@@ -1,0 +1,22 @@
+{
+  "env": {
+    "es6": true,
+    "browser": true
+  },
+  "ecmaFeatures": {
+    "jsx": true
+  },
+  "plugins": [
+    "react"
+  ],
+  "rules": {
+    "comma-dangle": false,
+    "curly": [2, "multi-line"],
+    "new-cap": false,
+    "no-mixed-requires": false,
+    "no-underscore-dangle": false,
+    "no-use-before-define": [2, "nofunc"],
+    "quotes": false,
+    "semi": false
+  }
+}
