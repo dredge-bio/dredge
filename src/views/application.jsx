@@ -7,8 +7,8 @@ module.exports = React.createClass({
 
   getInitialState: function () {
     return {
-      cellA: null,
-      cellB: null
+      cellA: 'EMS',
+      cellB: 'C'
     }
   },
 
@@ -18,7 +18,7 @@ module.exports = React.createClass({
 
   render: function () {
     var CellSelector = require('./cell_selector.jsx')
-      , CellPlot = require('./plot.jsx')
+      , CellPlotContainer = require('./plot_container.jsx')
 
     return (
       <main className="m3">
@@ -28,7 +28,7 @@ module.exports = React.createClass({
           currentCell={this.state.cellA}
           onSelectCell={this.setCurrentCell.bind(null, 'A')} />
 
-        <CellPlot
+        <CellPlotContainer
           cellA={this.state.cellA}
           cellB={this.state.cellB} />
 
