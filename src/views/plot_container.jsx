@@ -31,9 +31,10 @@ module.exports = React.createClass({
   },
 
   fetchPlotData() {
-    var cellA = this.props.cellA
+    var cellNameMap = require('../cell_name_map.json')
+      , cellA = this.props.cellA
       , cellB = this.props.cellB
-      , dataFile = `data/geneExpression/${cellA}_${cellB}.txt`
+      , dataFile = `data/geneExpression/${cellNameMap[cellA]}_${cellNameMap[cellB]}.txt`
 
     fetch(dataFile)
       .then(response => {
