@@ -27,6 +27,9 @@ function PlotVisualization(container) {
     .attr('transform', `translate(0, ${dimensions.PLOT_HEIGHT - 2 * dimensions.PLOT_PADDING})`)
 
   this.g.append('g')
+    .attr('class', 'squares')
+
+  this.g.append('g')
     .attr('class', 'dots')
 }
 
@@ -67,23 +70,45 @@ PlotVisualization.prototype = {
   },
 
   render() {
-    var [x, y] = this.getScales()
+    var bin = require('../utils/bin')
+      , units = 50
+      , rectWidth = (dimensions.PLOT_WIDTH - 2 * dimensions.PLOT_PADDING) / units
+      , [x, y] = this.getScales()
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
-      , select
+      , bins
+      , colorScale
 
     this.g.select('.y-axis').call(yAxis);
     this.g.select('.x-axis').call(xAxis);
 
+    this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.dots').selectAll('circle').remove();
 
-    select = this.g.select('.dots').selectAll('circle').data(this.plotData);
+    bins = bin(this.plotData, x, y, units);
 
-    select.enter()
+    colorScale = d3.scale.log()
+      .domain(d3.extent(bins, d => d.genes.length))
+      .range(["#deebf7", "#08519c", '#000'])
+
+    this.g.select('.squares').selectAll('rect').data(bins)
+        .enter()
+      .append('rect')
+      .attr('x', d => x(d.cpmMin))
+      .attr('y', d => y(d.fcMax))
+      .attr('width', rectWidth)
+      .attr('height', rectWidth)
+      .attr('fill', d => colorScale(d.genes.length))
+      .append('title').text(d => d.genes.length)
+
+      /*
+    this.g.select('.dots').selectAll('circle').data(this.plotData)
+        .enter()
       .append('circle')
       .attr('cx', d => x(d.logCPM))
       .attr('cy', d => y(d.logFC))
-      .attr('r', 1);
+      .attr('r', 1)
+      */
   }
 }
 
