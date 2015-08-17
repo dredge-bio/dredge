@@ -7,9 +7,18 @@ module.exports = React.createClass({
 
   getInitialState: function () {
     return {
-      cellA: 'EMS',
-      cellB: 'C'
+      cellA: null,
+      cellB: null
     }
+  },
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({
+        cellA: 'EMS',
+        cellB: 'C'
+      });
+    }, 0);
   },
 
   setCurrentCell: function (cellType, cell) {
@@ -22,8 +31,6 @@ module.exports = React.createClass({
 
     return (
       <main className="m3">
-        <h1>Application</h1>
-
         <CellSelector
           currentCell={this.state.cellA}
           onSelectCell={this.setCurrentCell.bind(null, 'A')} />

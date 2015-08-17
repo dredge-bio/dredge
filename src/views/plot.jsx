@@ -3,11 +3,13 @@
 var React = require('react')
   , d3 = require('d3')
 
+
 const dimensions = {
   PLOT_HEIGHT: 540,
   PLOT_WIDTH: 540,
   PLOT_PADDING: 48,
 }
+
 
 function PlotVisualization(container) {
   this.svg = d3.select(container)
