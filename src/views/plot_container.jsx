@@ -2,9 +2,6 @@
 
 var React = require('react')
 
-const PLOT_HEIGHT = 480
-    , PLOT_WIDTH = 720
-
 module.exports = React.createClass({
   displayName: 'CellPlot',
 
