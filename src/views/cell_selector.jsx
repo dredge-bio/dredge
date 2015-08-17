@@ -22,7 +22,7 @@ module.exports = React.createClass({
     return (
       <section>
         <h2>{ this.props.currentCell || 'no cell selected' }</h2>
-        <img src="data/cells.png" useMap={id} />
+        <img src="data/clickableDiagramImage.png" useMap={id} />
         <map name={id}>
           {
             cells.map(cell =>
