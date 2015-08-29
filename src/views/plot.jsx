@@ -36,10 +36,10 @@ function PlotVisualization(container) {
 }
 
 PlotVisualization.prototype = {
-  update(cellA, cellB, plotData) {
+  update(cellA, cellB, data) {
     this.cellA = cellA;
     this.cellB = cellB;
-    this.plotData = plotData;
+    this.data = data;
 
     this.render();
   },
@@ -52,7 +52,7 @@ PlotVisualization.prototype = {
       , x
       , y
 
-    this.plotData.forEach(gene => {
+    this.data.forEach(gene => {
       if (gene.logCPM < cpmMin) cpmMin = gene.logCPM;
       if (gene.logCPM > cpmMax) cpmMax = gene.logCPM;
 
@@ -73,7 +73,7 @@ PlotVisualization.prototype = {
 
   render() {
     var bin = require('../utils/bin')
-      , units = 50
+      , units = 75
       , rectWidth = (dimensions.PLOT_WIDTH - 2 * dimensions.PLOT_PADDING) / units
       , [x, y] = this.getScales()
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
@@ -87,7 +87,7 @@ PlotVisualization.prototype = {
     this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.dots').selectAll('circle').remove();
 
-    bins = bin(this.plotData, x, y, units);
+    bins = bin(this.data, x, y, units);
 
     colorScale = d3.scale.log()
       .domain(d3.extent(bins, d => d.genes.length))
@@ -104,27 +104,42 @@ PlotVisualization.prototype = {
       .append('title').text(d => d.genes.length)
 
       /*
-    this.g.select('.dots').selectAll('circle').data(this.plotData)
+    this.g.select('.dots').selectAll('circle').data(this.data)
         .enter()
       .append('circle')
       .attr('cx', d => x(d.logCPM))
       .attr('cy', d => y(d.logFC))
       .attr('r', 1)
       */
-  }
+  },
 }
 
 module.exports = React.createClass({
   displayName: 'CellPlot',
 
+  propTypes: {
+    cellA: React.PropTypes.string,
+    cellB: React.PropTypes.string,
+    data: React.PropTypes.array
+  },
+
   refresh() {
-    this.state.visualization.update(this.props.cellA, this.props.cellB, this.props.plotData);
+    this.state.visualization.update(this.props.cellA, this.props.cellB, this.props.data);
   },
 
   componentDidUpdate(prevProps) {
-    var needsUpdate = (
-      prevProps.cellA !== this.props.cellA ||
-      prevProps.cellB !== this.props.cellB
+    var stringify = require('json-stable-stringify')
+      , needsUpdate
+
+    needsUpdate = (
+      this.props.cellA &&
+      this.props.cellB &&
+      this.props.data &&
+      (
+        prevProps.cellA !== this.props.cellA ||
+        prevProps.cellB !== this.props.cellB ||
+        stringify(prevProps.data) !== stringify(this.props.data)
+      )
     )
 
     if (needsUpdate) this.refresh();
