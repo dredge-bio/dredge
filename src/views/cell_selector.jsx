@@ -1,7 +1,10 @@
 "use strict";
 
 var React = require('react')
-  , cells = require('../cell_selector_coordinates.json')
+
+function copy(data) {
+  return JSON.parse(JSON.stringify(data))
+}
 
 module.exports = React.createClass({
   displayName: 'CellSelector',
@@ -16,26 +19,42 @@ module.exports = React.createClass({
     this.props.onSelectCell(cellName);
   },
 
-  render: function () {
-    var id = 'cellmap-' + Math.random().toString().slice(2)
+  renderEmbryo: function (embryo, i) {
+    var shapes
+      , style
+
+    shapes = embryo.cells.map(cell => {
+      var attrs = copy(cell.attrs);
+      attrs.key = cell.cell_name;
+
+      attrs.fill = cell.cell_name === this.props.currentCell ? '#ccc' : 'transparent';
+
+      attrs.onClick = this.handleClick.bind(null, cell.cell_name);
+
+      return React.createElement(cell.type, attrs);
+    }, this);
+
+    style = {
+      stroke: 'black',
+      display: 'inline-block',
+      height: '100px',
+      margin: '0 1em'
+    }
 
     return (
-      <section>
-        <h2>{ this.props.currentCell || 'no cell selected' }</h2>
-        <img src="data/clickableDiagramImage.png" useMap={id} />
-        <map name={id}>
-          {
-            cells.map(cell =>
-              <area
-                key={cell.name}
-                shape="poly"
-                href={'#' + cell.name}
-                coords={cell.coords}
-                onClick={this.handleClick.bind(null, cell.name)} />
-            )
-          }
-        </map>
-      </section>
+      <svg key={i} style={style} {...embryo.svg_attrs}>
+        <g {...embryo.g1_attrs}>
+          <g {...embryo.g2_attrs}>
+            { shapes }
+          </g>
+        </g>
+      </svg>
     )
+  },
+
+  render: function () {
+    var embryos = require('../embryos.json')
+
+    return <section>{ embryos.map(this.renderEmbryo) }</section>
   }
 });
