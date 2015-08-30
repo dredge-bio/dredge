@@ -4,9 +4,12 @@ var React = require('react')
   , d3 = require('d3')
 
 const dimensions = {
-  PVALUE_HEIGHT: 100,
-  PVALUE_WIDTH: 200,
-  PVALUE_PADDING: 12,
+  PVALUE_HEIGHT: 540,
+  PVALUE_WIDTH: 100,
+  PVALUE_PADDING_LEFT: 32,
+  PVALUE_PADDING_RIGHT: 24,
+  PVALUE_PADDING_TOP: 24,
+  PVALUE_PADDING_BOTTOM: 60
 }
 
 
@@ -18,44 +21,107 @@ function PValueVisualization(container) {
 
   this.g = this.svg
     .append('g')
-    .attr('transform', `translate(${dimensions.PVALUE_PADDING}, ${dimensions.PVALUE_PADDING})`)
+    .attr('transform', `translate(
+      ${dimensions.PVALUE_PADDING_LEFT},
+      ${dimensions.PVALUE_PADDING_TOP}
+    )`)
 
+  this.g.append('g')
+    .attr('class', 'graph')
+
+  this.g.append('g')
+    .attr('class', 'brush')
+
+  this.g.append('g')
+    .attr('class', 'y-axis')
+
+  this.g.append('g')
+    .attr('class', 'x-axis')
+
+  this.y = d3.scale.linear()
+    .domain([1, 0])
+    .range([0, dimensions.PVALUE_HEIGHT - dimensions.PVALUE_PADDING_BOTTOM])
+
+  this.brush = d3.svg.brush()
+    .y(this.y)
+    .on('brushend', () => {
+      var [start, stop] = this.brush.extent()
+
+      if (start === stop) {
+        start = 0;
+        stop = 1;
+      }
+
+      this.onPValueChange(start, stop);
+    })
 }
 
 PValueVisualization.prototype = {
-  update(plotData) {
-    this.plotData = plotData;
+  update(data) {
+    this.data = data;
 
     this.render();
   },
 
   render() {
-    var pValues = this.plotData.map(gene => gene.pValue)
+    var pValues = this.data.map(gene => gene.pValue)
+      , datapoints = []
       , x
-      , y
       , data
-
-    x = d3.scale.linear()
-      .domain([0, 1])
-      .range([0, dimensions.PVALUE_WIDTH - dimensions.PVALUE_PADDING])
+      , areaFn
+      , yAxis
+      , max
 
     data = d3.layout.histogram()
-      .bins(x.ticks(100))(pValues)
+      .bins(this.y.ticks(100))(pValues)
 
-    y = d3.scale.linear()
-      .domain([0, d3.max(data, d => d.y)])
-      .range([dimensions.PVALUE_HEIGHT - dimensions.PVALUE_PADDING, 0])
+    data.forEach(point => {
+      datapoints.push({ x: point.x, y: point.y });
+      datapoints.push({ x: point.x + point.dx, y: point.y });
+    });
 
-    this.g.selectAll('rect').remove();
+    max = d3.max(data, d => d.y)
 
-    this.g.selectAll('rect')
-        .data(data)
-      .enter()
-      .append('rect')
-      .attr('x', d => x(d.x))
-      .attr('width', d => x(d.dx))
-      .attr('y', d => dimensions.PVALUE_HEIGHT - dimensions.PVALUE_PADDING - y(d.y))
-      .attr('height', d => y(d.y))
+    x = d3.scale.linear()
+      .domain([0, max])
+      .range([0, dimensions.PVALUE_WIDTH - dimensions.PVALUE_PADDING_LEFT - dimensions.PVALUE_PADDING_RIGHT])
+      .nice()
+
+    areaFn = d3.svg.area()
+      .x(d => x(d.y))
+      .x0(() => x(0))
+      .y(d => this.y(d.x))
+      .interpolate('linear')
+
+    this.g.select('.brush').select('g').remove();
+    this.g.select('.brush')
+      .append('g')
+      .call(this.brush)
+      .selectAll('rect')
+        .attr('x', 0)
+        .attr('width', x(max))
+
+
+    this.g.select('.graph').select('path').remove();
+
+    this.g.select('.graph').append('path')
+      .datum(datapoints)
+      .attr('d', areaFn)
+      .attr('class', 'pvalues')
+      .attr('stroke', '#ccc')
+      .attr('stroke-width', 1)
+      .attr('fill', 'black')
+
+    yAxis = d3.svg.axis().scale(this.y).ticks(4).orient('left');
+    this.g.select('.y-axis').call(yAxis);
+
+    /*
+    xAxis = d3.svg.axis()
+      .scale(x)
+      .tickValues([0, max])
+      .orient('top');
+    this.g.select('.x-axis').call(xAxis);
+    */
 
   }
 }
@@ -66,21 +132,31 @@ module.exports = React.createClass({
 
   propTypes: {
     onPValueChange: React.PropTypes.func.isRequired,
-    plotData: React.PropTypes.object
+    data: React.PropTypes.array
   },
 
   componentDidUpdate(prevProps) {
     var stringify = require('json-stable-stringify')
 
-    if (stringify(prevProps.plotData) !== stringify(this.props.plotData)) {
-      this.state.visualization.update(this.props.plotData);
+    if (stringify(prevProps.data) !== stringify(this.props.data)) {
+      this.state.visualization.update(this.props.data);
     }
   },
 
   componentDidMount() {
-    this.setState({
-      visualization: new PValueVisualization(React.findDOMNode(this))
-    });
+    var el = React.findDOMNode(this)
+      , initialSelection
+      , visualization
+
+    if (!(this.props.pValueLower === 1 && this.props.pValueLower === 0)) {
+      initialSelection = [this.props.pValueLower, this.props.pValueUpper];
+    }
+
+    visualization = new PValueVisualization(el, initialSelection)
+
+    visualization.onPValueChange = this.props.onPValueChange;
+
+    this.setState({ visualization });
   },
 
 

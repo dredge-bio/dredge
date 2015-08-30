@@ -1,1 +1,22 @@
-@import 'basscss'
+@import 'basscss';
+
+.x-axis path,
+.y-axis path {
+    fill: none;
+    stroke: black;
+    stroke-width: 1;
+}
+
+.brush .extent {
+    fill: rgba(142, 178, 213, 0.6);
+    stroke: #666;
+    stroke-width: 1px;
+}
+
+/*
+.x-axis line,
+.y-axis line {
+    stroke: black;
+    stroke-width: 1px;
+}
+*/

@@ -9,7 +9,8 @@ module.exports = React.createClass({
     return {
       cellA: null,
       cellB: null,
-      pValueThreshold: 0
+      pValueUpper: 1,
+      pValueLower: 0
     }
   },
 
@@ -30,8 +31,18 @@ module.exports = React.createClass({
     });
   },
 
-  handlePValueChange: function (pValueThreshold) {
-    this.setState({ pValueThreshold });
+  handlePValueChange: function (pValueLower, pValueUpper) {
+    this.setState({ pValueLower, pValueUpper });
+  },
+
+  filterPlotData() {
+    if (!this.state.plotData) return null;
+
+    return this.state.plotData.filter(gene => (
+      gene.pValue >= this.state.pValueLower &&
+      gene.pValue <= this.state.pValueUpper
+    ))
+
   },
 
   fetchCellPairData() {
@@ -77,15 +88,19 @@ module.exports = React.createClass({
           currentCell={this.state.cellA}
           onSelectCell={this.setCurrentCell.bind(null, 'A')} />
 
-        <CellPlot
-          cellA={this.state.cellA}
-          cellB={this.state.cellB}
-          pValueThreshold={this.state.pValueThreshold}
-          data={this.state.plotData} />
+        <div className="gene-plot" style={{ display: 'inline-block' }}>
+          <CellPlot
+            cellA={this.state.cellA}
+            cellB={this.state.cellB}
+            pValueThreshold={this.state.pValueThreshold}
+            data={this.filterPlotData()} />
+        </div>
 
-        <CellPValueSelector
-          onPValueChange={this.handlePValueChange}
-          data={this.state.plotData} />
+        <div className="pvalue-selector" style={{ display: 'inline-block' }}>
+          <CellPValueSelector
+            onPValueChange={this.handlePValueChange}
+            data={this.state.plotData} />
+        </div>
 
         <CellSelector
           currentCell={this.state.cellB}
