@@ -80,6 +80,7 @@ PlotVisualization.prototype = {
       , yAxis = d3.svg.axis().scale(y).orient('left')
       , bins
       , colorScale
+      , container
 
     this.g.select('.y-axis').call(yAxis);
     this.g.select('.x-axis').call(xAxis);
@@ -93,6 +94,8 @@ PlotVisualization.prototype = {
       .domain(d3.extent(bins, d => d.genes.length))
       .range(["#deebf7", "#08519c", '#000'])
 
+    container = this.g.select('.squares')[0][0];
+
     this.g.select('.squares').selectAll('rect').data(bins)
         .enter()
       .append('rect')
@@ -101,6 +104,9 @@ PlotVisualization.prototype = {
       .attr('width', rectWidth)
       .attr('height', rectWidth)
       .attr('fill', d => colorScale(d.genes.length))
+      .on('mouseover', function (d) {
+        container.appendChild(this);
+      })
       .append('title').text(d => d.genes.length)
 
       /*

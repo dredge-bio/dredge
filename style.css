@@ -13,6 +13,11 @@
     stroke-width: 1px;
 }
 
+.squares rect:hover {
+    stroke: red;
+    stroke-width: 1px;
+}
+
 /*
 .x-axis line,
 .y-axis line {
