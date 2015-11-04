@@ -11,7 +11,9 @@ const dimensions = {
 }
 
 
-function PlotVisualization(container) {
+function PlotVisualization(container, handleGeneDetailsChange) {
+  this.handleGeneDetailsChange = handleGeneDetailsChange;
+
   this.svg = d3.select(container)
     .append('svg')
     .attr('width', dimensions.PLOT_WIDTH)
@@ -78,6 +80,7 @@ PlotVisualization.prototype = {
       , [x, y] = this.getScales()
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
+      , { handleGeneDetailsChange } = this
       , bins
       , colorScale
       , container
@@ -106,6 +109,9 @@ PlotVisualization.prototype = {
       .attr('fill', d => colorScale(d.genes.length))
       .on('mouseover', function () {
         container.appendChild(this);
+      })
+      .on('click', function (d) {
+        handleGeneDetailsChange(d.genes);
       })
       .append('title').text(d => d.genes.length)
 
@@ -151,8 +157,10 @@ module.exports = React.createClass({
   },
 
   componentDidMount() {
+    var { handleGeneDetailsChange } = this.props
+
     this.setState({
-      visualization: new PlotVisualization(React.findDOMNode(this))
+      visualization: new PlotVisualization(React.findDOMNode(this), handleGeneDetailsChange)
     });
   },
 

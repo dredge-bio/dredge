@@ -18,7 +18,8 @@ Application = React.createClass({
   getInitialState: function () {
     return {
       pValueUpper: 1,
-      pValueLower: 0
+      pValueLower: 0,
+      deets: []
     }
   },
 
@@ -38,6 +39,14 @@ Application = React.createClass({
     ));
   },
 
+  renderGeneDetails() {
+    var { deets } = this.state
+
+    return deets.map(gene => (
+      <p key={gene.geneName}>{ gene.geneName }</p>
+    ))
+  },
+
   render: function () {
     var CellSelector = require('./cell_selector.jsx')
       , CellPlot = require('./plot.jsx')
@@ -51,19 +60,31 @@ Application = React.createClass({
           currentCell={cellA}
           onSelectCell={setCurrentCell.bind(null, 'A')} />
 
-        <div className="gene-plot" style={{ display: 'inline-block' }}>
-          <CellPlot
-            cellA={cellA}
-            cellB={cellB}
-            pValueLower={pValueLower}
-            pValueUpper={pValueUpper}
-            data={this.filterPlotData()} />
-        </div>
+        <div className="clearfix">
+          <div className="left gene-plot" style={{ display: 'inline-block' }}>
+            <CellPlot
+              cellA={cellA}
+              cellB={cellB}
+              pValueLower={pValueLower}
+              pValueUpper={pValueUpper}
+              handleGeneDetailsChange={deets => this.setState({ deets })}
+              data={this.filterPlotData()} />
+          </div>
 
-        <div className="pvalue-selector" style={{ display: 'inline-block' }}>
-          <CellPValueSelector
-            onPValueChange={this.handlePValueChange}
-            data={plotData} />
+          <div className="left pvalue-selector" style={{ display: 'inline-block' }}>
+            <CellPValueSelector
+              onPValueChange={this.handlePValueChange}
+              data={plotData} />
+          </div>
+
+          <div className="left inline-block ml3">
+            <h1>Saved guys</h1>
+          </div>
+
+          <div className="left inline-block ml3">
+            <h1>GeneDetails</h1>
+            { this.renderGeneDetails() }
+          </div>
         </div>
 
         <CellSelector
