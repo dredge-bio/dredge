@@ -13,6 +13,7 @@ module.exports = React.createClass({
     return {
       cellA: null,
       cellB: null,
+      loading: false,
       pValueUpper: 1,
       pValueLower: 0
     }
@@ -49,6 +50,16 @@ module.exports = React.createClass({
 
   },
 
+  onResponse(e) {
+    this.setState({ loading: false });
+
+    if (e instanceof Error) {
+      throw e;
+    } else {
+      return e;
+    }
+  },
+
   fetchCellPairData() {
     var cellNameMap = require('../cell_name_map.json')
       , { cellA, cellB } = this.state
@@ -57,9 +68,12 @@ module.exports = React.createClass({
     cellA = cellFile(cellA, cellNameMap);
     cellB = cellFile(cellB, cellNameMap);
 
+    this.setState({ loading: true });
+
     dataFile  = `data/geneExpression/${cellA}_${cellB}.txt`
 
     fetch(dataFile)
+      .then(this.onResponse, this.onResponse)
       .then(response => {
         // Stop if cells have been changed since fetch
         if (this.state.cellA !== cellA || this.state.cellB !== cellB) return;
@@ -70,6 +84,7 @@ module.exports = React.createClass({
           .then(this.processPlotData)
           .then(plotData => this.setState({ plotData }))
       })
+      .catch(err => alert('SOPHIE IT\'S AN ERROR IM SORRY'))
   },
 
   processPlotData(text) {
@@ -89,6 +104,7 @@ module.exports = React.createClass({
     var CellSelector = require('./cell_selector.jsx')
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
+      , { loading } = this.state
 
     return (
       <main className="m3">
@@ -113,6 +129,14 @@ module.exports = React.createClass({
         <CellSelector
           currentCell={this.state.cellB}
           onSelectCell={this.setCurrentCell.bind(null, 'B')} />
+
+        {
+          loading && (
+            <div style={{ color: 'red', fontSize: '64px', position: 'absolute', top: '200px' }}>
+              LOADING, LOADINGD....
+            </div>
+          )
+        }
       </main>
     )
   }
