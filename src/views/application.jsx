@@ -2,6 +2,10 @@
 
 var React = require('react')
 
+function cellFile(cellName, cellMap) {
+  return cellMap[cellName] || cellName;
+}
+
 module.exports = React.createClass({
   displayName: 'Application',
 
@@ -47,9 +51,13 @@ module.exports = React.createClass({
 
   fetchCellPairData() {
     var cellNameMap = require('../cell_name_map.json')
-      , cellA = this.state.cellA
-      , cellB = this.state.cellB
-      , dataFile = `data/geneExpression/${cellNameMap[cellA]}_${cellNameMap[cellB]}.txt`
+      , { cellA, cellB } = this.state
+      , dataFile
+
+    cellA = cellFile(cellA, cellNameMap);
+    cellB = cellFile(cellB, cellNameMap);
+
+    dataFile  = `data/geneExpression/${cellA}_${cellB}.txt`
 
     fetch(dataFile)
       .then(response => {

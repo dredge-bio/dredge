@@ -20,14 +20,18 @@ module.exports = React.createClass({
   },
 
   renderEmbryo: function (embryo, i) {
-    var shapes
+    var stage = Math.pow(2, i)
+      , stageName = `${stage}cellEmbryo`
+      , { currentCell } = this.props
+      , cellSelected = currentCell === stageName
+      , shapes
       , style
 
     shapes = embryo.cells.map(cell => {
       var attrs = copy(cell.attrs);
       attrs.key = cell.cell_name;
 
-      attrs.fill = cell.cell_name === this.props.currentCell ? '#ccc' : 'transparent';
+      attrs.fill = cell.cell_name === currentCell ? '#ccc' : 'transparent';
 
       attrs.onClick = this.handleClick.bind(null, cell.cell_name);
 
@@ -42,13 +46,24 @@ module.exports = React.createClass({
     }
 
     return (
-      <svg key={i} style={style} {...embryo.svg_attrs}>
-        <g {...embryo.g1_attrs}>
-          <g {...embryo.g2_attrs}>
-            { shapes }
+      <div style={{ display: 'inline-block', textAlign: 'center' }}>
+        <a href=""
+            style={{ backgroundColor: cellSelected ? 'red' : 'white' }}
+            onClick={this.handleClick.bind(null, stageName)}>
+          {stage}-cell embryo
+        </a>
+
+        <br />
+        <br />
+
+        <svg key={i} style={style} {...embryo.svg_attrs}>
+          <g {...embryo.g1_attrs}>
+            <g {...embryo.g2_attrs}>
+              { shapes }
+            </g>
           </g>
-        </g>
-      </svg>
+        </svg>
+      </div>
     )
   },
 
