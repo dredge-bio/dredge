@@ -1,10 +1,33 @@
 "use strict";
 
+// 3 decimal places for pValue, 1 for others
+
 var React = require('react')
   , Immutable = require('immutable')
   , CellFetcher = require('./fetch_cell.jsx')
   , Application
 
+function dataForCell(cell, list) {
+  var found = null
+    , ret = {}
+
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].geneName === cell) {
+      found = list[i];
+      break;
+    }
+  }
+
+  found = found || { not: 'found' }
+
+  Object.keys(found).sort().forEach(key => {
+    if (key === 'geneName') return;
+
+    ret[key] = found[key];
+  });
+
+  return Immutable.fromJS(ret);
+}
 
 Application = React.createClass({
   displayName: 'Application',
@@ -21,7 +44,8 @@ Application = React.createClass({
       pValueUpper: 1,
       pValueLower: 0,
       deets: [],
-      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]'))
+      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
+      onlySavedGenes: false
     }
   },
 
@@ -62,11 +86,20 @@ Application = React.createClass({
   },
 
   renderSavedGenes() {
-    var { savedGenes } = this.state
+    var { plotData } = this.props
+      , { savedGenes } = this.state
 
     return savedGenes.map(gene => (
       <div key={gene}>
         <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>{'x'}</a> { gene }
+        {
+          plotData && dataForCell(gene, plotData).map((val, key) =>
+            <div key={key}>
+              {key}: {val}
+            </div>
+          )
+        }
+
       </div>
     ))
   },

@@ -78,10 +78,12 @@ module.exports = function (Component) {
           response
             .text()
             .then(this.processPlotData)
-            .then(plotData => this.setState({
-              loading: false,
-              cellA, cellB, plotData
-            }));
+            .then(plotData => {
+              setTimeout(() => this.setState({ loading: false }), 300);
+              this.setState({
+                cellA, cellB, plotData
+              })
+            });
         })
         .catch(() => alert('SOPHIE IT\'S AN ERROR IM SORRY'))
     },
