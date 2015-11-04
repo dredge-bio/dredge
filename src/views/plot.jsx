@@ -104,7 +104,7 @@ PlotVisualization.prototype = {
       .attr('width', rectWidth)
       .attr('height', rectWidth)
       .attr('fill', d => colorScale(d.genes.length))
-      .on('mouseover', function (d) {
+      .on('mouseover', function () {
         container.appendChild(this);
       })
       .append('title').text(d => d.genes.length)
@@ -134,21 +134,20 @@ module.exports = React.createClass({
   },
 
   componentDidUpdate(prevProps) {
-    var stringify = require('json-stable-stringify')
-      , needsUpdate
+    var { cellA, cellB, pValueLower, pValueUpper, data } = this.props
+      , needsUpdate = data && !prevProps.data
 
-    needsUpdate = (
-      this.props.cellA &&
-      this.props.cellB &&
-      this.props.data &&
-      (
-        prevProps.cellA !== this.props.cellA ||
-        prevProps.cellB !== this.props.cellB ||
-        stringify(prevProps.data) !== stringify(this.props.data)
-      )
+    needsUpdate = needsUpdate || (
+      data &&
+      prevProps.cellA !== cellA ||
+      prevProps.cellB !== cellB ||
+      prevProps.pValueLower !== pValueLower ||
+      prevProps.pValueUpper !== pValueUpper
     )
 
-    if (needsUpdate) this.refresh();
+    if (needsUpdate) {
+      this.refresh();
+    }
   },
 
   componentDidMount() {

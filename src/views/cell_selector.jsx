@@ -46,7 +46,7 @@ module.exports = React.createClass({
     }
 
     return (
-      <div style={{ display: 'inline-block', textAlign: 'center' }}>
+      <div key={i} style={{ display: 'inline-block', textAlign: 'center' }}>
         <a href=""
             style={{ backgroundColor: cellSelected ? 'red' : 'white' }}
             onClick={this.handleClick.bind(null, stageName)}>
@@ -56,7 +56,7 @@ module.exports = React.createClass({
         <br />
         <br />
 
-        <svg key={i} style={style} {...embryo.svg_attrs}>
+        <svg style={style} {...embryo.svg_attrs}>
           <g {...embryo.g1_attrs}>
             <g {...embryo.g2_attrs}>
               { shapes }
