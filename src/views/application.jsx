@@ -1,6 +1,7 @@
 "use strict";
 
 var React = require('react')
+  , Immutable = require('immutable')
   , CellFetcher = require('./fetch_cell.jsx')
   , Application
 
@@ -19,7 +20,8 @@ Application = React.createClass({
     return {
       pValueUpper: 1,
       pValueLower: 0,
-      deets: []
+      deets: [],
+      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]'))
     }
   },
 
@@ -39,11 +41,43 @@ Application = React.createClass({
     ));
   },
 
+  handleSaveGene(gene, e) {
+    var { savedGenes } = this.state
+
+    e.preventDefault();
+
+    savedGenes = savedGenes.add(gene);
+    localStorage.savedGenes = JSON.stringify(savedGenes);
+    this.setState({ savedGenes });
+  },
+
+  handleRemoveSavedGene(gene, e) {
+    var { savedGenes } = this.state
+
+    e.preventDefault();
+
+    savedGenes = savedGenes.delete(gene);
+    localStorage.savedGenes = JSON.stringify(savedGenes);
+    this.setState({ savedGenes });
+  },
+
+  renderSavedGenes() {
+    var { savedGenes } = this.state
+
+    return savedGenes.map(gene => (
+      <div key={gene}>
+        <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>{'x'}</a> { gene }
+      </div>
+    ))
+  },
+
   renderGeneDetails() {
     var { deets } = this.state
 
     return deets.map(gene => (
-      <p key={gene.geneName}>{ gene.geneName }</p>
+      <div key={gene.geneName}>
+        <a href="" onClick={this.handleSaveGene.bind(null, gene.geneName)}>{'<'}</a> { gene.geneName }
+      </div>
     ))
   },
 
@@ -78,7 +112,8 @@ Application = React.createClass({
           </div>
 
           <div className="left inline-block ml3">
-            <h1>Saved guys</h1>
+            <h1>Saved genes</h1>
+            { this.renderSavedGenes() }
           </div>
 
           <div className="left inline-block ml3">

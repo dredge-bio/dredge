@@ -136,9 +136,7 @@ module.exports = React.createClass({
   },
 
   componentDidUpdate(prevProps) {
-    var stringify = require('json-stable-stringify')
-
-    if (stringify(prevProps.data) !== stringify(this.props.data)) {
+    if (prevProps.data !== this.props.data) {
       this.state.visualization.update(this.props.data);
     }
   },
