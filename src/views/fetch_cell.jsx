@@ -3,6 +3,7 @@
 /* eslint no-alert:0 */
 
 var React = require('react')
+  , Immutable = require('immutable')
 
 
 function cellFile(cellName, cellMap) {
@@ -89,16 +90,17 @@ module.exports = function (Component) {
     },
 
     processPlotData(text) {
-      return text
-        .split('\n')
-        .slice(1)
-        .map(row => row.split('\t'))
-        .map(([geneName, logFC, logCPM, pValue]) => ({
-          geneName,
-          logFC: parseFloat(logFC),
-          logCPM: parseFloat(logCPM),
-          pValue: parseFloat(pValue)
-        }));
+      return Immutable.Map().withMutations(plotData => {
+        text.split('\n').slice(1).map(row => row.split('\t'))
+          .forEach(([geneName, logFC, logCPM, pValue]) => {
+            plotData.set(geneName, {
+              geneName,
+              logFC: parseFloat(logFC),
+              logCPM: parseFloat(logCPM),
+              pValue: parseFloat(pValue)
+            })
+          })
+      });
     },
 
     render() {

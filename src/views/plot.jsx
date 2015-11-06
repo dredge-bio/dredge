@@ -136,7 +136,11 @@ module.exports = React.createClass({
   },
 
   refresh() {
-    this.state.visualization.update(this.props.cellA, this.props.cellB, this.props.data);
+    this.state.visualization.update(
+      this.props.cellA,
+      this.props.cellB,
+      this.props.data.toArray()
+    );
   },
 
   componentDidUpdate(prevProps) {

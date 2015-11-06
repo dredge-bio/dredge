@@ -8,25 +8,7 @@ var React = require('react')
   , Application
 
 function dataForCell(cell, list) {
-  var found = null
-    , ret = {}
-
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].geneName === cell) {
-      found = list[i];
-      break;
-    }
-  }
-
-  found = found || { not: 'found' }
-
-  Object.keys(found).sort().forEach(key => {
-    if (key === 'geneName') return;
-
-    ret[key] = found[key];
-  });
-
-  return Immutable.fromJS(ret);
+  return Immutable.fromJS(list.get('cell') || { not: 'found'})
 }
 
 Application = React.createClass({
@@ -35,7 +17,7 @@ Application = React.createClass({
   propTypes: {
     cellA: React.PropTypes.string.isRequired,
     cellB: React.PropTypes.string.isRequired,
-    plotData: React.PropTypes.array,
+    plotData: React.PropTypes.instanceOf(Immutable.Map),
     setCurrentCell: React.PropTypes.func.isRequired
   },
 
