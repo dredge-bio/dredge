@@ -25,7 +25,7 @@ Application = React.createClass({
     return {
       pValueUpper: 1,
       pValueLower: 0,
-      deets: [],
+      details: [],
       savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
       onlySavedGenes: false
     }
@@ -87,9 +87,9 @@ Application = React.createClass({
   },
 
   renderGeneDetails() {
-    var { deets } = this.state
+    var { details } = this.state
 
-    return deets.map(gene => (
+    return details.map(gene => (
       <div key={gene.geneName}>
         <a href="" onClick={this.handleSaveGene.bind(null, gene.geneName)}>{'<'}</a> { gene.geneName }
       </div>
@@ -116,7 +116,7 @@ Application = React.createClass({
               cellB={cellB}
               pValueLower={pValueLower}
               pValueUpper={pValueUpper}
-              handleGeneDetailsChange={deets => this.setState({ deets })}
+              handleGeneDetailsChange={details => this.setState({ details })}
               data={this.filterPlotData()} />
           </div>
 
