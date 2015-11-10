@@ -2,7 +2,8 @@
 
 require('whatwg-fetch');
 
-var React = require('react')
-  , Application = require('./views/application.jsx')
+var Application = require('./views/application.jsx')
+  , React = require('react')
+  , { render } = require('react-dom')
 
-React.render(<Application />, document.body);
+render(React.createElement(Application), document.getElementById('main'));
