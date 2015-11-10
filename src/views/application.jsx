@@ -7,10 +7,6 @@ var React = require('react')
   , CellFetcher = require('./fetch_cell.jsx')
   , Application
 
-function dataForCell(cell, list) {
-  return Immutable.fromJS(list.get('cell') || { not: 'found'})
-}
-
 Application = React.createClass({
   displayName: 'Application',
 
@@ -68,32 +64,37 @@ Application = React.createClass({
   },
 
   renderSavedGenes() {
-    var { plotData } = this.props
+    var GeneTable = require('./gene_row.jsx')
+      , { plotData } = this.props
       , { savedGenes } = this.state
 
-    return savedGenes.map(gene => (
-      <div key={gene}>
-        <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>{'x'}</a> { gene }
-        {
-          plotData && dataForCell(gene, plotData).map((val, key) =>
-            <div key={key}>
-              {key}: {val}
-            </div>
-          )
-        }
-
-      </div>
-    ))
+    return plotData && (
+      <GeneTable
+          geneNames={savedGenes}
+          plotData={plotData}
+          renderFirstColumn={gene => (
+            <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>
+              x
+            </a>
+          )} />
+      )
   },
 
   renderGeneDetails() {
-    var { details } = this.state
+    var GeneTable = require('./gene_row.jsx')
+      , { plotData } = this.props
+      , { details } = this.state
 
-    return details.map(gene => (
-      <div key={gene.geneName}>
-        <a href="" onClick={this.handleSaveGene.bind(null, gene.geneName)}>{'<'}</a> { gene.geneName }
-      </div>
-    ))
+    return plotData && (
+      <GeneTable
+          geneNames={details.map(gene => gene.geneName)}
+          plotData={plotData}
+          renderFirstColumn={gene => (
+            <a href="" onClick={this.handleSaveGene.bind(null, gene)}>
+              {'<'}
+            </a>
+          )} />
+      )
   },
 
   render: function () {
