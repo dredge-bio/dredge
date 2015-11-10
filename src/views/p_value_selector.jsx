@@ -1,6 +1,7 @@
 "use strict";
 
 var React = require('react')
+  , Immutable = require('immutable')
   , d3 = require('d3')
 
 const dimensions = {
@@ -132,12 +133,12 @@ module.exports = React.createClass({
 
   propTypes: {
     onPValueChange: React.PropTypes.func.isRequired,
-    data: React.PropTypes.array
+    data: React.PropTypes.instanceOf(Immutable.Map)
   },
 
   componentDidUpdate(prevProps) {
     if (prevProps.data !== this.props.data) {
-      this.state.visualization.update(this.props.data);
+      this.state.visualization.update(this.props.data.toArray());
     }
   },
 

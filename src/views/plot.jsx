@@ -1,6 +1,7 @@
 "use strict";
 
 var React = require('react')
+  , Immutable = require('immutable')
   , d3 = require('d3')
 
 
@@ -132,7 +133,7 @@ module.exports = React.createClass({
   propTypes: {
     cellA: React.PropTypes.string,
     cellB: React.PropTypes.string,
-    data: React.PropTypes.array
+    data: React.PropTypes.instanceOf(Immutable.Map)
   },
 
   refresh() {
