@@ -2,7 +2,8 @@
 
 // 3 decimal places for pValue, 1 for others
 
-var React = require('react')
+var d3 = require('d3')
+  , React = require('react')
   , Immutable = require('immutable')
   , CellFetcher = require('./fetch_cell.jsx')
   , Application
@@ -23,6 +24,7 @@ Application = React.createClass({
       pValueLower: 0,
       details: [],
       savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
+      savedGeneColorScale: d3.scale.category20(),
       onlySavedGenes: false
     }
   },
@@ -66,16 +68,28 @@ Application = React.createClass({
   renderSavedGenes() {
     var GeneTable = require('./gene_row.jsx')
       , { plotData } = this.props
-      , { savedGenes } = this.state
+      , { savedGenes, savedGeneColorScale } = this.state
 
     return plotData && (
       <GeneTable
           geneNames={savedGenes}
           plotData={plotData}
           renderFirstColumn={gene => (
-            <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>
-              x
-            </a>
+            <span>
+              <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>
+                x
+              </a>
+
+              <span
+                  className="ml2 inline-block"
+                  dangerouslySetInnerHTML={{ __html: '&nbsp;' }}
+                  style={{
+                    background: savedGeneColorScale(gene),
+                    width: '1em',
+                    height: '1em',
+                    lineHeight: '100%'
+                  }} />
+            </span>
           )} />
       )
   },
@@ -102,7 +116,7 @@ Application = React.createClass({
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
-      , { pValueLower, pValueUpper } = this.state
+      , { pValueLower, pValueUpper, savedGenes, savedGeneColorScale } = this.state
 
     return (
       <main className="m3">
@@ -117,6 +131,8 @@ Application = React.createClass({
               cellB={cellB}
               pValueLower={pValueLower}
               pValueUpper={pValueUpper}
+              savedGenes={savedGenes}
+              savedGeneColorScale={savedGeneColorScale}
               handleGeneDetailsChange={details => this.setState({ details })}
               data={this.filterPlotData()} />
           </div>

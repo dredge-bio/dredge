@@ -39,23 +39,28 @@ function PlotVisualization(container, handleGeneDetailsChange) {
 }
 
 PlotVisualization.prototype = {
-  update(cellA, cellB, data) {
+  update(cellA, cellB, data, savedGeneNames, savedGeneColorScale) {
     this.cellA = cellA;
     this.cellB = cellB;
     this.data = data;
+    this.savedGeneNames = savedGeneNames;
+    this.savedGeneColorScale = savedGeneColorScale;
 
     this.render();
   },
 
-  getScales() {
+  getScalesAndSavedGenes() {
     var cpmMin = Infinity
       , cpmMax = -Infinity
       , fcMin = Infinity
       , fcMax = -Infinity
+      , savedGenes = []
       , x
       , y
 
     this.data.forEach(gene => {
+      if (this.savedGeneNames.indexOf(gene.geneName) !== -1) savedGenes.push(gene);
+
       if (gene.logCPM < cpmMin) cpmMin = gene.logCPM;
       if (gene.logCPM > cpmMax) cpmMax = gene.logCPM;
 
@@ -71,14 +76,14 @@ PlotVisualization.prototype = {
       .domain([fcMin, fcMax])
       .range([dimensions.PLOT_HEIGHT - (2 * dimensions.PLOT_PADDING), 0])
 
-    return [x, y];
+    return [x, y, savedGenes];
   },
 
   render() {
     var bin = require('../utils/bin')
       , units = 75
       , rectWidth = (dimensions.PLOT_WIDTH - 2 * dimensions.PLOT_PADDING) / units
-      , [x, y] = this.getScales()
+      , [x, y, savedGenes] = this.getScalesAndSavedGenes()
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
       , { handleGeneDetailsChange } = this
@@ -116,14 +121,13 @@ PlotVisualization.prototype = {
       })
       .append('title').text(d => d.genes.length)
 
-      /*
-    this.g.select('.dots').selectAll('circle').data(this.data)
+    this.g.select('.dots').selectAll('circle').data(savedGenes)
         .enter()
       .append('circle')
       .attr('cx', d => x(d.logCPM))
       .attr('cy', d => y(d.logFC))
-      .attr('r', 1)
-      */
+      .attr('fill', d => this.savedGeneColorScale(d.geneName))
+      .attr('r', 2)
   },
 }
 
@@ -133,14 +137,17 @@ module.exports = React.createClass({
   propTypes: {
     cellA: React.PropTypes.string,
     cellB: React.PropTypes.string,
-    data: React.PropTypes.instanceOf(Immutable.Map)
+    data: React.PropTypes.instanceOf(Immutable.Map),
+    savedGenes: React.PropTypes.instanceOf(Immutable.Set),
   },
 
   refresh() {
     this.state.visualization.update(
       this.props.cellA,
       this.props.cellB,
-      this.props.data.toArray()
+      this.props.data.toArray(),
+      this.props.savedGenes.toJS(),
+      this.props.savedGeneColorScale
     );
   },
 
