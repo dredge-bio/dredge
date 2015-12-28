@@ -23,6 +23,6 @@
     "bundle": "npm run bundle-js && npm run bundle-css",
     "bundle-js": "mkdir -p dist && browserify -o dist/bundle.js src/index.js",
     "bundle-css": "mkdir -p dist && cssnext style.css > dist/style.css",
-    "watch": "mkdir -p dist && watchify -v -d -o dist/bundle.js src/index.js"
+    "watch": "mkdir -p dist && watchify --poll -v -d -o dist/bundle.js src/index.js"
   }
 }
