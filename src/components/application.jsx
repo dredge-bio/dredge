@@ -1,32 +1,42 @@
 "use strict";
 
-// 3 decimal places for pValue, 1 for others
+/* eslint no-alert:0 */
 
 var React = require('react')
   , Immutable = require('immutable')
 
+
 module.exports = React.createClass({
   displayName: 'Application',
 
-  propTypes: {
-    cellA: React.PropTypes.string.isRequired,
-    cellB: React.PropTypes.string.isRequired,
+  getInitialState() {
+    return {
+      cellA: 'EMS',
+      cellB: 'C',
 
-    pValueUpper: React.PropTypes.number.isRequired,
-    pValueLower: React.PropTypes.number.isRequired,
+      pValueUpper: 1,
+      pValueLower: 0,
 
-    detailedGenes: React.instanceOf(Immutable.OrderedSet).isRequired,
-    savedGenes: React.instanceOf(Immutable.OrderedSet).isRequired,
-    savedGeneColorScale: React.PropTypes.func.isRequired,
+      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
+      detailedGenes: Immutable.OrderedSet(),
 
-    plotData: React.PropTypes.instanceOf(Immutable.Map),
-    loading: React.PropTypes.bool.isRequired,
+      savedGeneColorScale: d3.scale.category20(),
 
-    setCurrentCell: React.PropTypes.func.isRequired
+      fetchingCells: null,
+
+      plotData: null,
+
+      loading: false
+    }
+  },
+
+  componentDidMount() {
+    setTimeout(this.setCurrentCell, 0);
   },
 
   filterPlotData() {
-    var { plotData, pValueLower, pValueUpper } = this.props
+    var { plotData } = this.props
+      , { pValueLower, pValueUpper } = this.state
 
     if (!plotData) return null;
 
@@ -36,111 +46,64 @@ module.exports = React.createClass({
     ));
   },
 
-  renderSavedGenes() {
-    var GeneTable = require('./gene_row.jsx')
-      , { plotData, editSavedGenes } = this.props
-      , { savedGenes, savedGeneColorScale } = this.state
 
-    return plotData && (
-      <GeneTable
-          geneNames={savedGenes}
-          plotData={plotData}
-          renderFirstColumn={gene => (
-            <span>
-              <a className="red" href="" onClick={editSavedGenes.bind(null, false, gene)}>
-                x
-              </a>
-
-              <span
-                  className="ml2 inline-block"
-                  dangerouslySetInnerHTML={{ __html: '&nbsp;' }}
-                  style={{
-                    background: savedGeneColorScale(gene),
-                    width: '1em',
-                    height: '1em',
-                    lineHeight: '100%'
-                  }} />
-            </span>
-          )} />
-      )
+  handlePValueChange: function (pValueLower, pValueUpper) {
+    this.setState({ pValueLower, pValueUpper });
   },
 
-  renderGeneDetails() {
-    var GeneTable = require('./gene_row.jsx')
-      , { plotData, editSavedGenes, detailedGenes } = this.props
+  editSavedGenes(add, gene, e) {
+    var { savedGenes } = this.state
 
-    return plotData && (
-      <GeneTable
-          geneNames={detailedGenes.map(gene => gene.geneName)}
-          plotData={plotData}
-          renderFirstColumn={gene => (
-            <a href="" onClick={editSavedGenes.bind(null, true, gene)}>
-              {'<'}
-            </a>
-          )} />
-      )
+    e.preventDefault();
+
+    savedGenes = savedGenes[add ? 'add' : 'delete'](gene);
+    localStorage.savedGenes = JSON.stringify(savedGenes);
+    this.setState({ savedGenes });
   },
 
-  render: function () {
-    var CellSelector = require('./cell_selector.jsx')
-      , CellPlot = require('./plot.jsx')
-      , CellPValueSelector = require('./p_value_selector.jsx')
-      , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
-      , { pValueLower, pValueUpper, savedGenes, savedGeneColorScale } = this.props
+  setCurrentCell(cellType, cell) {
+    var fetchCellPair = require('../utils/fetch_cell_pair')
+      , processCellData = require('../utils/process_cell_data')
+      , { cellA, cellB } = this.state
 
+    if (cellType === 'A') {
+      cellA = cell;
+    } else if (cellType === 'B') {
+      cellB = cell;
+    }
+
+    this.setState({
+      loading: true,
+      fetchingCells: cellA + cellB
+    });
+
+    fetchCellPair(cellA, cellB)
+      .then(null, e => { this.setState({ loading: false }); throw e; })
+      .then(response => {
+        var { fetchingCells } = this.state
+
+        // Stop if cells have been changed since fetch started
+        if (fetchingCells !== (cellA + cellB)) return;
+
+        // TODO: make sure of 200
+        response.text()
+          .then(processCellData)
+          .then(plotData => {
+            // Set the cell/plot data immediately, but let the loading
+            // message stick around for a little bit.
+            setTimeout(() => this.setState({ loading: false }), 300);
+            this.setState({ cellA, cellB, plotData });
+          });
+      })
+      .catch(() => alert('SOPHIE IT\'S AN ERROR IM SORRY'))
+  },
+
+  render() {
     return (
-      <main className="m3">
-        <CellSelector
-          currentCell={cellA}
-          onSelectCell={setCurrentCell.bind(null, 'A')} />
-
-        <div className="clearfix">
-          <div className="left gene-plot" style={{ display: 'inline-block' }}>
-            <CellPlot
-              cellA={cellA}
-              cellB={cellB}
-              pValueLower={pValueLower}
-              pValueUpper={pValueUpper}
-              savedGenes={savedGenes}
-              savedGeneColorScale={savedGeneColorScale}
-              handleGeneDetailsChange={details => this.setState({ details })}
-              data={this.filterPlotData()} />
-          </div>
-
-          <div className="left pvalue-selector" style={{ display: 'inline-block' }}>
-            <CellPValueSelector
-              onPValueChange={this.handlePValueChange}
-              data={plotData} />
-          </div>
-
-          <div className="left inline-block ml3">
-            <h1>Saved genes</h1>
-            { this.renderSavedGenes() }
-          </div>
-
-          <div className="left inline-block ml3">
-            <h1>GeneDetails</h1>
-            { this.renderGeneDetails() }
-          </div>
-        </div>
-
-        <CellSelector
-          currentCell={cellB}
-          onSelectCell={setCurrentCell.bind(null, 'B')} />
-
-        {
-          loading && (
-            <div style={{
-              color: 'red',
-              fontSize: '64px',
-              position: 'absolute',
-              top: '200px'
-            }}>
-              LOADING, LOADINGD....
-            </div>
-          )
-        }
-      </main>
+      <Component
+          {...this.state}
+          editSavedGenes={this.editSavedGenes}
+          setCurrentCell={this.setCurrentCell} />
     )
   }
 });
