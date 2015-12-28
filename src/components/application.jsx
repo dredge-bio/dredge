@@ -2,40 +2,31 @@
 
 // 3 decimal places for pValue, 1 for others
 
-var d3 = require('d3')
-  , React = require('react')
+var React = require('react')
   , Immutable = require('immutable')
-  , CellFetcher = require('./fetch_cell.jsx')
-  , Application
 
-Application = React.createClass({
+module.exports = React.createClass({
   displayName: 'Application',
 
   propTypes: {
     cellA: React.PropTypes.string.isRequired,
     cellB: React.PropTypes.string.isRequired,
+
+    pValueUpper: React.PropTypes.number.isRequired,
+    pValueLower: React.PropTypes.number.isRequired,
+
+    detailedGenes: React.instanceOf(Immutable.OrderedSet).isRequired,
+    savedGenes: React.instanceOf(Immutable.OrderedSet).isRequired,
+    savedGeneColorScale: React.PropTypes.func.isRequired,
+
     plotData: React.PropTypes.instanceOf(Immutable.Map),
+    loading: React.PropTypes.bool.isRequired,
+
     setCurrentCell: React.PropTypes.func.isRequired
   },
 
-  getInitialState: function () {
-    return {
-      pValueUpper: 1,
-      pValueLower: 0,
-      details: [],
-      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
-      savedGeneColorScale: d3.scale.category20(),
-      onlySavedGenes: false
-    }
-  },
-
-  handlePValueChange: function (pValueLower, pValueUpper) {
-    this.setState({ pValueLower, pValueUpper });
-  },
-
   filterPlotData() {
-    var { plotData } = this.props
-      , { pValueLower, pValueUpper } = this.state
+    var { plotData, pValueLower, pValueUpper } = this.props
 
     if (!plotData) return null;
 
@@ -45,29 +36,9 @@ Application = React.createClass({
     ));
   },
 
-  handleSaveGene(gene, e) {
-    var { savedGenes } = this.state
-
-    e.preventDefault();
-
-    savedGenes = savedGenes.add(gene);
-    localStorage.savedGenes = JSON.stringify(savedGenes);
-    this.setState({ savedGenes });
-  },
-
-  handleRemoveSavedGene(gene, e) {
-    var { savedGenes } = this.state
-
-    e.preventDefault();
-
-    savedGenes = savedGenes.delete(gene);
-    localStorage.savedGenes = JSON.stringify(savedGenes);
-    this.setState({ savedGenes });
-  },
-
   renderSavedGenes() {
     var GeneTable = require('./gene_row.jsx')
-      , { plotData } = this.props
+      , { plotData, editSavedGenes } = this.props
       , { savedGenes, savedGeneColorScale } = this.state
 
     return plotData && (
@@ -76,7 +47,7 @@ Application = React.createClass({
           plotData={plotData}
           renderFirstColumn={gene => (
             <span>
-              <a className="red" href="" onClick={this.handleRemoveSavedGene.bind(null, gene)}>
+              <a className="red" href="" onClick={editSavedGenes.bind(null, false, gene)}>
                 x
               </a>
 
@@ -96,15 +67,14 @@ Application = React.createClass({
 
   renderGeneDetails() {
     var GeneTable = require('./gene_row.jsx')
-      , { plotData } = this.props
-      , { details } = this.state
+      , { plotData, editSavedGenes, detailedGenes } = this.props
 
     return plotData && (
       <GeneTable
-          geneNames={details.map(gene => gene.geneName)}
+          geneNames={detailedGenes.map(gene => gene.geneName)}
           plotData={plotData}
           renderFirstColumn={gene => (
-            <a href="" onClick={this.handleSaveGene.bind(null, gene)}>
+            <a href="" onClick={editSavedGenes.bind(null, true, gene)}>
               {'<'}
             </a>
           )} />
@@ -116,7 +86,7 @@ Application = React.createClass({
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
-      , { pValueLower, pValueUpper, savedGenes, savedGeneColorScale } = this.state
+      , { pValueLower, pValueUpper, savedGenes, savedGeneColorScale } = this.props
 
     return (
       <main className="m3">
@@ -174,5 +144,3 @@ Application = React.createClass({
     )
   }
 });
-
-module.exports = CellFetcher(Application);

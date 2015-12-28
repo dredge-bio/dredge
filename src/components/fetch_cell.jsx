@@ -6,112 +6,104 @@ var React = require('react')
   , Immutable = require('immutable')
 
 
-function cellFile(cellName, cellMap) {
-  return cellMap[cellName] || cellName;
-}
+module.exports = React.createClass({
+  displayName: 'Application',
 
+  getInitialState() {
+    return {
+      cellA: 'EMS',
+      cellB: 'C',
 
-module.exports = function (Component) {
-  var CellFetch = React.createClass({
-    getInitialState() {
-      return {
-        cellA: 'EMS',
-        cellB: 'C',
-        fetchingCells: null,
-        plotData: null,
-        loading: false
-      }
-    },
+      pValueUpper: 1,
+      pValueLower: 0,
 
-    componentDidMount() {
-      setTimeout(this.fetchCellPairData, 0);
-    },
+      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
+      detailedGenes: Immutable.OrderedSet(),
 
-    setCurrentCell(cellType, cell) {
-      if (cellType === 'A') {
-        this.fetchCellPairData(cell);
-      } else if (cellType === 'B') {
-        this.fetchCellPairData(null, cell);
-      }
-    },
+      savedGeneColorScale: d3.scale.category20(),
 
-    onResponse(e) {
-      this.setState({ loading: false });
+      fetchingCells: null,
 
-      if (e instanceof Error) {
-        throw e;
-      } else {
-        return e;
-      }
-    },
+      plotData: null,
 
-    fetchCellPairData(a, b) {
-      var cellNameMap = require('../cell_name_map.json')
-        , { cellA, cellB } = this.state
-        , cellFileA
-        , cellFileB
-        , dataFile
-
-      if (a) {
-        cellA = a;
-      } else if (b) {
-        cellB = b;
-      }
-
-      this.setState({ fetchingCells: cellA + cellB })
-
-      cellFileA = cellFile(cellA, cellNameMap);
-      cellFileB = cellFile(cellB, cellNameMap);
-
-      this.setState({ loading: true });
-
-      dataFile = `data/geneExpression/${cellFileA}_${cellFileB}.txt`
-
-      fetch(dataFile)
-        .then(null, this.onResponse)
-        .then(response => {
-          var { fetchingCells } = this.state
-
-          // Stop if cells have been changed since fetch started
-          if (fetchingCells !== (cellA + cellB)) return;
-
-          // TODO: make sure of 200
-          response
-            .text()
-            .then(this.processPlotData)
-            .then(plotData => {
-              setTimeout(() => this.setState({ loading: false }), 300);
-              this.setState({
-                cellA, cellB, plotData
-              })
-            });
-        })
-        .catch(() => alert('SOPHIE IT\'S AN ERROR IM SORRY'))
-    },
-
-    processPlotData(text) {
-      return Immutable.Map().withMutations(plotData => {
-        text.split('\n').slice(1).map(row => row.split('\t'))
-          .forEach(([geneName, logFC, logCPM, pValue]) => {
-            plotData.set(geneName, {
-              geneName,
-              logFC: parseFloat(logFC),
-              logCPM: parseFloat(logCPM),
-              pValue: parseFloat(pValue)
-            })
-          })
-      });
-    },
-
-    render() {
-      return (
-        <Component
-            {...this.props}
-            {...this.state}
-            setCurrentCell={this.setCurrentCell} />
-      )
+      loading: false
     }
-  });
+  },
 
-  return CellFetch
-}
+  componentDidMount() {
+    setTimeout(this.setCurrentCell, 0);
+  },
+
+  filterPlotData() {
+    var { plotData } = this.props
+      , { pValueLower, pValueUpper } = this.state
+
+    if (!plotData) return null;
+
+    return plotData.filter(gene => (
+      gene.pValue >= pValueLower &&
+      gene.pValue <= pValueUpper
+    ));
+  },
+
+
+  handlePValueChange: function (pValueLower, pValueUpper) {
+    this.setState({ pValueLower, pValueUpper });
+  },
+
+  editSavedGenes(add, gene, e) {
+    var { savedGenes } = this.state
+
+    e.preventDefault();
+
+    savedGenes = savedGenes[add ? 'add' : 'delete'](gene);
+    localStorage.savedGenes = JSON.stringify(savedGenes);
+    this.setState({ savedGenes });
+  },
+
+  setCurrentCell(cellType, cell) {
+    var fetchCellPair = require('../utils/fetch_cell_pair')
+      , processCellData = require('../utils/process_cell_data')
+      , { cellA, cellB } = this.state
+
+    if (cellType === 'A') {
+      cellA = cell;
+    } else if (cellType === 'B') {
+      cellB = cell;
+    }
+
+    this.setState({
+      loading: true,
+      fetchingCells: cellA + cellB
+    });
+
+    fetchCellPair(cellA, cellB)
+      .then(null, e => { this.setState({ loading: false }); throw e; })
+      .then(response => {
+        var { fetchingCells } = this.state
+
+        // Stop if cells have been changed since fetch started
+        if (fetchingCells !== (cellA + cellB)) return;
+
+        // TODO: make sure of 200
+        response.text()
+          .then(processCellData)
+          .then(plotData => {
+            // Set the cell/plot data immediately, but let the loading
+            // message stick around for a little bit.
+            setTimeout(() => this.setState({ loading: false }), 300);
+            this.setState({ cellA, cellB, plotData });
+          });
+      })
+      .catch(() => alert('SOPHIE IT\'S AN ERROR IM SORRY'))
+  },
+
+  render() {
+    return (
+      <Component
+          {...this.state}
+          editSavedGenes={this.editSavedGenes}
+          setCurrentCell={this.setCurrentCell} />
+    )
+  }
+});
