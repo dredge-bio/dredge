@@ -15,13 +15,14 @@ module.exports = React.createClass({
     pValueUpper: React.PropTypes.number.isRequired,
     pValueLower: React.PropTypes.number.isRequired,
 
-    detailedGenes: React.instanceOf(Immutable.OrderedSet).isRequired,
-    savedGenes: React.instanceOf(Immutable.OrderedSet).isRequired,
+    detailedGenes: React.PropTypes.instanceOf(Immutable.OrderedSet).isRequired,
+    savedGenes: React.PropTypes.instanceOf(Immutable.OrderedSet).isRequired,
     savedGeneColorScale: React.PropTypes.func.isRequired,
 
     plotData: React.PropTypes.instanceOf(Immutable.Map),
     loading: React.PropTypes.bool.isRequired,
 
+    editSavedGenes: React.PropTypes.func.isRequired,
     setCurrentCell: React.PropTypes.func.isRequired
   },
 
@@ -38,8 +39,7 @@ module.exports = React.createClass({
 
   renderSavedGenes() {
     var GeneTable = require('./gene_row.jsx')
-      , { plotData, editSavedGenes } = this.props
-      , { savedGenes, savedGeneColorScale } = this.state
+      , { plotData, editSavedGenes, savedGenes, savedGeneColorScale } = this.props
 
     return plotData && (
       <GeneTable

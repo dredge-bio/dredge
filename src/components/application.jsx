@@ -2,7 +2,8 @@
 
 /* eslint no-alert:0 */
 
-var React = require('react')
+var d3 = require('d3')
+  , React = require('react')
   , Immutable = require('immutable')
 
 
@@ -33,19 +34,6 @@ module.exports = React.createClass({
   componentDidMount() {
     setTimeout(this.setCurrentCell, 0);
   },
-
-  filterPlotData() {
-    var { plotData } = this.props
-      , { pValueLower, pValueUpper } = this.state
-
-    if (!plotData) return null;
-
-    return plotData.filter(gene => (
-      gene.pValue >= pValueLower &&
-      gene.pValue <= pValueUpper
-    ));
-  },
-
 
   handlePValueChange: function (pValueLower, pValueUpper) {
     this.setState({ pValueLower, pValueUpper });
@@ -99,8 +87,10 @@ module.exports = React.createClass({
   },
 
   render() {
+    var Display = require('./display.jsx')
+
     return (
-      <Component
+      <Display
           {...this.state}
           editSavedGenes={this.editSavedGenes}
           setCurrentCell={this.setCurrentCell} />
