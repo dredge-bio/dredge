@@ -49,6 +49,10 @@ module.exports = React.createClass({
     this.setState({ savedGenes });
   },
 
+  setDetailedGenes(genes) {
+    this.setState({ detailedGenes: Immutable.OrderedSet(genes) });
+  },
+
   setCurrentCell(cellType, cell) {
     var fetchCellPair = require('../utils/fetch_cell_pair')
       , processCellData = require('../utils/process_cell_data')
@@ -93,6 +97,8 @@ module.exports = React.createClass({
       <Display
           {...this.state}
           editSavedGenes={this.editSavedGenes}
+          handlePValueChange={this.handlePValueChange}
+          setDetailedGenes={this.setDetailedGenes}
           setCurrentCell={this.setCurrentCell} />
     )
   }

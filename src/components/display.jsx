@@ -23,7 +23,8 @@ module.exports = React.createClass({
     loading: React.PropTypes.bool.isRequired,
 
     editSavedGenes: React.PropTypes.func.isRequired,
-    setCurrentCell: React.PropTypes.func.isRequired
+    setCurrentCell: React.PropTypes.func.isRequired,
+    setDetailedGenes: React.PropTypes.func.isRequired
   },
 
   filterPlotData() {
@@ -86,7 +87,8 @@ module.exports = React.createClass({
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
-      , { pValueLower, pValueUpper, savedGenes, savedGeneColorScale } = this.props
+      , { pValueLower, pValueUpper, handlePValueChange, savedGenes } = this.props
+      , { setDetailedGenes, savedGeneColorScale } = this.props
 
     return (
       <main className="m3">
@@ -103,13 +105,13 @@ module.exports = React.createClass({
               pValueUpper={pValueUpper}
               savedGenes={savedGenes}
               savedGeneColorScale={savedGeneColorScale}
-              handleGeneDetailsChange={details => this.setState({ details })}
+              handleGeneDetailsChange={setDetailedGenes}
               data={this.filterPlotData()} />
           </div>
 
           <div className="left pvalue-selector" style={{ display: 'inline-block' }}>
             <CellPValueSelector
-              onPValueChange={this.handlePValueChange}
+              onPValueChange={handlePValueChange}
               data={plotData} />
           </div>
 

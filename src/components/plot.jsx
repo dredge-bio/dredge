@@ -1,6 +1,7 @@
 "use strict";
 
 var React = require('react')
+  , ReactDOM = require('react-dom')
   , Immutable = require('immutable')
   , d3 = require('d3')
 
@@ -172,7 +173,7 @@ module.exports = React.createClass({
     var { handleGeneDetailsChange } = this.props
 
     this.setState({
-      visualization: new PlotVisualization(React.findDOMNode(this), handleGeneDetailsChange)
+      visualization: new PlotVisualization(ReactDOM.findDOMNode(this), handleGeneDetailsChange)
     });
   },
 

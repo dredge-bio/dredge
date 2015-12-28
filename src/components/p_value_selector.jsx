@@ -1,6 +1,7 @@
 "use strict";
 
 var React = require('react')
+  , ReactDOM = require('react-dom')
   , Immutable = require('immutable')
   , d3 = require('d3')
 
@@ -143,7 +144,7 @@ module.exports = React.createClass({
   },
 
   componentDidMount() {
-    var el = React.findDOMNode(this)
+    var el = ReactDOM.findDOMNode(this)
       , initialSelection
       , visualization
 
