@@ -5,7 +5,7 @@
 var d3 = require('d3')
   , React = require('react')
   , Immutable = require('immutable')
-
+  , db = require('../db')()
 
 module.exports = React.createClass({
   displayName: 'Application',
@@ -27,12 +27,27 @@ module.exports = React.createClass({
 
       plotData: null,
 
-      loading: false
+      initializing: true,
+      loadingCells: false
     }
   },
 
   componentDidMount() {
     setTimeout(this.setCurrentCell, 0);
+    db.datasets.get('cellGeneMeasures', ({ blob }) => {
+      var reader = new FileReader();
+
+      reader.onloadend = () => {
+        this.setState({
+          initializing: false,
+          cellGeneMeasures: JSON.parse(reader.result)
+        });
+      };
+
+      reader.onerror = err => { throw err; }
+
+      reader.readAsText(blob);
+    });
   },
 
   handlePValueChange: function (pValueLower, pValueUpper) {
@@ -65,12 +80,12 @@ module.exports = React.createClass({
     }
 
     this.setState({
-      loading: true,
+      loadingCells: true,
       fetchingCells: cellA + cellB
     });
 
-    fetchCellPair(cellA, cellB)
-      .then(null, e => { this.setState({ loading: false }); throw e; })
+    return fetchCellPair(cellA, cellB)
+      .then(null, e => { this.setState({ loadingCells: false }); throw e; })
       .then(response => {
         var { fetchingCells } = this.state
 
@@ -83,7 +98,7 @@ module.exports = React.createClass({
           .then(plotData => {
             // Set the cell/plot data immediately, but let the loading
             // message stick around for a little bit.
-            setTimeout(() => this.setState({ loading: false }), 300);
+            setTimeout(() => this.setState({ loadingCells: false }), 300);
             this.setState({ cellA, cellB, plotData });
           });
       })
@@ -92,10 +107,12 @@ module.exports = React.createClass({
 
   render() {
     var Display = require('./display.jsx')
+      , { loadingCells, initializing } = this.state
 
     return (
       <Display
           {...this.state}
+          loading={loadingCells || initializing }
           editSavedGenes={this.editSavedGenes}
           handlePValueChange={this.handlePValueChange}
           setDetailedGenes={this.setDetailedGenes}
