@@ -25,3 +25,36 @@
     stroke-width: 1px;
 }
 */
+
+.GeneDetailsTable thead th { padding: 0; }
+.GeneDetailsTable td { padding-left: 0; }
+.GeneDetailsTable thead th > span {
+    position: absolute;
+}
+
+.GeneDetailsTable td:first-of-type,
+.GeneDetailsTable th:first-of-type {
+    padding-left: 1em;
+}
+
+
+.cell-rpkm-headers th > span { top: 6px; }
+.gene-headers th > span { top: 42px; }
+
+.cell-rpkm-headers th[colspan="2"] > span {
+    border-left: 2px solid #ccc;
+    padding-bottom: 1024px;
+    padding-left: 12px;
+    margin-left: -12px;
+    margin-top: -6px;
+    padding-top: 6px;
+}
+
+.cell-rpkm-headers th[colspan="2"] > span::after {
+    content: " ";
+    position: absolute;
+    top: 34px;
+    left: 0;
+    border-bottom: 1px solid #ccc;
+    width: 1024px;
+}

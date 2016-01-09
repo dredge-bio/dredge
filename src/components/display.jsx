@@ -5,6 +5,16 @@
 var React = require('react')
   , Immutable = require('immutable')
 
+
+function Loading() {
+  return <div style={{
+    color: 'red',
+    fontSize: '64px',
+    position: 'absolute',
+    top: '200px'
+  }}>LOADING, LOADINGD....</div>
+}
+
 module.exports = React.createClass({
   displayName: 'Display',
 
@@ -20,6 +30,7 @@ module.exports = React.createClass({
     savedGeneColorScale: React.PropTypes.func.isRequired,
 
     plotData: React.PropTypes.instanceOf(Immutable.Map),
+    cellGeneMeasures: React.PropTypes.object,
     loading: React.PropTypes.bool.isRequired,
 
     editSavedGenes: React.PropTypes.func.isRequired,
@@ -38,57 +49,40 @@ module.exports = React.createClass({
     ));
   },
 
-  renderSavedGenes() {
-    var GeneTable = require('./gene_row.jsx')
-      , { plotData, editSavedGenes, savedGenes, savedGeneColorScale } = this.props
+  getSavedGenes() {
+    var { cellA, cellB, plotData, cellGeneMeasures, savedGeneColorScale, savedGenes } = this.props
 
-    return plotData && (
-      <GeneTable
-          geneNames={savedGenes}
-          plotData={plotData}
-          renderFirstColumn={gene => (
-            <span>
-              <a className="red" href="" onClick={editSavedGenes.bind(null, false, gene)}>
-                x
-              </a>
-
-              <span
-                  className="ml2 inline-block"
-                  dangerouslySetInnerHTML={{ __html: '&nbsp;' }}
-                  style={{
-                    background: savedGeneColorScale(gene),
-                    width: '1em',
-                    height: '1em',
-                    lineHeight: '100%'
-                  }} />
-            </span>
-          )} />
-      )
+    return savedGenes.map(geneName => Immutable.fromJS(plotData.get(geneName)).merge({
+      color: savedGeneColorScale(geneName),
+      cellARPKMAvg: cellGeneMeasures[cellA][geneName].avg,
+      cellARPKMMed: cellGeneMeasures[cellA][geneName].med,
+      cellBRPKMAvg: cellGeneMeasures[cellB][geneName].avg,
+      cellBRPKMMed: cellGeneMeasures[cellB][geneName].med,
+    }));
   },
 
-  renderGeneDetails() {
-    var GeneTable = require('./gene_row.jsx')
-      , { plotData, editSavedGenes, detailedGenes } = this.props
+  getDetailedGenes() {
+    var { cellA, cellB, cellGeneMeasures, detailedGenes } = this.props
 
-    return plotData && (
-      <GeneTable
-          geneNames={detailedGenes.map(gene => gene.geneName)}
-          plotData={plotData}
-          renderFirstColumn={gene => (
-            <a href="" onClick={editSavedGenes.bind(null, true, gene)}>
-              {'<'}
-            </a>
-          )} />
-      )
+    return detailedGenes.map(geneData => {
+      var geneName = geneData.geneName
+
+      return Immutable.fromJS(geneData).merge({
+        cellARPKMAvg: cellGeneMeasures[cellA][geneName].avg,
+        cellARPKMMed: cellGeneMeasures[cellA][geneName].med,
+        cellBRPKMAvg: cellGeneMeasures[cellB][geneName].avg,
+        cellBRPKMMed: cellGeneMeasures[cellB][geneName].med,
+      });
+    });
   },
 
   render: function () {
     var CellSelector = require('./cell_selector.jsx')
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
+      , GeneTable = require('./gene_row.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
-      , { pValueLower, pValueUpper, handlePValueChange, savedGenes } = this.props
-      , { setDetailedGenes, savedGeneColorScale } = this.props
+      , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
 
     return (
       <main className="m3">
@@ -97,51 +91,37 @@ module.exports = React.createClass({
           onSelectCell={setCurrentCell.bind(null, 'A')} />
 
         <div className="clearfix">
-          <div className="left gene-plot" style={{ display: 'inline-block' }}>
+          <div className="left gene-plot inline-block">
             <CellPlot
-              cellA={cellA}
-              cellB={cellB}
-              pValueLower={pValueLower}
-              pValueUpper={pValueUpper}
-              savedGenes={savedGenes}
-              savedGeneColorScale={savedGeneColorScale}
-              handleGeneDetailsChange={setDetailedGenes}
-              data={this.filterPlotData()} />
+              {...this.props}
+              data={this.filterPlotData()}
+              handleGeneDetailsChange={setDetailedGenes} />
           </div>
 
-          <div className="left pvalue-selector" style={{ display: 'inline-block' }}>
+          <div className="left pvalue-selector inline-block">
             <CellPValueSelector
               onPValueChange={handlePValueChange}
               data={plotData} />
           </div>
 
-          <div className="left inline-block ml3">
-            <h1>Saved genes</h1>
-            { this.renderSavedGenes() }
-          </div>
-
-          <div className="left inline-block ml3">
-            <h1>GeneDetails</h1>
-            { this.renderGeneDetails() }
-          </div>
         </div>
 
         <CellSelector
           currentCell={cellB}
           onSelectCell={setCurrentCell.bind(null, 'B')} />
 
-        {
-          loading && (
-            <div style={{
-              color: 'red',
-              fontSize: '64px',
-              position: 'absolute',
-              top: '200px'
-            }}>
-              LOADING, LOADINGD....
-            </div>
-          )
-        }
+        <div>
+          {
+            plotData && cellGeneMeasures && (
+              <GeneTable
+                  {...this.props}
+                  detailedGenes={this.getDetailedGenes()}
+                  savedGenes={this.getSavedGenes()} />
+            )
+          }
+        </div>
+
+        { loading && <Loading /> }
       </main>
     )
   }
