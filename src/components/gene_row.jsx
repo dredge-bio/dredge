@@ -166,7 +166,7 @@ module.exports = React.createClass({
           background: '#f0f0f0'
         }} />
         <div style={{
-          height: '500px',
+          height: '764px',
           overflowY: 'scroll',
         }}>
           <table className="table GeneDetailsTable" style={{

@@ -85,32 +85,35 @@ module.exports = React.createClass({
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
 
     return (
-      <main className="m3">
-        <CellSelector
-          currentCell={cellA}
-          onSelectCell={setCurrentCell.bind(null, 'A')} />
+      <main className="m3 clearfix">
+        <section className="left">
+          <CellSelector
+            currentCell={cellA}
+            onSelectCell={setCurrentCell.bind(null, 'A')} />
 
-        <div className="clearfix">
-          <div className="left gene-plot inline-block">
-            <CellPlot
-              {...this.props}
-              data={this.filterPlotData()}
-              handleGeneDetailsChange={setDetailedGenes} />
+          <div className="clearfix">
+            <div className="left gene-plot inline-block">
+              <CellPlot
+                {...this.props}
+                data={this.filterPlotData()}
+                handleGeneDetailsChange={setDetailedGenes} />
+            </div>
+
+            <div className="left pvalue-selector inline-block">
+              <CellPValueSelector
+                onPValueChange={handlePValueChange}
+                data={plotData} />
+            </div>
+
           </div>
 
-          <div className="left pvalue-selector inline-block">
-            <CellPValueSelector
-              onPValueChange={handlePValueChange}
-              data={plotData} />
-          </div>
+          <CellSelector
+            currentCell={cellB}
+            onSelectCell={setCurrentCell.bind(null, 'B')} />
 
-        </div>
+        </section>
 
-        <CellSelector
-          currentCell={cellB}
-          onSelectCell={setCurrentCell.bind(null, 'B')} />
-
-        <div>
+        <section className="left ml2" style={{ width: '1024px' }}>
           {
             plotData && cellGeneMeasures && (
               <GeneTable
@@ -119,7 +122,7 @@ module.exports = React.createClass({
                   savedGenes={this.getSavedGenes()} />
             )
           }
-        </div>
+        </section>
 
         { loading && <Loading /> }
       </main>
