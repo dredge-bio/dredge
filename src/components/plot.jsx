@@ -12,6 +12,8 @@ const dimensions = {
   PLOT_PADDING: 48,
 }
 
+const GRID_UNITS = 75
+
 
 function PlotVisualization(container, handleGeneDetailsChange) {
   this.handleGeneDetailsChange = handleGeneDetailsChange;
@@ -59,20 +61,40 @@ PlotVisualization.prototype = {
     this.plotData = data;
     this.data = data.toArray();
 
-    this.hoveredGene = hoveredGene;
     this.savedGenes = savedGenes.toJS();
 
+    this.updateScalesAndSavedGenes();
     this.render();
+    this.updateHoveredGene({ hoveredGene });
   },
 
-  getScalesAndSavedGenes() {
-    var cpmMin = Infinity
+  updateHoveredGene({ hoveredGene }) {
+    var { x, y, plotData } = this
+
+    this.g.select('.hoverdot')
+      .selectAll('circle')
+      .transition()
+        .duration(150)
+        .style('opacity', 0)
+        .remove()
+
+    if (hoveredGene) {
+      this.g.select('.hoverdot').datum(plotData.get(hoveredGene))
+        .append('circle')
+        .attr('cx', d => x(d.logCPM))
+        .attr('cy', d => y(d.logFC))
+        .attr('fill', 'rgba(255, 0, 0, 1)')
+        .attr('r', 3)
+    }
+  },
+
+  updateScalesAndSavedGenes() {
+    var bin = require('../utils/bin')
+      , cpmMin = Infinity
       , cpmMax = -Infinity
       , fcMin = Infinity
       , fcMax = -Infinity
       , savedGenes = []
-      , x
-      , y
 
     this.data.forEach(gene => {
       if (this.savedGenes.indexOf(gene.geneName) !== -1) savedGenes.push(gene);
@@ -84,26 +106,27 @@ PlotVisualization.prototype = {
       if (gene.logFC > fcMax) fcMax = gene.logFC;
     });
 
-    x = d3.scale.linear()
+
+    // Update object's state
+    this.x = d3.scale.linear()
       .domain([cpmMin, cpmMax])
       .range([0, dimensions.PLOT_WIDTH - (2 * dimensions.PLOT_PADDING)])
 
-    y = d3.scale.linear()
+    this.y = d3.scale.linear()
       .domain([fcMin, fcMax])
       .range([dimensions.PLOT_HEIGHT - (2 * dimensions.PLOT_PADDING), 0])
 
-    return [x, y, savedGenes];
+    this.bins = bin(this.data, this.x, this.y, GRID_UNITS)
+
+    this.savedGenes = [savedGenes];
   },
 
   render() {
-    var bin = require('../utils/bin')
-      , units = 75
-      , rectWidth = (dimensions.PLOT_WIDTH - 2 * dimensions.PLOT_PADDING) / units
-      , [x, y, savedGenes] = this.getScalesAndSavedGenes()
+    var { x, y, bins, handleGeneDetailsChange } = this
+      , { PLOT_WIDTH, PLOT_PADDING } = dimensions
+      , rectWidth = (PLOT_WIDTH - 2 * PLOT_PADDING) / GRID_UNITS
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
-      , { handleGeneDetailsChange } = this
-      , bins
       , colorScale
       , container
 
@@ -112,9 +135,6 @@ PlotVisualization.prototype = {
 
     this.g.select('.squares').selectAll('rect').remove();
     // this.g.select('.dots').selectAll('circle').remove();
-    this.g.select('.hoverdot').selectAll('circle').remove();
-
-    bins = bin(this.data, x, y, units);
 
     colorScale = d3.scale.log()
       .domain(d3.extent(bins, d => d.genes.length))
@@ -146,15 +166,6 @@ PlotVisualization.prototype = {
       .attr('cy', d => y(d.logFC))
       .attr('r', 2)
     */
-
-    if (this.hoveredGene) {
-      this.g.select('.hoverdot').datum(this.plotData.get(this.hoveredGene))
-        .append('circle')
-        .attr('cx', d => x(d.logCPM))
-        .attr('cy', d => y(d.logFC))
-        .attr('fill', 'red')
-        .attr('r', 3)
-    }
   },
 }
 
@@ -168,24 +179,24 @@ module.exports = React.createClass({
     savedGenes: React.PropTypes.instanceOf(Immutable.Set),
   },
 
-  refresh() {
-    this.state.visualization.update(this.props);
-  },
-
   componentDidUpdate(prevProps) {
     var { cellA, cellB, pValueLower, pValueUpper, data, hoveredGene } = this.props
-      , needsUpdate = data && !prevProps.data
+      , { visualization } = this.state
+      , needsUpdate
 
-    needsUpdate = needsUpdate || (
+    needsUpdate = data && !prevProps.data || (
       data &&
       prevProps.cellA !== cellA ||
       prevProps.cellB !== cellB ||
       prevProps.pValueLower !== pValueLower ||
-      prevProps.pValueUpper !== pValueUpper ||
-      prevProps.hoveredGene !== hoveredGene
+      prevProps.pValueUpper !== pValueUpper
     )
 
-    if (needsUpdate) this.refresh();
+    if (needsUpdate) {
+      visualization.update(this.props);
+    } else if (prevProps.hoveredGene !== hoveredGene) {
+      visualization.updateHoveredGene(this.props);
+    }
   },
 
   componentDidMount() {
