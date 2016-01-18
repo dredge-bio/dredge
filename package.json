@@ -1,6 +1,7 @@
 {
   "name": "sophie-genes",
   "author": "Patrick Golden",
+  "version": "0.1.0",
   "private": true,
   "dependencies": {
     "babelify": "^6.1.3",
