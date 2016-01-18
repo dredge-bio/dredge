@@ -15,19 +15,10 @@ const tableFields = [
 ]
 
 
-function SavedGeneFirstColumn({ handleClick, color }) {
+function SavedGeneFirstColumn({ handleClick }) {
   return (
     <span className="absolute" style={{ left: 0 }}>
       <a className="red" href="" onClick={handleClick}>x</a>
-      <span
-          className="ml2 inline-block"
-          dangerouslySetInnerHTML={{ __html: '&nbsp;' }}
-          style={{
-            background: color,
-            width: '1em',
-            height: '1em',
-            lineHeight: '100%'
-          }} />
     </span>
   )
 }
@@ -41,16 +32,21 @@ function UnsavedGeneFirstColumn({ handleClick }) {
   )
 }
 
+function dashesOrFixed(number, places=2) {
+  return number == null ? '--' : number.toFixed(places)
+}
+
 
 function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseLeave }) {
   var FirstColumn = saved ? SavedGeneFirstColumn : UnsavedGeneFirstColumn
     , geneName = geneData.get('geneName')
+    , data = geneData.toJS()
     , firstColumn
     , className
 
+
   firstColumn = React.createElement(FirstColumn, {
     geneName,
-    color: geneData.color,
     handleClick: editSavedGenes.bind(null, !saved, geneName)
   });
 
@@ -58,18 +54,6 @@ function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseL
 
   onRowMouseEnter = onRowMouseEnter || (() => null);
   onRowMouseLeave = onRowMouseLeave || (() => null);
-
-  if (!geneData) {
-    return (
-      <tr className={className}>
-        <td className="relative">
-          { firstColumn }
-          { geneName }
-        </td>
-        <td colSpan={6} className="muted"><em>No measurement</em></td>
-      </tr>
-    )
-  }
 
   return (
     <tr
@@ -80,13 +64,14 @@ function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseL
         { firstColumn }
         { geneName }
       </td>
-      <td>{ geneData.get('pValue').toFixed(3) }</td>
-      <td>{ geneData.get('logCPM').toFixed(2) }</td>
-      <td>{ geneData.get('logFC').toFixed(2) }</td>
-      <td>{ geneData.get('cellARPKMAvg').toFixed(2) }</td>
-      <td>{ geneData.get('cellARPKMMed').toFixed(2) }</td>
-      <td>{ geneData.get('cellBRPKMAvg').toFixed(2) }</td>
-      <td>{ geneData.get('cellBRPKMMed').toFixed(2) }</td>
+
+      <td>{ dashesOrFixed(data.pValue, 3) }</td>
+      <td>{ dashesOrFixed(data.logCPM) }</td>
+      <td>{ dashesOrFixed(data.logFC) }</td>
+      <td>{ dashesOrFixed(data.cellARPKMAvg) }</td>
+      <td>{ dashesOrFixed(data.cellARPKMMed) }</td>
+      <td>{ dashesOrFixed(data.cellBRPKMAvg) }</td>
+      <td>{ dashesOrFixed(data.cellBRPKMMed) }</td>
     </tr>
   )
 }

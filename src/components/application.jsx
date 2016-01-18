@@ -79,6 +79,8 @@ module.exports = React.createClass({
       cellB = cell;
     }
 
+    this.setState({ detailedGenes: Immutable.OrderedSet([]) })
+
     this.setState({
       loadingCells: true,
       fetchingCells: cellA + cellB

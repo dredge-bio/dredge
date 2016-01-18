@@ -21,7 +21,7 @@ module.exports = React.createClass({
 
   renderEmbryo: function (embryo, i) {
     var stage = Math.pow(2, i)
-      , stageName = `${stage}cellEmbryo`
+      , stageName = `${stage}-cell`
       , { currentCell } = this.props
       , cellSelected = currentCell === stageName
       , shapes

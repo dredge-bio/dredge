@@ -29,7 +29,6 @@ module.exports = React.createClass({
 
     detailedGenes: React.PropTypes.instanceOf(Immutable.OrderedSet).isRequired,
     savedGenes: React.PropTypes.instanceOf(Immutable.OrderedSet).isRequired,
-    savedGeneColorScale: React.PropTypes.func.isRequired,
 
     plotData: React.PropTypes.instanceOf(Immutable.Map),
     cellGeneMeasures: React.PropTypes.object,
@@ -66,18 +65,23 @@ module.exports = React.createClass({
   },
 
   getSavedGenes() {
-    var { cellA, cellB, plotData, cellGeneMeasures, savedGeneColorScale, savedGenes } = this.props
+    var { cellA, cellB, plotData, cellGeneMeasures, savedGenes } = this.props
 
-    cellA = cellNameMap[cellA];
-    cellB = cellNameMap[cellB];
+    cellA = cellNameMap[cellA] || cellA;
+    cellB = cellNameMap[cellB] || cellB;
 
-    return savedGenes.map(geneName => Immutable.fromJS(plotData.get(geneName)).merge({
-      color: savedGeneColorScale(geneName),
-      cellARPKMAvg: cellGeneMeasures[cellA][geneName].avg,
-      cellARPKMMed: cellGeneMeasures[cellA][geneName].med,
-      cellBRPKMAvg: cellGeneMeasures[cellB][geneName].avg,
-      cellBRPKMMed: cellGeneMeasures[cellB][geneName].med,
-    }));
+    return savedGenes.map(geneName => {
+      var data = Immutable.fromJS(plotData.get(geneName) || { geneName })
+        , cellAData = (cellGeneMeasures[cellA] || {})[geneName]
+        , cellBData = (cellGeneMeasures[cellB] || {})[geneName]
+
+      return data.merge({
+        cellARPKMAvg: cellAData ? cellAData.avg : null,
+        cellARPKMMed: cellAData ? cellAData.med : null,
+        cellBRPKMAvg: cellBData ? cellBData.avg : null,
+        cellBRPKMMed: cellBData ? cellBData.med : null
+      });
+    });
   },
 
   getDetailedGenes() {
@@ -88,12 +92,14 @@ module.exports = React.createClass({
 
     return detailedGenes.map(geneData => {
       var geneName = geneData.geneName
+        , cellAData = (cellGeneMeasures[cellA] || {})[geneName]
+        , cellBData = (cellGeneMeasures[cellB] || {})[geneName]
 
       return Immutable.fromJS(geneData).merge({
-        cellARPKMAvg: cellGeneMeasures[cellA][geneName].avg,
-        cellARPKMMed: cellGeneMeasures[cellA][geneName].med,
-        cellBRPKMAvg: cellGeneMeasures[cellB][geneName].avg,
-        cellBRPKMMed: cellGeneMeasures[cellB][geneName].med,
+        cellARPKMAvg: cellAData ? cellAData.avg : null,
+        cellARPKMMed: cellAData ? cellAData.med : null,
+        cellBRPKMAvg: cellBData ? cellBData.avg : null,
+        cellBRPKMMed: cellBData ? cellBData.med : null
       });
     });
   },
