@@ -35,17 +35,32 @@ function PlotVisualization(container, handleGeneDetailsChange) {
   this.g.append('g')
     .attr('class', 'squares')
 
+  /*
   this.g.append('g')
     .attr('class', 'dots')
+  */
+
+  this.g.append('g')
+    .attr('class', 'hoverdot')
 }
 
 PlotVisualization.prototype = {
-  update(cellA, cellB, data, savedGeneNames, savedGeneColorScale) {
+  update({
+    cellA,
+    cellB,
+    data,
+    savedGenes,
+    hoveredGene
+  }) {
+
     this.cellA = cellA;
     this.cellB = cellB;
-    this.data = data;
-    this.savedGeneNames = savedGeneNames;
-    this.savedGeneColorScale = savedGeneColorScale;
+
+    this.plotData = data;
+    this.data = data.toArray();
+
+    this.hoveredGene = hoveredGene;
+    this.savedGenes = savedGenes.toJS();
 
     this.render();
   },
@@ -60,7 +75,7 @@ PlotVisualization.prototype = {
       , y
 
     this.data.forEach(gene => {
-      if (this.savedGeneNames.indexOf(gene.geneName) !== -1) savedGenes.push(gene);
+      if (this.savedGenes.indexOf(gene.geneName) !== -1) savedGenes.push(gene);
 
       if (gene.logCPM < cpmMin) cpmMin = gene.logCPM;
       if (gene.logCPM > cpmMax) cpmMax = gene.logCPM;
@@ -96,7 +111,8 @@ PlotVisualization.prototype = {
     this.g.select('.x-axis').call(xAxis);
 
     this.g.select('.squares').selectAll('rect').remove();
-    this.g.select('.dots').selectAll('circle').remove();
+    // this.g.select('.dots').selectAll('circle').remove();
+    this.g.select('.hoverdot').selectAll('circle').remove();
 
     bins = bin(this.data, x, y, units);
 
@@ -122,13 +138,23 @@ PlotVisualization.prototype = {
       })
       .append('title').text(d => d.genes.length)
 
+    /* These were for saved genes, but not really doing that anymore
     this.g.select('.dots').selectAll('circle').data(savedGenes)
         .enter()
       .append('circle')
       .attr('cx', d => x(d.logCPM))
       .attr('cy', d => y(d.logFC))
-      .attr('fill', d => this.savedGeneColorScale(d.geneName))
       .attr('r', 2)
+    */
+
+    if (this.hoveredGene) {
+      this.g.select('.hoverdot').datum(this.plotData.get(this.hoveredGene))
+        .append('circle')
+        .attr('cx', d => x(d.logCPM))
+        .attr('cy', d => y(d.logFC))
+        .attr('fill', 'red')
+        .attr('r', 3)
+    }
   },
 }
 
@@ -143,17 +169,11 @@ module.exports = React.createClass({
   },
 
   refresh() {
-    this.state.visualization.update(
-      this.props.cellA,
-      this.props.cellB,
-      this.props.data.toArray(),
-      this.props.savedGenes.toJS(),
-      this.props.savedGeneColorScale
-    );
+    this.state.visualization.update(this.props);
   },
 
   componentDidUpdate(prevProps) {
-    var { cellA, cellB, pValueLower, pValueUpper, data } = this.props
+    var { cellA, cellB, pValueLower, pValueUpper, data, hoveredGene } = this.props
       , needsUpdate = data && !prevProps.data
 
     needsUpdate = needsUpdate || (
@@ -161,12 +181,11 @@ module.exports = React.createClass({
       prevProps.cellA !== cellA ||
       prevProps.cellB !== cellB ||
       prevProps.pValueLower !== pValueLower ||
-      prevProps.pValueUpper !== pValueUpper
+      prevProps.pValueUpper !== pValueUpper ||
+      prevProps.hoveredGene !== hoveredGene
     )
 
-    if (needsUpdate) {
-      this.refresh();
-    }
+    if (needsUpdate) this.refresh();
   },
 
   componentDidMount() {

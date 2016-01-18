@@ -42,7 +42,7 @@ function UnsavedGeneFirstColumn({ handleClick }) {
 }
 
 
-function GeneRow({ saved, geneData, editSavedGenes }) {
+function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseLeave }) {
   var FirstColumn = saved ? SavedGeneFirstColumn : UnsavedGeneFirstColumn
     , geneName = geneData.get('geneName')
     , firstColumn
@@ -55,6 +55,9 @@ function GeneRow({ saved, geneData, editSavedGenes }) {
   });
 
   className = `GeneRow--${saved ? 'saved' : 'detailed'}`;
+
+  onRowMouseEnter = onRowMouseEnter || (() => null);
+  onRowMouseLeave = onRowMouseLeave || (() => null);
 
   if (!geneData) {
     return (
@@ -69,7 +72,10 @@ function GeneRow({ saved, geneData, editSavedGenes }) {
   }
 
   return (
-    <tr className={className}>
+    <tr
+        className={className}
+        onMouseEnter={e => onRowMouseEnter(e, geneName)}
+        onMouseLeave={e => onRowMouseLeave(e, geneName)}>
       <td className="relative">
         { firstColumn }
         { geneName }
@@ -96,7 +102,9 @@ module.exports = React.createClass({
     cellB: React.PropTypes.string.isRequired,
     cellGeneMeasures: React.PropTypes.object.isRequired,
 
-    editSavedGenes: React.PropTypes.func.isRequired
+    editSavedGenes: React.PropTypes.func.isRequired,
+    onRowMouseEnter: React.PropTypes.func,
+    onRowMouseLeave: React.PropTypes.func,
   },
 
   getInitialState() {
@@ -148,7 +156,7 @@ module.exports = React.createClass({
   },
 
   render() {
-    var { cellA, cellB, savedGenes, detailedGenes, editSavedGenes } = this.props
+    var { cellA, cellB, savedGenes, detailedGenes, editSavedGenes, onRowMouseEnter, onRowMouseLeave } = this.props
 
     return (
       <div style={{
@@ -188,6 +196,8 @@ module.exports = React.createClass({
                       key={'saved' + geneData.get('geneName')}
                       saved={true}
                       geneData={geneData}
+                      onRowMouseEnter={onRowMouseEnter}
+                      onRowMouseLeave={onRowMouseLeave}
                       editSavedGenes={editSavedGenes} />
                 )
               }
@@ -198,6 +208,8 @@ module.exports = React.createClass({
                       key={'detailed' + geneData.get('geneName')}
                       saved={false}
                       geneData={geneData}
+                      onRowMouseEnter={onRowMouseEnter}
+                      onRowMouseLeave={onRowMouseLeave}
                       editSavedGenes={editSavedGenes} />
                 )
               }

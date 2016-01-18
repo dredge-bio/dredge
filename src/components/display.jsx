@@ -40,6 +40,20 @@ module.exports = React.createClass({
     setDetailedGenes: React.PropTypes.func.isRequired
   },
 
+  getInitialState() {
+    return {
+      hoveredGene: null,
+    }
+  },
+
+  handleRowMouseEnter(e, hoveredGene) {
+    this.setState({ hoveredGene });
+  },
+
+  handleRowMouseLeave() {
+    this.setState({ hoveredGene: null });
+  },
+
   filterPlotData() {
     var { plotData, pValueLower, pValueUpper } = this.props
 
@@ -103,6 +117,7 @@ module.exports = React.createClass({
             <div className="left gene-plot inline-block">
               <CellPlot
                 {...this.props}
+                {...this.state}
                 data={this.filterPlotData()}
                 handleGeneDetailsChange={setDetailedGenes} />
             </div>
@@ -126,6 +141,8 @@ module.exports = React.createClass({
             plotData && cellGeneMeasures && (
               <GeneTable
                   {...this.props}
+                  onRowMouseEnter={this.handleRowMouseEnter}
+                  onRowMouseLeave={this.handleRowMouseLeave}
                   detailedGenes={this.getDetailedGenes()}
                   savedGenes={this.getSavedGenes()} />
             )

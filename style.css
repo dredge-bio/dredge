@@ -58,3 +58,7 @@
     border-bottom: 1px solid #ccc;
     width: 1024px;
 }
+
+[class*="GeneRow"]:hover {
+    background: #b9d0e7;
+}
