@@ -104,7 +104,10 @@ module.exports = React.createClass({
             this.setState({ cellA, cellB, plotData });
           });
       })
-      .catch(() => alert('SOPHIE IT\'S AN ERROR IM SORRY'))
+      .catch(e => {
+        alert('error!');
+        console.error(e);
+      })
   },
 
   render() {
