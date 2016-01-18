@@ -32,6 +32,7 @@ function SavedGeneFirstColumn({ handleClick, color }) {
   )
 }
 
+
 function UnsavedGeneFirstColumn({ handleClick }) {
   return (
     <span className="absolute" style={{ left: 0 }}>
@@ -39,7 +40,6 @@ function UnsavedGeneFirstColumn({ handleClick }) {
     </span>
   )
 }
-
 
 
 function GeneRow({ saved, geneData, editSavedGenes }) {

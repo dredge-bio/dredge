@@ -88,7 +88,7 @@ module.exports = React.createClass({
     var CellSelector = require('./cell_selector.jsx')
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
-      , GeneTable = require('./gene_row.jsx')
+      , GeneTable = require('./gene_table.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
 
