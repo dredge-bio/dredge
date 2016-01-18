@@ -4,6 +4,7 @@
 
 var React = require('react')
   , Immutable = require('immutable')
+  , cellNameMap = require('../cell_name_map.json')
 
 
 function Loading() {
@@ -14,6 +15,7 @@ function Loading() {
     top: '200px'
   }}>LOADING, LOADINGD....</div>
 }
+
 
 module.exports = React.createClass({
   displayName: 'Display',
@@ -52,6 +54,9 @@ module.exports = React.createClass({
   getSavedGenes() {
     var { cellA, cellB, plotData, cellGeneMeasures, savedGeneColorScale, savedGenes } = this.props
 
+    cellA = cellNameMap[cellA];
+    cellB = cellNameMap[cellB];
+
     return savedGenes.map(geneName => Immutable.fromJS(plotData.get(geneName)).merge({
       color: savedGeneColorScale(geneName),
       cellARPKMAvg: cellGeneMeasures[cellA][geneName].avg,
@@ -63,6 +68,9 @@ module.exports = React.createClass({
 
   getDetailedGenes() {
     var { cellA, cellB, cellGeneMeasures, detailedGenes } = this.props
+
+    cellA = cellNameMap[cellA];
+    cellB = cellNameMap[cellB];
 
     return detailedGenes.map(geneData => {
       var geneName = geneData.geneName
