@@ -9,11 +9,11 @@ var React = require('react')
 
 function Loading() {
   return <div style={{
-    color: 'red',
-    fontSize: '64px',
+    color: 'crimson',
+    fontSize: '48px',
     position: 'absolute',
-    top: '200px'
-  }}>LOADING, LOADINGD....</div>
+    top: '132px'
+  }}>Loading...</div>
 }
 
 
