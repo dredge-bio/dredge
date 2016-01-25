@@ -142,7 +142,7 @@ module.exports = React.createClass({
 
         </section>
 
-        <section className="left ml2" style={{ width: '1024px' }}>
+        <section className="left ml2" style={{ width: '768px' }}>
           {
             plotData && cellGeneMeasures && (
               <GeneTable

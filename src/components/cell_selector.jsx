@@ -41,7 +41,7 @@ module.exports = React.createClass({
     style = {
       stroke: 'black',
       display: 'inline-block',
-      height: '100px',
+      height: '68px',
       margin: '0 1em'
     }
 

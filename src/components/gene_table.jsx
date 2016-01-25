@@ -159,14 +159,15 @@ module.exports = React.createClass({
           background: '#f0f0f0'
         }} />
         <div style={{
-          height: '764px',
+          height: '720px',
           overflowY: 'scroll',
         }}>
           <table className="table GeneDetailsTable" style={{
+            fontSize: '12px',
             borderCollapse: 'collapse',
             tableLayout: 'fixed'
           }}>
-            <thead>
+            <thead style={{ fontSize: '12px' }}>
               <tr className="cell-rpkm-headers">
                 <th colSpan={4} />
                 <th colSpan={2}><span>{ cellA }</span></th>
