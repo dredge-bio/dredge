@@ -12,7 +12,20 @@ const dimensions = {
   PLOT_PADDING: 48,
 }
 
-const GRID_UNITS = 75
+const GRID_UNITS = 75;
+
+const GENE_BIN_MULTIPLIERs = {
+  1: .4,
+  2: .6,
+  3: .8
+}
+
+
+/*
+ * 1. Colors all same darkness
+ * 2. Number of genes in the cell determines size of fill
+ * 3. Different colors for different saved genes
+ */
 
 
 function PlotVisualization(container, handleGeneDetailsChange) {
@@ -44,6 +57,9 @@ function PlotVisualization(container, handleGeneDetailsChange) {
 
   this.g.append('g')
     .attr('class', 'hoverdot')
+
+  this.g.append('g')
+    .attr('class', 'squares-overlay')
 }
 
 PlotVisualization.prototype = {
@@ -117,6 +133,9 @@ PlotVisualization.prototype = {
       .range([dimensions.PLOT_HEIGHT - (2 * dimensions.PLOT_PADDING), 0])
 
     this.bins = bin(this.data, this.x, this.y, GRID_UNITS)
+    this.bins.forEach(geneBin => {
+      geneBin.multiplier = GENE_BIN_MULTIPLIERs[geneBin.genes.length] || 1;
+    })
 
     this.savedGenes = [savedGenes];
   },
@@ -134,22 +153,32 @@ PlotVisualization.prototype = {
     this.g.select('.x-axis').call(xAxis);
 
     this.g.select('.squares').selectAll('rect').remove();
+    this.g.select('.squares-overlay').selectAll('rect').remove();
     // this.g.select('.dots').selectAll('circle').remove();
 
     colorScale = d3.scale.log()
       .domain(d3.extent(bins, d => d.genes.length))
       .range(["#deebf7", "#08519c", '#000'])
 
-    container = this.g.select('.squares')[0][0];
+    container = this.g.select('.squares-overlay')[0][0];
 
     this.g.select('.squares').selectAll('rect').data(bins)
+        .enter()
+      .append('rect')
+      .attr('x', d => x(d.cpmMin) + ((1 - d.multiplier) / 2) * rectWidth)
+      .attr('y', d => y(d.fcMax) + ((1 - d.multiplier) / 2) * rectWidth)
+      .attr('width', d => rectWidth * d.multiplier)
+      .attr('height', d => rectWidth * d.multiplier)
+      .attr('fill', d => colorScale(50))
+
+    squares = this.g.select('.squares-overlay').selectAll('rect').data(bins)
         .enter()
       .append('rect')
       .attr('x', d => x(d.cpmMin))
       .attr('y', d => y(d.fcMax))
       .attr('width', rectWidth)
       .attr('height', rectWidth)
-      .attr('fill', d => colorScale(d.genes.length))
+      .attr('fill', 'rgba(255,255,255,0)')
       .on('mouseover', function () {
         container.appendChild(this);
       })

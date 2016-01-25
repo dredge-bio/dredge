@@ -13,7 +13,7 @@
     stroke-width: 1px;
 }
 
-.squares rect:hover {
+.squares-overlay rect:hover {
     stroke: red;
     stroke-width: 1px;
 }
