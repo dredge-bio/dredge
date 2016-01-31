@@ -17,7 +17,7 @@ const tableFields = [
 
 function SavedGeneFirstColumn({ handleClick }) {
   return (
-    <span className="absolute" style={{ left: 0 }}>
+    <span className="absolute" style={{ left: 6 }}>
       <a className="red" href="" onClick={handleClick}>x</a>
     </span>
   )
@@ -26,7 +26,7 @@ function SavedGeneFirstColumn({ handleClick }) {
 
 function UnsavedGeneFirstColumn({ handleClick }) {
   return (
-    <span className="absolute" style={{ left: 0 }}>
+    <span className="absolute" style={{ left: 6 }}>
       <a href="" onClick={handleClick}>{'<'}</a>
     </span>
   )
@@ -37,18 +37,21 @@ function dashesOrFixed(number, places=2) {
 }
 
 
-function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseLeave }) {
+function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseLeave, savedGenes }) {
   var FirstColumn = saved ? SavedGeneFirstColumn : UnsavedGeneFirstColumn
     , geneName = geneData.get('geneName')
     , data = geneData.toJS()
+    , skipFirstColumn = !saved && savedGenes.has(geneData)
     , firstColumn
     , className
 
 
-  firstColumn = React.createElement(FirstColumn, {
-    geneName,
-    handleClick: editSavedGenes.bind(null, !saved, geneName)
-  });
+  if (!skipFirstColumn) {
+    firstColumn = React.createElement(FirstColumn, {
+      geneName,
+      handleClick: editSavedGenes.bind(null, !saved, geneName)
+    });
+  }
 
   className = `GeneRow--${saved ? 'saved' : 'detailed'}`;
 
@@ -145,6 +148,8 @@ module.exports = React.createClass({
 
     return (
       <div style={{
+        border: '1px solid #ccc',
+        background: 'white',
         position: 'relative',
         paddingTop: '72px',
         overflowY: 'hidden',
@@ -194,6 +199,7 @@ module.exports = React.createClass({
                       key={'detailed' + geneData.get('geneName')}
                       saved={false}
                       geneData={geneData}
+                      savedGenes={savedGenes}
                       onRowMouseEnter={onRowMouseEnter}
                       onRowMouseLeave={onRowMouseLeave}
                       editSavedGenes={editSavedGenes} />

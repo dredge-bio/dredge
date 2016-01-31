@@ -31,7 +31,7 @@ module.exports = React.createClass({
       var attrs = copy(cell.attrs);
       attrs.key = cell.cell_name;
 
-      attrs.fill = cell.cell_name === currentCell ? '#ccc' : 'transparent';
+      attrs.fill = cell.cell_name === currentCell ? '#ccc' : 'white';
 
       attrs.onClick = this.handleClick.bind(null, cell.cell_name);
 
@@ -48,12 +48,11 @@ module.exports = React.createClass({
     return (
       <div key={i} style={{ display: 'inline-block', textAlign: 'center' }}>
         <a href=""
-            style={{ backgroundColor: cellSelected ? 'red' : 'white' }}
+            style={{ backgroundColor: cellSelected && 'red' }}
             onClick={this.handleClick.bind(null, stageName)}>
           {stage}-cell embryo
         </a>
 
-        <br />
         <br />
 
         <svg style={style} {...embryo.svg_attrs}>

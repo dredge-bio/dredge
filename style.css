@@ -1,5 +1,9 @@
 @import 'basscss';
 
+.bg-main {
+    background-color: #F5F1E8;
+}
+
 .x-axis path,
 .y-axis path {
     fill: none;
@@ -34,7 +38,7 @@
 
 .GeneDetailsTable td:first-of-type,
 .GeneDetailsTable th:first-of-type {
-    padding-left: 1em;
+    padding-left: 18px;
 }
 
 
