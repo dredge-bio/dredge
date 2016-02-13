@@ -1,4 +1,5 @@
 @import 'basscss';
+@import 'basscss-btn-sizes';
 
 .bg-main {
     background-color: #F5F1E8;
@@ -43,7 +44,7 @@
 
 
 .cell-rpkm-headers th > span { top: 6px; }
-.gene-headers th > span { top: 42px; }
+.gene-headers th > span { top: 44px; }
 
 .cell-rpkm-headers th[colspan="2"] > span {
     border-left: 2px solid #ccc;

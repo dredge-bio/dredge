@@ -97,9 +97,31 @@ module.exports = React.createClass({
 
   getInitialState() {
     return {
+      addingGenes: false,
+      addingGeneText: '',
+      alternateGeneNames: null,
       sortBy: 'geneName',
       sortOrder: 'desc'
     }
+  },
+
+  handleClickAddGene() {
+    var getAlternateGeneNamesSeq = require('../utils/get_alternate_gene_names')
+      , { alternateGeneNames } = this.state
+
+    this.setState({ addingGenes: true });
+
+    if (!alternateGeneNames) {
+      getAlternateGeneNamesSeq()
+        .then(alternateGeneNames => {
+          var alternateGeneNamesSeq = alternateGeneNames.toSeq().cacheResult();
+          this.setState({ alternateGeneNames, alternateGeneNamesSeq });
+        });
+    }
+
+    setTimeout(() => {
+      this.refs.search.focus();
+    }, 10);
   },
 
   toggleSort(field) {
@@ -145,6 +167,7 @@ module.exports = React.createClass({
 
   render() {
     var { cellA, cellB, savedGenes, detailedGenes, editSavedGenes, onRowMouseEnter, onRowMouseLeave } = this.props
+      , { addingGenes, addingGeneText, alternateGeneNames, alternateGeneNamesSeq } = this.state
 
     return (
       <div style={{
@@ -163,6 +186,29 @@ module.exports = React.createClass({
           height: '72px',
           background: '#f0f0f0'
         }} />
+
+        <div style={{ position: 'absolute', top: 6, left: 16 }}>
+          {
+            !addingGenes ?
+              <button
+                  style={{ fontSize: '14px' }}
+                  className="btn btn-primary btn-small"
+                  onClick={this.handleClickAddGene}>
+                Add watched gene
+              </button>
+              : (
+                <div>
+                  <input
+                      ref="search"
+                      type="text"
+                      className="field"
+                      onBlur={e => this.setState({ addingGeneText: '', addingGenes: false })}
+                      onChange={e => this.setState({ addingGeneText: e.target.value })} />
+                </div>
+              )
+          }
+        </div>
+
         <div style={{
           height: '720px',
           overflowY: 'scroll',
@@ -207,6 +253,32 @@ module.exports = React.createClass({
               }
             </tbody>
           </table>
+
+          {
+            addingGenes && addingGeneText && alternateGeneNames && (
+              <div className="absolute px2 py1" style={{
+                width: 400,
+                top: '46px',
+                border: '1px solid #ccc',
+                background: '#f0f0f0'
+              }}>
+                {
+                  alternateGeneNamesSeq
+                    .filter((v, k) => !!k.match(addingGeneText))
+                    .take(20)
+                    .map((v, k) =>
+                      <div key={k}>
+                        <a onMouseDown={editSavedGenes.bind(null, true, v)}>
+                          { k } { k !== v && `(aka ${v})` }
+                        </a>
+                      </div>
+                    )
+                    .toList()
+                }
+              </div>
+            )
+          }
+
         </div>
       </div>
     )
