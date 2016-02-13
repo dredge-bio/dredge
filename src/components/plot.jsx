@@ -14,7 +14,7 @@ const dimensions = {
 
 const GRID_UNITS = 75;
 
-const GENE_BIN_MULTIPLIERs = {
+const GENE_BIN_MULTIPLIERS = {
   1: .4,
   2: .6,
   3: .8
@@ -94,7 +94,7 @@ PlotVisualization.prototype = {
         .style('opacity', 0)
         .remove()
 
-    if (hoveredGene) {
+    if (hoveredGene && plotData.has(hoveredGene)) {
       this.g.select('.hoverdot').datum(plotData.get(hoveredGene))
         .append('circle')
         .attr('cx', d => x(d.logCPM))
@@ -129,12 +129,12 @@ PlotVisualization.prototype = {
       .range([0, dimensions.PLOT_WIDTH - (2 * dimensions.PLOT_PADDING)])
 
     this.y = d3.scale.linear()
-      .domain([fcMin, fcMax])
+      .domain([-12, 12])
       .range([dimensions.PLOT_HEIGHT - (2 * dimensions.PLOT_PADDING), 0])
 
     this.bins = bin(this.data, this.x, this.y, GRID_UNITS)
     this.bins.forEach(geneBin => {
-      geneBin.multiplier = GENE_BIN_MULTIPLIERs[geneBin.genes.length] || 1;
+      geneBin.multiplier = GENE_BIN_MULTIPLIERS[geneBin.genes.length] || 1;
     })
 
     this.savedGenes = [savedGenes];
@@ -146,7 +146,6 @@ PlotVisualization.prototype = {
       , rectWidth = (PLOT_WIDTH - 2 * PLOT_PADDING) / GRID_UNITS
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
-      , colorScale
       , container
 
     this.g.select('.y-axis').call(yAxis);
@@ -155,10 +154,6 @@ PlotVisualization.prototype = {
     this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.squares-overlay').selectAll('rect').remove();
     // this.g.select('.dots').selectAll('circle').remove();
-
-    colorScale = d3.scale.log()
-      .domain(d3.extent(bins, d => d.genes.length))
-      .range(["#deebf7", "#08519c", '#000'])
 
     container = this.g.select('.squares-overlay')[0][0];
 
@@ -169,16 +164,16 @@ PlotVisualization.prototype = {
       .attr('y', d => y(d.fcMax) + ((1 - d.multiplier) / 2) * rectWidth)
       .attr('width', d => rectWidth * d.multiplier)
       .attr('height', d => rectWidth * d.multiplier)
-      .attr('fill', d => colorScale(50))
+      .attr('fill', '#2566a8')
 
-    squares = this.g.select('.squares-overlay').selectAll('rect').data(bins)
+    this.g.select('.squares-overlay').selectAll('rect').data(bins)
         .enter()
       .append('rect')
       .attr('x', d => x(d.cpmMin))
       .attr('y', d => y(d.fcMax))
       .attr('width', rectWidth)
       .attr('height', rectWidth)
-      .attr('fill', 'rgba(255,255,255,0)')
+      .attr('fill', 'transparent')
       .on('mouseover', function () {
         container.appendChild(this);
       })
