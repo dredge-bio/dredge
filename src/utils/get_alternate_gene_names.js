@@ -1,6 +1,7 @@
 "use strict";
 
-var Immutable = require('immutable');
+var Immutable = require('immutable')
+  , whitelist = Immutable.Set(require('../gene_whitelist.json'))
 
 module.exports = () => fetch('data/20150813_alternateGeneNames.csv')
   .then(resp => resp.text())
@@ -8,6 +9,9 @@ module.exports = () => fetch('data/20150813_alternateGeneNames.csv')
   .then(rows => Immutable.Map().withMutations(map => {
     rows.forEach(row => {
       var canonicalName = row[0]
-      row.forEach(name => map.set(name, canonicalName));
+
+      if (whitelist.has(canonicalName)) {
+        row.forEach(name => map.set(name, canonicalName));
+      }
     });
   }));
