@@ -47,6 +47,7 @@ module.exports = React.createClass({
   },
 
   handleRowClick(e, clickedGene) {
+    if (e.target.nodeName === 'A') return;
     this.setState({ clickedGene });
   },
 

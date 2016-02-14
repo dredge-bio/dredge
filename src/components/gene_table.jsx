@@ -251,6 +251,7 @@ module.exports = React.createClass({
                   <GeneRow
                       key={'saved' + geneData.get('geneName')}
                       saved={true}
+                      geneData={geneData}
                       {...this.props} />
                 )
               }
@@ -260,6 +261,7 @@ module.exports = React.createClass({
                   <GeneRow
                       key={'detailed' + geneData.get('geneName')}
                       saved={false}
+                      geneData={geneData}
                       {...this.props} />
                 )
               }
