@@ -9,9 +9,9 @@ const tableFields = [
   ['logCPM', 'Log CPM'],
   ['logFC', 'Log FC'],
   ['cellARPKMAvg', 'Mean RPKM'],
-  ['cellARPKMMed', 'Median RPKM'],
+  ['cellARPKMMed', 'Med. RPKM'],
   ['cellBRPKMAvg', 'Mean RPKM'],
-  ['cellBRPKMMed', 'Median RPKM'],
+  ['cellBRPKMMed', 'Med. RPKM'],
 ]
 
 
@@ -231,6 +231,12 @@ module.exports = React.createClass({
             borderCollapse: 'collapse',
             tableLayout: 'fixed'
           }}>
+            <colgroup>
+              <col span="1" width="164px" />
+              <col span="3" />
+              <col span="2" width="92px" />
+              <col span="2" width="92px" />
+            </colgroup>
             <thead style={{ fontSize: '12px' }}>
               <tr className="cell-rpkm-headers">
                 <th colSpan={4} />
