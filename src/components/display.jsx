@@ -149,30 +149,31 @@ module.exports = React.createClass({
 
         </section>
 
-        <section className="left ml2" style={{ width: '768px' }}>
+        <section className="left ml2 flex">
+          <div style={{ width: '768px' }}>
+            {
+              plotData && cellGeneMeasures && (
+                <GeneTable
+                    {...this.props}
+                    onRowClick={this.handleRowClick}
+                    onRowMouseEnter={this.handleRowMouseEnter}
+                    onRowMouseLeave={this.handleRowMouseLeave}
+                    detailedGenes={this.getDetailedGenes()}
+                    savedGenes={this.getSavedGenes()} />
+              )
+            }
+          </div>
+
           {
-            plotData && cellGeneMeasures && (
-              <GeneTable
-                  {...this.props}
-                  onRowClick={this.handleRowClick}
-                  onRowMouseEnter={this.handleRowMouseEnter}
-                  onRowMouseLeave={this.handleRowMouseLeave}
-                  detailedGenes={this.getDetailedGenes()}
-                  savedGenes={this.getSavedGenes()} />
+            clickedGene && (
+              <div className="bg-white center">
+                <h3>{ clickedGene }</h3>
+                <img src={`data/cellMaps/${clickedGene}.svg`}></img>
+              </div>
             )
           }
         </section>
 
-        {
-          clickedGene && (
-            <section className="left ml2">
-              { clickedGene }
-              <div>
-                <img src={`data/cellMaps/${clickedGene}.svg`}></img>
-              </div>
-            </section>
-          )
-        }
 
         { loading && <Loading /> }
       </main>
