@@ -37,7 +37,16 @@ function dashesOrFixed(number, places=2) {
 }
 
 
-function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseLeave, savedGenes }) {
+function GeneRow({
+  saved,
+  geneData,
+  savedGenes,
+  editSavedGenes,
+
+  onRowClick,
+  onRowMouseEnter,
+  onRowMouseLeave
+}) {
   var FirstColumn = saved ? SavedGeneFirstColumn : UnsavedGeneFirstColumn
     , geneName = geneData.get('geneName')
     , data = geneData.toJS()
@@ -61,6 +70,7 @@ function GeneRow({ saved, geneData, editSavedGenes, onRowMouseEnter, onRowMouseL
   return (
     <tr
         className={className}
+        onClick={e => onRowClick(e, geneName) }
         onMouseEnter={e => onRowMouseEnter(e, geneName)}
         onMouseLeave={e => onRowMouseLeave(e, geneName)}>
       <td className="relative">
@@ -113,9 +123,12 @@ module.exports = React.createClass({
 
     if (!alternateGeneNames) {
       getAlternateGeneNamesSeq()
-        .then(alternateGeneNames => {
-          var alternateGeneNamesSeq = alternateGeneNames.toSeq().cacheResult();
-          this.setState({ alternateGeneNames, alternateGeneNamesSeq });
+        .then(alternateNamesMap => {
+          var alternateGeneNamesSeq = alternateNamesMap.toSeq().cacheResult();
+          this.setState({
+            alternateGeneNames: alternateNamesMap,
+            alternateGeneNamesSeq
+          });
         });
     }
 
@@ -166,7 +179,7 @@ module.exports = React.createClass({
   },
 
   render() {
-    var { cellA, cellB, savedGenes, detailedGenes, editSavedGenes, onRowMouseEnter, onRowMouseLeave } = this.props
+    var { cellA, cellB, savedGenes, detailedGenes, editSavedGenes } = this.props
       , { addingGenes, addingGeneText, alternateGeneNames, alternateGeneNamesSeq } = this.state
 
     return (
@@ -202,7 +215,7 @@ module.exports = React.createClass({
                       ref="search"
                       type="text"
                       className="field"
-                      onBlur={e => this.setState({ addingGeneText: '', addingGenes: false })}
+                      onBlur={() => this.setState({ addingGeneText: '', addingGenes: false })}
                       onChange={e => this.setState({ addingGeneText: e.target.value })} />
                 </div>
               )
@@ -232,10 +245,7 @@ module.exports = React.createClass({
                   <GeneRow
                       key={'saved' + geneData.get('geneName')}
                       saved={true}
-                      geneData={geneData}
-                      onRowMouseEnter={onRowMouseEnter}
-                      onRowMouseLeave={onRowMouseLeave}
-                      editSavedGenes={editSavedGenes} />
+                      {...this.props} />
                 )
               }
 
@@ -244,11 +254,7 @@ module.exports = React.createClass({
                   <GeneRow
                       key={'detailed' + geneData.get('geneName')}
                       saved={false}
-                      geneData={geneData}
-                      savedGenes={savedGenes}
-                      onRowMouseEnter={onRowMouseEnter}
-                      onRowMouseLeave={onRowMouseLeave}
-                      editSavedGenes={editSavedGenes} />
+                      {...this.props} />
                 )
               }
             </tbody>

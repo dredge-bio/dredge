@@ -42,7 +42,12 @@ module.exports = React.createClass({
   getInitialState() {
     return {
       hoveredGene: null,
+      clickedGene: null,
     }
+  },
+
+  handleRowClick(e, clickedGene) {
+    this.setState({ clickedGene });
   },
 
   handleRowMouseEnter(e, hoveredGene) {
@@ -111,6 +116,7 @@ module.exports = React.createClass({
       , GeneTable = require('./gene_table.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
+      , { clickedGene } = this.state
 
     return (
       <main className="m3 clearfix">
@@ -147,6 +153,7 @@ module.exports = React.createClass({
             plotData && cellGeneMeasures && (
               <GeneTable
                   {...this.props}
+                  onRowClick={this.handleRowClick}
                   onRowMouseEnter={this.handleRowMouseEnter}
                   onRowMouseLeave={this.handleRowMouseLeave}
                   detailedGenes={this.getDetailedGenes()}
@@ -154,6 +161,17 @@ module.exports = React.createClass({
             )
           }
         </section>
+
+        {
+          clickedGene && (
+            <section className="left ml2">
+              { clickedGene }
+              <div>
+                <img src={`data/cellMaps/${clickedGene}.svg`}></img>
+              </div>
+            </section>
+          )
+        }
 
         { loading && <Loading /> }
       </main>
