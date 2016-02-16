@@ -9,7 +9,7 @@ var React = require('react')
 const dimensions = {
   PLOT_HEIGHT: 540,
   PLOT_WIDTH: 540,
-  PLOT_PADDING: 48,
+  PLOT_PADDING: 56,
 }
 
 const GRID_UNITS = 75;
@@ -46,6 +46,23 @@ function PlotVisualization(container, handleGeneDetailsChange) {
   this.g.append('g')
     .attr('class', 'x-axis')
     .attr('transform', `translate(0, ${dimensions.PLOT_HEIGHT - 2 * dimensions.PLOT_PADDING})`)
+
+  this.svg.append('text')
+    .attr('class', 'plot-title')
+    .attr('transform', `translate(${dimensions.PLOT_WIDTH - dimensions.PLOT_PADDING}, 48)`)
+    .attr('text-anchor', 'end')
+    .style('font-weight', 'bold')
+    .style('font-size', '24px')
+
+  this.svg.append('text')
+    .text('log FC')
+    .style('font-weight', 'bold')
+    .attr('transform', `rotate(-90) translate(-${dimensions.PLOT_HEIGHT - 250}, 20)`)
+
+  this.svg.append('text')
+    .text('log CPM')
+    .style('font-weight', 'bold')
+    .attr('transform', `translate(250, ${dimensions.PLOT_HEIGHT - 8})`)
 
   this.g.append('g')
     .attr('class', 'squares')
@@ -141,7 +158,7 @@ PlotVisualization.prototype = {
   },
 
   render() {
-    var { x, y, bins, handleGeneDetailsChange } = this
+    var { x, y, bins, cellA, cellB, handleGeneDetailsChange } = this
       , { PLOT_WIDTH, PLOT_PADDING } = dimensions
       , rectWidth = (PLOT_WIDTH - 2 * PLOT_PADDING) / GRID_UNITS
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
@@ -154,6 +171,8 @@ PlotVisualization.prototype = {
     this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.squares-overlay').selectAll('rect').remove();
     // this.g.select('.dots').selectAll('circle').remove();
+
+    this.svg.select('.plot-title').text(`${cellA} - ${cellB}`);
 
     container = this.g.select('.squares-overlay')[0][0];
 
