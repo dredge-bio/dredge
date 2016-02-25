@@ -11,7 +11,7 @@ function cellFile(cellName) {
 module.exports = function (cellA, cellB) {
   var cellFileA = cellFile(cellA)
     , cellFileB = cellFile(cellB)
-    , dataFile = `data/geneExpression/${cellFileB}_${cellFileA}.txt`
+    , dataFile = `data/geneExpression/${cellFileA}_${cellFileB}.txt`
 
   return fetch(dataFile)
 }
