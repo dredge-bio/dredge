@@ -114,7 +114,7 @@ module.exports = React.createClass({
     var CellSelector = require('./cell_selector.jsx')
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
-      , GeneTable = require('./gene_table.jsx')
+      , GeneTable = require('./table/component.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
       , { clickedGene } = this.state
@@ -150,19 +150,17 @@ module.exports = React.createClass({
         </section>
 
         <section className="left ml2 flex">
-          <div style={{ width: '768px' }}>
-            {
-              plotData && cellGeneMeasures && (
-                <GeneTable
-                    {...this.props}
-                    onRowClick={this.handleRowClick}
-                    onRowMouseEnter={this.handleRowMouseEnter}
-                    onRowMouseLeave={this.handleRowMouseLeave}
-                    detailedGenes={this.getDetailedGenes()}
-                    savedGenes={this.getSavedGenes()} />
-              )
-            }
-          </div>
+          {
+            plotData && cellGeneMeasures && (
+              <GeneTable
+                  {...this.props}
+                  onRowClick={this.handleRowClick}
+                  onRowMouseEnter={this.handleRowMouseEnter}
+                  onRowMouseLeave={this.handleRowMouseLeave}
+                  detailedGenes={this.getDetailedGenes()}
+                  savedGenes={this.getSavedGenes()} />
+            )
+          }
 
           {
             clickedGene && (
