@@ -120,35 +120,30 @@ module.exports = React.createClass({
       , { clickedGene } = this.state
 
     return (
-      <main className="m3">
-        <section>
+      <main className="flex">
+        <section style={{ width: '40vw' }}>
           <CellSelector
             currentCell={cellA}
             onSelectCell={setCurrentCell.bind(null, 'A')} />
 
-          <div className="clearfix">
-            <div className="left gene-plot inline-block">
+            <div className="flex" style={{ height: '90%', width: '100%' }}>
               <CellPlot
                 {...this.props}
                 {...this.state}
                 data={this.filterPlotData()}
                 handleGeneDetailsChange={setDetailedGenes} />
-            </div>
 
-            <div className="left pvalue-selector inline-block">
               <CellPValueSelector
                 onPValueChange={handlePValueChange}
                 data={plotData} />
             </div>
-
-          </div>
 
           <CellSelector
             currentCell={cellB}
             onSelectCell={setCurrentCell.bind(null, 'B')} />
         </section>
 
-        <section className="left ml2 flex">
+        <section style={{ width: '60vw', marginLeft: '2em' }}>
           {
             plotData && cellGeneMeasures && (
               <GeneTable
@@ -170,7 +165,6 @@ module.exports = React.createClass({
             )
           }
         </section>
-
 
         { loading && <Loading /> }
       </main>

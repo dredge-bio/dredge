@@ -43,7 +43,7 @@ function GeneRow({ saved, geneData, savedGenes, editSavedGenes, onRowClick }) {
 
 
   return (
-    <tr onClick={e => onRowClick(e, geneName)}>
+    <tr className="GeneRow" onClick={e => onRowClick(e, geneName)}>
       <td>{ firstColumn }</td>
       <td>{ geneName }</td>
       <td>{ dashesOrFixed(data.pValue, 3) }</td>

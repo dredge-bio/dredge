@@ -25,10 +25,10 @@ module.exports = React.createClass({
       , { currentCell } = this.props
 
     return (
-      <section className="flex" style={{ height: '10vh' }}>
+      <section className="flex" style={{ height: '5%' }}>
         {
           embryos.map((embryoData, i) =>
-            <div key={i} className="flex-auto px2">
+            <div key={i} className="flex-auto flex flex-column px1">
               <a href="#"
                   className="inline-block center col-12 mb1"
                   style={{

@@ -1,7 +1,6 @@
 "use strict";
 
 var React = require('react')
-  , ReactDOM = require('react-dom')
   , Immutable = require('immutable')
   , d3 = require('d3')
 
@@ -31,11 +30,7 @@ const GENE_BIN_MULTIPLIERS = {
 function PlotVisualization(container, handleGeneDetailsChange) {
   this.handleGeneDetailsChange = handleGeneDetailsChange;
 
-  this.svg = d3.select(container)
-    .append('svg')
-    .attr('width', dimensions.PLOT_WIDTH)
-    .attr('height', dimensions.PLOT_HEIGHT)
-    .attr('viewBox', `0 0 ${dimensions.PLOT_WIDTH} ${dimensions.PLOT_HEIGHT}`)
+  this.svg = d3.select(container);
 
   this.g = this.svg
     .append('g')
@@ -247,11 +242,19 @@ module.exports = React.createClass({
     var { handleGeneDetailsChange } = this.props
 
     this.setState({
-      visualization: new PlotVisualization(ReactDOM.findDOMNode(this), handleGeneDetailsChange)
+      visualization: new PlotVisualization(this.refs.svg, handleGeneDetailsChange)
     });
   },
 
   render() {
-    return <div />
+    var { PLOT_HEIGHT, PLOT_WIDTH } = dimensions
+
+    return (
+      <svg
+          ref="svg"
+          width={PLOT_WIDTH}
+          height={PLOT_HEIGHT}
+          viewBox={`0 0 ${PLOT_WIDTH} ${PLOT_HEIGHT}`} />
+    )
   }
 });
