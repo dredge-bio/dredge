@@ -41,8 +41,8 @@ module.exports = React.createClass({
     var { addingGenes, addingGeneText, editSavedGenes } = this.props
       , { alternateGeneNames, alternateGeneNamesSeq } = this.state
     return (
-      <div className="relative">
-        <div style={{ position: 'absolute', top: 6, left: 16 }}>
+      <div className="mb1">
+        <div>
           {
             !addingGenes ?
               <button

@@ -3,18 +3,18 @@
 var def = require('../../utils/define')(exports)
 
 
-def('TABLE', 'WIDTH', 1000);
+def('TABLE', 'WIDTH', 800);
 def('TABLE', 'HEIGHT', 800);
 def('TABLE', 'COLUMN_WIDTHS', [
-    exports.TABLE.WIDTH * .03,
-    exports.TABLE.WIDTH * .20,
-    exports.TABLE.WIDTH * .11,
-    exports.TABLE.WIDTH * .11,
-    exports.TABLE.WIDTH * .11,
-    exports.TABLE.WIDTH * .11,
-    exports.TABLE.WIDTH * .11,
-    exports.TABLE.WIDTH * .11,
-    exports.TABLE.WIDTH * .11,
+    exports.TABLE.WIDTH * .02,
+    exports.TABLE.WIDTH * .19,
+    exports.TABLE.WIDTH * .09,
+    exports.TABLE.WIDTH * .09,
+    exports.TABLE.WIDTH * .09,
+    exports.TABLE.WIDTH * .13,
+    exports.TABLE.WIDTH * .13,
+    exports.TABLE.WIDTH * .13,
+    exports.TABLE.WIDTH * .13,
 ]);
 def('TABLE', 'COLUMN_STARTS', exports.TABLE.COLUMN_WIDTHS.map((w, i, cols) => {
   return cols.slice(0, i).reduce((a, b) => a + b, 0);

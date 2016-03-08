@@ -33,7 +33,7 @@ function GeneRow({ saved, geneData, savedGenes, editSavedGenes, onRowClick }) {
         x
       </a>
     )
-  } else if (!saved && savedGenes.has(geneData)) {
+  } else if (!saved && !savedGenes.has(geneData)) {
     firstColumn = (
       <a href="" onClick={editSavedGenes.bind(null, true, geneName)}>
         {'<'}
