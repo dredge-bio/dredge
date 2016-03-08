@@ -35,6 +35,7 @@ function PlotVisualization(container, handleGeneDetailsChange) {
     .append('svg')
     .attr('width', dimensions.PLOT_WIDTH)
     .attr('height', dimensions.PLOT_HEIGHT)
+    .attr('viewBox', `0 0 ${dimensions.PLOT_WIDTH} ${dimensions.PLOT_HEIGHT}`)
 
   this.g = this.svg
     .append('g')

@@ -1,9 +1,10 @@
 "use strict";
 
 var React = require('react')
+  , embryos = require('../embryos.json')
 
-function copy(data) {
-  return JSON.parse(JSON.stringify(data))
+function embryoName(i) {
+  return `${Math.pow(2, i)}-cell`
 }
 
 module.exports = React.createClass({
@@ -19,56 +20,28 @@ module.exports = React.createClass({
     this.props.onSelectCell(cellName);
   },
 
-  renderEmbryo: function (embryo, i) {
-    var stage = Math.pow(2, i)
-      , stageName = `${stage}-cell`
+  render: function () {
+    var Embryo = require('./embryo.jsx')
       , { currentCell } = this.props
-      , cellSelected = currentCell === stageName
-      , shapes
-      , style
-
-    shapes = embryo.cells.map(cell => {
-      var attrs = copy(cell.attrs);
-      attrs.key = cell.cell_name;
-
-      attrs.fill = cell.cell_name === currentCell ? '#ccc' : 'white';
-
-      attrs.onClick = this.handleClick.bind(null, cell.cell_name);
-
-      return React.createElement(cell.type, attrs);
-    }, this);
-
-    style = {
-      stroke: 'black',
-      display: 'inline-block',
-      height: '68px',
-      margin: '0 1em'
-    }
 
     return (
-      <div key={i} style={{ display: 'inline-block', textAlign: 'center' }}>
-        <a href=""
-            style={{ backgroundColor: cellSelected && 'red' }}
-            onClick={this.handleClick.bind(null, stageName)}>
-          {stage}-cell embryo
-        </a>
-
-        <br />
-
-        <svg style={style} {...embryo.svg_attrs}>
-          <g {...embryo.g1_attrs}>
-            <g {...embryo.g2_attrs}>
-              { shapes }
-            </g>
-          </g>
-        </svg>
-      </div>
+      <section className="flex" style={{ height: '10vh' }}>
+        {
+          embryos.map((embryoData, i) =>
+            <div key={i} className="flex-auto px2">
+              <a href="#"
+                  className="inline-block center col-12 mb1"
+                  style={{
+                    backgroundColor: currentCell === embryoName(i) && 'red'
+                  }}
+                  onClick={this.handleClick.bind(null, embryoName(i))}>
+                { embryoName(i) } embryo
+              </a>
+              <Embryo embryoData={embryoData} {...this.props} />
+            </div>
+          )
+        }
+      </section>
     )
-  },
-
-  render: function () {
-    var embryos = require('../embryos.json')
-
-    return <section>{ embryos.map(this.renderEmbryo) }</section>
   }
 });

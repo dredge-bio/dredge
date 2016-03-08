@@ -120,8 +120,8 @@ module.exports = React.createClass({
       , { clickedGene } = this.state
 
     return (
-      <main className="m3 clearfix">
-        <section className="left">
+      <main className="m3">
+        <section>
           <CellSelector
             currentCell={cellA}
             onSelectCell={setCurrentCell.bind(null, 'A')} />
@@ -146,7 +146,6 @@ module.exports = React.createClass({
           <CellSelector
             currentCell={cellB}
             onSelectCell={setCurrentCell.bind(null, 'B')} />
-
         </section>
 
         <section className="left ml2 flex">
