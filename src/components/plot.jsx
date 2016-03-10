@@ -6,12 +6,15 @@ var React = require('react')
 
 
 const dimensions = {
-  PLOT_HEIGHT: 540,
-  PLOT_WIDTH: 540,
-  PLOT_PADDING: 56,
+  PLOT_HEIGHT: 500,
+  PLOT_WIDTH: 500,
+  PADDING: 60
 }
 
-const GRID_UNITS = 75;
+dimensions.SVG_HEIGHT = dimensions.PLOT_HEIGHT + (2 * dimensions.PADDING);
+dimensions.SVG_WIDTH = dimensions.PLOT_WIDTH + (2 * dimensions.PADDING);
+
+const GRID_SQUARE_UNIT = 8;
 
 const GENE_BIN_MULTIPLIERS = {
   1: .4,
@@ -34,18 +37,18 @@ function PlotVisualization(container, handleGeneDetailsChange) {
 
   this.g = this.svg
     .append('g')
-    .attr('transform', `translate(${dimensions.PLOT_PADDING}, ${dimensions.PLOT_PADDING})`)
+    .attr('transform', `translate(${dimensions.PADDING}, ${dimensions.PADDING})`)
 
   this.g.append('g')
     .attr('class', 'y-axis')
 
   this.g.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', `translate(0, ${dimensions.PLOT_HEIGHT - 2 * dimensions.PLOT_PADDING})`)
+    .attr('transform', `translate(0, ${dimensions.PLOT_HEIGHT})`)
 
   this.svg.append('text')
     .attr('class', 'plot-title')
-    .attr('transform', `translate(${dimensions.PLOT_WIDTH - dimensions.PLOT_PADDING}, 48)`)
+    .attr('transform', `translate(${dimensions.SVG_WIDTH - dimensions.PADDING}, 48)`)
     .attr('text-anchor', 'end')
     .style('font-weight', 'bold')
     .style('font-size', '24px')
@@ -53,15 +56,25 @@ function PlotVisualization(container, handleGeneDetailsChange) {
   this.svg.append('text')
     .text('log FC')
     .style('font-weight', 'bold')
-    .attr('transform', `rotate(-90) translate(-${dimensions.PLOT_HEIGHT - 250}, 20)`)
+    .attr('y', dimensions.SVG_HEIGHT / 2)
+    .attr('text-anchor', 'middle')
+    .attr('transform', `
+      rotate(-90, 0,${dimensions.SVG_HEIGHT / 2})
+      translate(0 20)
+    `)
+    //.attr('transform', `rotate(-90) translate(-${dimensions.SVG_HEIGHT}, 20)`)
 
   this.svg.append('text')
     .text('log CPM')
     .style('font-weight', 'bold')
-    .attr('transform', `translate(250, ${dimensions.PLOT_HEIGHT - 8})`)
+    .attr('x', dimensions.PLOT_WIDTH / 2)
+    .attr('text-anchor', 'middle')
+    .attr('transform', `translate(${dimensions.PADDING}, ${dimensions.SVG_HEIGHT - 8})`)
+
 
   this.g.append('g')
     .attr('class', 'squares')
+
 
   /*
   this.g.append('g')
@@ -145,7 +158,7 @@ PlotVisualization.prototype = {
       .domain([-12, 12])
       .range([dimensions.PLOT_HEIGHT - (2 * dimensions.PLOT_PADDING), 0])
 
-    this.bins = bin(this.data, this.x, this.y, GRID_UNITS)
+    this.bins = bin(this.data, this.x, this.y, GRID_SQUARE_UNIT)
     this.bins.forEach(geneBin => {
       geneBin.multiplier = GENE_BIN_MULTIPLIERS[geneBin.genes.length] || 1;
     })
@@ -155,8 +168,6 @@ PlotVisualization.prototype = {
 
   render() {
     var { x, y, bins, cellA, cellB, handleGeneDetailsChange } = this
-      , { PLOT_WIDTH, PLOT_PADDING } = dimensions
-      , rectWidth = (PLOT_WIDTH - 2 * PLOT_PADDING) / GRID_UNITS
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
       , container
@@ -172,22 +183,32 @@ PlotVisualization.prototype = {
 
     container = this.g.select('.squares-overlay')[0][0];
 
+    this.g.select('.squares')
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', dimensions.PLOT_WIDTH)
+      .attr('height', dimensions.PLOT_HEIGHT)
+      .attr('fill', 'white')
+      .attr('stroke', '#ccc')
+
     this.g.select('.squares').selectAll('rect').data(bins)
         .enter()
       .append('rect')
-      .attr('x', d => x(d.cpmMin) + ((1 - d.multiplier) / 2) * rectWidth)
-      .attr('y', d => y(d.fcMax) + ((1 - d.multiplier) / 2) * rectWidth)
-      .attr('width', d => rectWidth * d.multiplier)
-      .attr('height', d => rectWidth * d.multiplier)
+      .attr('x', d => d.x0 + ((1 - d.multiplier) / 2) * GRID_SQUARE_UNIT)
+      .attr('y', d => d.y0 + ((1 - d.multiplier) / 2) * GRID_SQUARE_UNIT)
+      .attr('width', d => GRID_SQUARE_UNIT * d.multiplier)
+      .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
       .attr('fill', '#2566a8')
 
     this.g.select('.squares-overlay').selectAll('rect').data(bins)
         .enter()
       .append('rect')
-      .attr('x', d => x(d.cpmMin))
-      .attr('y', d => y(d.fcMax))
-      .attr('width', rectWidth)
-      .attr('height', rectWidth)
+      .attr('x', d => d.x0)
+      .attr('y', d => d.y0)
+      .attr('width', GRID_SQUARE_UNIT)
+      .attr('height', GRID_SQUARE_UNIT)
+      .attr('fill', '#2566a8')
       .attr('fill', 'transparent')
       .on('mouseover', function () {
         container.appendChild(this);
@@ -247,14 +268,14 @@ module.exports = React.createClass({
   },
 
   render() {
-    var { PLOT_HEIGHT, PLOT_WIDTH } = dimensions
+    var { SVG_HEIGHT, SVG_WIDTH } = dimensions
 
     return (
       <svg
           ref="svg"
-          width={PLOT_WIDTH}
-          height={PLOT_HEIGHT}
-          viewBox={`0 0 ${PLOT_WIDTH} ${PLOT_HEIGHT}`} />
+          width={SVG_WIDTH}
+          height={SVG_HEIGHT}
+          viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} />
     )
   }
 });

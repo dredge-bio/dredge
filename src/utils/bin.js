@@ -1,73 +1,87 @@
 "use strict";
 
-var sortBy = require('lodash.sortby')
+var d3 = require('d3')
+  , sortBy = require('lodash.sortby')
 
-function getBins(scale, count) {
-  var [min, max] = scale.domain()
-    , step = (max - min) / count
+function getBins(scale, unit) {
+  var [ min, max ] = d3.extent(scale.range())
+    , reversed = scale.range()[0] !== min
+    , numBins = Math.floor((max - min) / unit)
     , bins
 
-  bins = Array.apply(null, Array(count)).map((d, i) => {
-    var start = min + (i * step)
-      , stop = start + step
+  bins = Array.apply(null, Array(numBins)).map((_, i) => {
+    var rMin = min + i * unit
+      , rMax = rMin + unit
 
-    return [start, stop];
+    if (reversed) [ rMin, rMax ] = [ rMax, rMin ];
+
+    return [
+      scale.invert(rMin),
+      scale.invert(rMax),
+      rMin,
+      rMax,
+    ]
   });
 
-  bins[bins.length - 1][1] = max;
+  bins = reversed ? bins.reverse() : bins;
+
+  bins[0][0] = d3.min(scale.domain());
+  bins[bins.length - 1][1] = d3.max(scale.domain());
 
   return bins;
 }
 
-module.exports = function (data, xScale, yScale, units=100) {
+function takeWhile(list, condition) {
+  var ret = []
+
+  for (var i = 0, l = list.length; i < l; i++) {
+    if (!condition(list[i])) {
+      break;
+    } else {
+      ret.push(list[i]);
+    }
+  }
+
+  return ret;
+}
+
+module.exports = function (data, xScale, yScale, unit=5) {
   var fcSorted = sortBy(data, 'logFC')
-    , fcBins = getBins(yScale, units)
-    , cpmBins = getBins(xScale, units)
+    , fcBins = getBins(yScale, unit)
+    , cpmBins = getBins(xScale, unit)
     , curFC = 0
     , bins = []
 
+  fcBins.forEach(([ fcMin, fcMax, y0, y1 ]) => {
+    var curCPM = 0
+      , cpmSorted
+      , inFCBin
 
-  fcBins.forEach(([fcBinStart, fcBinStop]) => {
-    var check = fcSorted.slice(curFC)
-      , inFCBin = []
-      , curCPM = 0
+    inFCBin = takeWhile(
+      fcSorted.slice(curFC),
+      ({ logFC }) => logFC >= fcMin && logFC <= fcMax);
 
-    while (check.length) {
-      let gene = check.shift()
+    curFC += inFCBin.length;
+    cpmSorted = sortBy(inFCBin, 'logCPM');
 
-      if (gene.logFC <= fcBinStop) {
-        inFCBin.push(gene);
-        curFC += 1;
-      } else {
-        break;
-      }
-    }
+    cpmBins.forEach(([ cpmMin, cpmMax, x0, x1 ]) => {
+      var inCPMBin
 
-    inFCBin = sortBy(inFCBin, 'logCPM');
+      inCPMBin = takeWhile(
+        cpmSorted.slice(curCPM),
+        ({ logCPM }) => logCPM >= cpmMin && logCPM <= cpmMax);
 
-    cpmBins.forEach(([cpmBinStart, cpmBinStop]) => {
-      var check = inFCBin.slice(curCPM)
-        , inCPMBin = []
-
-      while (check.length) {
-        let gene = check.shift()
-
-        if (gene.logCPM <= cpmBinStop) {
-          inCPMBin.push(gene);
-          curCPM += 1;
-        } else {
-          break;
-        }
-      }
+      curCPM += inCPMBin.length;
 
       if (inCPMBin.length) {
         bins.push({
-          fcMin: fcBinStart,
-          fcMax: fcBinStop,
-          cpmMin: cpmBinStart,
-          cpmMax: cpmBinStop,
+          x0, x1, y0, y1,
+          fcMin,
+          fcMax,
+          cpmMin,
+          cpmMax,
           genes: inCPMBin
-        });
+        })
       }
     });
   });
