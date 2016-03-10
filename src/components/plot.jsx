@@ -150,13 +150,15 @@ PlotVisualization.prototype = {
 
 
     // Update object's state
+
+    // TODO: These two scales' domains are hardcoded
     this.x = d3.scale.linear()
-      .domain([cpmMin, cpmMax])
-      .range([0, dimensions.PLOT_WIDTH - (2 * dimensions.PLOT_PADDING)])
+      .domain([0, 16])
+      .range([0, dimensions.PLOT_WIDTH])
 
     this.y = d3.scale.linear()
-      .domain([-12, 12])
-      .range([dimensions.PLOT_HEIGHT - (2 * dimensions.PLOT_PADDING), 0])
+      .domain([-20, 20])
+      .range([dimensions.PLOT_HEIGHT, 0])
 
     this.bins = bin(this.data, this.x, this.y, GRID_SQUARE_UNIT)
     this.bins.forEach(geneBin => {
