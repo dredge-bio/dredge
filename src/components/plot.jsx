@@ -275,6 +275,7 @@ module.exports = React.createClass({
     return (
       <svg
           ref="svg"
+          style={{ width: 'auto', height: 'auto' }}
           width={SVG_WIDTH}
           height={SVG_HEIGHT}
           viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} />

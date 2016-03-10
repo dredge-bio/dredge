@@ -12,7 +12,8 @@ function Loading() {
     color: 'crimson',
     fontSize: '48px',
     position: 'absolute',
-    top: '132px'
+    top: 150,
+    left: 16
   }}>Loading...</div>
 }
 
@@ -120,13 +121,47 @@ module.exports = React.createClass({
       , { clickedGene } = this.state
 
     return (
-      <main className="flex">
-        <section style={{ width: '40vw' }}>
-          <CellSelector
-            currentCell={cellA}
-            onSelectCell={setCurrentCell.bind(null, 'A')} />
+      <div style={{ height: '100vh', width: '100vw' }}>
+        <header className="px2 flex flex-justify" style={{
+          height: '40px',
+          lineHeight: '40px',
+          color: 'white',
+          backgroundColor: '#370a00',
+          borderBottom: '1px solid #ccc',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            fontSize: '18px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            Interactive visualizer of differential gene expression in the early <i>C. elegans</i> embryo
+          </div>
+        
+          <div>
+            <a href="#" className="bold white">
+              About
+            </a>
+          </div>
+        </header>
+        <main className="relative" style={{ height: 'calc(100vh - 40px)' }}>
 
-            <div className="flex" style={{ height: '90%', width: '100%' }}>
+          <section className="flex flex-column" style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '50%',
+            height: '100%'
+          }}>
+
+            <div style={{ height: 120 }}>
+              <CellSelector
+                currentCell={cellA}
+                onSelectCell={setCurrentCell.bind(null, 'A')} />
+            </div>
+
+            <div className="flex-auto flex flex-center flex-stretch">
               <CellPlot
                 {...this.props}
                 {...this.state}
@@ -138,36 +173,46 @@ module.exports = React.createClass({
                 data={plotData} />
             </div>
 
-          <CellSelector
-            currentCell={cellB}
-            onSelectCell={setCurrentCell.bind(null, 'B')} />
-        </section>
+            <div style={{ height: 120 }}>
+              <CellSelector
+                currentCell={cellB}
+                onSelectCell={setCurrentCell.bind(null, 'B')} />
+            </div>
 
-        <section style={{ width: '60vw', marginLeft: '2em' }}>
-          {
-            plotData && cellGeneMeasures && (
-              <GeneTable
-                  {...this.props}
-                  onRowClick={this.handleRowClick}
-                  onRowMouseEnter={this.handleRowMouseEnter}
-                  onRowMouseLeave={this.handleRowMouseLeave}
-                  detailedGenes={this.getDetailedGenes()}
-                  savedGenes={this.getSavedGenes()} />
-            )
-          }
+          </section>
 
-          {
-            clickedGene && (
-              <div className="bg-white center">
-                <h3>{ clickedGene }</h3>
-                <img src={`data/cellMaps/${clickedGene}.svg`}></img>
-              </div>
-            )
-          }
-        </section>
+          <section style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '50%',
+            height: '100%'
+          }}>
+            {
+              plotData && cellGeneMeasures && (
+                <GeneTable
+                    {...this.props}
+                    onRowClick={this.handleRowClick}
+                    onRowMouseEnter={this.handleRowMouseEnter}
+                    onRowMouseLeave={this.handleRowMouseLeave}
+                    detailedGenes={this.getDetailedGenes()}
+                    savedGenes={this.getSavedGenes()} />
+              )
+            }
 
+            {
+              clickedGene && (
+                <div className="bg-white center">
+                  <h3>{ clickedGene }</h3>
+                  <img src={`data/cellMaps/${clickedGene}.svg`}></img>
+                </div>
+              )
+            }
+          </section>
+
+        </main>
         { loading && <Loading /> }
-      </main>
+      </div>
     )
   }
 });

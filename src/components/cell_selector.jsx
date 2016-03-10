@@ -25,14 +25,19 @@ module.exports = React.createClass({
       , { currentCell } = this.props
 
     return (
-      <section className="flex" style={{ height: '5%' }}>
+      <div className="flex" style={{ height: '100%' }}>
         {
           embryos.map((embryoData, i) =>
-            <div key={i} className="flex-auto flex flex-column px1">
+            <div key={i} className="flex flex-column flex-auto px1 py1">
               <a href="#"
-                  className="inline-block center col-12 mb1"
+                  className="center col-12 flex-grow"
                   style={{
-                    backgroundColor: currentCell === embryoName(i) && 'red'
+                    backgroundColor: currentCell === embryoName(i) && 'red',
+                      width: '100%',
+            overflowX: 'hidden',
+            overflowY: 'normal',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
                   }}
                   onClick={this.handleClick.bind(null, embryoName(i))}>
                 { embryoName(i) } embryo
@@ -41,7 +46,7 @@ module.exports = React.createClass({
             </div>
           )
         }
-      </section>
+      </div>
     )
   }
 });

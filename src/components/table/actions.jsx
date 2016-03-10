@@ -41,16 +41,21 @@ module.exports = React.createClass({
     var { addingGenes, addingGeneText, editSavedGenes } = this.props
       , { alternateGeneNames, alternateGeneNamesSeq } = this.state
     return (
-      <div className="mb1">
+      <div>
         <div>
           {
             !addingGenes ?
-              <button
-                  style={{ fontSize: '14px' }}
-                  className="btn btn-primary btn-small"
-                  onClick={this.handleClickAddGene}>
-                Add watched gene
-              </button>
+              <div style={{ fontSize: '14px' }}>
+                <button className="btn btn-outline bg-white btn-small mr2" onClick={this.handleClickAddGene}>
+                  Add watched gene
+                </button>
+                <button className="btn btn-outline bg-white btn-small mr2">
+                  Watch all
+                </button>
+                <button className="btn btn-outline bg-white btn-small mr2">
+                  Clear watched genes
+                </button>
+              </div>
               : (
                 <div>
                   <input

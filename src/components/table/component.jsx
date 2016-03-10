@@ -19,8 +19,10 @@ GeneTable = React.createClass({
       , TableHeader = require('./table_header.jsx')
 
     return (
-      <div className="flex flex-column" style={{ alignItems: 'baseline' }}>
-        <Actions {...this.props} />
+      <div className="flex flex-column flex-center" style={{ height: '100%' }}>
+        <div className="py1">
+          <Actions {...this.props} />
+        </div>
 
         <svg
             style={{ maxWidth: '100%' }}
