@@ -12,21 +12,38 @@ module.exports = React.createClass({
 
   getInitialState() {
     return {
+      // The selected cells
       cellA: 'EMS',
       cellB: 'C',
 
+      // P-Value critical limit (TODO: change into one threshhold value)
       pValueUpper: 1,
       pValueLower: 0,
 
+      // Genes in the watch list
       savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
+
+      // Genes brushed in the table
       detailedGenes: Immutable.OrderedSet(),
 
+
+      // The gene currently "focused" by the application (e.g. the heat map is
+      // showing)
       focusedGene: null,
+
+      // The pair of cells currently being fetched. Not to be used by
+      // anything but this component, to make sure things aren't fetched
+      // twice.
       fetchingCells: null,
 
+      // The fetched plot data from the file fetched for cellA-cellB
       plotData: null,
 
+      // Whether the application is initializing. Will be true until the cell-
+      // gene data is fetched.
       initializing: true,
+
+      // Whether cell-pair data are currently being fetched
       loadingCells: false
     }
   },
