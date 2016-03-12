@@ -3,7 +3,7 @@
 var def = require('../../utils/define')(exports)
 
 
-def('TABLE', 'WIDTH', 800);
+def('TABLE', 'WIDTH', 1028);
 def('TABLE', 'HEIGHT', 800);
 def('TABLE', 'COLUMN_WIDTHS', [
     exports.TABLE.WIDTH * .02,

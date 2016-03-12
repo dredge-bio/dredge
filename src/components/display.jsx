@@ -116,6 +116,7 @@ module.exports = React.createClass({
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
       , GeneTable = require('./table/component.jsx')
+      , Actions = require('./actions.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
       , { clickedGene } = this.state
@@ -181,33 +182,41 @@ module.exports = React.createClass({
 
           </section>
 
-          <section style={{
+          <section className="flex flex-column" style={{
             position: 'absolute',
             top: 0,
             right: 0,
             width: '50%',
             height: '100%'
           }}>
-            {
-              plotData && cellGeneMeasures && (
-                <GeneTable
-                    {...this.props}
-                    onRowClick={this.handleRowClick}
-                    onRowMouseEnter={this.handleRowMouseEnter}
-                    onRowMouseLeave={this.handleRowMouseLeave}
-                    detailedGenes={this.getDetailedGenes()}
-                    savedGenes={this.getSavedGenes()} />
-              )
-            }
+            <div className="flex-none px2 py1">
+              <Actions {...this.props} />
+            </div>
 
-            {
-              clickedGene && (
-                <div className="bg-white center">
-                  <h3>{ clickedGene }</h3>
-                  <img src={`data/cellMaps/${clickedGene}.svg`}></img>
-                </div>
-              )
-            }
+            <div className="flex-auto flex flex-stretch">
+              {
+                plotData && cellGeneMeasures && (
+                  <GeneTable
+                      {...this.props}
+                      onRowClick={this.handleRowClick}
+                      onRowMouseEnter={this.handleRowMouseEnter}
+                      onRowMouseLeave={this.handleRowMouseLeave}
+                      detailedGenes={this.getDetailedGenes()}
+                      savedGenes={this.getSavedGenes()} />
+                )
+              }
+            </div>
+
+            <div className="flex-none" style={{ height: 200 }}>
+              {
+                clickedGene && (
+                  <div className="bg-white center" style={{ height: "100%", overflow: 'hidden' }}>
+                    <h3>{ clickedGene }</h3>
+                    <img src={`data/cellMaps/${clickedGene}.svg`}></img>
+                  </div>
+                )
+              }
+            </div>
           </section>
 
         </main>

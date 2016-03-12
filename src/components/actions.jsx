@@ -16,7 +16,7 @@ module.exports = React.createClass({
   },
 
   handleClickAddGene() {
-    var getAlternateGeneNamesSeq = require('../../utils/get_alternate_gene_names')
+    var getAlternateGeneNamesSeq = require('../utils/get_alternate_gene_names')
       , { alternateGeneNames } = this.state
 
     this.setState({ addingGenes: true });
