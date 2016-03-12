@@ -22,10 +22,22 @@ function sortGenes(set, sortBy, sortOrder) {
 }
 
 
-function GeneRow({ saved, geneData, savedGenes, editSavedGenes, onRowClick }) {
+function GeneRow({
+  saved,
+  geneData,
+  savedGenes,
+  focusedGene,
+  editSavedGenes,
+  onRowClick
+}) {
   var geneName = geneData.get('geneName')
+    , className="GeneRow"
     , data = geneData.toJS()
     , firstColumn
+
+  if (focusedGene === data.geneName) {
+    className += ' GeneRow--selected';
+  }
 
   if (saved) {
     firstColumn = (
@@ -43,7 +55,7 @@ function GeneRow({ saved, geneData, savedGenes, editSavedGenes, onRowClick }) {
 
 
   return (
-    <tr className="GeneRow" onClick={e => onRowClick(e, geneName)}>
+    <tr className={className} onClick={e => onRowClick(e, geneName)}>
       <td>{ firstColumn }</td>
       <td>{ geneName }</td>
       <td>{ dashesOrFixed(data.pValue, 3) }</td>

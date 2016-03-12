@@ -6,6 +6,7 @@ var React = require('react')
 
 Embryo = ({
   embryoData: { svg_attrs, g1_attrs, g2_attrs, cells },
+  extraCellAtrs,
   currentCell,
   onSelectCell
 }) => (
@@ -20,7 +21,7 @@ Embryo = ({
                 className: "CellShape",
                 onClick: () => onSelectCell(cell_name),
                 fill: cell_name === currentCell ? "#ccc" : "#fff"
-            }))
+            }, extraCellAtrs ? extraCellAtrs(cell_name) : {}))
         )}
       </g>
     </g>

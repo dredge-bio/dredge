@@ -21,8 +21,7 @@ module.exports = React.createClass({
       savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
       detailedGenes: Immutable.OrderedSet(),
 
-      savedGeneColorScale: d3.scale.category20(),
-
+      focusedGene: null,
       fetchingCells: null,
 
       plotData: null,
@@ -62,6 +61,10 @@ module.exports = React.createClass({
     savedGenes = savedGenes[add ? 'add' : 'delete'](gene);
     localStorage.savedGenes = JSON.stringify(savedGenes);
     this.setState({ savedGenes });
+  },
+
+  setFocusedGene(focusedGene) {
+    this.setState({ focusedGene });
   },
 
   setDetailedGenes(genes) {
@@ -121,7 +124,8 @@ module.exports = React.createClass({
           editSavedGenes={this.editSavedGenes}
           handlePValueChange={this.handlePValueChange}
           setDetailedGenes={this.setDetailedGenes}
-          setCurrentCell={this.setCurrentCell} />
+          setCurrentCell={this.setCurrentCell}
+          setFocusedGene={this.setFocusedGene} />
     )
   }
 });

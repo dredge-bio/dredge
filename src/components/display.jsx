@@ -37,19 +37,18 @@ module.exports = React.createClass({
 
     editSavedGenes: React.PropTypes.func.isRequired,
     setCurrentCell: React.PropTypes.func.isRequired,
-    setDetailedGenes: React.PropTypes.func.isRequired
+    setDetailedGenes: React.PropTypes.func.isRequired,
+    setFocusedGene: React.PropTypes.func.isRequired,
   },
 
   getInitialState() {
-    return {
-      hoveredGene: null,
-      clickedGene: null,
-    }
+    return { hoveredGene: null }
   },
 
-  handleRowClick(e, clickedGene) {
+  handleRowClick(e, geneName) {
+    var { setFocusedGene } = this.props
     if (e.target.nodeName === 'A') return;
-    this.setState({ clickedGene });
+    setFocusedGene(geneName);
   },
 
   handleRowMouseEnter(e, hoveredGene) {
@@ -116,8 +115,9 @@ module.exports = React.createClass({
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
       , GeneTable = require('./table/component.jsx')
+      , GeneHeatMap = require('./gene_heat_map.jsx')
       , Actions = require('./actions.jsx')
-      , { loading, cellA, cellB, plotData, setCurrentCell } = this.props
+      , { loading, cellA, cellB, plotData, setCurrentCell, focusedGene } = this.props
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
       , { clickedGene } = this.state
 
@@ -209,11 +209,10 @@ module.exports = React.createClass({
 
             <div className="flex-none" style={{ height: 200 }}>
               {
-                clickedGene && (
-                  <div className="bg-white center" style={{ height: "100%", overflow: 'hidden' }}>
-                    <h3>{ clickedGene }</h3>
-                    <img src={`data/cellMaps/${clickedGene}.svg`}></img>
-                  </div>
+                cellGeneMeasures && focusedGene && (
+                  <GeneHeatMap
+                      cellGeneMeasures={cellGeneMeasures}
+                      focusedGene={focusedGene} />
                 )
               }
             </div>
