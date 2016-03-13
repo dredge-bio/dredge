@@ -2,14 +2,13 @@
 
 /* eslint no-alert:0 */
 
-var d3 = require('d3')
-  , React = require('react')
+var React = require('react')
   , Immutable = require('immutable')
   , db = require('../db')()
+  , Sorted = require('./sorted.jsx')
+  , Application
 
-module.exports = React.createClass({
-  displayName: 'Application',
-
+Application = React.createClass({
   getInitialState() {
     return {
       // The selected cells
@@ -30,6 +29,9 @@ module.exports = React.createClass({
       // The gene currently "focused" by the application (e.g. the heat map is
       // showing)
       focusedGene: null,
+
+      // The gene currently hovered in the gene table
+      hoveredGene: null,
 
       // The pair of cells currently being fetched. Not to be used by
       // anything but this component, to make sure things aren't fetched
@@ -84,6 +86,11 @@ module.exports = React.createClass({
     this.setState({ focusedGene });
   },
 
+  setHoveredGene(hoveredGene) {
+    this.setState({ hoveredGene });
+  },
+
+
   setDetailedGenes(genes) {
     this.setState({ detailedGenes: Immutable.OrderedSet(genes) });
   },
@@ -120,7 +127,7 @@ module.exports = React.createClass({
           .then(plotData => {
             // Set the cell/plot data immediately, but let the loading
             // message stick around for a little bit.
-            setTimeout(() => this.setState({ loadingCells: false }), 300);
+            setTimeout(() => this.setState({ loadingCells: false }), 200);
             this.setState({ cellA, cellB, plotData });
           });
       })
@@ -136,6 +143,7 @@ module.exports = React.createClass({
 
     return (
       <Display
+          {...this.props}
           {...this.state}
           loading={loadingCells || initializing }
           editSavedGenes={this.editSavedGenes}
@@ -146,3 +154,5 @@ module.exports = React.createClass({
     )
   }
 });
+
+module.exports = Sorted(Application);

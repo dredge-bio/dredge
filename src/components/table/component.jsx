@@ -2,11 +2,9 @@
 
 var React = require('react')
   , consts = require('./consts')
-  , Sorted = require('./sorted.jsx')
-  , GeneTable
 
 
-GeneTable = React.createClass({
+module.exports = React.createClass({
   displayName: 'GeneTable',
 
   propTypes: {
@@ -78,5 +76,3 @@ GeneTable = React.createClass({
     )
   }
 });
-
-module.exports = Sorted(GeneTable);

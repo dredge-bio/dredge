@@ -41,10 +41,6 @@ module.exports = React.createClass({
     setFocusedGene: React.PropTypes.func.isRequired,
   },
 
-  getInitialState() {
-    return { hoveredGene: null }
-  },
-
   handleRowClick(e, geneName) {
     var { setFocusedGene } = this.props
     if (e.target.nodeName === 'A') return;
@@ -111,7 +107,8 @@ module.exports = React.createClass({
   },
 
   render: function () {
-    var CellSelector = require('./cell_selector.jsx')
+    var Header = require('./header.jsx')
+      , CellSelector = require('./cell_selector.jsx')
       , CellPlot = require('./plot.jsx')
       , CellPValueSelector = require('./p_value_selector.jsx')
       , GeneTable = require('./table/component.jsx')
@@ -119,33 +116,10 @@ module.exports = React.createClass({
       , Actions = require('./actions.jsx')
       , { loading, cellA, cellB, plotData, setCurrentCell, focusedGene } = this.props
       , { cellGeneMeasures, handlePValueChange, setDetailedGenes } = this.props
-      , { clickedGene } = this.state
 
     return (
       <div style={{ height: '100vh', width: '100vw' }}>
-        <header className="px2 flex flex-justify" style={{
-          height: '40px',
-          lineHeight: '40px',
-          color: 'white',
-          backgroundColor: '#370a00',
-          borderBottom: '1px solid #ccc',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{
-            fontSize: '18px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            Interactive visualizer of differential gene expression in the early <i>C. elegans</i> embryo
-          </div>
-        
-          <div>
-            <a href="#" className="bold white">
-              About
-            </a>
-          </div>
-        </header>
+        <Header />
         <main className="relative" style={{ height: 'calc(100vh - 40px)' }}>
 
           <section className="flex flex-column" style={{

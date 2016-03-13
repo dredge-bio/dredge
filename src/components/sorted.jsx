@@ -29,9 +29,9 @@ module.exports = function Sorted(Component) {
     render() {
       return (
         <Component
-            toggleSort={this.toggleSort}
             {...this.state}
-            {...this.props} />
+            {...this.props}
+            toggleSort={this.toggleSort} />
       )
     }
   });
