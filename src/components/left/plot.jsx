@@ -3,6 +3,7 @@
 var React = require('react')
   , Immutable = require('immutable')
   , d3 = require('d3')
+  , formatCellName = require('../../utils/format_cell_name')
 
 
 const dimensions = {
@@ -164,7 +165,7 @@ PlotVisualization.prototype = {
     this.g.select('.squares-overlay').selectAll('rect').remove();
     this.g.select('.dots').selectAll('circle').remove();
 
-    this.svg.select('.plot-title').text(`${cellA} - ${cellB}`);
+    this.svg.select('.plot-title').text(`${formatCellName(cellA)} - ${formatCellName(cellB)}`);
 
     container = this.g.select('.squares-overlay')[0][0];
 

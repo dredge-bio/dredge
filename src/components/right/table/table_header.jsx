@@ -2,6 +2,7 @@
 
 var React = require('react')
   , consts = require('./consts')
+  , formatCellName = require('../../../utils/format_cell_name')
   , TableHeader
 
 
@@ -37,7 +38,7 @@ TableHeader = ({ cellA, cellB, sortBy, sortOrder, toggleSort }) => (
                 fontWeight: "bold",
                 dominantBaseline: "middle"
               }}>
-            { cellName }
+            { formatCellName(cellName) }
           </text>
       )}
     </g>
