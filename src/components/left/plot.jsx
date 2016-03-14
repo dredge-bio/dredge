@@ -23,6 +23,10 @@ const GENE_BIN_MULTIPLIERS = {
   3: .8
 }
 
+function withinBounds([min, max], value) {
+  return value >= min && value <= max;
+}
+
 
 /*
  * 1. Colors all same darkness
@@ -32,6 +36,8 @@ const GENE_BIN_MULTIPLIERS = {
 
 
 function PlotVisualization(container, setBrushedGenes) {
+  var that = this;
+
   this.setBrushedGenes = setBrushedGenes;
 
   this.svg = d3.select(container);
@@ -101,6 +107,37 @@ function PlotVisualization(container, setBrushedGenes) {
 
   this.g.append('g')
     .attr('class', 'squares-overlay')
+
+  this.g.append('g')
+    .attr('class', 'brush')
+    .call(
+      d3.svg.brush()
+        .x(this.x)
+        .y(this.y)
+        .on('brushend', function () {
+          var extent = d3.event.target.extent()
+            , cpmBounds = [extent[0][0], extent[1][0]]
+            , fcBounds = [extent[0][1], extent[1][1]]
+            , brushedBins
+
+          that.binSelection.attr('fill', '#2566a8');
+
+          brushedBins = that.binSelection.filter(d => {
+            var { cpmMin, cpmMax, fcMin, fcMax } = d
+
+            return (
+                (withinBounds(cpmBounds, cpmMin) || withinBounds(cpmBounds, cpmMax)) &&
+                (withinBounds(fcBounds, fcMin) || withinBounds(fcBounds, fcMax))
+            )
+          });
+
+          brushedBins.attr('fill', 'purple');
+
+          setBrushedGenes(Immutable.List(
+            Array.prototype.concat.apply([],
+              brushedBins.data().map(bin => bin.genes.map(gene => gene.geneName)))))
+        })
+    )
 }
 
 PlotVisualization.prototype = {
@@ -153,7 +190,9 @@ PlotVisualization.prototype = {
       geneBin.multiplier = GENE_BIN_MULTIPLIERS[geneBin.genes.length] || 1;
     });
 
-    return bins
+    this.bins = bins;
+
+    return bins;
   },
 
   render() {
@@ -178,7 +217,7 @@ PlotVisualization.prototype = {
       .attr('fill', 'white')
       .attr('stroke', '#ccc')
 
-    this.g.select('.squares').selectAll('rect').data(bins)
+    this.binSelection = this.g.select('.squares').selectAll('rect').data(bins)
         .enter()
       .append('rect')
       .attr('x', d => d.x0 + ((1 - d.multiplier) / 2) * GRID_SQUARE_UNIT)
