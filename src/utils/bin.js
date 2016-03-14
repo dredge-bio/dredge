@@ -86,5 +86,9 @@ module.exports = function (data, xScale, yScale, unit=5) {
     });
   });
 
+  if (data.length !== bins.reduce((a, b) => a + b.genes.length, 0)) {
+    throw Error('Bins not of equal length');
+  }
+
   return bins;
 }
