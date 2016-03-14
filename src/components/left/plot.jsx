@@ -39,12 +39,14 @@ function PlotVisualization(container, setBrushedGenes) {
     .append('g')
     .attr('transform', `translate(${dimensions.PADDING}, ${dimensions.PADDING})`)
 
+  // Scales and axes
   this.g.append('g')
     .attr('class', 'y-axis')
 
   this.g.append('g')
     .attr('class', 'x-axis')
     .attr('transform', `translate(0, ${dimensions.PLOT_HEIGHT})`)
+
 
   this.svg.append('text')
     .attr('class', 'plot-title')
@@ -75,6 +77,20 @@ function PlotVisualization(container, setBrushedGenes) {
   this.g.append('g')
     .attr('class', 'squares')
 
+  this.x = d3.scale.linear()
+    .domain([0, 16])
+    .range([0, dimensions.PLOT_WIDTH])
+
+  this.y = d3.scale.linear()
+    .domain([-20, 20])
+    .range([dimensions.PLOT_HEIGHT, 0])
+
+  var xAxis = d3.svg.axis().scale(this.x).orient('bottom')
+    , yAxis = d3.svg.axis().scale(this.y).orient('left')
+
+  this.g.select('.y-axis').call(yAxis);
+  this.g.select('.x-axis').call(xAxis);
+
 
   /*
   this.g.append('g')
@@ -92,26 +108,26 @@ PlotVisualization.prototype = {
   update({
     cellA,
     cellB,
-    data,
+    pairwiseComparisonData,
+    pValueThreshhold,
     savedGenes,
     hoveredGene
   }) {
-
     this.cellA = cellA;
     this.cellB = cellB;
 
-    this.plotData = data;
-    this.data = data.toArray();
+    this.plotData = pairwiseComparisonData;
+    this.filteredPlotData = this.plotData.filter(gene => gene.pValue <= pValueThreshhold);
 
-    this.savedGenes = savedGenes.toJS();
+    this.savedGenes = savedGenes;
 
-    this.updateScalesAndSavedGenes();
     this.render();
     this.updateHoveredGene({ hoveredGene });
   },
 
   updateHoveredGene({ hoveredGene }) {
     var { x, y, plotData } = this
+      , hoveredGeneName = hoveredGene && hoveredGene.get('geneName')
 
     this.g.select('.hoverdot')
       .selectAll('circle')
@@ -120,8 +136,8 @@ PlotVisualization.prototype = {
         .style('opacity', 0)
         .remove()
 
-    if (hoveredGene && plotData.has(hoveredGene)) {
-      this.g.select('.hoverdot').datum(plotData.get(hoveredGene))
+    if (hoveredGene && plotData.has(hoveredGeneName)) {
+      this.g.select('.hoverdot').datum(plotData.get(hoveredGeneName))
         .append('circle')
         .attr('cx', d => x(d.logCPM))
         .attr('cy', d => y(d.logFC))
@@ -130,52 +146,21 @@ PlotVisualization.prototype = {
     }
   },
 
-  updateScalesAndSavedGenes() {
+  getBins() {
     var bin = require('../../utils/bin')
-      , cpmMin = Infinity
-      , cpmMax = -Infinity
-      , fcMin = Infinity
-      , fcMax = -Infinity
-      , savedGenes = []
+      , bins = bin(this.filteredPlotData.toArray(), this.x, this.y, GRID_SQUARE_UNIT)
 
-    this.data.forEach(gene => {
-      if (this.savedGenes.indexOf(gene.geneName) !== -1) savedGenes.push(gene);
-
-      if (gene.logCPM < cpmMin) cpmMin = gene.logCPM;
-      if (gene.logCPM > cpmMax) cpmMax = gene.logCPM;
-
-      if (gene.logFC < fcMin) fcMin = gene.logFC;
-      if (gene.logFC > fcMax) fcMax = gene.logFC;
+    bins.forEach(geneBin => {
+      geneBin.multiplier = GENE_BIN_MULTIPLIERS[geneBin.genes.length] || 1;
     });
 
-
-    // Update object's state
-
-    // TODO: These two scales' domains are hardcoded
-    this.x = d3.scale.linear()
-      .domain([0, 16])
-      .range([0, dimensions.PLOT_WIDTH])
-
-    this.y = d3.scale.linear()
-      .domain([-20, 20])
-      .range([dimensions.PLOT_HEIGHT, 0])
-
-    this.bins = bin(this.data, this.x, this.y, GRID_SQUARE_UNIT)
-    this.bins.forEach(geneBin => {
-      geneBin.multiplier = GENE_BIN_MULTIPLIERS[geneBin.genes.length] || 1;
-    })
-
-    this.savedGenes = [savedGenes];
+    return bins
   },
 
   render() {
-    var { x, y, bins, cellA, cellB, setBrushedGenes } = this
-      , xAxis = d3.svg.axis().scale(x).orient('bottom')
-      , yAxis = d3.svg.axis().scale(y).orient('left')
+    var { cellA, cellB, setBrushedGenes } = this
+      , bins = this.getBins()
       , container
-
-    this.g.select('.y-axis').call(yAxis);
-    this.g.select('.x-axis').call(xAxis);
 
     this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.squares-overlay').selectAll('rect').remove();
@@ -216,7 +201,7 @@ PlotVisualization.prototype = {
         container.appendChild(this);
       })
       .on('click', function (d) {
-        setBrushedGenes(d.genes.map(gene => gene.geneName));
+        setBrushedGenes(Immutable.OrderedSet(d.genes.map(gene => gene.geneName)));
       })
       .append('title').text(d => d.genes.length)
 
@@ -238,30 +223,20 @@ module.exports = React.createClass({
     cellA: React.PropTypes.string,
     cellB: React.PropTypes.string,
     pairwiseComparisonData: React.PropTypes.instanceOf(Immutable.Map),
+    pValueThreshhold: React.PropTypes.number,
     savedGenes: React.PropTypes.instanceOf(Immutable.Set),
   },
 
-  // FIXME: need to call this
-  filterPlotData() {
-    var { pairwiseComparisonData, pValueThreshhold } = this.props
-
-    if (!pairwiseComparisonData) return null;
-
-    return pairwiseComparisonData.filter(gene => gene.pValue <= pValueThreshhold)
-  },
-
-
   componentDidUpdate(prevProps) {
-    var { cellA, cellB, pValueLower, pValueUpper, data, hoveredGene } = this.props
+    var { cellA, cellB, pValueThreshhold, pairwiseComparisonData, hoveredGene } = this.props
       , { visualization } = this.state
       , needsUpdate
 
-    needsUpdate = data && !prevProps.data || (
-      data &&
+    needsUpdate = pairwiseComparisonData && !prevProps.pairwiseComparisonData || (
+      pairwiseComparisonData &&
       prevProps.cellA !== cellA ||
       prevProps.cellB !== cellB ||
-      prevProps.pValueLower !== pValueLower ||
-      prevProps.pValueUpper !== pValueUpper
+      prevProps.pValueThreshhold !== pValueThreshhold
     )
 
     if (needsUpdate) {
