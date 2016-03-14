@@ -1,7 +1,7 @@
 "use strict";
 
 var React = require('react')
-  , embryos = require('../embryos.json')
+  , embryos = require('../../embryos.json')
 
 function embryoName(i) {
   return `${Math.pow(2, i)}-cell`
@@ -21,7 +21,7 @@ module.exports = React.createClass({
   },
 
   render: function () {
-    var Embryo = require('./embryo.jsx')
+    var Embryo = require('../embryo.jsx')
       , { currentCell } = this.props
 
     return (

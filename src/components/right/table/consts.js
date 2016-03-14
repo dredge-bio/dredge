@@ -1,6 +1,6 @@
 "use strict";
 
-var def = require('../../utils/define')(exports)
+var def = require('../../../utils/define')(exports)
 
 
 def('TABLE', 'WIDTH', 1028);

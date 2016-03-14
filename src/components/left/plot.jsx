@@ -30,8 +30,8 @@ const GENE_BIN_MULTIPLIERS = {
  */
 
 
-function PlotVisualization(container, handleGeneDetailsChange) {
-  this.handleGeneDetailsChange = handleGeneDetailsChange;
+function PlotVisualization(container, setBrushedGenes) {
+  this.setBrushedGenes = setBrushedGenes;
 
   this.svg = d3.select(container);
 
@@ -131,7 +131,7 @@ PlotVisualization.prototype = {
   },
 
   updateScalesAndSavedGenes() {
-    var bin = require('../utils/bin')
+    var bin = require('../../utils/bin')
       , cpmMin = Infinity
       , cpmMax = -Infinity
       , fcMin = Infinity
@@ -169,7 +169,7 @@ PlotVisualization.prototype = {
   },
 
   render() {
-    var { x, y, bins, cellA, cellB, handleGeneDetailsChange } = this
+    var { x, y, bins, cellA, cellB, setBrushedGenes } = this
       , xAxis = d3.svg.axis().scale(x).orient('bottom')
       , yAxis = d3.svg.axis().scale(y).orient('left')
       , container
@@ -216,7 +216,7 @@ PlotVisualization.prototype = {
         container.appendChild(this);
       })
       .on('click', function (d) {
-        handleGeneDetailsChange(d.genes);
+        setBrushedGenes(d.genes.map(gene => gene.geneName));
       })
       .append('title').text(d => d.genes.length)
 
@@ -237,9 +237,19 @@ module.exports = React.createClass({
   propTypes: {
     cellA: React.PropTypes.string,
     cellB: React.PropTypes.string,
-    data: React.PropTypes.instanceOf(Immutable.Map),
+    pairwiseComparisonData: React.PropTypes.instanceOf(Immutable.Map),
     savedGenes: React.PropTypes.instanceOf(Immutable.Set),
   },
+
+  // FIXME: need to call this
+  filterPlotData() {
+    var { pairwiseComparisonData, pValueThreshhold } = this.props
+
+    if (!pairwiseComparisonData) return null;
+
+    return pairwiseComparisonData.filter(gene => gene.pValue <= pValueThreshhold)
+  },
+
 
   componentDidUpdate(prevProps) {
     var { cellA, cellB, pValueLower, pValueUpper, data, hoveredGene } = this.props
@@ -262,10 +272,10 @@ module.exports = React.createClass({
   },
 
   componentDidMount() {
-    var { handleGeneDetailsChange } = this.props
+    var { setBrushedGenes } = this.props
 
     this.setState({
-      visualization: new PlotVisualization(this.refs.svg, handleGeneDetailsChange)
+      visualization: new PlotVisualization(this.refs.svg, setBrushedGenes)
     });
   },
 

@@ -2,24 +2,25 @@
 
 var d3 = require('d3')
   , React = require('react')
-  , embryos = require('../embryos.json')
-  , cellNameMap = require('../cell_name_map.json')
+  , Immutable = require('immutable')
+  , embryos = require('../../embryos.json')
+  , cellNameMap = require('../../cell_name_map.json')
 
 
 module.exports = React.createClass({
   displayName: 'GeneHeatMap',
 
   propTypes: {
-    focusedGene: React.PropTypes.string,
-    cellGeneMeasures: React.PropTypes.object
+    focusedGene: React.PropTypes.instanceOf(Immutable.Map),
+    cellGeneExpressionData: React.PropTypes.object
   },
 
   getMeasures() {
-    var { focusedGene, cellGeneMeasures } = this.props
+    var { focusedGene, cellGeneExpressionData } = this.props
       , ret = {}
 
-    Object.keys(cellGeneMeasures).forEach(cell => {
-      ret[cell] = cellGeneMeasures[cell][focusedGene];
+    Object.keys(cellGeneExpressionData).forEach(cell => {
+      ret[cell] = cellGeneExpressionData[cell][focusedGene.get('geneName')];
     });
 
     return ret;
@@ -27,7 +28,7 @@ module.exports = React.createClass({
 
   render () {
     var { focusedGene } = this.props
-      , Embryo = require('./embryo.jsx')
+      , Embryo = require('../embryo.jsx')
       , measures = this.getMeasures()
       , scale
       , step
@@ -44,7 +45,7 @@ module.exports = React.createClass({
         <div className="mr3">
           {
             [0, 1, 2, 3, 4].map(i =>
-              <div key={`${focusedGene}-scale-${i}`}>
+              <div key={`${focusedGene.get('geneName')}-scale-${i}`}>
                 <span style={{
                   display: 'inline-block',
                   width: 20,
@@ -58,7 +59,7 @@ module.exports = React.createClass({
         </div>
           {
             embryos.map((embryoData, i) =>
-              <div className="flex-auto px1" key={`${focusedGene}-embryo-${i}`}>
+              <div className="flex-auto px1" key={`${focusedGene.get('geneName')}-embryo-${i}`}>
                 <Embryo
                   embryoData={embryoData}
                   extraCellAtrs={cellName => ({

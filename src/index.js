@@ -6,4 +6,4 @@ var Application = require('./components/application.jsx')
   , React = require('react')
   , { render } = require('react-dom')
 
-render(React.createElement(Application), document.getElementById('main'));
+render(React.createElement(Application), document.getElementById('application'));

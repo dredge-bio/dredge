@@ -4,34 +4,26 @@
 
 var React = require('react')
   , Immutable = require('immutable')
-  , db = require('../db')()
-  , Sorted = require('./sorted.jsx')
-  , Application
+  , fetchingCells
 
-Application = React.createClass({
+
+module.exports = React.createClass({
+  displayName: 'Application',
+
   getInitialState() {
+    var localSavedGenes = JSON.parse(localStorage.savedGeneNames || '[]');
+
     return {
       // The selected cells
       cellA: 'EMS',
       cellB: 'C',
 
-      // P-Value critical limit (TODO: change into one threshhold value)
-      pValueUpper: 1,
-      pValueLower: 0,
-
       // Genes in the watch list
-      savedGenes: Immutable.OrderedSet(JSON.parse(localStorage.savedGenes || '[]')),
+      savedGeneNames: Immutable.OrderedSet(localSavedGenes),
 
       // Genes brushed in the table
-      detailedGenes: Immutable.OrderedSet(),
+      brushedGeneNames: Immutable.OrderedSet(),
 
-
-      // The gene currently "focused" by the application (e.g. the heat map is
-      // showing)
-      focusedGene: null,
-
-      // The gene currently hovered in the gene table
-      hoveredGene: null,
 
       // The pair of cells currently being fetched. Not to be used by
       // anything but this component, to make sure things aren't fetched
@@ -39,60 +31,36 @@ Application = React.createClass({
       fetchingCells: null,
 
       // The fetched plot data from the file fetched for cellA-cellB
-      plotData: null,
+      pairwiseComparisonData: null,
+      cellGeneExpressionData: null,
 
       // Whether the application is initializing. Will be true until the cell-
       // gene data is fetched.
       initializing: true,
 
       // Whether cell-pair data are currently being fetched
-      loadingCells: false
+      loading: false
     }
   },
 
   componentDidMount() {
+    var fetchCellGeneMeasures = require('../utils/fetch_cell_gene_measures')
+
     setTimeout(this.setCurrentCell, 0);
-    db.datasets.get('cellGeneMeasures', ({ blob }) => {
-      var reader = new FileReader();
 
-      reader.onloadend = () => {
-        this.setState({
-          initializing: false,
-          cellGeneMeasures: JSON.parse(reader.result)
-        });
-      };
-
-      reader.onerror = err => { throw err; }
-
-      reader.readAsText(blob);
-    });
+    fetchCellGeneMeasures().then(cellGeneExpressionData => this.setState({
+      initializing: false,
+      cellGeneExpressionData
+    }));
   },
 
-  handlePValueChange: function (pValueLower, pValueUpper) {
-    this.setState({ pValueLower, pValueUpper });
+  setBrushedGenes(brushedGeneNames) {
+    this.setState({ brushedGeneNames });
   },
 
-  editSavedGenes(add, gene, e) {
-    var { savedGenes } = this.state
-
-    e.preventDefault();
-
-    savedGenes = savedGenes[add ? 'add' : 'delete'](gene);
-    localStorage.savedGenes = JSON.stringify(savedGenes);
-    this.setState({ savedGenes });
-  },
-
-  setFocusedGene(focusedGene) {
-    this.setState({ focusedGene });
-  },
-
-  setHoveredGene(hoveredGene) {
-    this.setState({ hoveredGene });
-  },
-
-
-  setDetailedGenes(genes) {
-    this.setState({ detailedGenes: Immutable.OrderedSet(genes) });
+  setSavedGenes(savedGeneNames) {
+    localStorage.savedGeneNames = JSON.stringify(savedGeneNames);
+    this.setState({ savedGeneNames });
   },
 
   setCurrentCell(cellType, cell) {
@@ -106,29 +74,27 @@ Application = React.createClass({
       cellB = cell;
     }
 
-    this.setState({ detailedGenes: Immutable.OrderedSet([]) })
-
     this.setState({
-      loadingCells: true,
-      fetchingCells: cellA + cellB
-    });
+      loading: true,
+      brushedGeneNames: Immutable.OrderedSet([])
+    })
+
+    fetchingCells = cellA + cellB;
 
     return fetchCellPair(cellA, cellB)
-      .then(null, e => { this.setState({ loadingCells: false }); throw e; })
+      .then(null, e => { this.setState({ loading: false }); throw e; })
       .then(response => {
-        var { fetchingCells } = this.state
-
         // Stop if cells have been changed since fetch started
         if (fetchingCells !== (cellA + cellB)) return;
 
         // TODO: make sure of 200
         response.text()
           .then(processCellData)
-          .then(plotData => {
+          .then(pairwiseComparisonData => {
             // Set the cell/plot data immediately, but let the loading
             // message stick around for a little bit.
-            setTimeout(() => this.setState({ loadingCells: false }), 200);
-            this.setState({ cellA, cellB, plotData });
+            setTimeout(() => this.setState({ loading: false }), 200);
+            this.setState({ cellA, cellB, pairwiseComparisonData });
           });
       })
       .catch(e => {
@@ -138,21 +104,14 @@ Application = React.createClass({
   },
 
   render() {
-    var Display = require('./display.jsx')
-      , { loadingCells, initializing } = this.state
+    var SortedData = require('./sorted_data.jsx')
 
     return (
-      <Display
-          {...this.props}
+      <SortedData
           {...this.state}
-          loading={loadingCells || initializing }
-          editSavedGenes={this.editSavedGenes}
-          handlePValueChange={this.handlePValueChange}
-          setDetailedGenes={this.setDetailedGenes}
-          setCurrentCell={this.setCurrentCell}
-          setFocusedGene={this.setFocusedGene} />
+          setBrushedGenes={this.setBrushedGenes}
+          setSavedGenes={this.setSavedGenes}
+          setCurrentCell={this.setCurrentCell} />
     )
   }
 });
-
-module.exports = Sorted(Application);

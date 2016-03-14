@@ -4,10 +4,42 @@
     <title>Gene expression visualization</title>
     <meta charset="utf8">
     <link rel="stylesheet" href="dist/style.css" />
+    
+    <style type="text/css">
+      header {
+        height: 40px;
+        line-height: 40px;
+
+        color: white;
+        background-color: #370a00;
+
+        border-bottom: 1px solid #ccc;
+        box-sizing: border-box;
+      } 
+
+      header h1 {
+        margin: 0;
+        line-height: 40px;
+
+        font-size: 18px;
+        font-weight: normal;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
   </head>
 
   <body class="bg-main">
-    <div id="main" />
+    <header class="px2 flex flex-justify">
+      <h1>
+        Interactive visualizer of differential gene expression
+        in the early <i>C. elegans</i> embryo
+      </h1>
+      <a href="#" class="bold white">About</a>
+    </header>
+    <main id="application" class="relative" style="height: calc(100vh - 40px)"></main>
     <script type="text/javascript" src="dist/bundle.js"></script>
   </body>
 </html>
