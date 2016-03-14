@@ -92,10 +92,8 @@ function PlotVisualization(container, setBrushedGenes) {
   this.g.select('.x-axis').call(xAxis);
 
 
-  /*
   this.g.append('g')
     .attr('class', 'dots')
-  */
 
   this.g.append('g')
     .attr('class', 'hoverdot')
@@ -110,7 +108,7 @@ PlotVisualization.prototype = {
     cellB,
     pairwiseComparisonData,
     pValueThreshhold,
-    savedGenes,
+    savedGeneNames,
     hoveredGene
   }) {
     this.cellA = cellA;
@@ -119,7 +117,7 @@ PlotVisualization.prototype = {
     this.plotData = pairwiseComparisonData;
     this.filteredPlotData = this.plotData.filter(gene => gene.pValue <= pValueThreshhold);
 
-    this.savedGenes = savedGenes;
+    this.savedGeneNames = savedGeneNames;
 
     this.render();
     this.updateHoveredGene({ hoveredGene });
@@ -158,13 +156,13 @@ PlotVisualization.prototype = {
   },
 
   render() {
-    var { cellA, cellB, setBrushedGenes } = this
+    var { cellA, cellB, savedGeneNames, setBrushedGenes, plotData } = this
       , bins = this.getBins()
       , container
 
     this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.squares-overlay').selectAll('rect').remove();
-    // this.g.select('.dots').selectAll('circle').remove();
+    this.g.select('.dots').selectAll('circle').remove();
 
     this.svg.select('.plot-title').text(`${cellA} - ${cellB}`);
 
@@ -183,7 +181,7 @@ PlotVisualization.prototype = {
         .enter()
       .append('rect')
       .attr('x', d => d.x0 + ((1 - d.multiplier) / 2) * GRID_SQUARE_UNIT)
-      .attr('y', d => d.y0 + ((1 - d.multiplier) / 2) * GRID_SQUARE_UNIT)
+      .attr('y', d => d.y1 + ((1 - d.multiplier) / 2) * GRID_SQUARE_UNIT)
       .attr('width', d => GRID_SQUARE_UNIT * d.multiplier)
       .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
       .attr('fill', '#2566a8')
@@ -192,7 +190,7 @@ PlotVisualization.prototype = {
         .enter()
       .append('rect')
       .attr('x', d => d.x0)
-      .attr('y', d => d.y0)
+      .attr('y', d => d.y1)
       .attr('width', GRID_SQUARE_UNIT)
       .attr('height', GRID_SQUARE_UNIT)
       .attr('fill', '#2566a8')
@@ -205,14 +203,17 @@ PlotVisualization.prototype = {
       })
       .append('title').text(d => d.genes.length)
 
-    /* These were for saved genes, but not really doing that anymore
-    this.g.select('.dots').selectAll('circle').data(savedGenes)
-        .enter()
-      .append('circle')
-      .attr('cx', d => x(d.logCPM))
-      .attr('cy', d => y(d.logFC))
-      .attr('r', 2)
-    */
+    if (savedGeneNames) {
+      let savedGenes = savedGeneNames.map(name => plotData.get(name)).filter(d => d).toArray()
+        debugger;
+      this.g.select('.dots').selectAll('circle').data(savedGenes)
+          .enter()
+        .append('circle')
+        .attr('cx', d => this.x(d.logCPM))
+        .attr('cy', d => this.y(d.logFC))
+        .attr('r', 2)
+        .attr('fill', 'red')
+    }
   },
 }
 
@@ -228,12 +229,13 @@ module.exports = React.createClass({
   },
 
   componentDidUpdate(prevProps) {
-    var { cellA, cellB, pValueThreshhold, pairwiseComparisonData, hoveredGene } = this.props
+    var { cellA, cellB, pValueThreshhold, pairwiseComparisonData, hoveredGene, savedGeneNames } = this.props
       , { visualization } = this.state
       , needsUpdate
 
     needsUpdate = pairwiseComparisonData && !prevProps.pairwiseComparisonData || (
       pairwiseComparisonData &&
+      prevProps.savedGeneNames !== savedGeneNames ||
       prevProps.cellA !== cellA ||
       prevProps.cellB !== cellB ||
       prevProps.pValueThreshhold !== pValueThreshhold
