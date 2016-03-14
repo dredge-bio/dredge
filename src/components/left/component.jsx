@@ -24,10 +24,7 @@ LeftPanel = props => (
 
     <div className="flex-auto flex flex-center flex-stretch">
       <CellPlot {...props} />
-
-      <CellPValueSelector
-        onPValueChange={props.setPValueThreshhold}
-        data={props.pairwiseComparisonData} />
+      <CellPValueSelector {...props} />
     </div>
 
     <div style={{ height: 120 }}>
