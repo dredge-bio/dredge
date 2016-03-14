@@ -50,7 +50,7 @@ function GeneRow({
 
 
   return (
-    <tr className={className} onClick={() => setFocusedGene(geneData)}>
+    <tr className={className} onClick={() => setFocusedGene(geneData, !saved)}>
       <td>{ firstColumn }</td>
       <td>{ geneName }</td>
       <td>{ dashesOrFixed(data.pValue, 3) }</td>

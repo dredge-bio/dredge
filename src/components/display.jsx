@@ -23,11 +23,82 @@ module.exports = React.createClass({
       pValueThreshhold: 1,
       hoveredGene: null,
       focusedGene: null,
+      focusedGeneInBrushed: false,
     }
   },
 
-  setFocusedGene(focusedGene) {
-    this.setState({ focusedGene });
+  componentDidMount() {
+    window.addEventListener('keydown', e => {
+      switch(e.code) {
+      case "KeyJ":
+        this.focusNextGene();
+        break;
+      case "KeyK":
+        this.focusPreviousGene();
+        break;
+      }
+    });
+  },
+
+  focusNextGene() {
+    var { savedGenes, brushedGenes } = this.props
+      , { focusedGene, focusedGeneInBrushed } = this.state
+
+    savedGenes = savedGenes.toList();
+    brushedGenes = brushedGenes.toList();
+
+    if (!focusedGene) {
+      if (savedGenes.size) {
+        this.setFocusedGene(savedGenes.first());
+      } else if (brushedGenes.size) {
+        this.setFocusedGene(brushedGenes.first(), true);
+      }
+    } else if (focusedGeneInBrushed) {
+      let idx = brushedGenes.indexOf(focusedGene);
+
+      if (idx + 1 !== brushedGenes.size) {
+        this.setFocusedGene(brushedGenes.get(idx + 1), true);
+      }
+    } else {
+      let idx = savedGenes.indexOf(focusedGene);
+
+      if (idx + 1 !== savedGenes.size) {
+        this.setFocusedGene(savedGenes.get(idx + 1));
+      } else if (brushedGenes.size) {
+        this.setFocusedGene(brushedGenes.first(), true);
+      }
+    }
+  },
+
+  focusPreviousGene() {
+    var { savedGenes, brushedGenes } = this.props
+      , { focusedGene, focusedGeneInBrushed } = this.state
+
+    savedGenes = savedGenes.toList();
+    brushedGenes = brushedGenes.toList();
+
+    if (!focusedGene) {
+      this.focusNextGene();
+    } else if (focusedGeneInBrushed) {
+      let idx = brushedGenes.indexOf(focusedGene);
+
+      if (idx !== 0) {
+        this.setFocusedGene(brushedGenes.get(idx - 1), true);
+      } else if (savedGenes.size) {
+        this.setFocusedGene(savedGenes.last());
+      }
+
+    } else {
+      let idx = savedGenes.indexOf(focusedGene);
+
+      if (idx > 0) {
+        this.setFocusedGene(savedGenes.get(idx - 1));
+      }
+    }
+  },
+
+  setFocusedGene(focusedGene, focusedGeneInBrushed=false) {
+    this.setState({ focusedGene, focusedGeneInBrushed });
   },
 
   setHoveredGene(hoveredGene) {
