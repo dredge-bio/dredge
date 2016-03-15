@@ -15,14 +15,16 @@ Embryo = ({
       {...svg_attrs}>
     <g {...g1_attrs}>
       <g {...g2_attrs}>
-        { cells.map(({ type, cell_name, attrs }) =>
+        {
+          cells.map(({ type, cell_name, attrs }) =>
             React.createElement(type, Object.assign({}, attrs, {
                 key: cell_name,
                 className: "CellShape",
                 onClick: () => onSelectCell(cell_name),
                 fill: cell_name === currentCell ? "#ccc" : "#fff"
             }, extraCellAtrs ? extraCellAtrs(cell_name) : {}))
-        )}
+          )
+        }
       </g>
     </g>
   </svg>

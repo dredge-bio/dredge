@@ -19,6 +19,7 @@ LeftPanel = props => (
     <div style={{ height: 120 }}>
       <CellSelector
           currentCell={props.cellA}
+          labelOrientation="bottom"
           onSelectCell={props.setCurrentCell.bind(null, 'A')} />
     </div>
 
@@ -30,6 +31,7 @@ LeftPanel = props => (
     <div style={{ height: 120 }}>
       <CellSelector
         currentCell={props.cellB}
+          labelOrientation="top"
         onSelectCell={props.setCurrentCell.bind(null, 'B')} />
     </div>
   </section>
