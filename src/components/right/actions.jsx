@@ -78,6 +78,7 @@ module.exports = React.createClass({
       var text = ee.target.result
         , names = text.split('\n').map(row => row.split(',')[0])
 
+      this.refs.import.value = '';
       setSavedGenes(savedGeneNames.union(names));
     }
 
