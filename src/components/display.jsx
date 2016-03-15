@@ -16,6 +16,7 @@ function Loading() {
 
 const MIN_LEFT_WIDTH = 400
     , MIN_RIGHT_WIDTH = 600
+    , MIN_HEIGHT = 600
 
 
 module.exports = React.createClass({
@@ -25,7 +26,7 @@ module.exports = React.createClass({
     return {
       leftPanelWidth: null,
       rightPanelWidth: null,
-      height: document.getElementById('application').clientHeight,
+      height: null,
       pValueThreshhold: 1,
       hoveredGene: null,
       focusedGene: null,
@@ -36,13 +37,15 @@ module.exports = React.createClass({
   componentDidMount() {
     var leftPanelWidth = window.innerWidth * .42
       , rightPanelWidth = window.innerWidth * .58
+      , height = document.getElementById('application').clientHeight
 
     if (leftPanelWidth < MIN_LEFT_WIDTH) leftPanelWidth = MIN_LEFT_WIDTH;
     if (rightPanelWidth < MIN_RIGHT_WIDTH) rightPanelWidth = MIN_RIGHT_WIDTH;
+    if (height < MIN_HEIGHT) height = MIN_HEIGHT;
 
     leftPanelWidth -= 40;
 
-    this.setState({ leftPanelWidth, rightPanelWidth });
+    this.setState({ leftPanelWidth, rightPanelWidth, height });
 
     window.addEventListener('keydown', e => {
       switch(e.code) {
