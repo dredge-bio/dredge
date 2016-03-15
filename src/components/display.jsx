@@ -131,7 +131,7 @@ module.exports = React.createClass({
   render: function () {
     var LeftPanel = require('./left/component.jsx')
       , RightPanel = require('./right/component.jsx')
-      , { loading } = this.props
+      , { loading, initializing } = this.props
       , { leftPanelWidth, rightPanelWidth } = this.state
 
     return (
@@ -155,7 +155,7 @@ module.exports = React.createClass({
           )
         }
 
-        { loading && <Loading /> }
+        { (loading || initializing) && <Loading /> }
       </div>
     )
   }
