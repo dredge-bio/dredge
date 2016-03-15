@@ -8,34 +8,48 @@ var React = require('react')
   , LeftPanel
 
 
-LeftPanel = props => (
-  <section className="flex flex-column" style={{
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '50%',
-    height: '100%'
-  }}>
-    <div style={{ height: 120 }}>
-      <CellSelector
-          currentCell={props.cellA}
-          labelOrientation="bottom"
-          onSelectCell={props.setCurrentCell.bind(null, 'A')} />
-    </div>
+const SELECTOR_HEIGHT = 120
+    , PVALUE_SELECTOR_WIDTH = 100
 
-    <div className="flex-auto flex flex-center flex-stretch">
-      <CellPlot {...props} />
-      <CellPValueSelector {...props} />
-    </div>
+LeftPanel = props => {
+  var width = props.leftPanelWidth
+    , plotHeight = props.height - 2 * SELECTOR_HEIGHT;
 
-    <div style={{ height: 120 }}>
-      <CellSelector
-        currentCell={props.cellB}
-          labelOrientation="top"
-        onSelectCell={props.setCurrentCell.bind(null, 'B')} />
-    </div>
-  </section>
-)
+  return (
+    <section style={{
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      width
+    }}>
+      <div style={{ height: SELECTOR_HEIGHT }}>
+        <CellSelector
+            currentCell={props.cellA}
+            labelOrientation="bottom"
+            onSelectCell={props.setCurrentCell.bind(null, 'A')} />
+      </div>
+
+      <div style={{ height: plotHeight }}>
+        <CellPlot
+            {...props}
+            height={plotHeight}
+            width={width - PVALUE_SELECTOR_WIDTH} />
+        <CellPValueSelector
+            {...props}
+            height={plotHeight}
+            width={PVALUE_SELECTOR_WIDTH} />
+      </div>
+
+      <div style={{ height: SELECTOR_HEIGHT }}>
+        <CellSelector
+          currentCell={props.cellB}
+            labelOrientation="top"
+          onSelectCell={props.setCurrentCell.bind(null, 'B')} />
+      </div>
+    </section>
+  )
+}
 
 
 LeftPanel.propTypes = {

@@ -6,14 +6,17 @@ var React = require('react')
   , formatCellName = require('../../utils/format_cell_name')
 
 
-const dimensions = {
-  PLOT_HEIGHT: 500,
-  PLOT_WIDTH: 500,
-  PADDING: 60
-}
+const SVG_PADDING = 60
 
-dimensions.SVG_HEIGHT = dimensions.PLOT_HEIGHT + (2 * dimensions.PADDING);
-dimensions.SVG_WIDTH = dimensions.PLOT_WIDTH + (2 * dimensions.PADDING);
+function getDimensions(SVG_WIDTH, SVG_HEIGHT) {
+  return {
+    SVG_WIDTH,
+    SVG_HEIGHT,
+    PADDING: SVG_PADDING,
+    PLOT_WIDTH: SVG_WIDTH - 2 * SVG_PADDING,
+    PLOT_HEIGHT: SVG_HEIGHT - 2 * SVG_PADDING
+  }
+}
 
 const GRID_SQUARE_UNIT = 8;
 
@@ -35,10 +38,11 @@ function withinBounds([min, max], value) {
  */
 
 
-function PlotVisualization(container, setBrushedGenes) {
+function PlotVisualization(container, dimensions, setBrushedGenes) {
   var that = this;
 
   this.setBrushedGenes = setBrushedGenes;
+  this.dimensions = dimensions;
 
   this.svg = d3.select(container);
 
@@ -106,9 +110,6 @@ function PlotVisualization(container, setBrushedGenes) {
     .attr('class', 'hoverdot')
 
   this.g.append('g')
-    .attr('class', 'squares-overlay')
-
-  this.g.append('g')
     .attr('class', 'brush')
     .call(
       d3.svg.brush()
@@ -133,11 +134,15 @@ function PlotVisualization(container, setBrushedGenes) {
 
           brushedBins.attr('fill', 'purple');
 
-          setBrushedGenes(Immutable.List(
+          setBrushedGenes(Immutable.OrderedSet(
             Array.prototype.concat.apply([],
               brushedBins.data().map(bin => bin.genes.map(gene => gene.geneName)))))
         })
     )
+
+  this.g.append('g')
+    .attr('class', 'squares-overlay')
+
 }
 
 PlotVisualization.prototype = {
@@ -196,7 +201,7 @@ PlotVisualization.prototype = {
   },
 
   render() {
-    var { cellA, cellB, savedGeneNames, setBrushedGenes, plotData } = this
+    var { cellA, cellB, dimensions, savedGeneNames, setBrushedGenes, plotData } = this
       , bins = this.getBins()
       , container
 
@@ -289,23 +294,22 @@ module.exports = React.createClass({
   },
 
   componentDidMount() {
-    var { setBrushedGenes } = this.props
+    var { setBrushedGenes, width, height } = this.props
 
     this.setState({
-      visualization: new PlotVisualization(this.refs.svg, setBrushedGenes)
+      visualization: new PlotVisualization(this.refs.svg, getDimensions(width, height), setBrushedGenes)
     });
   },
 
   render() {
-    var { SVG_HEIGHT, SVG_WIDTH } = dimensions
+    var { width, height } = this.props
 
     return (
       <svg
           ref="svg"
-          style={{ width: 'auto', height: 'auto' }}
-          width={SVG_WIDTH}
-          height={SVG_HEIGHT}
-          viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} />
+          className="left"
+          width={width}
+          height={height} />
     )
   }
 });

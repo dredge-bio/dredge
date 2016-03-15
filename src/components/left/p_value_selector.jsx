@@ -18,7 +18,7 @@ module.exports = React.createClass({
   },
 
   render: function () {
-    var { cellA, cellB, pValueThreshhold, setPValueThreshhold, pairwiseComparisonData } = this.props
+    var { cellA, cellB, pValueThreshhold, width, height, setPValueThreshhold, pairwiseComparisonData } = this.props
       , histogram
       , scale
 
@@ -34,7 +34,7 @@ module.exports = React.createClass({
     }
 
     return (
-      <div className="flex flex-column">
+      <div className="left border-box py2 flex flex-column" style={{ width, height }}>
         <div className="flex-none mb2">
         p-value cutoff
         </div>
@@ -49,24 +49,22 @@ module.exports = React.createClass({
               max="1"
               step=".01" />
         </div>
-        <div className="flex-grow" style={{ width: 100, position: 'relative' }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-          }}>
-            <div style={{ borderLeft: '1px solid black' }}>
+        <div className="flex-grow relative">
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
+            <div style={{
+              position: 'absolute',
+              height: '100%',
+              left: 18,
+              right: 0
+            }}>
               {
                 histogram && histogram.reverse().map((ct, i) =>
                   <span
                       key={`${cellA}${cellB}-${i}`}
-                      className="inline-block absolute"
+                      className="inline-block absolute border-box"
                       style={{
                         height: '1%',
                         top: `${i}%`,
-                        left: 12,
                         width: `${scale(ct)}%`,
                         background: 'maroon',
                         opacity: (100 - i) <= pValueThreshhold * 100 ? 1 : .33
@@ -80,9 +78,8 @@ module.exports = React.createClass({
                 orient="vertical"
                 value={pValueThreshhold}
                 style={{
-                  width: 0,
+                  width: 18,
                   height: '100%',
-                  zIndex: 10
                 }}
                 onChange={e => setPValueThreshhold(parseFloat(e.target.value))}
                 min="0"

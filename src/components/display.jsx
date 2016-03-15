@@ -20,6 +20,9 @@ module.exports = React.createClass({
 
   getInitialState() {
     return {
+      leftPanelWidth: 500,
+      rightPanelWidth: 1000,
+      height: document.getElementById('application').clientHeight,
       pValueThreshhold: 1,
       hoveredGene: null,
       focusedGene: null,
