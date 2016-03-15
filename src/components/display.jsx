@@ -14,14 +14,17 @@ function Loading() {
   }}>Loading...</div>
 }
 
+const MIN_LEFT_WIDTH = 400
+    , MIN_RIGHT_WIDTH = 600
+
 
 module.exports = React.createClass({
   displayName: 'Display',
 
   getInitialState() {
     return {
-      leftPanelWidth: 500,
-      rightPanelWidth: 1000,
+      leftPanelWidth: null,
+      rightPanelWidth: null,
       height: document.getElementById('application').clientHeight,
       pValueThreshhold: 1,
       hoveredGene: null,
@@ -31,6 +34,16 @@ module.exports = React.createClass({
   },
 
   componentDidMount() {
+    var leftPanelWidth = window.innerWidth * .42
+      , rightPanelWidth = window.innerWidth * .58
+
+    if (leftPanelWidth < MIN_LEFT_WIDTH) leftPanelWidth = MIN_LEFT_WIDTH;
+    if (rightPanelWidth < MIN_RIGHT_WIDTH) rightPanelWidth = MIN_RIGHT_WIDTH;
+
+    leftPanelWidth -= 40;
+
+    this.setState({ leftPanelWidth, rightPanelWidth });
+
     window.addEventListener('keydown', e => {
       switch(e.code) {
       case "KeyJ":
@@ -116,19 +129,29 @@ module.exports = React.createClass({
     var LeftPanel = require('./left/component.jsx')
       , RightPanel = require('./right/component.jsx')
       , { loading } = this.props
+      , { leftPanelWidth, rightPanelWidth } = this.state
 
     return (
       <div>
-        <LeftPanel
-            {...this.props}
-            {...this.state}
-            setPValueThreshhold={this.setPValueThreshhold} />
+        {
+          leftPanelWidth && (
+            <LeftPanel
+                {...this.props}
+                {...this.state}
+                setPValueThreshhold={this.setPValueThreshhold} />
+          )
+        }
 
-        <RightPanel
-            {...this.props}
-            {...this.state}
-            setFocusedGene={this.setFocusedGene}
-            setHoveredGene={this.setHoveredGene} />
+        {
+          rightPanelWidth && (
+            <RightPanel
+                {...this.props}
+                {...this.state}
+                setFocusedGene={this.setFocusedGene}
+                setHoveredGene={this.setHoveredGene} />
+          )
+        }
+
         { loading && <Loading /> }
       </div>
     )
