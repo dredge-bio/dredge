@@ -5,8 +5,8 @@ var Dexie = require('dexie')
 
 function seedData(db) {
   var promises = [
-    fetch('data/20150807_geneExpressionAvg.csv'),
-    fetch('data/20150807_geneExpressionMed.csv')
+    fetch('data/20160315_geneExpressionAvg.csv'),
+    fetch('data/20160315_geneExpressionMed.csv')
   ]
 
   return new Dexie.Promise((resolve, reject) => {
