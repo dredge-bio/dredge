@@ -178,7 +178,8 @@ module.exports = React.createClass({
           addingGenes && addingGeneText && alternateGeneNames && (
             <div className="absolute px2 py1" style={{
               width: 400,
-              top: '46px',
+              top: '72px',
+              zIndex: 10,
               border: '1px solid #ccc',
               background: '#f0f0f0'
             }}>
