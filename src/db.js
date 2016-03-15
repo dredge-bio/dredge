@@ -46,7 +46,7 @@ function seedData(db) {
       }
 
       return db.datasets.put({
-        name: 'cellGeneMeasures',
+        name: 'cellGeneMeasuress',
         blob: new Blob([JSON.stringify(data)], { type: 'application/json' })
       });
     });
@@ -58,7 +58,7 @@ module.exports = function () {
 
     _db.version(1).stores({ datasets: 'name' })
 
-    _db.on('ready', () => _db.datasets.get('cellGeneMeasures', d => d || seedData(_db)))
+    _db.on('ready', () => _db.datasets.get('cellGeneMeasuress', d => d || seedData(_db)))
 
     _db.open();
   }
