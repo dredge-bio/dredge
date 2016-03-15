@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Gene expression visualization</title>
+    <meta charset="utf8">
+    <link rel="stylesheet" href="dist/style.css" />
+    
+    <style type="text/css">
+      header {
+        height: 40px;
+        line-height: 40px;
+
+        color: white;
+        background-color: #370a00;
+
+        border-bottom: 1px solid #ccc;
+        box-sizing: border-box;
+      } 
+
+      header h1 {
+        margin: 0;
+        line-height: 40px;
+
+        font-size: 18px;
+        font-weight: normal;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      main section {
+        width: 6in;
+        padding-left: .5in;
+        float: left;
+      }
+
+
+    </style>
+  </head>
+
+  <body class="bg-main">
+    <header class="px2 flex flex-justify">
+      <h1>
+        <a class="white" href="/">
+          Interactive visualizer of differential gene expression
+          in the early <i>C. elegans</i> embryo
+        </a>
+      </h1>
+      <a href="about.html" class="bold white">About</a>
+    </header>
+    <main id="application" class="relative" style="height: calc(100vh - 40px)">
+      <section>
+        <h2>About</h2>
+        <p>
+        This is an interactive tool for comparing transcript abundance between each cell of the <i>C. elegans</i> embryo from the 1- to 16- cell stage.
+        </p>
+
+        <p>
+        At the center of the tool is an MA plot, which plots genes by their average expression 
+        level (x-axis), and by the extent to which transcripts are enriched in one of two samples being compared (y-axis). The user can select which two samples t hey wish to compare by clicking on cells or whole embryos above and below the plot.
+        </p>
+
+        <p>
+        Once the MA plot shows a comparison of interest, the user can filter results by significance of differential expression (via the P-value slider to the right). The user can select specific genes by clicking on pixels within the MA plot. When each pixel is clicked, the gene(s) represented by that pixel will show up in the table on the right. The user can add any of these genes to a "watched gene list", which will keep those g enes highlighted in subsequent MA plots. The user can also select large swaths of genes by dragging the mouse over a section of the MA plot.
+        </p>
+
+        <p>
+        The watched gene list can be sorted by a number of features (enrichment in on sample or 
+        the other, average abundan
+        ce, and others), and can also be exported. To view a summary 
+        of gene expression in all samples through all time points, the user can click on any gene 
+        name in the table, and retrieve a pictogram of all stages, with cells colored by quantitative 
+        expression 
+        data.
+        </p>
+    </section>
+
+    <section>
+      <h2>Attribution</h2>
+      <p>
+      Designed by Sophia Tintori and Patrick Golden
+      </p>
+
+      <p>
+      Coded by Patrick Golden
+      </p>
+
+      <div>Please cite this tool as:</div>
+      <div style="margin-left: 1em;">
+      Tintori, SC, Osborne Nishimura, E, Golden, PT, Lieb, JD, Goldstein, B. 2016. A 
+      Transcriptional Lineage of Early C. Elegans Development. (In Preparation).
+      </div>
+    </section>
+
+    </main>
+  </body>
+</html>
