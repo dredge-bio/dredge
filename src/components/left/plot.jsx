@@ -67,7 +67,7 @@ function PlotVisualization(container, dimensions, setBrushedGenes) {
     .style('font-size', '24px')
 
   this.svg.append('text')
-    .text('log FC')
+    .text('log₂ (Fold Change)')
     .style('font-weight', 'bold')
     .attr('y', dimensions.SVG_HEIGHT / 2)
     .attr('text-anchor', 'middle')
@@ -78,7 +78,7 @@ function PlotVisualization(container, dimensions, setBrushedGenes) {
     //.attr('transform', `rotate(-90) translate(-${dimensions.SVG_HEIGHT}, 20)`)
 
   this.svg.append('text')
-    .text('log CPM')
+    .text('log₂ (Average Transcript Level)')
     .style('font-weight', 'bold')
     .attr('x', dimensions.PLOT_WIDTH / 2)
     .attr('text-anchor', 'middle')
