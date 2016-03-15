@@ -1,6 +1,8 @@
 "use strict";
 
 var React = require('react')
+  , Immutable = require('immutable')
+  , { saveAs } = require('filesaver.js')
 
 module.exports = React.createClass({
   displayName: 'Actions',
@@ -10,6 +12,8 @@ module.exports = React.createClass({
 
   getInitialState() {
     return {
+      addingGenes: false,
+      addingGeneText: '',
       alternateGeneNames: null,
       alternateGeneNamesSeq: null
     }
@@ -34,39 +38,139 @@ module.exports = React.createClass({
 
     setTimeout(() => {
       this.refs.search.focus();
-    }, 10);
+    }, 1);
+  },
+
+  handleSelectGene(name) {
+    var { setSavedGenes, savedGeneNames } = this.props
+
+    setSavedGenes(savedGeneNames.add(name));
+
+    this.setState({
+      addingGenes: false,
+      addingGeneText: ''
+    });
+  },
+
+  handleAddBrushedGenes() {
+    var { brushedGenes, savedGeneNames, setSavedGenes } = this.props
+
+    setSavedGenes(savedGeneNames.union(brushedGenes.map(gene => gene.get('geneName'))));
+  },
+
+  handleClearSavedGenes() {
+    var { setSavedGenes } = this.props
+
+    setSavedGenes(Immutable.OrderedSet());
+  },
+
+  handleImport() {
+    this.refs.import.dispatchEvent(new MouseEvent('click'));
+  },
+
+  handleImportUpload(e) {
+    var { setSavedGenes, savedGeneNames } = this.props
+      , reader = new FileReader()
+      , file = e.target.files[0]
+
+    // TODO: only allow valid names
+    reader.onload = ee => {
+      var text = ee.target.result
+        , names = text.split('\n').map(row => row.split(',')[0])
+
+      setSavedGenes(savedGeneNames.union(names));
+    }
+
+    reader.readAsText(file);
+  },
+
+  handleExport() {
+    var { savedGenes } = this.props
+      , csv = ''
+      , blob
+
+    savedGenes.forEach(gene => {
+
+      csv += [
+        gene.get('geneName'),
+        gene.get('pValue'),
+        gene.get('logCPM'),
+        gene.get('logFC')
+      ].join(',');
+
+      csv += '\n';
+    });
+
+    csv = csv.trim();
+
+    blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    saveAs(blob, 'exported_genes.csv');
   },
 
   render() {
-    var { addingGenes, addingGeneText, editSavedGenes } = this.props
-      , { alternateGeneNames, alternateGeneNamesSeq } = this.state
+    var { brushedGenes, savedGenes } = this.props
+      , { alternateGeneNames, alternateGeneNamesSeq, addingGenes, addingGeneText } = this.state
+      , btnClassName = "btn btn-outline bg-white btn-small mr2"
+
     return (
       <div>
+        <h2 className="m0 mb1 h4">Watched genes</h2>
         <div>
           {
-            !addingGenes ?
+            !addingGenes && (
               <div style={{ fontSize: '14px' }}>
-                <button className="btn btn-outline bg-white btn-small mr2" onClick={this.handleClickAddGene}>
-                  Add watched gene
+                <button
+                    className={btnClassName}
+                    onClick={this.handleClickAddGene}>
+                  Search
                 </button>
-                <button className="btn btn-outline bg-white btn-small mr2">
-                  Watch all
+                <button
+                    className={btnClassName}
+                    disabled={!brushedGenes.size}
+                    onClick={this.handleAddBrushedGenes}>
+                  Add brushed
                 </button>
-                <button className="btn btn-outline bg-white btn-small mr2">
-                  Clear watched genes
+                <button
+                    className={btnClassName}
+                    disabled={!savedGenes.size}
+                    onClick={this.handleClearSavedGenes}>
+                  Clear all
+                </button>
+
+                <button
+                    className={btnClassName + ' right'}
+                    onClick={this.handleImport}>
+                  Import
+                </button>
+
+                <input
+                    type="file"
+                    ref="import"
+                    accept="text/csv"
+                    onChange={this.handleImportUpload}
+                    style={{
+                      position: 'absolute',
+                      top: -1000
+                    }} />
+
+                <button
+                    className={btnClassName + ' right'}
+                    disabled={!savedGenes.size}
+                    onClick={this.handleExport}>
+                  Export
                 </button>
               </div>
-              : (
-                <div>
-                  <input
-                      ref="search"
-                      type="text"
-                      className="field"
-                      onBlur={() => this.setState({ addingGeneText: '', addingGenes: false })}
-                      onChange={e => this.setState({ addingGeneText: e.target.value })} />
-                </div>
-              )
+            )
           }
+
+          <div className={addingGenes ? '' : "hide"}>
+            <input
+                ref="search"
+                type="text"
+                className="field"
+                value={addingGeneText}
+                onChange={e => this.setState({ addingGeneText: e.target.value })} />
+          </div>
         </div>
 
         {
@@ -83,7 +187,7 @@ module.exports = React.createClass({
                   .take(20)
                   .map((v, k) =>
                     <div key={k}>
-                      <a onMouseDown={editSavedGenes.bind(null, true, v)}>
+                      <a onMouseDown={this.handleSelectGene.bind(null, v)}>
                         { k } { k !== v && `(aka ${v})` }
                       </a>
                     </div>

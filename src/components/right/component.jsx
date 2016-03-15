@@ -15,7 +15,11 @@ RightPanel = props => (
     height: '100%'
   }}>
     <div className="flex-none px2 py1">
-      <Actions {...props} />
+      {
+        props.pairwiseComparisonData &&
+        props.cellGeneExpressionData &&
+        <Actions {...props} />
+      }
     </div>
 
     <div className="flex-auto flex flex-stretch">
