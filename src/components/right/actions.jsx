@@ -113,7 +113,7 @@ module.exports = React.createClass({
       , btnClassName = "btn btn-outline bg-white btn-small mr2"
 
     return (
-      <div>
+      <div className="px2 py1">
         <h2 className="m0 mb1 h4">Watched genes</h2>
         <div>
           {

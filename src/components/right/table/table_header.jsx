@@ -1,7 +1,6 @@
 "use strict";
 
 var React = require('react')
-  , consts = require('./consts')
   , formatCellName = require('../../../utils/format_cell_name')
   , TableHeader
 
@@ -18,71 +17,73 @@ const FIELDS = [
 ]
 
 
-TableHeader = ({ cellA, cellB, sortBy, sortOrder, toggleSort }) => (
-  <g>
-    <rect
-        x="0"
-        y="0"
-        width={consts.TABLE.WIDTH}
-        height={consts.TABLE_HEADER.HEIGHT * 2}
-        fill={consts.TABLE_HEADER.BGCOLOR} />
-
-    <g>
-      { [cellA, cellB].map((cellName, i) =>
-          <text
+TableHeader = ({
+  cellA,
+  cellB,
+  sortBy,
+  sortOrder,
+  toggleSort,
+  COLUMN_WIDTHS,
+  COLUMN_STARTS,
+  COLUMN_PL=12,
+  HEADER_HEIGHT
+}) => (
+  <div style={{
+    height: HEADER_HEIGHT,
+    background: '#f0f0f0'
+  }}>
+    <div style={{
+      position: 'relative',
+      height: HEADER_HEIGHT / 2,
+      borderBottom: '#ccc',
+      boxSizing: 'border-box'
+    }}>
+      {
+        [cellA, cellB].map((cellName, i) =>
+          <span
               key={`${cellName}-${i}`}
-              x={consts.TABLE.COLUMN_STARTS[5 + (2 * i)] + consts.TABLE_HEADER.PL}
-              y={consts.TABLE_HEADER.HEIGHT * .5}
-              textAnchor="start"
               style={{
-                fontWeight: "bold",
-                dominantBaseline: "middle"
+                position: 'absolute',
+                left: COLUMN_STARTS[5 + (2 * i)] + COLUMN_PL,
+                fontWeight: "bold"
               }}>
             { formatCellName(cellName) }
-          </text>
-      )}
-    </g>
-
-    <line
-        x1={consts.TABLE.COLUMN_STARTS[5]}
-        x2={consts.TABLE.WIDTH}
-        y1={consts.TABLE_HEADER.HEIGHT}
-        y2={consts.TABLE_HEADER.HEIGHT}
-        stroke="#ccc" />
-
-    <g>
-      {
-        FIELDS.map(([field, label], i) =>
-          <g key={field}>
-            <text
-                x={consts.TABLE.COLUMN_STARTS[i + 1] + consts.TABLE_HEADER.PL}
-                y={consts.TABLE_HEADER.HEIGHT * 1.5}
-                textAnchor="start"
-                style={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  dominantBaseline: "middle"
-                }}>
-              {
-                label + (
-                  sortBy !== field ? '' :
-                    sortOrder === 'asc' ? ' ▴' : ' ▾'
-                  )
-              }
-            </text>
-            <rect
-                fill="transparent"
-                onClick={toggleSort.bind(null, field)}
-                style={{ cursor: 'pointer' }}
-                x={consts.TABLE.COLUMN_STARTS[i + 1]}
-                y={consts.TABLE_HEADER.HEIGHT}
-                width={consts.TABLE.COLUMN_WIDTHS[i + 1]}
-                height={consts.TABLE_HEADER.HEIGHT} />
-          </g>
+          </span>
         )
       }
-    </g>
-  </g>
+    </div>
+    <div style={{
+      position: 'relative',
+      height: HEADER_HEIGHT / 2,
+      borderBottom: '#ccc',
+      boxSizing: 'border-box'
+    }}>
+      {
+        FIELDS.map(([field, label], i) =>
+          <span
+              key={field}
+              onClick={toggleSort.bind(null, field)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: COLUMN_STARTS[i + 1] + COLUMN_PL,
+                width: COLUMN_WIDTHS[i + 1] - COLUMN_PL,
+                fontWeight: "bold",
+                fontSize: "14px",
+                cursor: 'pointer'
+              }}>
+            {
+              label + (
+                sortBy !== field ? '' :
+                  sortOrder === 'asc' ? ' ▴' : ' ▾'
+                )
+            }
+          </span>
+        )
+      }
+    </div>
+  </div>
 )
 
 

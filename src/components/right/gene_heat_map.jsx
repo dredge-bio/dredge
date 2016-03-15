@@ -27,9 +27,10 @@ module.exports = React.createClass({
   },
 
   render () {
-    var { focusedGene } = this.props
+    var { focusedGene, height } = this.props
       , Embryo = require('../embryo.jsx')
       , measures = this.getMeasures()
+      , squareHeight = ((height - 28) / 5) - 2
       , scale
       , step
 
@@ -41,22 +42,34 @@ module.exports = React.createClass({
     step = d3.max(scale.domain()) / 4
 
     return (
-      <div className="flex flex-center">
-        <div className="mr3">
-          {
-            [0, 1, 2, 3, 4].map(i =>
-              <div key={`${focusedGene.get('geneName')}-scale-${i}`}>
-                <span style={{
-                  display: 'inline-block',
-                  width: 20,
-                  height: 20,
-                  backgroundColor: scale(i * step)
-                }}> </span>
-                <span>{ i * step }</span>
-              </div>
-            )
-          }
-        </div>
+      <div>
+        <h4 className="m0 mb1"> {/* height is 28px */}
+          { focusedGene.get('geneName') }
+        </h4>
+        <div className="flex">
+          <div className="flex-none">
+            {
+              [0, 1, 2, 3, 4].map(i =>
+                <div className="relative" style={{
+                  height: squareHeight,
+                  width: 120,
+                  lineHeight: squareHeight + 'px'
+                }}>
+                  <span
+                      key={`${focusedGene.get('geneName')}-scale-${i}`}
+                      style={{
+                        position: 'absolute',
+                        backgroundColor: scale(i * step),
+                        width: squareHeight,
+                        height: squareHeight,
+                      }}> </span>
+                  <span style={{ marginLeft: squareHeight + 2 }}>
+                    { i * step }
+                  </span>
+                </div>
+              )
+            }
+          </div>
           {
             embryos.map((embryoData, i) =>
               <div className="flex-auto px1" key={`${focusedGene.get('geneName')}-embryo-${i}`}>
@@ -72,6 +85,7 @@ module.exports = React.createClass({
               </div>
             )
           }
+        </div>
       </div>
     )
   }

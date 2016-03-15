@@ -1,8 +1,43 @@
 "use strict";
 
 var React = require('react')
-  , consts = require('./consts')
 
+
+function ColGroup({ COLUMN_WIDTHS }) {
+  return (
+    <colgroup>
+      { COLUMN_WIDTHS.map((width, i) => <col key={i} width={width} />) }
+    </colgroup>
+  )
+}
+
+function dimensions(width, height) {
+  var COLUMN_WIDTHS = [
+    85,
+    85,
+    85,
+    115,
+    115,
+    115,
+    115,
+  ]
+
+  COLUMN_WIDTHS.unshift(width - COLUMN_WIDTHS.reduce((a, b) => a + b, 0) - 30);
+  COLUMN_WIDTHS.unshift(30);
+
+  var d = {
+    COLUMN_WIDTHS,
+    HEADER_HEIGHT: 48,
+    NUM_VISIBLE_ROWS: 20,
+  }
+
+  d.COLUMN_STARTS = d.COLUMN_WIDTHS.map((w, i, cols) => cols.slice(0, i).reduce((a, b) => a + b, 0));
+
+  d.BODY_HEIGHT = height - d.HEADER_HEIGHT;
+  d.ROW_HEIGHT = d.BODY_HEIGHT / d.NUM_VISIBLE_ROWS;
+
+  return d;
+}
 
 module.exports = React.createClass({
   displayName: 'GeneTable',
@@ -12,67 +47,47 @@ module.exports = React.createClass({
   },
 
   render() {
-    var TableBody = require('./table_body.jsx')
+    var { width, height } = this.props
+      , TableBody = require('./table_body.jsx')
       , TableHeader = require('./table_header.jsx')
+      , d = dimensions(width, height)
 
     return (
-      <svg
-          style={{ width: "100%", height: 'auto' }}
-          width={consts.TABLE.WIDTH}
-          height={consts.TABLE.HEIGHT}
-          viewBox={`0 0 ${consts.TABLE.WIDTH} ${consts.TABLE.HEIGHT}`}>
-
-        <rect
-            x="0"
-            y="0"
-            width={consts.TABLE.WIDTH}
-            height={consts.TABLE.HEIGHT}
-            fill="#fff" />
-
-        <TableHeader {...this.props} />
-
-        <foreignObject
-            x={0}
-            y={consts.TABLE_HEADER.HEIGHT * 2}
-            width={consts.TABLE.WIDTH}
-            height={consts.TABLE_BODY.HEIGHT}>
-
-          <div style={{
-            minHeight: '100%',
-            maxHeight: consts.TABLE_BODY.HEIGHT,
-            overflowY: 'scroll',
-            overflowX: 'hidden'
-          }}>
-            <table
-              xmlns="http://www.w3.org/1999/xhtml"
-              style={{
-                fontSize: '12px',
-                tableLayout: 'fixed'
-              }}>
-
-              <colgroup>
-                { consts.TABLE.COLUMN_WIDTHS.map((width, i) => <col key={i} width={width} />) }
-              </colgroup>
-
-              <TableBody {...this.props} />
-            </table>
-          </div>
-        </foreignObject>
-
-        <g>
-          {
-            consts.TABLE.COLUMN_STARTS.filter((x, i) => [5, 7].indexOf(i) > -1).map((x, i) =>
-              <line
-                  key={i}
-                  x1={x}
-                  x2={x}
-                  y1={0}
-                  y2={consts.TABLE.HEIGHT}
-                  stroke="#ccc" />
-            )
-          }
-        </g>
-      </svg>
+      <div className="relative" style={{ background: 'white' }}>
+        <div>
+          <div style ={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: d.COLUMN_STARTS[5],
+            width: 0,
+            borderLeft: '1px solid #ccc'
+          }} />
+          <div style ={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: d.COLUMN_STARTS[7],
+            width: 0,
+            borderLeft: '1px solid #ccc'
+          }} />
+        </div>
+        <TableHeader
+            {...d}
+            {...this.props} />
+        <div style={{
+          height: d.BODY_HEIGHT,
+          maxHeight: d.BODY_HEIGHT,
+          overflowY: 'scroll',
+          overflowX: 'hidden',
+        }}>
+          <table style={{ tableLayout: 'fixed' }}>
+            <ColGroup {...d} />
+            <TableBody
+                {...this.props} />
+          </table>
+        </div>
+      </div>
     )
   }
 });
