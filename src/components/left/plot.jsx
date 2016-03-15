@@ -178,12 +178,21 @@ PlotVisualization.prototype = {
         .remove()
 
     if (hoveredGene && plotData.has(hoveredGeneName)) {
-      this.g.select('.hoverdot').datum(plotData.get(hoveredGeneName))
-        .append('circle')
+      let s = this.g.select('.hoverdot').datum(plotData.get(hoveredGeneName));
+
+      s.append('circle')
         .attr('cx', d => x(d.logCPM))
         .attr('cy', d => y(d.logFC))
-        .attr('fill', 'rgba(255, 0, 0, 1)')
-        .attr('r', 3)
+        .attr('stroke', 'rgb(255, 120, 0)')
+        .attr('stroke-width', 2)
+        .attr('fill', 'transparent')
+        .attr('r', 8)
+
+      s.append('circle')
+        .attr('cx', d => x(d.logCPM))
+        .attr('cy', d => y(d.logFC))
+        .attr('fill', 'rgb(255, 120, 0)')
+        .attr('r', 2)
     }
   },
 

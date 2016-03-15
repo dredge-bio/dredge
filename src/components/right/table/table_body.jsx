@@ -21,7 +21,8 @@ function GeneRow({
   savedGeneNames,
   focusedGene,
   setSavedGenes,
-  setFocusedGene
+  setFocusedGene,
+  setHoveredGene
 }) {
   var geneName = geneData.get('geneName')
     , className = "GeneRow"
@@ -50,7 +51,11 @@ function GeneRow({
 
 
   return (
-    <tr className={className} onClick={() => setFocusedGene(geneData, !saved)}>
+    <tr
+        className={className}
+        onMouseEnter={() => setHoveredGene(geneData)}
+        onMouseLeave={() => setHoveredGene(null)}
+        onClick={() => setFocusedGene(geneData, !saved)}>
       <td>{ firstColumn }</td>
       <td>{ geneName }</td>
       <td>{ dashesOrFixed(data.pValue, 3) }</td>
