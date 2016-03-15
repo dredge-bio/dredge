@@ -245,7 +245,7 @@ PlotVisualization.prototype = {
 
     if (savedGeneNames) {
       let savedGenes = savedGeneNames.map(name => plotData.get(name)).filter(d => d).toArray()
-        debugger;
+
       this.g.select('.dots').selectAll('circle').data(savedGenes)
           .enter()
         .append('circle')
