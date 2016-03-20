@@ -38,11 +38,12 @@ module.exports = React.createClass({
         {
           embryos.map((embryoData, i) =>
             <div key={i} className="flex flex-column flex-center flex-auto px1 py1 relative">
-              <a href="#"
-                  className="center col-12 flex-none"
+              <button
+                  className="border-box center col-12 flex-none btn btn-outline btn-small bg-white"
                   style={{
-                    backgroundColor: currentCell === embryoName(i) && 'red',
-                    width: '100%',
+                    backgroundColor: currentCell === embryoName(i) && '#b9d0e7',
+                    width: '95%',
+                    marginBottom: '6px',
                     overflowX: 'hidden',
                     overflowY: 'normal',
                     textOverflow: 'ellipsis',
@@ -50,7 +51,7 @@ module.exports = React.createClass({
                   }}
                   onClick={this.handleClick.bind(null, embryoName(i))}>
                 { embryoName(i) } embryo
-              </a>
+              </button>
               <Embryo
                   embryoData={embryoData}
                   {...this.props}

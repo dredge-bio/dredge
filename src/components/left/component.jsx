@@ -8,7 +8,7 @@ var React = require('react')
   , LeftPanel
 
 
-const SELECTOR_HEIGHT = 120
+const SELECTOR_HEIGHT = 130
     , PVALUE_SELECTOR_WIDTH = 100
 
 LeftPanel = props => {
@@ -36,7 +36,7 @@ LeftPanel = props => {
       <div style={{ height: plotHeight }}>
         <CellPlot
             {...props}
-            height={plotHeight}
+            height={plotHeight - 12}
             width={width - PVALUE_SELECTOR_WIDTH} />
         <CellPValueSelector
             {...props}

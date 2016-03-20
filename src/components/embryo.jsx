@@ -21,7 +21,7 @@ Embryo = ({
                 key: cell_name,
                 className: "CellShape",
                 onClick: () => onSelectCell(cell_name),
-                fill: cell_name === currentCell ? "#ccc" : "#fff"
+                fill: cell_name === currentCell ? "#b9d0e7" : "#fff"
             }, extraCellAtrs ? extraCellAtrs(cell_name) : {}))
           )
         }

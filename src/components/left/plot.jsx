@@ -228,7 +228,7 @@ PlotVisualization.prototype = {
       .attr('y', 0)
       .attr('width', dimensions.PLOT_WIDTH)
       .attr('height', dimensions.PLOT_HEIGHT)
-      .attr('fill', 'white')
+      .attr('fill', '#f9f9f9')
       .attr('stroke', '#ccc')
 
     this.binSelection = this.g.select('.squares').selectAll('rect').data(bins)
