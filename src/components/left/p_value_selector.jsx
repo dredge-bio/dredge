@@ -18,7 +18,7 @@ module.exports = React.createClass({
   },
 
   render: function () {
-    var { cellA, cellB, pValueThreshhold, width, height, setPValueThreshhold, pairwiseComparisonData } = this.props
+    var { cellA, cellB, pValueThreshhold, width, height, setBrushedGenes, setPValueThreshhold, pairwiseComparisonData } = this.props
       , histogram
       , scale
 
@@ -44,7 +44,10 @@ module.exports = React.createClass({
               type="number"
               value={pValueThreshhold.toFixed(2)}
               onKeyDown={e => e.preventDefault()}
-              onChange={e => setPValueThreshhold(parseFloat(e.target.value))}
+              onChange={e => {
+                setBrushedGenes(Immutable.OrderedSet());
+                setPValueThreshhold(parseFloat(e.target.value));
+              }}
               min="0"
               max="1"
               step=".01" />
@@ -61,12 +64,16 @@ module.exports = React.createClass({
                 histogram && histogram.reverse().map((ct, i) =>
                   <span
                       key={`${cellA}${cellB}-${i}`}
-                      className="inline-block absolute border-box"
+                      title={(1 - i / 100).toFixed(2)}
+                      className="PValueBar inline-block absolute border-box"
+                      onClick={e => {
+                        setBrushedGenes(Immutable.OrderedSet());
+                        setPValueThreshhold(1 - i / 100);
+                      }}
                       style={{
                         height: '1%',
                         top: `${i}%`,
                         width: `${scale(ct)}%`,
-                        background: 'maroon',
                         opacity: (100 - i) <= pValueThreshhold * 100 ? 1 : .33
                       }} />
                 )
@@ -81,7 +88,10 @@ module.exports = React.createClass({
                   width: 18,
                   height: '100%',
                 }}
-                onChange={e => setPValueThreshhold(parseFloat(e.target.value))}
+                onChange={e => {
+                  setBrushedGenes(Immutable.OrderedSet());
+                  setPValueThreshhold(parseFloat(e.target.value));
+                }}
                 min="0"
                 max="1"
                 step=".01" />

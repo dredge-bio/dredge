@@ -48,3 +48,11 @@ html, body, #main {
 .GeneRow--selected {
     background: #b9d0e7;
 }
+
+.PValueBar {
+    background: maroon;
+    cursor: pointer;
+}
+.PValueBar:hover {
+    background: red;
+}
