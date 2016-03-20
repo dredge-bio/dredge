@@ -41,6 +41,7 @@ module.exports = React.createClass({
         <div className="flex-none mb2">
           <input
               className="field"
+              style={{ width: '100%' }}
               type="number"
               value={pValueThreshhold.toFixed(2)}
               onKeyDown={e => e.preventDefault()}

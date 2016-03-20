@@ -28,6 +28,7 @@ LeftPanel = props => {
     }}>
       <div style={{ height: SELECTOR_HEIGHT }}>
         <CellSelector
+            width={width}
             currentCell={props.cellA}
             labelOrientation="bottom"
             onSelectCell={props.setCurrentCell.bind(null, 'A')} />
@@ -57,9 +58,10 @@ LeftPanel = props => {
 
       <div style={{ height: SELECTOR_HEIGHT }}>
         <CellSelector
-          currentCell={props.cellB}
+            width={width}
+            currentCell={props.cellB}
             labelOrientation="top"
-          onSelectCell={props.setCurrentCell.bind(null, 'B')} />
+            onSelectCell={props.setCurrentCell.bind(null, 'B')} />
       </div>
     </section>
   )

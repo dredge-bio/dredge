@@ -30,14 +30,17 @@ module.exports = React.createClass({
 
   render: function () {
     var Embryo = require('../embryo.jsx')
-      , { currentCell, labelOrientation } = this.props
+      , { currentCell, labelOrientation, width } = this.props
       , { hoveredCell, hoveredEmbryo } = this.state
 
     return (
-      <div className="flex" style={{ height: '100%' }}>
+      <div className="flex" style={{ height: '100%', width }}>
         {
           embryos.map((embryoData, i) =>
-            <div key={i} className="flex flex-column flex-center flex-auto px1 py1 relative">
+            <div
+                key={i}
+                className="border-box flex-none flex flex-column flex-center flex-auto px1 py1 relative"
+                style={{ width: width / 5 }}>
               <button
                   className="border-box center col-12 flex-none btn btn-outline btn-small bg-white"
                   style={{
