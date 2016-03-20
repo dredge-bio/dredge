@@ -2,14 +2,19 @@
 @import 'basscss-btn-sizes';
 
 html, body, #main {
-    height: 100vh;
-    width: 100vw;
-    overflow: none;
+    height: 100%;
+    width: 100%;
 }
 
 .bg-main {
     background-color: #F5F1E8;
 }
+
+@font-face {
+    font-family: SourceSansPro;
+    src: url("../lib/SourceSansPro-Regular.otf") format("opentype");
+}
+
 
 .x-axis path,
 .y-axis path {

@@ -49,6 +49,11 @@ function GeneRow({
     )
   }
 
+  var tdStyle = {
+    padding: '2px 0'
+  }
+
+
 
   return (
     <tr
@@ -56,15 +61,15 @@ function GeneRow({
         onMouseEnter={() => setHoveredGene(geneData)}
         onMouseLeave={() => setHoveredGene(null)}
         onClick={() => setFocusedGene(geneData, !saved)}>
-      <td>{ firstColumn }</td>
-      <td>{ geneName }</td>
-      <td>{ dashesOrFixed(data.pValue, 3) }</td>
-      <td>{ dashesOrFixed(data.logCPM) }</td>
-      <td>{ dashesOrFixed(data.logFC) }</td>
-      <td>{ dashesOrFixed(data.cellARPKMAvg) }</td>
-      <td>{ dashesOrFixed(data.cellARPKMMed) }</td>
-      <td>{ dashesOrFixed(data.cellBRPKMAvg) }</td>
-      <td>{ dashesOrFixed(data.cellBRPKMMed) }</td>
+      <td className="center" style={tdStyle}>{ firstColumn }</td>
+      <td style={tdStyle}>{ geneName }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.pValue, 3) }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.logCPM) }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.logFC) }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.cellARPKMAvg) }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.cellARPKMMed) }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.cellBRPKMAvg) }</td>
+      <td style={tdStyle}>{ dashesOrFixed(data.cellBRPKMMed) }</td>
     </tr>
   )
 }

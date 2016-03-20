@@ -25,7 +25,6 @@ TableHeader = ({
   toggleSort,
   COLUMN_WIDTHS,
   COLUMN_STARTS,
-  COLUMN_PL=12,
   HEADER_HEIGHT
 }) => (
   <div style={{
@@ -44,7 +43,7 @@ TableHeader = ({
               key={`${cellName}-${i}`}
               style={{
                 position: 'absolute',
-                left: COLUMN_STARTS[5 + (2 * i)] + COLUMN_PL,
+                left: COLUMN_STARTS[5 + (2 * i)],
                 fontWeight: "bold"
               }}>
             { formatCellName(cellName) }
@@ -67,10 +66,9 @@ TableHeader = ({
                 position: 'absolute',
                 top: 0,
                 bottom: 0,
-                left: COLUMN_STARTS[i + 1] + COLUMN_PL,
-                width: COLUMN_WIDTHS[i + 1] - COLUMN_PL,
+                left: COLUMN_STARTS[i + 1],
+                width: COLUMN_WIDTHS[i + 1],
                 fontWeight: "bold",
-                fontSize: "14px",
                 cursor: 'pointer'
               }}>
             {

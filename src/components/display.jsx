@@ -14,8 +14,9 @@ function Loading() {
   }}>Loading...</div>
 }
 
-const MIN_LEFT_WIDTH = 400
-    , MIN_RIGHT_WIDTH = 600
+const MIN_RIGHT_WIDTH = 666
+    , MAX_RIGHT_WIDTH = 780
+    , MIN_LEFT_WIDTH = 614
     , MIN_HEIGHT = 600
 
 
@@ -41,6 +42,12 @@ module.exports = React.createClass({
 
     if (leftPanelWidth < MIN_LEFT_WIDTH) leftPanelWidth = MIN_LEFT_WIDTH;
     if (rightPanelWidth < MIN_RIGHT_WIDTH) rightPanelWidth = MIN_RIGHT_WIDTH;
+
+    if (rightPanelWidth > MAX_RIGHT_WIDTH) {
+      rightPanelWidth = MAX_RIGHT_WIDTH;
+      leftPanelWidth = window.innerWidth - rightPanelWidth;
+    }
+
     if (height < MIN_HEIGHT) height = MIN_HEIGHT;
 
     leftPanelWidth -= 40;

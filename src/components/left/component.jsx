@@ -15,6 +15,9 @@ LeftPanel = props => {
   var width = props.leftPanelWidth
     , plotHeight = props.height - 2 * SELECTOR_HEIGHT;
 
+  // Padding
+  width -= 40;
+
   return (
     <section style={{
       position: 'absolute',

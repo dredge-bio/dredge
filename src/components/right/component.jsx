@@ -18,7 +18,7 @@ RightPanel = props => {
       position: 'absolute',
       top: 0,
       bottom: 0,
-      right: 0,
+      left: props.leftPanelWidth,
       width
     }}>
       <div style={{ height: ACTION_HEIGHT }}>

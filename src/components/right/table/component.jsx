@@ -13,17 +13,17 @@ function ColGroup({ COLUMN_WIDTHS }) {
 
 function dimensions(width, height) {
   var COLUMN_WIDTHS = [
+    70,
+    70,
+    70,
     85,
     85,
     85,
-    115,
-    115,
-    115,
-    115,
+    85,
   ]
 
-  COLUMN_WIDTHS.unshift(width - COLUMN_WIDTHS.reduce((a, b) => a + b, 0) - 30);
-  COLUMN_WIDTHS.unshift(30);
+  COLUMN_WIDTHS.unshift(width - COLUMN_WIDTHS.reduce((a, b) => a + b, 0) - 28);
+  COLUMN_WIDTHS.unshift(28);
 
   var d = {
     COLUMN_WIDTHS,
@@ -53,13 +53,17 @@ module.exports = React.createClass({
       , d = dimensions(width, height)
 
     return (
-      <div className="relative" style={{ background: 'white' }}>
+      <div className="relative" style={{
+        background: 'white',
+        fontFamily: 'SourceSansPro',
+        fontSize: '14px'
+      }}>
         <div>
           <div style ={{
             position: 'absolute',
             top: 0,
             bottom: 0,
-            left: d.COLUMN_STARTS[5],
+            left: d.COLUMN_STARTS[5] - 6,
             width: 0,
             borderLeft: '1px solid #ccc'
           }} />
@@ -67,7 +71,7 @@ module.exports = React.createClass({
             position: 'absolute',
             top: 0,
             bottom: 0,
-            left: d.COLUMN_STARTS[7],
+            left: d.COLUMN_STARTS[7] - 6,
             width: 0,
             borderLeft: '1px solid #ccc'
           }} />
