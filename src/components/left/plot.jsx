@@ -305,7 +305,8 @@ module.exports = React.createClass({
         pValueThreshhold,
         pairwiseComparisonData,
         hoveredGene,
-        savedGeneNames
+        savedGeneNames,
+        brushedGeneNames,
       } = this.props
       , { visualization } = this.state
       , needsUpdate
@@ -323,6 +324,12 @@ module.exports = React.createClass({
       visualization.updateHoveredGene(this.props);
     } else if (prevProps.savedGeneNames !== savedGeneNames) {
       visualization.updateSavedGenes(this.props);
+    } else if (brushedGeneNames && brushedGeneNames.size === 0) {
+      if (visualization.binOverlaySelection) {
+        visualization.brushG.call(visualization.brush.clear());
+        visualization.binSelection.attr('fill', '#2566a8');
+        visualization.binOverlaySelection.attr('fill', 'transparent');
+      }
     }
 
   },

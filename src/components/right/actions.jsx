@@ -58,6 +58,12 @@ module.exports = React.createClass({
     setSavedGenes(savedGeneNames.union(brushedGenes.map(gene => gene.get('geneName'))));
   },
 
+  handleRemoveBrushedGenes() {
+    var { brushedGenes, savedGeneNames, setSavedGenes } = this.props
+
+    setSavedGenes(savedGeneNames.subtract(brushedGenes.map(gene => gene.get('geneName'))));
+  },
+
   handleClearSavedGenes() {
     var { setSavedGenes } = this.props
 
@@ -133,9 +139,15 @@ module.exports = React.createClass({
                 </button>
                 <button
                     className={btnClassName}
+                    disabled={!brushedGenes.size}
+                    onClick={this.handleRemoveBrushedGenes}>
+                  Remove selected
+                </button>
+                <button
+                    className={btnClassName}
                     disabled={!savedGenes.size}
                     onClick={this.handleClearSavedGenes}>
-                  Clear all
+                  Remove all
                 </button>
 
                 <button

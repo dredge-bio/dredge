@@ -33,6 +33,17 @@ LeftPanel = props => {
             onSelectCell={props.setCurrentCell.bind(null, 'A')} />
       </div>
 
+        {
+          props.brushedGeneNames.size > 0 && (
+            <div style={{ position: 'absolute', top: 160, left: 58 }}>
+              <span className="bold">
+                <span className="purple">{ props.brushedGeneNames.size }</span> { props.brushedGeneNames.size > 1 ? 'genes' : 'gene' } selected
+              </span>
+              <button className="btn btn-small btn-outline bg-white ml1" onClick={e => props.setBrushedGenes(Immutable.OrderedSet())}>Clear</button>
+            </div>
+          )
+        }
+
       <div style={{ height: plotHeight }}>
         <CellPlot
             {...props}
