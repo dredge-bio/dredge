@@ -56,14 +56,66 @@ module.exports = React.createClass({
 
     window.addEventListener('keydown', e => {
       switch(e.code) {
-      case "KeyJ":
+      case "ArrowDown":
+        e.preventDefault();
         this.focusNextGene();
         break;
-      case "KeyK":
+      case "ArrowUp":
+        e.preventDefault();
         this.focusPreviousGene();
         break;
+      case "Space":
+        let { savedGenes, setSavedGenes } = this.props
+          , { focusedGene } = this.state
+
+        e.preventDefault();
+
+        if (savedGenes.contains(focusedGene)) {
+          setSavedGenes(savedGenes.remove(focusedGene).map(gene => gene.get('geneName')));
+        } else {
+          setSavedGenes(savedGenes.add(focusedGene).map(gene => gene.get('geneName')));
+        }
       }
     });
+  },
+
+  componentWillReceiveProps(nextProps) {
+    var { savedGenes, brushedGenes } = this.props
+      , { focusedGene } = this.state
+
+    if (!nextProps.brushedGenes || !nextProps.savedGenes) return;
+
+    if (nextProps.brushedGenes.size) {
+      this.setState({
+        focusedGene: nextProps.brushedGenes.first(),
+        focusedGeneInBrushed: true
+      });
+    } else if (!savedGenes || !savedGenes.equals(nextProps.savedGenes)) {
+      if (focusedGene) {
+        let prevFocusedName = focusedGene.get('geneName')
+          , newFocusedGene
+
+        newFocusedGene = nextProps.savedGenes
+          .find(gene => gene.get('geneName') === prevFocusedName)
+
+        this.setState({
+          focusedGene: newFocusedGene || nextProps.savedGenes.first(),
+          focusedGeneInBrushed: false
+        });
+      } else {
+        this.setState({
+          focusedGene: nextProps.savedGenes.first(),
+          focusedGeneInBrushed: false
+        });
+      }
+    } else if (!nextProps.savedGenes.contains(focusedGene)) {
+        this.setState({
+          focusedGene: nextProps.savedGenes.first(),
+          focusedGeneInBrushed: false
+        });
+    } else {
+      this.setState({ focusedGeneInBrushed: false });
+    }
   },
 
   focusNextGene() {
@@ -74,10 +126,10 @@ module.exports = React.createClass({
     brushedGenes = brushedGenes.toList();
 
     if (!focusedGene) {
-      if (savedGenes.size) {
-        this.setFocusedGene(savedGenes.first());
-      } else if (brushedGenes.size) {
+      if (brushedGenes.size) {
         this.setFocusedGene(brushedGenes.first(), true);
+      } else {
+        this.setFocusedGene(savedGenes.first());
       }
     } else if (focusedGeneInBrushed) {
       let idx = brushedGenes.indexOf(focusedGene);
@@ -90,8 +142,6 @@ module.exports = React.createClass({
 
       if (idx + 1 !== savedGenes.size) {
         this.setFocusedGene(savedGenes.get(idx + 1));
-      } else if (brushedGenes.size) {
-        this.setFocusedGene(brushedGenes.first(), true);
       }
     }
   },
@@ -110,10 +160,7 @@ module.exports = React.createClass({
 
       if (idx !== 0) {
         this.setFocusedGene(brushedGenes.get(idx - 1), true);
-      } else if (savedGenes.size) {
-        this.setFocusedGene(savedGenes.last());
       }
-
     } else {
       let idx = savedGenes.indexOf(focusedGene);
 
