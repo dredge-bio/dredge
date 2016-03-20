@@ -129,7 +129,7 @@ module.exports = React.createClass({
                     className={btnClassName}
                     disabled={!brushedGenes.size}
                     onClick={this.handleAddBrushedGenes}>
-                  Add brushed
+                  Add selected
                 </button>
                 <button
                     className={btnClassName}
