@@ -17,6 +17,7 @@ function p(e) {
 function GeneRow({
   saved,
   geneData,
+  pValueThreshhold,
   savedGenes,
   savedGeneNames,
   focusedGene,
@@ -31,6 +32,10 @@ function GeneRow({
 
   if (focusedGene && focusedGene.get('geneName') === data.geneName) {
     className += ' GeneRow--selected';
+  }
+
+  if (geneData.get('pValue') == null || geneData.get('pValue') > pValueThreshhold) {
+    className += ' gray'
   }
 
   if (saved) {
