@@ -109,36 +109,39 @@ function PlotVisualization(container, dimensions, setBrushedGenes) {
   this.g.append('g')
     .attr('class', 'hoverdot')
 
-  this.g.append('g')
+  this.brush = d3.svg.brush()
+    .x(this.x)
+    .y(this.y)
+    .on('brushend', function () {
+      var extent = d3.event.target.extent()
+        , cpmBounds = [extent[0][0], extent[1][0]]
+        , fcBounds = [extent[0][1], extent[1][1]]
+        , brushedBins
+
+      that.binSelection.attr('fill', '#2566a8');
+      that.binOverlaySelection.attr('fill', 'transparent');
+
+      brushedBins = that.binSelection.filter(d => {
+        var { cpmMin, cpmMax, fcMin, fcMax } = d
+
+        return (
+            (withinBounds(cpmBounds, cpmMin) || withinBounds(cpmBounds, cpmMax)) &&
+            (withinBounds(fcBounds, fcMin) || withinBounds(fcBounds, fcMax))
+        )
+      });
+
+      brushedBins.attr('fill', 'purple');
+
+      that.brushedGeneNames = Immutable.OrderedSet(
+        Array.prototype.concat.apply([],
+          brushedBins.data().map(bin => bin.genes.map(gene => gene.geneName))));
+
+      setBrushedGenes(that.brushedGeneNames);
+    })
+
+  this.brushG = this.g.append('g')
     .attr('class', 'brush')
-    .call(
-      d3.svg.brush()
-        .x(this.x)
-        .y(this.y)
-        .on('brushend', function () {
-          var extent = d3.event.target.extent()
-            , cpmBounds = [extent[0][0], extent[1][0]]
-            , fcBounds = [extent[0][1], extent[1][1]]
-            , brushedBins
-
-          that.binSelection.attr('fill', '#2566a8');
-
-          brushedBins = that.binSelection.filter(d => {
-            var { cpmMin, cpmMax, fcMin, fcMax } = d
-
-            return (
-                (withinBounds(cpmBounds, cpmMin) || withinBounds(cpmBounds, cpmMax)) &&
-                (withinBounds(fcBounds, fcMin) || withinBounds(fcBounds, fcMax))
-            )
-          });
-
-          brushedBins.attr('fill', 'purple');
-
-          setBrushedGenes(Immutable.OrderedSet(
-            Array.prototype.concat.apply([],
-              brushedBins.data().map(bin => bin.genes.map(gene => gene.geneName)))))
-        })
-    )
+    .call(this.brush)
 
   this.g.append('g')
     .attr('class', 'squares-overlay')
@@ -210,7 +213,8 @@ PlotVisualization.prototype = {
   },
 
   render() {
-    var { cellA, cellB, dimensions, savedGeneNames, setBrushedGenes, plotData } = this
+    var that = this
+      , { cellA, cellB, dimensions, savedGeneNames, setBrushedGenes, plotData } = this
       , bins = this.getBins()
       , container
 
@@ -240,22 +244,28 @@ PlotVisualization.prototype = {
       .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
       .attr('fill', '#2566a8')
 
-    this.g.select('.squares-overlay').selectAll('rect').data(bins)
+    this.binOverlaySelection = this.g.select('.squares-overlay').selectAll('rect').data(bins)
         .enter()
       .append('rect')
       .attr('x', d => d.x0)
       .attr('y', d => d.y1)
       .attr('width', GRID_SQUARE_UNIT)
       .attr('height', GRID_SQUARE_UNIT)
-      .attr('fill', '#2566a8')
       .attr('fill', 'transparent')
       .on('mouseover', function () {
         container.appendChild(this);
       })
       .on('click', function (d) {
+        that.brushG.call(that.brush.clear());
+        that.binSelection.attr('fill', '#2566a8');
+        that.binOverlaySelection.attr('fill', 'transparent');
+
+        d3.select(this).attr('fill', 'purple');
+
         setBrushedGenes(Immutable.OrderedSet(d.genes.map(gene => gene.geneName)));
       })
-      .append('title').text(d => d.genes.length)
+
+    this.binOverlaySelection.append('title').text(d => d.genes.length)
 
     if (savedGeneNames) {
       let savedGenes = savedGeneNames.map(name => plotData.get(name)).filter(d => d).toArray()
@@ -283,7 +293,14 @@ module.exports = React.createClass({
   },
 
   componentDidUpdate(prevProps) {
-    var { cellA, cellB, pValueThreshhold, pairwiseComparisonData, hoveredGene, savedGeneNames } = this.props
+    var {
+        cellA,
+        cellB,
+        pValueThreshhold,
+        pairwiseComparisonData,
+        hoveredGene,
+        savedGeneNames
+      } = this.props
       , { visualization } = this.state
       , needsUpdate
 
@@ -300,6 +317,7 @@ module.exports = React.createClass({
     } else if (prevProps.hoveredGene !== hoveredGene) {
       visualization.updateHoveredGene(this.props);
     }
+
   },
 
   componentDidMount() {
