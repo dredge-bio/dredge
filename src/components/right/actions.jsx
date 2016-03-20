@@ -182,6 +182,7 @@ module.exports = React.createClass({
                 type="text"
                 className="field"
                 value={addingGeneText}
+                onBlur={e => this.setState({ addingGeneText: '', addingGenes: false })}
                 onChange={e => this.setState({ addingGeneText: e.target.value })} />
           </div>
         </div>
