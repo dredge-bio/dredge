@@ -13,12 +13,15 @@ RightPanel = props => {
   var width = props.rightPanelWidth
     , tableHeight = props.height - ACTION_HEIGHT - HEATMAP_HEIGHT
 
+    width -= 20;
+
   return (
     <section style={{
       position: 'absolute',
       top: 0,
       bottom: 0,
       left: props.leftPanelWidth,
+      paddingRight: 20,
       width
     }}>
       <div style={{ height: ACTION_HEIGHT }}>
