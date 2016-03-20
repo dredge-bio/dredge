@@ -167,6 +167,7 @@ PlotVisualization.prototype = {
 
     this.render();
     this.updateHoveredGene({ hoveredGene });
+    this.updateSavedGenes({ savedGeneNames });
   },
 
   updateHoveredGene({ hoveredGene }) {
@@ -199,6 +200,23 @@ PlotVisualization.prototype = {
     }
   },
 
+  updateSavedGenes({ savedGeneNames }) {
+    var { plotData } = this
+    this.g.select('.dots').selectAll('circle').remove();
+
+    if (savedGeneNames) {
+      let savedGenes = savedGeneNames.map(name => plotData.get(name)).filter(d => d).toArray()
+
+      this.g.select('.dots').selectAll('circle').data(savedGenes)
+          .enter()
+        .append('circle')
+        .attr('cx', d => this.x(d.logCPM))
+        .attr('cy', d => this.y(d.logFC))
+        .attr('r', 2)
+        .attr('fill', 'red')
+    }
+  },
+
   getBins() {
     var bin = require('../../utils/bin')
       , bins = bin(this.filteredPlotData.toArray(), this.x, this.y, GRID_SQUARE_UNIT)
@@ -214,13 +232,12 @@ PlotVisualization.prototype = {
 
   render() {
     var that = this
-      , { cellA, cellB, dimensions, savedGeneNames, setBrushedGenes, plotData } = this
+      , { cellA, cellB, dimensions, setBrushedGenes } = this
       , bins = this.getBins()
       , container
 
     this.g.select('.squares').selectAll('rect').remove();
     this.g.select('.squares-overlay').selectAll('rect').remove();
-    this.g.select('.dots').selectAll('circle').remove();
 
     this.svg.select('.plot-title').text(`${formatCellName(cellA)} - ${formatCellName(cellB)}`);
 
@@ -267,17 +284,6 @@ PlotVisualization.prototype = {
 
     this.binOverlaySelection.append('title').text(d => d.genes.length)
 
-    if (savedGeneNames) {
-      let savedGenes = savedGeneNames.map(name => plotData.get(name)).filter(d => d).toArray()
-
-      this.g.select('.dots').selectAll('circle').data(savedGenes)
-          .enter()
-        .append('circle')
-        .attr('cx', d => this.x(d.logCPM))
-        .attr('cy', d => this.y(d.logFC))
-        .attr('r', 2)
-        .attr('fill', 'red')
-    }
   },
 }
 
@@ -306,7 +312,6 @@ module.exports = React.createClass({
 
     needsUpdate = pairwiseComparisonData && !prevProps.pairwiseComparisonData || (
       pairwiseComparisonData &&
-      prevProps.savedGeneNames !== savedGeneNames ||
       prevProps.cellA !== cellA ||
       prevProps.cellB !== cellB ||
       prevProps.pValueThreshhold !== pValueThreshhold
@@ -316,6 +321,8 @@ module.exports = React.createClass({
       visualization.update(this.props);
     } else if (prevProps.hoveredGene !== hoveredGene) {
       visualization.updateHoveredGene(this.props);
+    } else if (prevProps.savedGeneNames !== savedGeneNames) {
+      visualization.updateSavedGenes(this.props);
     }
 
   },

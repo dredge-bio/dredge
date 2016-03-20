@@ -77,7 +77,7 @@ function GeneRow({
 GeneTable = props => (
   <tbody>
     {
-      props.savedGenes.map(geneData =>
+      !props.brushedGenes.size && props.savedGenes.map(geneData =>
         <GeneRow
             key={'saved' + geneData.get('geneName')}
             saved={true}
