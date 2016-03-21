@@ -5,15 +5,22 @@ var React = require('react')
   , cellNameMap = require('../cell_name_map.json')
 
 function sortGenes(set, sortBy, sortOrder) {
-  var sorted
+  return set.sort((geneA, geneB) => {
+    var a = geneA.get(sortBy)
+      , b = geneB.get(sortBy)
 
-  sorted = sortBy === 'geneName' ?
-    set.sortBy(gene => gene.get('geneName').toLowerCase()) :
-    set.sortBy(gene => gene.get(sortBy));
+    if (sortBy === 'geneName') {
+      a = a.toLowerCase();
+      b = b.toLowerCase();
+    }
 
-  if (sortOrder === 'asc') sorted = sorted.reverse();
+    if (a === b) return 0;
 
-  return sorted
+    if (a == null) return 1;
+    if (b == null) return -1;
+
+    return (a < b ? 1 : -1) * (sortOrder === 'asc' ? 1 : -1);
+  });
 }
 
 module.exports = React.createClass({
