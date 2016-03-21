@@ -11,6 +11,7 @@
     "cssnext": "^1.8.3",
     "d3": "^3.5.6",
     "dexie": "^1.2.0",
+    "envify": "^3.4.0",
     "filesaver.js": "^0.2.0",
     "immutable": "^3.7.5",
     "json-stable-stringify": "^1.0.0",
@@ -18,16 +19,17 @@
     "react": "^0.14.0",
     "react-dom": "^0.14.2",
     "tape": "^4.2.0",
+    "uglifyjs": "^2.4.10",
     "watchify": "^3.3.1",
     "whatwg-fetch": "^0.9.0"
   },
   "browserify": {
-    "transform": "babelify"
+    "transform": ["babelify", "envify"]
   },
   "scripts": {
     "bundle": "npm run bundle-js && npm run bundle-css",
-    "bundle-js": "mkdir -p dist && browserify -o dist/bundle.js src/index.js",
-    "bundle-css": "mkdir -p dist && cssnext style.css > dist/style.css",
-    "watch": "mkdir -p dist && watchify -v -d -o dist/bundle.js src/index.js"
+    "bundle-js": "mkdir -p dist && browserify -o dist/mabrowser.js src/index.js",
+    "bundle-css": "mkdir -p dist && cssnext style.css > dist/mabrowser.css",
+    "watch": "mkdir -p dist && watchify -v -d -o dist/mabrowser.js src/index.js"
   }
 }
