@@ -45,6 +45,13 @@ module.exports = React.createClass({
       <div>
         <h4 className="m0 mb1"> {/* height is 28px */}
           { focusedGene.get('geneName') }
+          {' ('}
+          <a
+              target="_blank"
+              href={`http://www.wormbase.org/db/gene/gene?name=${focusedGene.get('geneName')}`}>
+            WormBase
+          </a>
+          {')'}
         </h4>
         <div className="flex">
           <div className="flex-none">
