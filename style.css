@@ -36,7 +36,7 @@ html, body, #main {
 
 
 .CellShape {
-    stroke: #999;
+    stroke: black;
     stroke-width: 1px;
 }
 .CellShape:hover {

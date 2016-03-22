@@ -85,7 +85,7 @@ module.exports = React.createClass({
                   extraCellAtrs={cellName => ({
                     className: undefined,
                     onClick: undefined,
-                    stroke: '#999',
+                    stroke: 'black',
                     fill: scale(measures[cellNameMap[cellName]].avg),
                   })}
                   {...this.props} />
