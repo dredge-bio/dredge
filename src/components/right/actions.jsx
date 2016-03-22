@@ -110,7 +110,7 @@ module.exports = React.createClass({
 
     csv = csv.trim();
 
-    blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    blob = new Blob([csv], { type: 'text/csv;charset=iso-8859-1' });
     saveAs(blob, 'exported_genes.csv');
   },
 
