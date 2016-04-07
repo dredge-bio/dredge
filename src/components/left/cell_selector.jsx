@@ -60,6 +60,8 @@ module.exports = React.createClass({
                   {...this.props}
                   extraCellAtrs={cellName => ({
                     style: { cursor: 'pointer' },
+                    role: 'button',
+                    ['aria-label']: cellName,
                     onMouseEnter: () => this.setState({ hoveredCell: cellName, hoveredEmbryo: i }),
                     onMouseLeave: () => this.setState({ hoveredCell: null, hoveredEmbryo: null })
                   })}
