@@ -10,6 +10,10 @@ var React = require('react')
 module.exports = React.createClass({
   displayName: 'Application',
 
+  propTypes: {
+    cellGeneExpressionData: React.PropTypes.object.isRequired
+  },
+
   getInitialState() {
     var localSavedGenes = JSON.parse(localStorage.savedGeneNames || '[]');
 
@@ -32,11 +36,6 @@ module.exports = React.createClass({
 
       // The fetched plot data from the file fetched for cellA-cellB
       pairwiseComparisonData: null,
-      cellGeneExpressionData: null,
-
-      // Whether the application is initializing. Will be true until the cell-
-      // gene data is fetched.
-      initializing: true,
 
       // Whether cell-pair data are currently being fetched
       loading: false
@@ -44,14 +43,7 @@ module.exports = React.createClass({
   },
 
   componentDidMount() {
-    var fetchCellGeneMeasures = require('../utils/fetch_cell_gene_measures')
-
     setTimeout(this.setCurrentCell, 0);
-
-    fetchCellGeneMeasures().then(cellGeneExpressionData => this.setState({
-      initializing: false,
-      cellGeneExpressionData
-    }));
   },
 
   setBrushedGenes(brushedGeneNames) {
@@ -108,6 +100,7 @@ module.exports = React.createClass({
 
     return (
       <SortedData
+          {...this.props}
           {...this.state}
           setBrushedGenes={this.setBrushedGenes}
           setSavedGenes={this.setSavedGenes}
