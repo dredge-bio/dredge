@@ -57,6 +57,13 @@ module.exports = React.createClass({
         , cellAData = (cellGeneExpressionData[cellA] || {})[geneName]
         , cellBData = (cellGeneExpressionData[cellB] || {})[geneName]
 
+      if (data.size === 1 && !cellAData && !cellBData) {
+        const errMessg = `no data for gene "${geneName}"`;
+        console.error(errMessg);
+
+        throw new Error(errMessg);
+      }
+
       return data.merge({
         cellARPKMAvg: cellAData ? cellAData.avg : null,
         cellARPKMMed: cellAData ? cellAData.med : null,
@@ -71,6 +78,17 @@ module.exports = React.createClass({
     return sortGenes(this.getGenes(geneNames), sortBy, sortOrder)
   },
 
+  getSavedGenes() {
+    var { savedGeneNames } = this.props
+
+    try {
+      return this.getSortedGenes(savedGeneNames);
+    } catch (e) {
+      localStorage.clear();
+      return Immutable.OrderedSet()
+    }
+  },
+
   render() {
     var Display = require('./display.jsx')
       , { savedGeneNames, brushedGeneNames } = this.props
@@ -83,7 +101,7 @@ module.exports = React.createClass({
           {...this.state}
           toggleSort={this.toggleSort}
           brushedGenes={ready && this.getSortedGenes(brushedGeneNames)}
-          savedGenes={ready && this.getSortedGenes(savedGeneNames)} />
+          savedGenes={ready && this.getSavedGenes()} />
     )
   }
 });
