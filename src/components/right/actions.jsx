@@ -82,7 +82,7 @@ module.exports = React.createClass({
     // TODO: only allow valid names
     reader.onload = ee => {
       var text = ee.target.result
-        , names = text.split('\n').map(row => row.split(',')[0])
+        , names = text.trim().split('\n').map(row => row.split(',')[0])
 
       this.refs.import.value = '';
       setSavedGenes(savedGeneNames.union(names));
