@@ -20,21 +20,7 @@ module.exports = React.createClass({
   },
 
   handleClickAddGene() {
-    var getAlternateGeneNamesSeq = require('../../utils/get_alternate_gene_names')
-      , { alternateGeneNames } = this.state
-
     this.setState({ addingGenes: true });
-
-    if (!alternateGeneNames) {
-      getAlternateGeneNamesSeq()
-        .then(alternateNamesMap => {
-          var alternateGeneNamesSeq = alternateNamesMap.toSeq().cacheResult();
-          this.setState({
-            alternateGeneNames: alternateNamesMap,
-            alternateGeneNamesSeq
-          });
-        });
-    }
 
     setTimeout(() => {
       this.refs.search.focus();
@@ -78,11 +64,23 @@ module.exports = React.createClass({
     var { setSavedGenes, savedGeneNames } = this.props
       , reader = new FileReader()
       , file = e.target.files[0]
+      ,{ alternateGeneNames, alternateGeneNamesSeq } = this.state
 
     // TODO: only allow valid names
     reader.onload = ee => {
       var text = ee.target.result
-        , names = text.trim().split('\n').map(row => row.split(',')[0])
+        , missing_names = []
+        , names = text.trim().split('\n').filter(function(v, k) {
+            if (alternateGeneNamesSeq.has(v)){
+                return true;
+            } else {
+                missing_names.push(v)
+                return false;
+            }
+        }).map(row => alternateGeneNamesSeq.get(row.split(',')[0]))
+      console.log("Could not find data for the following genes : ");
+      console.log(missing_names);
+      window.missing = missing_names
 
       this.refs.import.value = '';
       setSavedGenes(savedGeneNames.union(names));
@@ -118,6 +116,21 @@ module.exports = React.createClass({
     var { brushedGenes, savedGenes } = this.props
       , { alternateGeneNames, alternateGeneNamesSeq, addingGenes, addingGeneText } = this.state
       , btnClassName = "btn btn-outline bg-white btn-small mr2"
+
+    var getAlternateGeneNamesSeq = require('../../utils/get_alternate_gene_names')
+      , { alternateGeneNames } = this.state
+
+    if (!alternateGeneNames) {
+      getAlternateGeneNamesSeq()
+        .then(alternateNamesMap => {
+          var alternateGeneNamesSeq = alternateNamesMap.toSeq().cacheResult();
+
+          this.setState({
+            alternateGeneNames: alternateNamesMap,
+            alternateGeneNamesSeq
+          });
+        });
+    }
 
     return (
       <div className="px2 py1">
