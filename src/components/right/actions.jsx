@@ -78,9 +78,11 @@ module.exports = React.createClass({
                 return false;
             }
         }).map(row => alternateGeneNamesSeq.get(row.split(',')[0]))
-      console.log("Could not find data for the following genes : ");
-      console.log(missing_names);
-      window.missing = missing_names
+
+      if (missing_names.length){
+        console.log("Could not find data for the following genes : ");
+        console.log(missing_names);
+      }
 
       this.refs.import.value = '';
       setSavedGenes(savedGeneNames.union(names));
