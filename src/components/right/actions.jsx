@@ -70,7 +70,8 @@ module.exports = React.createClass({
     reader.onload = ee => {
       var text = ee.target.result
         , missing_names = []
-        , names = text.trim().split('\n').filter(function(v, k) {
+        , names = text.replace(/(\r\n|\n|\r)/gm, '\n').trim().split('\n').filter(function(v, k) {
+            //v = v.trim();
             if (alternateGeneNamesSeq.has(v)){
                 return true;
             } else {
