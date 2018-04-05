@@ -71,7 +71,7 @@ module.exports = React.createClass({
       var text = ee.target.result
         , missing_names = []
         , names = text.replace(/(\r\n|\n|\r)/gm, '\n').trim().split('\n').filter(function(v, k) {
-            //v = v.trim();
+            v = v.split(",")[0]
             if (alternateGeneNamesSeq.has(v)){
                 return true;
             } else {
