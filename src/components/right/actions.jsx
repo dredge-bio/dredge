@@ -83,6 +83,19 @@ module.exports = React.createClass({
       if (missing_names.length){
         console.log("Could not find data for the following genes : ");
         console.log(missing_names);
+
+        var csv = ''
+          , blob
+
+        missing_names.forEach(name => {
+          csv += name;
+          csv += ',\n';
+        });
+        csv = csv.trim();
+
+        blob = new Blob([csv], { type: 'text/csv;charset=iso-8859-1' });
+        saveAs(blob, 'missing_genes.csv');
+
       }
 
       this.refs.import.value = '';
