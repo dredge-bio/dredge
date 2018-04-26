@@ -43,7 +43,8 @@ all: node_modules $(MINIFIED_VERSIONED_JS_BUNDLE) $(MINIFIED_CSS_BUNDLE)
 zip: $(VERSIONED_ZIPFILE)
 
 clean:
-	@rm -rf dist
+	rm -rf dist
+	rm -rf node_modules
 
 .PHONY: all zip clean
 
