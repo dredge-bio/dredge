@@ -1,6 +1,7 @@
 "use strict";
 
 var React = require('react')
+  , getAlternateGeneNamesSeq = require('../utils/get_alternate_gene_names')
   , CurrentStep
 
 
@@ -47,16 +48,13 @@ module.exports = React.createClass({
   },
 
   checkIDBCompatibility() {
-    return new Promise((resolve, reject) => {
+    new Promise((resolve, reject) => {
       if (!window.indexedDB) {
         reject('Browser does not support indexedDB standard.')
       } else if (!window.Blob) {
         reject('Browser does not support Blob standard.');
       } else {
-        setTimeout(() => {
-          this.setState({ currentStep: 1 });
-          resolve();
-        }, 500);
+        this.setState({ currentStep: 1 }, resolve);
       }
     });
   },
@@ -64,14 +62,13 @@ module.exports = React.createClass({
   parseCellGeneMeasures() {
     var db = require('../db')()
 
-    return new Promise((resolve, reject) => {
+    var measures = new Promise((resolve, reject) => {
       db.datasets.get('cellGeneMeasuress', ({ blob }) => {
         var reader = new FileReader();
 
         reader.onloadend = () => {
           this.setState({
             cellGeneExpressionData: JSON.parse(reader.result),
-            currentStep: 2
           })
 
           resolve();
@@ -81,11 +78,32 @@ module.exports = React.createClass({
         reader.readAsText(blob);
       });
     });
+
+    var alternateNames = getAlternateGeneNamesSeq().then(alternateNamesMap => {
+      var alternateGeneNamesSeq = alternateNamesMap.toSeq().cacheResult();
+
+      this.setState({
+        alternateGeneNames: alternateNamesMap,
+        alternateGeneNamesSeq
+      })
+    })
+
+    return Promise.all([measures, alternateNames]).then(() => {
+      return new Promise(resolve => {
+        this.setState({ currentStep: 2 }, resolve)
+      })
+    })
   },
 
   render() {
     var Application = require('./application.jsx')
-      , { currentStep, cellGeneExpressionData } = this.state
+
+    var {
+      currentStep,
+      cellGeneExpressionData,
+      alternateGeneNames,
+      alternateGeneNamesSeq,
+    } = this.state
 
     return (
       <main>
@@ -115,7 +133,11 @@ module.exports = React.createClass({
 
         {
           currentStep === 3 && cellGeneExpressionData && (
-            <Application cellGeneExpressionData={cellGeneExpressionData} />
+            <Application
+                cellGeneExpressionData={cellGeneExpressionData}
+                alternateGeneNames={alternateGeneNames}
+                alternateGeneNamesSeq={alternateGeneNamesSeq}
+            />
           )
         }
       </main>
