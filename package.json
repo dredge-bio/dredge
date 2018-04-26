@@ -2,7 +2,7 @@
   "name": "sophie-genes",
   "author": "Patrick Golden",
   "license": "GPL-3.0",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "dependencies": {
     "babelify": "^6.1.3",
