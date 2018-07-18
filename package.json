@@ -28,6 +28,7 @@
     "bundle": "npm run bundle-js && npm run bundle-css",
     "bundle-js": "mkdir -p dist && browserify -o dist/mabrowser.js src/index.js",
     "bundle-css": "mkdir -p dist && cssnext style.css > dist/mabrowser.css",
-    "watch": "mkdir -p dist && watchify -v -d -o dist/mabrowser.js src/index.js"
+    "watch": "mkdir -p dist && watchify -v -d -o dist/mabrowser.js src/index.js",
+    "serve": "python3 -m http.server 9999"
   }
 }
