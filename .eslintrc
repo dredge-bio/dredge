@@ -23,7 +23,6 @@
     "prefer-arrow-callback": 2,
     "prefer-const": 2,
     "prefer-spread": 2,
-    "quotes": 0,
-    "semi": [2, "never"]
+    "quotes": 0
   }
 }
