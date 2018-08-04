@@ -1,17 +1,26 @@
 "use strict";
 
 const R = require('ramda')
+    , Type = require('union-type')
     , { makeActionType } = require('org-async-typed-actions')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
 }
 
-module.exports = makeActionType({
+const Action = module.exports = makeActionType({
   CheckCompatibility: {
     exec: checkCompatibility,
     request: {},
     response: {},
+  },
+
+  CheckAvailableDatasets: {
+    exec: checkAvailableDatasets,
+    request: {},
+    response: {
+      projects: Type.ListOf(String),
+    },
   },
 
   LoadDataset: {
@@ -73,6 +82,103 @@ function loadDataset() {
     const { blob } = await db.datasets.get('cellGeneMeasuress')
 
     blob
+  }
+}
+
+async function checkAvailableDatasets() {
+  return async dispatch => {
+    const loadedProjects = {}
+
+    const projectsResp = await fetch('project.json')
+
+    if (!projectsResp.ok) {
+      throw new Error("No project.json file available")
+    }
+
+    let projects
+
+    try {
+      projects = await projectsResp.json()
+      if (!Array.isArray(projects)) throw new Error()
+    } catch (e) {
+      throw new Error("project.json file is malformed")
+    }
+
+    await Promise.all(projects.map(async projectName => {
+      const report = []
+          , log = message => report.push(`${projectName}: ${message}`)
+
+      let samples
+        , aliases = null
+        , averages = null
+        , medians = null
+
+      const samplesResp = await fetch(`projects/${projectName}/samples.json`)
+
+      if (!samplesResp.ok) {
+        log(`Could not download \`samples.json\` file from ./projects/${projectName}/samples.json. Aborting.`)
+        dispatch(Action.ReportDatasetLoad(report))
+        return
+      }
+
+      try {
+        samples = await samplesResp.json()
+        log(`Loaded samples.`)
+      } catch (e) {
+        log(`./projects/${projectName}/samples.json is not a valid JSON file. Aborting.`)
+        dispatch(Action.ReportDatasetLoad(report))
+        return
+      }
+
+      // TODO: Validate all of samples, aliases, averages, medians
+
+      log('Checking for additional project statistics...')
+
+      await Promise.all([
+        fetch(`projects/${projectName}/gene_aliases.json`).then(async resp => {
+          try {
+            if (!resp.ok) throw '';
+            aliases = await resp.json()
+            report.push('Loaded gene aliases')
+          } catch (e) {
+            report.push('No file foudn for gene aliases')
+          }
+        }),
+
+        fetch(`projects/${projectName}/rpkm_averages.csv`).then(async resp => {
+          try {
+            if (!resp.ok) throw '';
+            averages = await resp.text()
+            report.push('Loaded gene RPKM averages')
+          } catch (e) {
+            report.push('No file found for gene RPKM averages')
+          }
+        }),
+
+        fetch(`projects/${projectName}/rpkm_medians.csv`).then(async resp => {
+          try {
+            if (!resp.ok) throw '';
+            medians = await resp.text()
+            report.push('Loaded gene RPKM medians')
+          } catch (e) {
+            report.push('No file found for gene RPKM medians')
+          }
+        }),
+      ])
+
+      loadedProjects[projectName] = {
+        key: projectName,
+        samples,
+        aliases,
+        averages,
+        medians,
+      }
+
+      dispatch(Action.ReportDatasetLoad(report))
+      return
+    }))
+
+    return loadedProjects
   }
 }
 

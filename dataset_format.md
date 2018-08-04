@@ -14,11 +14,13 @@ And citation information
 
 ## ./samples.json
 
-A file describing the different samples used in the project
+A file describing the different samples used in the project. This should describe, for each sample:
 
-- Labels
+  - The label by which it should be described
 
-- Mapping of keys (Only for internal usage to work with the embryo guy)
+  - The key which should be used to retrieve pairwise comparison files (Only for internal usage to work with the embryo guy)
+
+The JSON file must be an object whose keys are the unique identifiers are samples, and whose corresponding values must be objects with zero or more of strings corresponding to these keys: `label`, `file_identifier`.
 
 
 ## ./gene\_names.json
