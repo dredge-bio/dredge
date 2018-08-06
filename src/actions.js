@@ -2,13 +2,13 @@
 
 const R = require('ramda')
     , Type = require('union-type')
-    , { makeActionType } = require('org-async-typed-actions')
+    , { makeTypedAction } = require('org-async-actions')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
 }
 
-const Action = module.exports = makeActionType({
+const Action = module.exports = makeTypedAction({
   CheckCompatibility: {
     exec: checkCompatibility,
     request: {},
