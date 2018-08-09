@@ -2,30 +2,49 @@
 
 const R = require('ramda')
 
+function view(projectBaseURL) {
+  return {
+    projectBaseURL,
+
+    // Pairwise comparison with keys as `A_B`
+    pairwiseData: {},
+    currentPairwiseComparison: null,
+    savedGenes: new Set(),
+    brushedGenes: new Set(),
+  }
+}
+
 function initialState() {
   return {
-    compatibile: null,
-
-    datasets: {
-      'sophie': {
-        // Pairwise comparison with keys as `A_B`
-        pairwiseData: {},
-        currentPairwiseComparison: null,
-        savedGenes: new Set(),
-        brushedGenes: new Set(),
-      },
-    },
-
-
+    initialized: false,
+    compatible: null,
+    datasets: {},
+    log: [],
     loading: false,
+    projects: null,
+    currentView: null,
   }
 }
 
 module.exports = function reducer(state=initialState(), action) {
+  if (!action.readyState) return state
+
   return action.readyState.case({
     Success: resp => action.type.case({
+      Initialize() {
+        return R.assoc('initialized', true, state)
+      },
+
+      Log() {
+        return R.over(R.lensProp('log'), val => val.concat(action.type.message), state)
+      },
+
+      LoadAvailableProjects() {
+        return R.assoc('projects', resp.projects, state)
+      },
+
       CheckCompatibility() {
-        return R.set('compatible', true, state)
+        return R.assoc('compatible', true, state)
       },
 
       LoadDataset() {
@@ -64,7 +83,7 @@ module.exports = function reducer(state=initialState(), action) {
     }),
     Failure: err => action.type.case({
       CheckCompatibility() {
-        return R.set('compatibile', false, state)
+        return R.set('compatible', false, state)
       },
       _: () => {
         // eslint-disable-next-line no-console

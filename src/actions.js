@@ -1,7 +1,6 @@
 "use strict";
 
 const R = require('ramda')
-    , Type = require('union-type')
     , { makeTypedAction } = require('org-async-actions')
 
 function isIterable(obj) {
@@ -9,17 +8,32 @@ function isIterable(obj) {
 }
 
 const Action = module.exports = makeTypedAction({
+  Initialize: {
+    exec: initialize,
+    request: {},
+    response: {},
+  },
+
+  Log: {
+    exec: R.always({}),
+    request: {
+      message: val => [].concat(val).every(val => typeof val === 'string'),
+    },
+    response: {},
+  },
+
   CheckCompatibility: {
     exec: checkCompatibility,
     request: {},
     response: {},
   },
 
-  CheckAvailableDatasets: {
-    exec: checkAvailableDatasets,
+  LoadAvailableProjects: {
+    exec: loadAvailableProjects,
     request: {},
     response: {
-      projects: Type.ListOf(String),
+      // projects: Type.ListOf(Object),
+      projects: Object,
     },
   },
 
@@ -64,16 +78,38 @@ const Action = module.exports = makeTypedAction({
   },
 })
 
+function delay(time) {
+  return new Promise(resolve => setTimeout(resolve, time))
+}
+
+function initialize() {
+  return async dispatch => {
+    dispatch(Action.Log('Checking browser compatibility...'))
+    await dispatch(Action.CheckCompatibility)
+    dispatch(Action.Log('Browser compatible.'))
+    await delay(100)
+    dispatch(Action.Log('Loading available projects...'))
+    await dispatch(Action.LoadAvailableProjects)
+    dispatch(Action.Log('Finished initialization. Starting application...'))
+    await delay(420)
+
+    return {}
+  }
+}
+
 function checkCompatibility() {
-  if (!window.indexedDB) {
-    throw new Error('Browser does not support IndexedDB standard. Cannot run application.')
-  }
+  return () => {
 
-  if (!window.Blob) {
-    throw new Error('Browser does not support Blob standard. Cannot run application.')
-  }
+    if (!window.indexedDB) {
+      throw new Error('Browser does not support IndexedDB standard. Cannot run application.')
+    }
 
-  return {}
+    if (!window.Blob) {
+      throw new Error('Browser does not support Blob standard. Cannot run application.')
+    }
+
+    return {}
+  }
 }
 
 function loadDataset() {
@@ -85,11 +121,11 @@ function loadDataset() {
   }
 }
 
-async function checkAvailableDatasets() {
+function loadAvailableProjects() {
   return async dispatch => {
     const loadedProjects = {}
 
-    const projectsResp = await fetch('project.json')
+    const projectsResp = await fetch('projects.json')
 
     if (!projectsResp.ok) {
       throw new Error("No project.json file available")
@@ -100,33 +136,27 @@ async function checkAvailableDatasets() {
     try {
       projects = await projectsResp.json()
       if (!Array.isArray(projects)) throw new Error()
+      dispatch(Action.Log(`Loading projects: ${projects.join(', ')}`))
     } catch (e) {
-      throw new Error("project.json file is malformed")
+      throw new Error("projects.json file is malformed")
     }
 
-    await Promise.all(projects.map(async projectName => {
-      const report = []
-          , log = message => report.push(`${projectName}: ${message}`)
+    await Promise.all(projects.map(async projectBaseURL => {
+      const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
+          , project = {}
 
-      let samples
-        , aliases = null
-        , averages = null
-        , medians = null
-
-      const samplesResp = await fetch(`projects/${projectName}/samples.json`)
+      const samplesResp = await fetch(`${projectBaseURL}/samples.json`)
 
       if (!samplesResp.ok) {
-        log(`Could not download \`samples.json\` file from ./projects/${projectName}/samples.json. Aborting.`)
-        dispatch(Action.ReportDatasetLoad(report))
+        log(`Could not download \`samples.json\` file from ${projectBaseURL}/samples.json. Aborting.`)
         return
       }
 
       try {
-        samples = await samplesResp.json()
-        log(`Loaded samples.`)
+        project.samples = await samplesResp.json()
+        log(`Loaded samples`)
       } catch (e) {
-        log(`./projects/${projectName}/samples.json is not a valid JSON file. Aborting.`)
-        dispatch(Action.ReportDatasetLoad(report))
+        log(`${projectBaseURL}/samples.json is not a valid JSON file. Aborting.`)
         return
       }
 
@@ -134,51 +164,105 @@ async function checkAvailableDatasets() {
 
       log('Checking for additional project statistics...')
 
-      await Promise.all([
-        fetch(`projects/${projectName}/gene_aliases.json`).then(async resp => {
-          try {
-            if (!resp.ok) throw '';
-            aliases = await resp.json()
-            report.push('Loaded gene aliases')
-          } catch (e) {
-            report.push('No file foudn for gene aliases')
-          }
-        }),
+      await fetch(`${projectBaseURL}/gene_whitelist.txt`).then(async resp => {
+        if (!resp.ok) {
+          log('No gene whitelist found')
+          project.geneWhitelist = null
+          return
+        }
 
-        fetch(`projects/${projectName}/rpkm_averages.csv`).then(async resp => {
-          try {
-            if (!resp.ok) throw '';
-            averages = await resp.text()
-            report.push('Loaded gene RPKM averages')
-          } catch (e) {
-            report.push('No file found for gene RPKM averages')
-          }
-        }),
+        const whitelist = await resp.text()
+        project.geneWhitelist = new Set(whitelist.split('\n'))
 
-        fetch(`projects/${projectName}/rpkm_medians.csv`).then(async resp => {
-          try {
-            if (!resp.ok) throw '';
-            medians = await resp.text()
-            report.push('Loaded gene RPKM medians')
-          } catch (e) {
-            report.push('No file found for gene RPKM medians')
-          }
-        }),
-      ])
+        log('Loaded gene whitelist')
+      })
 
-      loadedProjects[projectName] = {
-        key: projectName,
-        samples,
-        aliases,
-        averages,
-        medians,
-      }
+      await fetch(`${projectBaseURL}/gene_aliases.csv`).then(async resp => {
+        if (!resp.ok) {
+          log('No gene aliases found')
+          project.geneAliases = {}
+          return
+        }
 
-      dispatch(Action.ReportDatasetLoad(report))
-      return
+        const aliases = await resp.text()
+
+        try {
+          project.geneAliases = R.pipe(
+            R.split('\n'),
+            R.map(R.pipe(
+              R.split(','),
+              arr => [arr[0], [arr.slice(1)]]
+            )),
+            R.fromPairs,
+          )(aliases)
+
+          log('Loaded gene aliases')
+
+        } catch (e) {
+          log('Gene alias file malformed')
+          return
+        }
+      })
+
+      await fetch(`${projectBaseURL}/rpkm_averages.csv`).then(async resp => {
+        if (!resp.ok) {
+          log('No RPKM mean measurements found')
+          project.rpkmMeansByGene = {}
+          return
+        }
+
+        const means = (await resp.text()).split('\n')
+
+        try {
+          const samples = means.shift().split(',').slice(1)
+
+          project.rpkmMeansByGene = R.pipe(
+            R.map(R.pipe(
+              R.split(','),
+              ([geneName, ...sampleMeans]) => [geneName, R.zipObj(samples, sampleMeans)]
+            )),
+            R.fromPairs
+          )(means)
+
+          log('Loaded gene RPKM mean measurements')
+        } catch (e) {
+          log('Gene RPKM mean measurements file malformed')
+        }
+      })
+
+      await fetch(`${projectBaseURL}/rpkm_averages.csv`).then(async resp => {
+        if (!resp.ok) {
+          log('No RPKM median measurements found')
+          project.rpkmMediansByGene = {}
+          return
+        }
+
+        const medians = (await resp.text()).split('\n')
+
+        try {
+          const samples = medians.shift().split(',').slice(1)
+
+          project.rpkmMediansByGene = R.pipe(
+            R.map(R.pipe(
+              R.split(','),
+              ([geneName, ...sampleMedians]) => [geneName, R.zipObj(samples, sampleMedians)]
+            )),
+            R.fromPairs
+          )(medians)
+
+          log('Loaded gene RPKM median measurements')
+        } catch (e) {
+          log('Gene RPKM median measurements file malformed')
+        }
+      })
+
+      log('Finished loading')
+
+      project.baseURL = projectBaseURL
+      loadedProjects[projectBaseURL] = project
     }))
 
-    return loadedProjects
+    return { projects: loadedProjects }
   }
 }
 
