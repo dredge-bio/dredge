@@ -3,52 +3,10 @@
   <head>
     <title>Gene expression visualization</title>
     <meta charset="utf8">
-    <link rel="stylesheet" href="dist/mabrowser.css" />
-    
-    <style type="text/css">
-      header {
-        height: 40px;
-        line-height: 40px;
-
-        color: white;
-        background-color: #370a00;
-
-        border-bottom: 1px solid #ccc;
-        box-sizing: border-box;
-      } 
-
-      header h1 {
-        margin: 0;
-        line-height: 40px;
-
-        font-size: 18px;
-        font-weight: normal;
-
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      input[type="range"] {
-        -webkit-appearance: none;
-        -webkit-appearance: slider-vertical;
-      }
-
-
-    </style>
   </head>
 
-  <body class="bg-main">
-    <header class="px2 flex flex-justify">
-      <h1>
-        <a class="white" href="/">
-          Interactive visualizer of differential gene expression
-          in the early <i>C. elegans</i> embryo
-        </a>
-      </h1>
-      <a href="about.html" class="bold white">About</a>
-    </header>
-    <main id="application" class="relative" style="height: calc(100vh - 40px)"></main>
+  <body>
+    <div id="application"></main>
     <script type="text/javascript" src="dist/mabrowser.js"></script>
   </body>
 </html>

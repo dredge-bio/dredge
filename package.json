@@ -14,6 +14,7 @@
     "react-hyperscript": "^3.2.0",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
+    "styled-components": "^3.4.2",
     "tape": "^4.2.0",
     "union-type": "github:ptgolden/union-type"
   },
