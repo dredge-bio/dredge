@@ -37,10 +37,10 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
-  LoadDataset: {
-    exec: loadDataset,
+  ViewProject: {
+    exec: R.always({}),
     request: {
-      // id: String,
+      projectBaseURL: String,
     },
     response: {},
   },
@@ -109,15 +109,6 @@ function checkCompatibility() {
     }
 
     return {}
-  }
-}
-
-function loadDataset() {
-  return async (dispatch, getState, { db }) => {
-    await _loadDataset();
-    const { blob } = await db.datasets.get('cellGeneMeasuress')
-
-    blob
   }
 }
 
@@ -219,7 +210,10 @@ function loadAvailableProjects() {
           project.rpkmMeansByGene = R.pipe(
             R.map(R.pipe(
               R.split(','),
-              ([geneName, ...sampleMeans]) => [geneName, R.zipObj(samples, sampleMeans)]
+              ([geneName, ...sampleMeans]) => [
+                geneName,
+                R.zipObj(samples, sampleMeans.map(parseFloat))
+              ]
             )),
             R.fromPairs
           )(means)
@@ -245,7 +239,10 @@ function loadAvailableProjects() {
           project.rpkmMediansByGene = R.pipe(
             R.map(R.pipe(
               R.split(','),
-              ([geneName, ...sampleMedians]) => [geneName, R.zipObj(samples, sampleMedians)]
+              ([geneName, ...sampleMedians]) => [
+                geneName,
+                R.zipObj(samples, sampleMedians.map(parseFloat))
+              ]
             )),
             R.fromPairs
           )(medians)

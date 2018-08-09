@@ -5,16 +5,9 @@ const h = require('react-hyperscript')
     , React = require('react')
     , { connect } = require('react-redux')
     , Action = require('../actions')
-
-function Log({ messages }) {
-  return (
-    h('pre', messages.join('\n'))
-  )
-}
-
-function Viewer() {
-  return h('div', 'Pick project')
-}
+    , Log = require('./Log')
+    , View = require('./View')
+    , ProjectSelector = require('./ProjectSelector')
 
 class Application extends React.Component {
   componentDidMount() {
@@ -24,16 +17,22 @@ class Application extends React.Component {
   }
 
   render() {
-    const { initialized, log } = this.props
+    const { initialized, currentView } = this.props
 
-    return (
-      initialized
-        ? h(Viewer)
-        : h(Log, { messages: log })
-    )
+    let el
+
+    if (!initialized) {
+      el = h(Log)
+    } else if (!currentView) {
+      el = h(ProjectSelector)
+    } else {
+      el = h(View)
+    }
+
+    return el
   }
 }
 
 module.exports = connect(
-  R.pick(['initialized', 'log'])
+  R.pick(['initialized', 'currentView'])
 )(Application)

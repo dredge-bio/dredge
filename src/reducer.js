@@ -47,8 +47,8 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('compatible', true, state)
       },
 
-      LoadDataset() {
-        return state
+      ViewProject(projectBaseURL) {
+        return R.assoc('currentView', view(projectBaseURL), state)
       },
 
       SetPairwiseComparison(cellA, cellB) {
