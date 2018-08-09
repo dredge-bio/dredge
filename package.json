@@ -5,32 +5,24 @@
   "version": "2.3.0",
   "private": true,
   "dependencies": {
-    "basscss": "^7.1.0",
-    "basscss-btn-sizes": "^1.1.0",
-    "browserify": "^11.0.1",
-    "cssnext": "^1.8.3",
-    "d3": "^3.5.6",
+    "d3": "^5.5.0",
     "dexie": "^1.2.0",
-    "envify": "^3.4.0",
-    "filesaver.js": "^0.2.0",
-    "immutable": "^3.7.5",
-    "json-stable-stringify": "^1.0.0",
-    "lodash.sortby": "^3.1.5",
     "org-async-actions": "^1.0.0",
     "ramda": "^0.25.0",
-    "react": "^0.14.0",
-    "react-dom": "^0.14.2",
+    "react": "^16.4.2",
+    "react-dom": "^16.4.2",
     "react-hyperscript": "^3.2.0",
+    "react-redux": "^5.0.7",
+    "redux": "^4.0.0",
     "tape": "^4.2.0",
-    "uglifyjs": "^2.4.10",
-    "union-type": "^0.4.1",
-    "watchify": "^3.3.1",
-    "whatwg-fetch": "^0.9.0"
+    "union-type": "github:ptgolden/union-type"
+  },
+  "devDependencies": {
+    "browserify": "^16.2.2",
+    "envify": "^3.4.0",
+    "watchify": "^3.11.0"
   },
   "scripts": {
-    "bundle": "npm run bundle-js && npm run bundle-css",
-    "bundle-js": "mkdir -p dist && browserify -o dist/mabrowser.js src/index.js",
-    "bundle-css": "mkdir -p dist && cssnext style.css > dist/mabrowser.css",
     "watch": "mkdir -p dist && watchify -v -d -o dist/mabrowser.js src/index.js",
     "serve": "python3 -m http.server 9999"
   }
