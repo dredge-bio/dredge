@@ -48,7 +48,6 @@ const Action = module.exports = makeTypedAction({
   SetPairwiseComparison: {
     exec: setPairwiseComparison,
     request: {
-      // dataset: String,
       CellA: String,
       CellB: String,
     },
@@ -60,7 +59,6 @@ const Action = module.exports = makeTypedAction({
   SetSavedGeneNames: {
     exec: R.always({}),
     request: {
-      // dataset: String,
       geneNames: isIterable,
     },
     response: {
@@ -70,7 +68,6 @@ const Action = module.exports = makeTypedAction({
   SetBrushedGeneNames: {
     exec: R.always({}),
     request: {
-      // dataset: String,
       geneNames: isIterable,
     },
     response: {
@@ -83,7 +80,7 @@ function delay(time) {
 }
 
 function initialize() {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     dispatch(Action.Log('Checking browser compatibility...'))
     await dispatch(Action.CheckCompatibility)
     dispatch(Action.Log('Browser compatible.'))
@@ -92,6 +89,9 @@ function initialize() {
     await dispatch(Action.LoadAvailableProjects)
     dispatch(Action.Log('Finished initialization. Starting application...'))
     await delay(420)
+    const project = Object.keys(getState().projects)[0]
+
+    await dispatch(Action.ViewProject(project))
 
     return {}
   }
@@ -212,7 +212,7 @@ function loadAvailableProjects() {
               R.split(','),
               ([geneName, ...sampleMeans]) => [
                 geneName,
-                R.zipObj(samples, sampleMeans.map(parseFloat))
+                R.zipObj(samples, sampleMeans.map(parseFloat)),
               ]
             )),
             R.fromPairs
@@ -241,7 +241,7 @@ function loadAvailableProjects() {
               R.split(','),
               ([geneName, ...sampleMedians]) => [
                 geneName,
-                R.zipObj(samples, sampleMedians.map(parseFloat))
+                R.zipObj(samples, sampleMedians.map(parseFloat)),
               ]
             )),
             R.fromPairs
@@ -265,77 +265,53 @@ function loadAvailableProjects() {
 
 // Load the table produced by the edgeR function `exactTest`:
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
-async function setPairwiseComparison(cellA, cellB) {
-  const cellNameMap = require('./cell_name_map')
+function setPairwiseComparison(sampleAKey, sampleBKey) {
+  return async (dispatch, getState) => {
+    const project = getState().projects[getState().currentView.projectBaseURL]
+        , { samples } = project
 
-  cellA = cellNameMap[cellA] || cellA
-  cellB = cellNameMap[cellB] || cellB
+    const sampleA = samples[sampleAKey]
+        , sampleB = samples[sampleBKey]
 
-  const filename = `data/geneExpression/${cellA}_${cellB}.txt`
-
-  const resp = await fetch(filename)
-      , text = await resp.text()
-
-  const pairwiseData = {}
-
-  text
-    .split('\n')
-    .slice(1) // Skip header
-    .forEach(row => {
-      const [ geneName, logFC, logCPM, pValue ] = row.split('\t')
-
-      pairwiseData[geneName] = {
-        geneName,
-        logFC: parseFloat(logFC),
-        logCPM: parseFloat(logCPM),
-        pValue: parseFloat(pValue),
-      }
-    })
-
-  return { pairwiseData }
-}
-
-async function _loadDataset() {
-  const [ avgRPKMs, medRPKMs ] = await (
-    Promise.all([
-      fetch('data/20160315_geneExpressionAvg.csv'),
-      fetch('data/20160315_geneExpressionMed.csv'),
-    ]).then(resp => resp.text())
-      .then(data => data.map(set => set.trim().split('\n')))
-  )
-
-  const cellNames = avgRPKMs.slice(0, 1)[0].slice(1).split(',')
-      , data = {}
-
-  // Skip past the cell name
-  avgRPKMs.splice(0, 1)
-  medRPKMs.splice(0, 1)
-
-  cellNames.forEach(name => {
-    data[name] = {}
-  })
-
-  for (let i = 0; i < avgRPKMs.length; i++) {
-    let geneAvgRPKMByCell = avgRPKMs[i].split(',')
-      , geneMedRPKMByCell = medRPKMs[i].split(',')
-
-    const geneName = geneAvgRPKMByCell.slice(0, 1)[0];
-
-    // Skip past the gene name
-    geneAvgRPKMByCell.splice(0, 1)
-    geneMedRPKMByCell.splice(0, 1)
-
-    // if (geneAvgRPKMByCell !== cellNames.length)
-
-    geneAvgRPKMByCell = geneAvgRPKMByCell.map(parseFloat);
-    geneMedRPKMByCell = geneMedRPKMByCell.map(parseFloat);
-
-    for (let j = 0; j < cellNames.length; j++) {
-      const cell = cellNames[j]
-          , avg = geneAvgRPKMByCell[j]
-          , med = geneMedRPKMByCell[j]
-
-      data[cell][geneName] = { avg, med };
+    if (!sampleA) {
+      throw new Error(`No such sample: ${sampleAKey}`)
     }
+
+    if (!sampleB) {
+      throw new Error(`No such sample: ${sampleBKey}`)
+    }
+
+    const comparisonFileKey = ([
+      sampleA.fileKey || sampleAKey,
+      sampleB.fileKey || sampleBKey,
+    ].join('_'))
+
+    const fileURL = `${project.baseURL}/pairwise_tests/${comparisonFileKey}.txt`
+
+    const resp = await fetch(fileURL)
+
+    if (!resp.ok) {
+      throw new Error(`Could not download pairwise test from ${fileURL}`)
+    }
+
+    const text = await resp.text()
+
+    const pairwiseData = {}
+
+    text
+      .split('\n')
+      .slice(1) // Skip header
+      .forEach(row => {
+        const [ geneName, logFC, logCPM, pValue ] = row.split('\t')
+
+        pairwiseData[geneName] = {
+          geneName,
+          logFC: parseFloat(logFC),
+          logCPM: parseFloat(logCPM),
+          pValue: parseFloat(pValue),
+        }
+      })
+
+    return { pairwiseData }
   }
 }

@@ -12,6 +12,11 @@ const minWidth = 1000
     , minHeight = 600
     , maxRightWidth = 780
 
+const ViewerContainer = styled.div`
+  position: relative;
+  height: 100%;
+`
+
 class Viewer extends React.Component {
   constructor() {
     super()
@@ -48,10 +53,7 @@ class Viewer extends React.Component {
     }
 
     return (
-      h(styled.div`
-        position: relative;
-        height: 100%;
-      `, {
+      h(ViewerContainer, {
         innerRef: el => {
           this.el = el;
         }

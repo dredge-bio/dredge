@@ -51,18 +51,20 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('currentView', view(projectBaseURL), state)
       },
 
-      SetPairwiseComparison(cellA, cellB) {
+      SetPairwiseComparison(project, cellA, cellB) {
         const key = `${cellA}${cellB}`
 
-        return R.update(
-          R.lensPath(['datasets', 'sophie']),
-          R.pipe(
-            R.assocPath(['pairwiseData', key], resp.pairwiseData),
-            R.set('currentPairwiseComparison', [cellA, cellB]),
-            R.set('brushedGenes', new Set()),
-          ),
-          state
-        )
+        return R.pipe(
+          R.assoc('loading', false),
+          R.over(
+            R.lensPath(['projects', project]),
+            R.pipe(
+              R.assocPath(['pairwiseData', key], resp.pairwiseData),
+              R.set('currentPairwiseComparison', [cellA, cellB]),
+              R.set('brushedGenes', new Set()),
+            )
+          )
+        )(state)
       },
 
       SetSavedGeneNames(geneNames) {
@@ -81,7 +83,20 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
     }),
+
+    Pending: () => action.type.case({
+      SetPairwiseComparison() {
+        return R.assoc('loading', true, state)
+      },
+
+      _: R.always(state),
+    }),
+
     Failure: err => action.type.case({
+      SetPairwiseComparison() {
+        return R.assoc('loading', false, state)
+      },
+
       CheckCompatibility() {
         return R.set('compatible', false, state)
       },
@@ -91,6 +106,5 @@ module.exports = function reducer(state=initialState(), action) {
         return state
       },
     }),
-    Pending: () => state,
   })
 }
