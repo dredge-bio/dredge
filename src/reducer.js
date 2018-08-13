@@ -63,8 +63,11 @@ module.exports = function reducer(state=initialState(), action) {
               ['project', 'pairwiseComparisonCache', [cellA, cellB]],
               pairwiseData
             ),
-            R.assoc('comparedSamples', [cellA, cellB]),
-            R.assoc('brushedGenes', new Set())
+            R.flip(R.merge)({
+              pairwiseData,
+              comparedSamples: [cellA, cellB],
+              brushedGenes: new Set(),
+            })
           ))
         )(state)
       },

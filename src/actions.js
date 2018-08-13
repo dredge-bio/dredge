@@ -270,6 +270,14 @@ function setPairwiseComparison(sampleAKey, sampleBKey) {
   return async (dispatch, getState) => {
     const { project } = getState().currentView
 
+    const cached = project.pairwiseComparisonCache[[sampleAKey, sampleBKey]]
+
+    if (cached) {
+      return {
+        pairwiseData: cached,
+      }
+    }
+
     const sampleA = project.samples[sampleAKey]
         , sampleB = project.samples[sampleBKey]
 
@@ -296,15 +304,14 @@ function setPairwiseComparison(sampleAKey, sampleBKey) {
 
     const text = await resp.text()
 
-    const pairwiseData = {}
-
-    text
+    const pairwiseData = text
+      .trim()
       .split('\n')
       .slice(1) // Skip header
-      .forEach(row => {
+      .map(row => {
         const [ geneName, logFC, logCPM, pValue ] = row.split('\t')
 
-        pairwiseData[geneName] = {
+        return {
           geneName,
           logFC: parseFloat(logFC),
           logCPM: parseFloat(logCPM),
