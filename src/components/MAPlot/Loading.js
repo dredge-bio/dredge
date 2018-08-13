@@ -3,7 +3,6 @@
 const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
-    , { connect } = require('react-redux')
 
 const LoadingWrapper = styled.div`
   position: absolute;
@@ -55,25 +54,4 @@ class LoadingIndicator extends React.Component {
   }
 }
 
-const PlotWrapper = styled.div`
-  position: relative;
-  height: 100%;
-`
-
-function Plot(props) {
-  return (
-    h(PlotWrapper, [
-      'The plot',
-      h(LoadingIndicator, {
-        loading: props.loading,
-      }),
-    ])
-  )
-}
-
-module.exports = connect(store => {
-  return {
-    loading: store.loading,
-    view: store.currentView,
-  }
-})(Plot)
+module.exports = LoadingIndicator;

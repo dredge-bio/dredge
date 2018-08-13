@@ -1,19 +1,22 @@
 "use strict";
 
-var d3 = require('d3')
-  , sortBy = require('lodash.sortby')
+const R = require('ramda')
+    , d3 = require('d3')
 
 function getBins(scale, unit) {
-  var [ min, max ] = d3.extent(scale.range())
-    , reversed = scale.range()[0] !== min
-    , numBins = Math.floor((max - min) / unit)
-    , bins
+  const [ min, max ] = d3.extent(scale.range())
+      , reversed = scale.range()[0] !== min
+      , numBins = Math.floor((max - min) / unit)
 
-  bins = Array.apply(null, Array(numBins)).map((_, i) => {
-    var rMin = min + i * unit
+  let bins
+
+  bins = [...Array(numBins)].map((_, i) => {
+    let rMin = min + i * unit
       , rMax = rMin + unit
 
-    if (reversed) [ rMin, rMax ] = [ rMax, rMin ];
+    if (reversed) {
+      [ rMin, rMax ] = [ rMax, rMin ]
+    }
 
     return [
       scale.invert(rMin),
@@ -31,45 +34,30 @@ function getBins(scale, unit) {
   return bins;
 }
 
-function takeWhile(list, condition) {
-  var ret = []
-
-  for (var i = 0, l = list.length; i < l; i++) {
-    if (!condition(list[i])) {
-      break;
-    } else {
-      ret.push(list[i]);
-    }
-  }
-
-  return ret;
-}
-
 module.exports = function (data, xScale, yScale, unit=5) {
-  var fcSorted = sortBy(data, 'logFC')
+  const fcSorted = R.sortBy(R.prop('logFC'), data)
     , fcBins = getBins(yScale, unit)
     , cpmBins = getBins(xScale, unit)
-    , curFC = 0
     , bins = []
 
-  fcBins.forEach(([ fcMin, fcMax, y0, y1 ]) => {
-    var curCPM = 0
-      , cpmSorted
-      , inFCBin
+  let curFC = 0
 
-    inFCBin = takeWhile(
-      fcSorted.slice(curFC),
-      ({ logFC }) => logFC >= fcMin && logFC <= fcMax);
+  fcBins.forEach(([ fcMin, fcMax, y0, y1 ]) => {
+    let curCPM = 0
+
+    const inFCBin = R.takeWhile(
+      ({ logFC }) => logFC >= fcMin && logFC <= fcMax,
+      fcSorted.slice(curFC)
+    )
 
     curFC += inFCBin.length;
-    cpmSorted = sortBy(inFCBin, 'logCPM');
+    const cpmSorted = R.sortBy(R.prop('logCPM'), inFCBin);
 
     cpmBins.forEach(([ cpmMin, cpmMax, x0, x1 ]) => {
-      var inCPMBin
-
-      inCPMBin = takeWhile(
-        cpmSorted.slice(curCPM),
-        ({ logCPM }) => logCPM >= cpmMin && logCPM <= cpmMax);
+      const inCPMBin = R.takeWhile(
+        ({ logCPM }) => logCPM >= cpmMin && logCPM <= cpmMax,
+        cpmSorted.slice(curCPM)
+      )
 
       curCPM += inCPMBin.length;
 
@@ -80,7 +68,7 @@ module.exports = function (data, xScale, yScale, unit=5) {
           fcMax,
           cpmMin,
           cpmMax,
-          genes: inCPMBin
+          genes: inCPMBin,
         })
       }
     });
