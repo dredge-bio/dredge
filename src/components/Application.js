@@ -48,11 +48,18 @@ function Header() {
     `, [
       h('div', [
         'Heading',
-      ])
+      ]),
     ])
   )
 }
 
+const ApplicationContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: grid;
+  background-color: bisque;
+  grid-template-rows: 50px minmax(600px, 1fr);
+`
 
 class Application extends React.Component {
   componentDidMount() {
@@ -74,17 +81,11 @@ class Application extends React.Component {
       mainEl = h(View)
     }
 
-    return h(styled.div`
-      height: 100%;
-      width: 100%;
-      display: grid;
-      grid-template-rows: 40px 1fr;
-      background-color: bisque;
-    `, [
+    return h(ApplicationContainer, [
       h(Header),
-      h(styled.main`
-        padding: 1em;
-      `, [ mainEl ])
+      h('main', [
+        mainEl,
+      ]),
     ])
   }
 }

@@ -1,7 +1,6 @@
 "use strict";
 
 const h = require('react-hyperscript')
-    , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
@@ -10,9 +9,9 @@ const LoadingWrapper = styled.div`
   position: absolute;
   color: red;
   font-size: 64px;
-  top: 50%;
+  top: 33%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%,0);
 `
 
 class LoadingIndicator extends React.Component {
@@ -22,7 +21,7 @@ class LoadingIndicator extends React.Component {
     this.startCountdown = this.startCountdown.bind(this)
 
     this.state = {
-      loading: props.loading
+      loading: props.loading,
     }
 
     if (props.loading) this.startCountdown()
@@ -33,7 +32,7 @@ class LoadingIndicator extends React.Component {
       clearTimeout(this.timer)
     }
 
-    this.timer = setTimeout(() => this.setState({ loading: false }), 666)
+    this.timer = setTimeout(() => this.setState({ loading: false }), 600)
   }
 
   componentDidUpdate(prevProps) {
@@ -50,29 +49,31 @@ class LoadingIndicator extends React.Component {
 
     return (
       h(LoadingWrapper, [
-        'Loading.....'
+        'Loading.....',
       ])
     )
   }
 }
 
-const LeftContainer = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: ${props => props.height}px;
-  width: ${props => props.width}px;
-  background-color: lightblue;
+const PlotWrapper = styled.div`
+  position: relative;
+  height: 100%;
 `
 
-function Left({ width, height, loading }) {
+function Plot(props) {
   return (
-    h(LeftContainer, { width, height }, [
-      h(LoadingIndicator, { loading }),
+    h(PlotWrapper, [
+      'The plot',
+      h(LoadingIndicator, {
+        loading: props.loading,
+      }),
     ])
   )
 }
 
-module.exports = connect(
-  R.pick(['loading'])
-)(Left)
+module.exports = connect(store => {
+  return {
+    loading: store.loading,
+    view: store.currentView,
+  }
+})(Plot)

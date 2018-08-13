@@ -2,74 +2,63 @@
 
 const h = require('react-hyperscript')
     , R = require('ramda')
-    , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
-    , Left = require('./Left')
-    , Right = require('./Right')
-
-const minWidth = 1000
-    , minHeight = 600
-    , maxRightWidth = 780
+    , MAPlot = require('./MAPlot')
 
 const ViewerContainer = styled.div`
-  position: relative;
+  display: grid;
   height: 100%;
+
+  grid-template:
+      "selectorA selectorA table " 130px
+      "plot      pvalue    table " minmax(300px, 1fr)
+      "selectorB selectorB table " 130px
+    / minmax(500px, 1fr) 100px minmax(500px, 780px)
+  ;
 `
 
-class Viewer extends React.Component {
-  constructor() {
-    super()
+const GridCell = styled.div`
+  grid-area: ${props => props.area};
+  background-color: ${props => props.bg || null};
+`
 
-    this.state = {
-      height: null,
-      width: null,
-    }
+function Viewer(props) {
+  const { currentView } = props
+      , { comparedSamples, pairwiseData } = currentView
+
+  let cellA, cellB
+
+  if (comparedSamples) {
+    [ cellA, cellB ] = comparedSamples
   }
 
-  componentDidMount() {
-    this.setState({
-      height: this.el.clientHeight,
-      width: this.el.clientWidth,
-    })
-  }
 
-  render() {
-    const { currentView } = this.props
+  return (
+    h(ViewerContainer, [
+      h(GridCell, { area: 'selectorA', bg: 'lightblue' }, [
+        cellA,
+      ]),
 
-    let { height, width } = this.state
-      , rightPanelWidth
-      , leftPanelWidth
-
-    if (height !== null) {
-      if (width < minWidth) width = minWidth;
-      if (height < minHeight) height = minHeight
-
-      rightPanelWidth = width * .58
-
-      if (rightPanelWidth > maxRightWidth) rightPanelWidth = maxRightWidth;
-
-      leftPanelWidth = width - rightPanelWidth
-    }
-
-    return (
-      h(ViewerContainer, {
-        innerRef: el => {
-          this.el = el;
-        }
-      }, height === null ? null : [
-        h(Left, {
-          width: leftPanelWidth,
-          height,
+      h(GridCell, { area: 'plot', bg: 'lightgreen' }, [
+        h(MAPlot, {
+          pairwiseData,
         }),
-        h(Right, {
-          left: leftPanelWidth,
-          width: rightPanelWidth,
-          height,
-        }),
-      ])
-    )
-  }
+      ]),
+
+      h(GridCell, { area: 'pvalue' }, [
+        'P-Value',
+      ]),
+
+      h(GridCell, { area: 'selectorB', bg: 'lightblue' }, [
+        cellB,
+      ]),
+
+      h(GridCell, { area: 'table', bg: 'lightpink' }, [
+        'Table',
+      ]),
+    ])
+  )
 }
 
 module.exports = connect(R.pick(['currentView']))(Viewer)
