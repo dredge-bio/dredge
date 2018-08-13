@@ -256,6 +256,7 @@ function loadAvailableProjects() {
       log('Finished loading')
 
       project.baseURL = projectBaseURL
+      project.pairwiseComparisonCache = {}
       loadedProjects[projectBaseURL] = project
     }))
 
@@ -267,11 +268,10 @@ function loadAvailableProjects() {
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
 function setPairwiseComparison(sampleAKey, sampleBKey) {
   return async (dispatch, getState) => {
-    const project = getState().projects[getState().currentView.projectBaseURL]
-        , { samples } = project
+    const { project } = getState().currentView
 
-    const sampleA = samples[sampleAKey]
-        , sampleB = samples[sampleBKey]
+    const sampleA = project.samples[sampleAKey]
+        , sampleB = project.samples[sampleBKey]
 
     if (!sampleA) {
       throw new Error(`No such sample: ${sampleAKey}`)

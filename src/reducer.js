@@ -2,13 +2,14 @@
 
 const R = require('ramda')
 
-function view(projectBaseURL) {
+function view(project) {
   return {
-    projectBaseURL,
+    project,
+    loading: false,
 
-    // Pairwise comparison with keys as `A_B`
-    pairwiseData: {},
-    currentPairwiseComparison: null,
+    comparedSamples: null,
+    pairwiseData: null,
+
     savedGenes: new Set(),
     brushedGenes: new Set(),
   }
@@ -18,9 +19,8 @@ function initialState() {
   return {
     initialized: false,
     compatible: null,
-    datasets: {},
     log: [],
-    loading: false,
+
     projects: null,
     currentView: null,
   }
@@ -48,28 +48,30 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       ViewProject(projectBaseURL) {
-        return R.assoc('currentView', view(projectBaseURL), state)
+        const project = state.projects[projectBaseURL]
+
+        return R.assoc('currentView', view(project), state)
       },
 
-      SetPairwiseComparison(project, cellA, cellB) {
-        const key = `${cellA}${cellB}`
+      SetPairwiseComparison(cellA, cellB) {
+        const { pairwiseData } = resp
 
         return R.pipe(
           R.assoc('loading', false),
-          R.over(
-            R.lensPath(['projects', project]),
-            R.pipe(
-              R.assocPath(['pairwiseData', key], resp.pairwiseData),
-              R.set('currentPairwiseComparison', [cellA, cellB]),
-              R.set('brushedGenes', new Set()),
-            )
-          )
+          R.over(R.lensProp('currentView'), R.pipe(
+            R.assocPath(
+              ['project', 'pairwiseComparisonCache', [cellA, cellB]],
+              pairwiseData
+            ),
+            R.assoc('comparedSamples', [cellA, cellB]),
+            R.assoc('brushedGenes', new Set())
+          ))
         )(state)
       },
 
       SetSavedGeneNames(geneNames) {
         return R.assocPath(
-          ['datasets', 'sophie', 'savedGenes'],
+          ['currentView', 'savedGenes'],
           new Set(geneNames),
           state
         )
@@ -77,7 +79,7 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetBrushedGeneNames(geneNames) {
         return R.assocPath(
-          ['datasets', 'sophie', 'brushedGenes'],
+          ['currentView', 'brushedGenes'],
           new Set(geneNames),
           state
         )
