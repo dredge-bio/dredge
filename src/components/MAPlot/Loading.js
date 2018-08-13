@@ -8,7 +8,7 @@ const LoadingWrapper = styled.div`
   position: absolute;
   color: red;
   font-size: 64px;
-  top: 33%;
+  top: 44%;
   left: 50%;
   transform: translate(-50%,0);
 `
