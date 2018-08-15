@@ -146,9 +146,9 @@ class Plot extends React.Component {
     } = this.state
 
     const { view={} } = this.props
-        , { comparedSamples } = view
+        , { comparedTreatments } = view
 
-    const samplesText = (comparedSamples || []).join('-')
+    const treatmentsText = (comparedTreatments || []).join('-')
 
     return (
       h('svg', {
@@ -164,7 +164,7 @@ class Plot extends React.Component {
             textAnchor: 'end',
             dominantBaseline: 'ideographic',
           },
-        }, samplesText),
+        }, treatmentsText),
 
         // X Axis label
         h('text', {

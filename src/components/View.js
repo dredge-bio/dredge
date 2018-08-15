@@ -5,7 +5,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
     , MAPlot = require('./MAPlot')
-    , SampleSelector = require('./SampleSelector')
+    , TreatmentSelector = require('./TreatmentSelector')
     , Action = require('../actions')
 
 const ViewerContainer = styled.div`
@@ -22,27 +22,27 @@ const ViewerContainer = styled.div`
 
 const GridCell = styled.div`
   grid-area: ${props => props.area};
-  background-color: ${props => props.bg || null};
+  border: 1px solid #666;
 `
 
 function Viewer(props) {
   const { currentView, dispatch } = props
-      , { comparedSamples, pairwiseData } = currentView
+      , { comparedTreatments, pairwiseData } = currentView
 
-  let sampleA, sampleB
+  let treatmentA, treatmentB
 
-  if (comparedSamples) {
-    [ sampleA, sampleB ] = comparedSamples
+  if (comparedTreatments) {
+    [ treatmentA, treatmentB ] = comparedTreatments
   }
 
 
   return (
     h(ViewerContainer, [
       h(GridCell, { area: 'selectorA', bg: 'lightblue' }, [
-        h(SampleSelector, {
-          selectedSample: sampleA,
-          handleSelectSample: sample => {
-            dispatch(Action.SetPairwiseComparison(sample, sampleB))
+        h(TreatmentSelector, {
+          selectedTreatment: treatmentA,
+          handleSelectTreatment: treatment => {
+            dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
           }
         }),
       ]),
@@ -58,10 +58,10 @@ function Viewer(props) {
       ]),
 
       h(GridCell, { area: 'selectorB', bg: 'lightblue' }, [
-        h(SampleSelector, {
-          selectedSample: sampleB,
-          handleSelectSample: sample => {
-            dispatch(Action.SetPairwiseComparison(sampleA, sample))
+        h(TreatmentSelector, {
+          selectedTreatment: treatmentB,
+          handleSelectTreatment: treatment => {
+            dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
           }
         }),
       ]),

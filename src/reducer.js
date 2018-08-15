@@ -7,7 +7,7 @@ function view(project) {
     project,
     loading: false,
 
-    comparedSamples: null,
+    comparedTreatments: null,
     pairwiseData: null,
 
     savedGenes: new Set(),
@@ -53,19 +53,19 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('currentView', view(project), state)
       },
 
-      SetPairwiseComparison(cellA, cellB) {
+      SetPairwiseComparison(treatmentA, treatmentB) {
         const { pairwiseData } = resp
 
         return R.pipe(
           R.over(R.lensProp('currentView'), R.pipe(
             R.assoc('loading', false),
             R.assocPath(
-              ['project', 'pairwiseComparisonCache', [cellA, cellB]],
+              ['project', 'pairwiseComparisonCache', [treatmentA, treatmentB]],
               pairwiseData
             ),
             R.flip(R.merge)({
               pairwiseData,
-              comparedSamples: [cellA, cellB],
+              comparedTreatments: [treatmentA, treatmentB],
               brushedGenes: new Set(),
             })
           ))

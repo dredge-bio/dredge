@@ -16,10 +16,10 @@ const SelectorWrapper = styled.div`
   }
 `
 
-function CellSelector({ samples, selectedSample, handleSelectSample, loading }) {
-  const initialLoad = loading && !selectedSample
+function TreatmentSelector({ treatments, selectedTreatment, handleSelectTreatment, loading }) {
+  const initialLoad = loading && !selectedTreatment
 
-  const _samples = Object.entries(samples).map(([key, val]) => ({
+  const _treatments = Object.entries(treatments).map(([key, val]) => ({
     key,
     label: val.label || key,
   }))
@@ -27,25 +27,25 @@ function CellSelector({ samples, selectedSample, handleSelectSample, loading }) 
   return (
     h(SelectorWrapper, [
       h('select', {
-        value: selectedSample || '',
+        value: selectedTreatment || '',
         disabled: initialLoad,
         onChange: e => {
-          handleSelectSample(e.target.value)
+          handleSelectTreatment(e.target.value)
         }
-      }, (!selectedSample ? [h('option', {
+      }, (!selectedTreatment ? [h('option', {
         key: '_blank',
         value: '',
-      }, 'Initializing...')] : []).concat(_samples.map(sample =>
+      }, 'Initializing...')] : []).concat(_treatments.map(treatment =>
         h('option', {
-          key: sample.key,
-          value: sample.key,
-        }, sample.label),
+          key: treatment.key,
+          value: treatment.key,
+        }, treatment.label),
       ))),
     ])
   )
 }
 
 module.exports = connect(state => ({
-  samples: R.path(['currentView', 'project', 'samples'], state),
+  treatments: R.path(['currentView', 'project', 'treatments'], state),
   loading: R.path(['currentView', 'loading'], state),
-}))(CellSelector)
+}))(TreatmentSelector)

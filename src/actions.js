@@ -48,8 +48,8 @@ const Action = module.exports = makeTypedAction({
   SetPairwiseComparison: {
     exec: setPairwiseComparison,
     request: {
-      CellA: String,
-      CellB: String,
+      TreatmentA: String,
+      TreatmentB: String,
     },
     response: {
       pairwiseData: Object, // Table?
@@ -136,22 +136,22 @@ function loadAvailableProjects() {
       const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
           , project = {}
 
-      const samplesResp = await fetch(`${projectBaseURL}/samples.json`)
+      const treatmentsResp = await fetch(`${projectBaseURL}/treatments.json`)
 
-      if (!samplesResp.ok) {
-        log(`Could not download \`samples.json\` file from ${projectBaseURL}/samples.json. Aborting.`)
+      if (!treatmentsResp.ok) {
+        log(`Could not download \`treatments.json\` file from ${projectBaseURL}/treatments.json. Aborting.`)
         return
       }
 
       try {
-        project.samples = await samplesResp.json()
-        log(`Loaded samples`)
+        project.treatments = await treatmentsResp.json()
+        log(`Loaded treatments`)
       } catch (e) {
-        log(`${projectBaseURL}/samples.json is not a valid JSON file. Aborting.`)
+        log(`${projectBaseURL}/treatments.json is not a valid JSON file. Aborting.`)
         return
       }
 
-      // TODO: Validate all of samples, aliases, averages, medians
+      // TODO: Validate all of treatments, aliases, averages, medians
 
       log('Checking for additional project statistics...')
 
@@ -205,14 +205,14 @@ function loadAvailableProjects() {
         const means = (await resp.text()).split('\n')
 
         try {
-          const samples = means.shift().split(',').slice(1)
+          const treatments = means.shift().split(',').slice(1)
 
           project.rpkmMeansByGene = R.pipe(
             R.map(R.pipe(
               R.split(','),
-              ([geneName, ...sampleMeans]) => [
+              ([geneName, ...treatmentMeans]) => [
                 geneName,
-                R.zipObj(samples, sampleMeans.map(parseFloat)),
+                R.zipObj(treatments, treatmentMeans.map(parseFloat)),
               ]
             )),
             R.fromPairs
@@ -234,14 +234,14 @@ function loadAvailableProjects() {
         const medians = (await resp.text()).split('\n')
 
         try {
-          const samples = medians.shift().split(',').slice(1)
+          const treatments = medians.shift().split(',').slice(1)
 
           project.rpkmMediansByGene = R.pipe(
             R.map(R.pipe(
               R.split(','),
-              ([geneName, ...sampleMedians]) => [
+              ([geneName, ...treatmentMedians]) => [
                 geneName,
-                R.zipObj(samples, sampleMedians.map(parseFloat)),
+                R.zipObj(treatments, treatmentMedians.map(parseFloat)),
               ]
             )),
             R.fromPairs
@@ -266,11 +266,11 @@ function loadAvailableProjects() {
 
 // Load the table produced by the edgeR function `exactTest`:
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
-function setPairwiseComparison(sampleAKey, sampleBKey) {
+function setPairwiseComparison(treatmentAKey, treatmentBKey) {
   return async (dispatch, getState) => {
     const { project } = getState().currentView
 
-    const cached = project.pairwiseComparisonCache[[sampleAKey, sampleBKey]]
+    const cached = project.pairwiseComparisonCache[[treatmentAKey, treatmentBKey]]
 
     if (cached) {
       await delay(0);
@@ -280,20 +280,20 @@ function setPairwiseComparison(sampleAKey, sampleBKey) {
       }
     }
 
-    const sampleA = project.samples[sampleAKey]
-        , sampleB = project.samples[sampleBKey]
+    const treatmentA = project.treatments[treatmentAKey]
+        , treatmentB = project.treatments[treatmentBKey]
 
-    if (!sampleA) {
-      throw new Error(`No such sample: ${sampleAKey}`)
+    if (!treatmentA) {
+      throw new Error(`No such treatment: ${treatmentAKey}`)
     }
 
-    if (!sampleB) {
-      throw new Error(`No such sample: ${sampleBKey}`)
+    if (!treatmentB) {
+      throw new Error(`No such treatment: ${treatmentBKey}`)
     }
 
     const comparisonFileKey = ([
-      sampleA.fileKey || sampleAKey,
-      sampleB.fileKey || sampleBKey,
+      treatmentA.fileKey || treatmentAKey,
+      treatmentB.fileKey || treatmentBKey,
     ].join('_'))
 
     const fileURL = `${project.baseURL}/pairwise_tests/${comparisonFileKey}.txt`
