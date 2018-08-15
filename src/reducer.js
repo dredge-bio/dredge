@@ -57,8 +57,8 @@ module.exports = function reducer(state=initialState(), action) {
         const { pairwiseData } = resp
 
         return R.pipe(
-          R.assoc('loading', false),
           R.over(R.lensProp('currentView'), R.pipe(
+            R.assoc('loading', false),
             R.assocPath(
               ['project', 'pairwiseComparisonCache', [cellA, cellB]],
               pairwiseData
@@ -91,7 +91,7 @@ module.exports = function reducer(state=initialState(), action) {
 
     Pending: () => action.type.case({
       SetPairwiseComparison() {
-        return R.assoc('loading', true, state)
+        return R.assocPath(['currentView', 'loading'], true, state)
       },
 
       _: R.always(state),
@@ -99,7 +99,7 @@ module.exports = function reducer(state=initialState(), action) {
 
     Failure: err => action.type.case({
       SetPairwiseComparison() {
-        return R.assoc('loading', false, state)
+        return R.assocPath(['currentView', 'loading'], false, state)
       },
 
       CheckCompatibility() {

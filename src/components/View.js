@@ -5,6 +5,8 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
     , MAPlot = require('./MAPlot')
+    , SampleSelector = require('./SampleSelector')
+    , Action = require('../actions')
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -24,20 +26,25 @@ const GridCell = styled.div`
 `
 
 function Viewer(props) {
-  const { currentView } = props
+  const { currentView, dispatch } = props
       , { comparedSamples, pairwiseData } = currentView
 
-  let cellA, cellB
+  let sampleA, sampleB
 
   if (comparedSamples) {
-    [ cellA, cellB ] = comparedSamples
+    [ sampleA, sampleB ] = comparedSamples
   }
 
 
   return (
     h(ViewerContainer, [
       h(GridCell, { area: 'selectorA', bg: 'lightblue' }, [
-        cellA,
+        h(SampleSelector, {
+          selectedSample: sampleA,
+          handleSelectSample: sample => {
+            dispatch(Action.SetPairwiseComparison(sample, sampleB))
+          }
+        }),
       ]),
 
       h(GridCell, { area: 'plot', bg: 'lightgreen' }, [
@@ -51,7 +58,12 @@ function Viewer(props) {
       ]),
 
       h(GridCell, { area: 'selectorB', bg: 'lightblue' }, [
-        cellB,
+        h(SampleSelector, {
+          selectedSample: sampleB,
+          handleSelectSample: sample => {
+            dispatch(Action.SetPairwiseComparison(sampleA, sample))
+          }
+        }),
       ]),
 
       h(GridCell, { area: 'table', bg: 'lightpink' }, [
