@@ -273,6 +273,8 @@ function setPairwiseComparison(sampleAKey, sampleBKey) {
     const cached = project.pairwiseComparisonCache[[sampleAKey, sampleBKey]]
 
     if (cached) {
+      await delay(0);
+
       return {
         pairwiseData: cached,
       }
