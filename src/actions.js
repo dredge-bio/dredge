@@ -116,7 +116,11 @@ function loadAvailableProjects() {
   return async dispatch => {
     const loadedProjects = {}
 
-    const projectsResp = await fetch('projects.json')
+    const projectsResp = await fetch('projects.json', {
+      headers: new Headers({
+        'Cache-Control': 'no-cache',
+      })
+    })
 
     if (!projectsResp.ok) {
       throw new Error("No project.json file available")
