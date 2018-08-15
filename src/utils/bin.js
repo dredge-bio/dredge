@@ -21,8 +21,8 @@ function getBins(scale, unit) {
     return [
       scale.invert(rMin),
       scale.invert(rMax),
-      rMin,
-      rMax,
+      Math.ceil(rMin),
+      Math.ceil(rMax),
     ]
   });
 

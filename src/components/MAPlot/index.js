@@ -1,6 +1,7 @@
 "use strict";
 
 const h = require('react-hyperscript')
+    , R = require('ramda')
     , React = require('react')
     , { connect } = require('react-redux')
     , LoadingIndicator = require('./Loading')
@@ -38,7 +39,7 @@ class PlotContainer extends React.Component {
         },
       }, [
         height === null ? null : h(Plot, { view, height, width }),
-        h(LoadingIndicator, { loading }),
+        h(LoadingIndicator, { loading: view.loading }),
       ])
     )
   }
@@ -46,7 +47,6 @@ class PlotContainer extends React.Component {
 
 module.exports = connect(store => {
   return {
-    loading: store.loading,
     view: store.currentView,
   }
 })(PlotContainer)

@@ -8,7 +8,7 @@ const LoadingWrapper = styled.div`
   position: absolute;
   color: red;
   font-size: 64px;
-  top: 44%;
+  top: 20%;
   left: 50%;
   transform: translate(-50%,0);
 `
@@ -31,7 +31,7 @@ class LoadingIndicator extends React.Component {
       clearTimeout(this.timer)
     }
 
-    this.timer = setTimeout(() => this.setState({ loading: false }), 600)
+    this.timer = setTimeout(() => this.setState({ loading: false }), 400)
   }
 
   componentDidUpdate(prevProps) {

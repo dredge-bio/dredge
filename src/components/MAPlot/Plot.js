@@ -16,9 +16,10 @@ const padding = {
 const GRID_SQUARE_UNIT = 8
 
 const GENE_BIN_MULTIPLIERS = {
-  1: .4,
-  2: .6,
-  3: .8,
+  1: .35,
+  2: .5,
+  3: .65,
+  4: .8,
 }
 
 
@@ -68,13 +69,36 @@ class Plot extends React.Component {
   drawAxes() {
     const { xScale, yScale } = this.state
 
-    d3.select(this.svg)
+    const xEl = d3.select(this.svg)
       .select('.x-axis')
-      .call(d3.axisBottom().scale(xScale))
 
-    d3.select(this.svg)
+    xEl.call(d3.axisBottom().scale(xScale))
+
+    const yEl = d3.select(this.svg)
       .select('.y-axis')
-      .call(d3.axisLeft().scale(yScale))
+
+    yEl.call(d3.axisLeft().scale(yScale));
+
+    yScale.ticks().forEach(y => {
+      yEl.append('line')
+        .attr('x1', Math.ceil(xScale(0)))
+        .attr('x2', Math.ceil(xScale(16)))
+        .attr('y1', Math.ceil(yScale(y)))
+        .attr('y2', Math.ceil(yScale(y)))
+        .attr('stroke', '#eee')
+        .attr('stroke-width', 1)
+    });
+
+    xScale.ticks().forEach(x => {
+      yEl.append('line')
+        .attr('x1', Math.ceil(xScale(x)))
+        .attr('x2', Math.ceil(xScale(x)))
+        .attr('y1', Math.ceil(yScale(20)))
+        .attr('y2', Math.ceil(yScale(-20)))
+        .attr('stroke', '#eee')
+        .attr('stroke-width', 1)
+    })
+
   }
 
   drawBins() {
@@ -82,8 +106,18 @@ class Plot extends React.Component {
         , { pairwiseData } = this.props.view
         , bins = getBins(pairwiseData, xScale, yScale, 8)
 
+    const colorScale = d3.scaleSequential(d3.interpolateBlues)
+      .domain([-300,150])
+
     bins.forEach(bin => {
       bin.multiplier = GENE_BIN_MULTIPLIERS[bin.genes.length] || 1
+      if (bin.genes.length < 5) {
+        bin.color = colorScale(5)
+      } else if (bin.genes.length >= 150) {
+        bin.color = colorScale(150)
+      } else {
+        bin.color = colorScale(bin.genes.length)
+      }
     })
 
     d3.select(this.svg)
@@ -100,7 +134,7 @@ class Plot extends React.Component {
         .attr('y', d => d.y1 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
         .attr('width', d => GRID_SQUARE_UNIT * d.multiplier)
         .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
-        .attr('fill', '#2566a8')
+        .attr('fill', d => d.color)
   }
 
   render() {
