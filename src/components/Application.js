@@ -36,16 +36,18 @@ pre {
 }
 `
 
+const HeaderContainer = styled.header`
+  background-color: indianred;
+  height: 100%;
+  padding: 0 1em 0 1em;
+  display: flex;
+  align-items: center;
+`
+
 
 function Header() {
   return (
-    h(styled.header`
-      background-color: lightgreen;
-      height: 100%;
-      padding: 0 1em 0 1em;
-      display: flex;
-      align-items: center;
-    `, [
+    h(HeaderContainer, [
       h('div', [
         'Heading',
       ]),
