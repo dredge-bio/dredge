@@ -199,61 +199,38 @@ function loadAvailableProjects() {
         }
       })
 
-      await fetch(`${projectBaseURL}/rpkm_averages.csv`).then(async resp => {
+      await fetch(`${projectBaseURL}/treatment_rpkms.tsv`).then(async resp => {
         if (!resp.ok) {
           log('No RPKM mean measurements found')
           project.rpkmMeansByGene = {}
           return
         }
 
-        const means = (await resp.text()).split('\n')
+        let rpkms = (await resp.text()).split('\n')
 
         try {
-          const treatments = means.shift().split(',').slice(1)
+          const replicates = rpkms.shift().split('\t').slice(1)
+              , genes = []
 
-          project.rpkmMeansByGene = R.pipe(
-            R.map(R.pipe(
-              R.split(','),
-              ([geneName, ...treatmentMeans]) => [
-                geneName,
-                R.zipObj(treatments, treatmentMeans.map(parseFloat)),
-              ]
-            )),
-            R.fromPairs
-          )(means)
+          rpkms = rpkms.map(row => {
+            row = row.split('\t')
+            genes.push(row.shift())
+            return row
+          })
 
-          log('Loaded gene RPKM mean measurements')
+          project.rpkmsForTreatementGene = (treatmentID, geneName) => {
+            const treatment = project.treatment[treatmentID]
+                , geneIDX = genes.indexOf(geneName)
+
+            return treatment.replicates.map(replicateID => {
+              const replicateIDX = replicates.indexOf(replicateID)
+              return rpkms[geneIDX][replicateIDX]
+            })
+          }
+
+          log('Loaded gene RPKM measurements')
         } catch (e) {
-          log('Gene RPKM mean measurements file malformed')
-        }
-      })
-
-      await fetch(`${projectBaseURL}/rpkm_averages.csv`).then(async resp => {
-        if (!resp.ok) {
-          log('No RPKM median measurements found')
-          project.rpkmMediansByGene = {}
-          return
-        }
-
-        const medians = (await resp.text()).split('\n')
-
-        try {
-          const treatments = medians.shift().split(',').slice(1)
-
-          project.rpkmMediansByGene = R.pipe(
-            R.map(R.pipe(
-              R.split(','),
-              ([geneName, ...treatmentMedians]) => [
-                geneName,
-                R.zipObj(treatments, treatmentMedians.map(parseFloat)),
-              ]
-            )),
-            R.fromPairs
-          )(medians)
-
-          log('Loaded gene RPKM median measurements')
-        } catch (e) {
-          log('Gene RPKM median measurements file malformed')
+          log('Gene RPKM measurements file malformed')
         }
       })
 
