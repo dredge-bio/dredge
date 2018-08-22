@@ -64,6 +64,29 @@ class Plot extends React.Component {
 
   componentDidMount() {
     this.drawAxes()
+    this.initBrush()
+  }
+
+  initBrush() {
+    const { xScale, yScale } = this.state
+
+    const [ x0, x1 ] = xScale.domain().map(xScale)
+    const [ y0, y1 ] = yScale.domain().map(yScale)
+
+    const brush = d3.brush()
+      .extent([[x0, y1], [x1, y0]])
+      .on('end', () => {
+        if (!d3.event.selection) return
+
+        const [[cpmMin, fcMax ], [cpmMax, fcMin]] = d3.event.selection
+            , cpmBounds = [cpmMin, cpmMax].map(xScale.invert)
+            , fcBounds = [fcMin, fcMax].map(yScale.invert)
+
+      })
+
+    d3.select(this.plotG)
+      .append('g')
+      .call(brush)
   }
 
   drawAxes() {
@@ -213,6 +236,7 @@ class Plot extends React.Component {
         }, 'log₂ (Fold Change)'),
 
         h('g', {
+          ref: el => this.plotG = el,
           transform: `translate(${padding.l}, ${padding.t})`,
         }, [
           h('rect', {
