@@ -57,7 +57,7 @@ class Plot extends React.Component {
     const dataLens = R.lensPath(['view', 'pairwiseData'])
         , updatedData = R.view(dataLens, this.props)
 
-    if (updatedData && updatedData !== R.view(dataLens, prevProps)) {
+    if (updatedData !== R.view(dataLens, prevProps)) {
       this.drawBins()
     }
   }
@@ -104,7 +104,30 @@ class Plot extends React.Component {
   drawBins() {
     const { xScale, yScale } = this.state
         , { pairwiseData } = this.props.view
-        , bins = getBins(pairwiseData, xScale, yScale, 8)
+
+    d3.select(this.svg)
+      .select('.squares')
+      .selectAll('rect')
+        .remove()
+
+    d3.select(this.svg)
+      .select('.squares')
+      .selectAll('text')
+        .remove()
+
+    if (pairwiseData === null) {
+      d3.select('.squares')
+        .append('text')
+        .attr('x', xScale(d3.mean(xScale.domain())))
+        .attr('y', yScale(d3.mean(yScale.domain())))
+        .text('No data available for comparison')
+        .style('text-anchor', 'middle')
+
+      return;
+    }
+
+
+    const bins = getBins(pairwiseData, xScale, yScale, 8)
 
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([-300,150])
@@ -119,11 +142,6 @@ class Plot extends React.Component {
         bin.color = colorScale(bin.genes.length)
       }
     })
-
-    d3.select(this.svg)
-      .select('.squares')
-      .selectAll('rect')
-        .remove()
 
     d3.select(this.svg)
       .select('.squares')

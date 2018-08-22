@@ -295,17 +295,29 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       throw new Error(`No such treatment: ${treatmentBKey}`)
     }
 
-    const comparisonFileKey = ([
+    const comparisonFileKey = [
       treatmentA.fileKey || treatmentAKey,
       treatmentB.fileKey || treatmentBKey,
-    ].join('_'))
+    ]
 
-    const fileURL = `${project.baseURL}/pairwise_tests/${comparisonFileKey}.txt`
+    const fileURLA = `${project.baseURL}/pairwise_tests/${comparisonFileKey.join('_')}.txt`
+        , fileURLB = `${project.baseURL}/pairwise_tests/${comparisonFileKey.reverse().join('_')}.txt`
 
-    const resp = await fetch(fileURL)
+    let reverse = false
+      , resp
 
-    if (!resp.ok) {
-      throw new Error(`Could not download pairwise test from ${fileURL}`)
+    const [ respA, respB ] = await Promise.all([
+      fetch(fileURLA),
+      fetch(fileURLB),
+    ])
+
+    if (respA.ok) {
+      resp = respA
+    } else if (respB.ok) {
+      resp = respB
+      reverse = true
+    } else {
+      throw new Error(`Could not download pairwise test from ${fileURLA} or ${fileURLB}`)
     }
 
     const text = await resp.text()
@@ -319,7 +331,7 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
         return {
           geneName,
-          logFC: parseFloat(logFC),
+          logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logCPM: parseFloat(logCPM),
           pValue: parseFloat(pValue),
         }

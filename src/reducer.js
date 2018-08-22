@@ -98,8 +98,17 @@ module.exports = function reducer(state=initialState(), action) {
     }),
 
     Failure: err => action.type.case({
-      SetPairwiseComparison() {
-        return R.assocPath(['currentView', 'loading'], false, state)
+      SetPairwiseComparison(treatmentA, treatmentB) {
+        return R.pipe(
+          R.over(R.lensProp('currentView'), R.pipe(
+            R.assoc('loading', false),
+            R.flip(R.merge)({
+              pairwiseData: null,
+              comparedTreatments: [treatmentA, treatmentB],
+              brushedGenes: new Set(),
+            })
+          ))
+        )(state)
       },
 
       CheckCompatibility() {
