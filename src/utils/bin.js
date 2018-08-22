@@ -74,8 +74,10 @@ module.exports = function (data, xScale, yScale, unit=5) {
     });
   });
 
-  if (data.length !== bins.reduce((a, b) => a + b.genes.length, 0)) {
-    throw Error('Bins not of equal length');
+  const numGenesBinned = bins.reduce((a, b) => a + b.genes.length, 0)
+
+  if (data.length !== numGenesBinned) {
+    console.warn(`Warning: ${data.length} genes in sample but only ${numGenesBinned} put in bins`)
   }
 
   return bins;
