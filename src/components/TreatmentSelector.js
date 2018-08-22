@@ -31,7 +31,7 @@ function TreatmentSelector({ treatments, selectedTreatment, handleSelectTreatmen
         disabled: initialLoad,
         onChange: e => {
           handleSelectTreatment(e.target.value)
-        }
+        },
       }, (!selectedTreatment ? [h('option', {
         key: '_blank',
         value: '',
