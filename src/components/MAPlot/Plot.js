@@ -4,7 +4,9 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , d3 = require('d3')
     , React = require('react')
+    , { connect  } = require('react-redux')
     , getBins = require('../../utils/bin')
+    , Action = require('../../actions')
 
 const padding = {
   l: 60,
@@ -22,6 +24,9 @@ const GENE_BIN_MULTIPLIERS = {
   4: .8,
 }
 
+function withinBounds([min, max], value) {
+  return value >= min && value <= max
+}
 
 class Plot extends React.Component {
   constructor() {
@@ -68,7 +73,8 @@ class Plot extends React.Component {
   }
 
   initBrush() {
-    const { xScale, yScale } = this.state
+    const { dispatch } = this.props
+        , { xScale, yScale } = this.state
 
     const [ x0, x1 ] = xScale.domain().map(xScale)
     const [ y0, y1 ] = yScale.domain().map(yScale)
@@ -76,12 +82,32 @@ class Plot extends React.Component {
     const brush = d3.brush()
       .extent([[x0, y1], [x1, y0]])
       .on('end', () => {
-        if (!d3.event.selection) return
+        // Reset each bin to its original fill
+        this.binSelection.attr('fill', d => d.color)
 
-        const [[cpmMin, fcMax ], [cpmMax, fcMin]] = d3.event.selection
-            , cpmBounds = [cpmMin, cpmMax].map(xScale.invert)
-            , fcBounds = [fcMin, fcMax].map(yScale.invert)
+        if (!d3.event.selection) {
+          dispatch(Action.SetBrushedGeneNames([]))
+          return
+        }
 
+        const extent = d3.event.selection
+            , cpmBounds = extent.map(R.head).map(xScale.invert).sort((a, b) => a - b)
+            , fcBounds = extent.map(R.last).map(yScale.invert).sort((a, b) => a - b)
+
+        // Filter based on whether this bin is within the brushed range
+        const brushedBins = this.binSelection
+          .filter(({ cpmMin, cpmMax, fcMin, fcMax }) =>
+            (withinBounds(cpmBounds, cpmMin) || withinBounds(cpmBounds, cpmMax))
+            &&
+            (withinBounds(fcBounds, fcMin) || withinBounds(fcBounds, fcMax))
+          )
+
+        brushedBins.attr('fill', d => d.brushedColor)
+
+        const brushedGeneNames = R.flatten(brushedBins.data().map(bin =>
+          bin.genes.map(gene => gene.geneName)))
+
+        dispatch(Action.SetBrushedGeneNames(brushedGeneNames))
       })
 
     d3.select(this.plotG)
@@ -128,6 +154,8 @@ class Plot extends React.Component {
     const { xScale, yScale } = this.state
         , { pairwiseData } = this.props.view
 
+    this.binSelection = null;
+
     d3.select(this.svg)
       .select('.squares')
       .selectAll('rect')
@@ -155,18 +183,24 @@ class Plot extends React.Component {
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([-300,150])
 
+    const brushedColorScale = d3.scaleSequential(d3.interpolatePurples)
+      .domain([-500,150])
+
     bins.forEach(bin => {
       bin.multiplier = GENE_BIN_MULTIPLIERS[bin.genes.length] || 1
       if (bin.genes.length < 5) {
         bin.color = colorScale(5)
+        bin.brushedColor = brushedColorScale(5)
       } else if (bin.genes.length >= 150) {
         bin.color = colorScale(150)
+        bin.brushedColor = brushedColorScale(150)
       } else {
         bin.color = colorScale(bin.genes.length)
+        bin.brushedColor = brushedColorScale(bin.genes.length)
       }
     })
 
-    d3.select(this.svg)
+    this.binSelection = d3.select(this.svg)
       .select('.squares')
       .selectAll('rect')
       .data(bins).enter()
@@ -232,7 +266,7 @@ class Plot extends React.Component {
             fontWeight: 'bold',
             textAnchor: 'middle',
             dominantBaseline: 'central',
-          }
+          },
         }, 'log₂ (Fold Change)'),
 
         h('g', {
@@ -261,4 +295,4 @@ class Plot extends React.Component {
   }
 }
 
-module.exports = Plot
+module.exports = connect()(Plot)

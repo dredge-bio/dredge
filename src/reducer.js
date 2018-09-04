@@ -72,6 +72,14 @@ module.exports = function reducer(state=initialState(), action) {
         )(state)
       },
 
+      SetBrushedGenes(geneNames) {
+        return R.assocPath(
+          ['currentView', 'brushedGenes'],
+          new Set(geneNames),
+          state
+        )
+      },
+
       SetSavedGeneNames(geneNames) {
         return R.assocPath(
           ['currentView', 'savedGenes'],

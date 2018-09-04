@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , MAPlot = require('./MAPlot')
     , TreatmentSelector = require('./TreatmentSelector')
     , Action = require('../actions')
+    , Table = require('./Table')
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -43,7 +44,7 @@ function Viewer(props) {
           selectedTreatment: treatmentA,
           handleSelectTreatment: treatment => {
             dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
-          }
+          },
         }),
       ]),
 
@@ -62,12 +63,18 @@ function Viewer(props) {
           selectedTreatment: treatmentB,
           handleSelectTreatment: treatment => {
             dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
-          }
+          },
         }),
       ]),
 
-      h(GridCell, { area: 'table', bg: 'lightpink' }, [
-        'Table',
+      h(GridCell, {
+        area: 'table',
+        bg: 'lightpink',
+        style: {
+          overflowY: 'scroll',
+        },
+      }, [
+        h(Table),
       ]),
     ])
   )
