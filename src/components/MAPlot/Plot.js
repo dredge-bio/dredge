@@ -86,7 +86,7 @@ class Plot extends React.Component {
         this.binSelection.attr('fill', d => d.color)
 
         if (!d3.event.selection) {
-          dispatch(Action.SetBrushedGeneNames([]))
+          dispatch(Action.SetBrushedGenes([]))
           return
         }
 
@@ -104,10 +104,9 @@ class Plot extends React.Component {
 
         brushedBins.attr('fill', d => d.brushedColor)
 
-        const brushedGeneNames = R.flatten(brushedBins.data().map(bin =>
-          bin.genes.map(gene => gene.geneName)))
+        const brushedGenes = R.chain(R.prop('genes'), brushedBins.data())
 
-        dispatch(Action.SetBrushedGeneNames(brushedGeneNames))
+        dispatch(Action.SetBrushedGenes(brushedGenes))
       })
 
     d3.select(this.plotG)

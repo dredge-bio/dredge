@@ -72,26 +72,18 @@ module.exports = function reducer(state=initialState(), action) {
         )(state)
       },
 
-      SetBrushedGenes(geneNames) {
+      SetBrushedGenes(genes) {
         return R.assocPath(
           ['currentView', 'brushedGenes'],
-          new Set(geneNames),
+          new Set(genes),
           state
         )
       },
 
-      SetSavedGeneNames(geneNames) {
+      SetSavedGenes(genes) {
         return R.assocPath(
           ['currentView', 'savedGenes'],
-          new Set(geneNames),
-          state
-        )
-      },
-
-      SetBrushedGeneNames(geneNames) {
-        return R.assocPath(
-          ['currentView', 'brushedGenes'],
-          new Set(geneNames),
+          new Set(genes),
           state
         )
       },

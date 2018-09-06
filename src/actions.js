@@ -56,19 +56,19 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
-  SetSavedGeneNames: {
+  SetSavedGenes: {
     exec: R.always({}),
     request: {
-      geneNames: isIterable,
+      genes: isIterable,
     },
     response: {
     },
   },
 
-  SetBrushedGeneNames: {
+  SetBrushedGenes: {
     exec: R.always({}),
     request: {
-      geneNames: isIterable,
+      genes: isIterable,
     },
     response: {
     },
@@ -119,7 +119,7 @@ function loadAvailableProjects() {
     const projectsResp = await fetch('projects.json', {
       headers: new Headers({
         'Cache-Control': 'no-cache',
-      })
+      }),
     })
 
     if (!projectsResp.ok) {
@@ -202,7 +202,7 @@ function loadAvailableProjects() {
       await fetch(`${projectBaseURL}/treatment_rpkms.tsv`).then(async resp => {
         if (!resp.ok) {
           log('No RPKM mean measurements found')
-          project.rpkmMeansByGene = {}
+          project.rpkmsForTreatmentGene = R.always(null)
           return
         }
 
@@ -218,13 +218,16 @@ function loadAvailableProjects() {
             return row
           })
 
-          project.rpkmsForTreatementGene = (treatmentID, geneName) => {
-            const treatment = project.treatment[treatmentID]
-                , geneIDX = genes.indexOf(geneName)
+          const geneIndices = R.invertObj(genes)
+              , replicateIndices = R.invertObj(replicates)
+
+          project.rpkmsForTreatmentGene = (treatmentID, geneName) => {
+            const treatment = project.treatments[treatmentID]
+                , geneIdx = geneIndices[geneName]
 
             return treatment.replicates.map(replicateID => {
-              const replicateIDX = replicates.indexOf(replicateID)
-              return rpkms[geneIDX][replicateIDX]
+              const replicateIdx = replicateIndices[replicateID]
+              return rpkms[geneIdx][replicateIdx]
             })
           }
 
@@ -304,10 +307,10 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       .split('\n')
       .slice(1) // Skip header
       .map(row => {
-        const [ geneName, logFC, logCPM, pValue ] = row.split('\t')
+        const [ label, logFC, logCPM, pValue ] = row.split('\t')
 
         return {
-          geneName,
+          label,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logCPM: parseFloat(logCPM),
           pValue: parseFloat(pValue),

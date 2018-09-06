@@ -70,9 +70,6 @@ function Viewer(props) {
       h(GridCell, {
         area: 'table',
         bg: 'lightpink',
-        style: {
-          overflowY: 'scroll',
-        },
       }, [
         h(Table),
       ]),
