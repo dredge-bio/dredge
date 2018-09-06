@@ -45,6 +45,14 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
+  ChangeProject: {
+    exec: changeProject,
+    request: {
+      projectBaseURL: String,
+    },
+    response: {},
+  },
+
   SetPairwiseComparison: {
     exec: setPairwiseComparison,
     request: {
@@ -89,9 +97,25 @@ function initialize() {
     await dispatch(Action.LoadAvailableProjects)
     dispatch(Action.Log('Finished initialization. Starting application...'))
     await delay(420)
-    const project = Object.keys(getState().projects)[0]
 
-    await dispatch(Action.ViewProject(project))
+    const projectKey = Object.keys(getState().projects)[0]
+
+    dispatch(Action.ChangeProject(projectKey))
+
+
+    return {}
+  }
+}
+
+function changeProject(projectURL) {
+  return async (dispatch, getState) => {
+    await dispatch(Action.ViewProject(projectURL))
+
+    const project = getState().projects[projectURL]
+        , { treatments } = project
+        , [ treatmentA, treatmentB ] = Object.keys(treatments).slice(3)
+
+    dispatch(Action.SetPairwiseComparison(treatmentA, treatmentB))
 
     return {}
   }

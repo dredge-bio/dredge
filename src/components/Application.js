@@ -45,15 +45,29 @@ const HeaderContainer = styled.header`
 `
 
 
-function Header() {
+
+const Header = connect(state => ({
+  projects: state.projects,
+  currentView: state.currentView,
+}))(function Header(props) {
+  const currentProject = R.path(['project', 'baseURL'], props.currentView)
+
   return (
     h(HeaderContainer, [
-      h('div', [
-        'Heading',
-      ]),
+      currentProject && h('select', {
+        value: currentProject,
+        onChange: e => {
+          props.dispatch(Action.ChangeProject(e.target.value))
+        },
+      }, Object.keys(props.projects || {}).map(key =>
+        h('option', {
+          key,
+          value: key,
+        }, key)
+      )),
     ])
   )
-}
+})
 
 const ApplicationContainer = styled.div`
   height: 100%;

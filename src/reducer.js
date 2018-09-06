@@ -47,6 +47,10 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('compatible', true, state)
       },
 
+      ChangeProject() {
+        return state
+      },
+
       ViewProject(projectBaseURL) {
         const project = state.projects[projectBaseURL]
 
