@@ -2,6 +2,7 @@
 
 const h = require('react-hyperscript')
     , R = require('ramda')
+    , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
     , MAPlot = require('./MAPlot')
@@ -19,62 +20,96 @@ const ViewerContainer = styled.div`
       "selectorB selectorB table " 130px
     / minmax(500px, 1fr) 100px minmax(500px, 780px)
   ;
-`
 
-const GridCell = styled.div`
-  grid-area: ${props => props.area};
-  border: 1px solid #666;
-`
-
-function Viewer(props) {
-  const { currentView, dispatch } = props
-      , { comparedTreatments, pairwiseData } = currentView
-
-  let treatmentA, treatmentB
-
-  if (comparedTreatments) {
-    [ treatmentA, treatmentB ] = comparedTreatments
+  ${
+    ['selectorA', 'selectorB', 'table', 'pvalue'].map(area => `
+      & .grid--${area} {
+        grid-area: ${area}
+      }`
+    ).join('\n')
   }
 
+`
 
-  return (
-    h(ViewerContainer, [
-      h(GridCell, { area: 'selectorA', bg: 'lightblue' }, [
-        h(TreatmentSelector, {
-          selectedTreatment: treatmentA,
-          handleSelectTreatment: treatment => {
-            dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
-          },
-        }),
-      ]),
+class Viewer extends React.Component {
+  constructor() {
+    super();
 
-      h(GridCell, { area: 'plot', bg: 'lightgreen' }, [
-        h(MAPlot, {
-          pairwiseData,
-        }),
-      ]),
+    this.state = {
+      sizes: null,
+    }
+  }
 
-      h(GridCell, { area: 'pvalue' }, [
-        'P-Value',
-      ]),
+  componentDidMount() {
+    this.refreshSize()
+  }
 
-      h(GridCell, { area: 'selectorB', bg: 'lightblue' }, [
-        h(TreatmentSelector, {
-          selectedTreatment: treatmentB,
-          handleSelectTreatment: treatment => {
-            dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
-          },
-        }),
-      ]),
+  refreshSize() {
+    const [ plotEl, tableEl ] = ['plot', 'table'].map(area =>
+      this.el.querySelector(`.grid--${area}`))
 
-      h(GridCell, {
-        area: 'table',
-        bg: 'lightpink',
+    this.setState({
+      sizes: {
+        plot: {
+          height: plotEl.clientHeight,
+          width: plotEl.clientWidth,
+        },
+        table: {
+          height: tableEl.clientHeight,
+          width: tableEl.clientWidth,
+        },
+      }, })
+  }
+
+  render() {
+    const { sizes } = this.state
+        , { currentView, dispatch } = this.props
+        , { comparedTreatments, pairwiseData } = currentView
+
+    let treatmentA, treatmentB
+
+    if (comparedTreatments) {
+      [ treatmentA, treatmentB ] = comparedTreatments
+    }
+
+    return (
+      h(ViewerContainer, {
+        innerRef: el => { this.el = el },
       }, [
-        h(Table),
-      ]),
-    ])
-  )
+        h('div.grid--selectorA', [
+          h(TreatmentSelector, {
+            selectedTreatment: treatmentA,
+            handleSelectTreatment: treatment => {
+              dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
+            },
+          }),
+        ]),
+
+        h('div.grid--plot', [
+          !sizes ? null : h(MAPlot, Object.assign({}, sizes.plot, {
+            pairwiseData,
+          })),
+        ]),
+
+        h('div.grid--pvalue', [
+          'P-Value',
+        ]),
+
+        h('div.grid--selectorB', [
+          h(TreatmentSelector, {
+            selectedTreatment: treatmentB,
+            handleSelectTreatment: treatment => {
+              dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
+            },
+          }),
+        ]),
+
+        h('div.grid--table', [
+          !sizes ? null : h(Table, sizes.table),
+        ]),
+      ])
+    )
+  }
 }
 
 module.exports = connect(R.pick(['currentView']))(Viewer)

@@ -7,42 +7,23 @@ const h = require('react-hyperscript')
     , LoadingIndicator = require('./Loading')
     , Plot = require('./Plot')
 
-class PlotContainer extends React.Component {
-  constructor() {
-    super();
-
-    this.state = {
-      height: null,
-      width: null,
-    }
-  }
-
-  componentDidMount() {
-    this.setState({
-      height: this.el.clientHeight,
-      width: this.el.clientWidth,
-    })
-  }
-
-  render() {
-    const { height, width } = this.state
-        , { view, loading } = this.props
-
-    return (
-      h('div', {
-        ref: el => {
-          this.el = el
-        },
-        style: {
-          height: '100%',
-          position: 'relative',
-        },
-      }, [
-        height === null ? null : h(Plot, { view, height, width }),
-        h(LoadingIndicator, { loading: view.loading }),
-      ])
-    )
-  }
+function PlotContainer({
+  height,
+  width,
+  view,
+  loading
+}) {
+  return (
+    h('div', {
+      style: {
+        height: '100%',
+        position: 'relative',
+      },
+    }, [
+      height === null ? null : h(Plot, { view, height, width }),
+      h(LoadingIndicator, { loading: view.loading }),
+    ])
+  )
 }
 
 module.exports = connect(store => {

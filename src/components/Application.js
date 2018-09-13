@@ -34,6 +34,11 @@ h1, h2, h3, h4, h5, h6 {
 pre {
   font-family: monospace;
 }
+
+@font-face {
+  font-family: SourceSansPro;
+  src: url("lib/SourceSansPro-Regular.otf") format("opentype");
+}
 `
 
 const HeaderContainer = styled.header`
