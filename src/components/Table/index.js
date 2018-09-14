@@ -14,21 +14,21 @@ const TableCell = styled.td`
 const HEADER_HEIGHT = 56;
 
 const FIELDS = [
-  '',
-  'Gene',
-  'P-Value',
-  'Log CPM',
-  'Log FC',
-  'Mean RPKM',
-  'Med. RPKM',
-  'Mean RPKM',
-  'Med. RPKM',
+  { sortKey: '', label: '' },
+  { sortKey: 'label', label: 'Gene' },
+  { sortKey: 'pValue', label: 'P-Value' },
+  { sortKey: 'logCPM', label: 'logCPM' },
+  { sortKey: 'logFC', label: 'logFC' },
+  { sortKey: 'treatmentA_RPKMMean', label: 'Mean RPKM' },
+  { sortKey: 'treatmentA_RPKMMedian', label: 'Med. RPKM' },
+  { sortKey: 'treatmentB_RPKMMean', label: 'Mean RPKM' },
+  { sortKey: 'treatmentB_RPKMMedian', label: 'Med. RPKM' },
 ]
 
 function calcColumnWidths(width) {
   const widths = [
     // Pairwise information (logCPM, logFC, p-value)
-    ...R.repeat(64, 3),
+    ...R.repeat(70, 3),
 
     // Sample mean/median RPKMs
     ...R.repeat(92, 4),
@@ -48,18 +48,7 @@ function dashesOrFixed(number, places = 2) {
 }
 
 
-function GeneRow({
-  gene,
-  treatmentRPKMs,
-}) {
-
-  const [
-    treatmentA_RPKMMean,
-    treatmentA_RPKMMedian,
-    treatmentB_RPKMMean,
-    treatmentB_RPKMMedian,
-  ] = R.chain(rpkms => [d3.mean(rpkms), d3.median(rpkms)], treatmentRPKMs)
-
+function GeneRow({ gene }) {
   return (
     h('tr', [
       h(TableCell, ''),
@@ -72,13 +61,13 @@ function GeneRow({
 
       h(TableCell, dashesOrFixed(gene.logFC)),
 
-      h(TableCell, dashesOrFixed(treatmentA_RPKMMean)),
+      h(TableCell, dashesOrFixed(gene.treatmentA_RPKMMean)),
 
-      h(TableCell, dashesOrFixed(treatmentA_RPKMMedian)),
+      h(TableCell, dashesOrFixed(gene.treatmentA_RPKMMedian)),
 
-      h(TableCell, dashesOrFixed(treatmentB_RPKMMean)),
+      h(TableCell, dashesOrFixed(gene.treatmentB_RPKMMean)),
 
-      h(TableCell, dashesOrFixed(treatmentB_RPKMMedian)),
+      h(TableCell, dashesOrFixed(gene.treatmentB_RPKMMedian)),
 
     ])
   )
@@ -121,14 +110,20 @@ const TableBodyWrapper = styled.div`
   height: calc(100% - ${HEADER_HEIGHT}px);
   overflow-y: scroll;
   background-color: white;
+
+  & tr:hover {
+    background-color: lightblue;
+  }
 `
 
 const TableHeaderCell = styled.span`
   position: absolute;
   font-weight: bold;
+  user-select: none;
   top: 0;
   bottom: 0;
   left: ${props => props.left}px;
+  ${props => props.clickable ? 'cursor: pointer;' : ''}
 `
 
 class Table extends React.Component {
@@ -137,6 +132,8 @@ class Table extends React.Component {
 
     this.state = {
       width: null,
+      sortBy: 'label',
+      order: 'asc',
     }
   }
 
@@ -144,25 +141,55 @@ class Table extends React.Component {
     this.refreshSize()
   }
 
+  getDisplayedGenes() {
+    const { sortBy, order } = this.state
+        , { project, brushedGenes, comparedTreatments } = this.props.view
+        , { rpkmsForTreatmentGene } = project
+        , [ treatmentA, treatmentB ] = comparedTreatments
+
+    const genes = [...brushedGenes].map(gene => {
+      const [
+        treatmentA_RPKMMean,
+        treatmentA_RPKMMedian,
+        treatmentB_RPKMMean,
+        treatmentB_RPKMMedian,
+      ] = R.chain(
+        rpkms => [d3.mean(rpkms), d3.median(rpkms)],
+        [rpkmsForTreatmentGene(treatmentA, gene.label), rpkmsForTreatmentGene(treatmentB, gene.label)]
+      )
+
+      return Object.assign({
+        treatmentA_RPKMMean,
+        treatmentA_RPKMMedian,
+        treatmentB_RPKMMean,
+        treatmentB_RPKMMedian,
+      }, gene)
+    })
+
+
+    return R.sort(
+      (order === 'asc' ? R.ascend : R.descend)(R.prop(sortBy)),
+      genes
+    )
+  }
+
   refreshSize() {
     this.setState({
-      width: this.el.querySelector('.table-scroll').clientWidth
+      width: this.el.querySelector('.table-scroll').clientWidth,
     })
   }
 
   render() {
-    const { width } = this.state
-        , { brushedGenes, project, comparedTreatments } = this.props.view
+    const { width, sortBy, order } = this.state
+        , { comparedTreatments } = this.props.view
         , [ treatmentA, treatmentB ] = (comparedTreatments || [])
-        , rpkmA = project.rpkmsForTreatmentGene.bind(null, treatmentA)
-        , rpkmB = project.rpkmsForTreatmentGene.bind(null, treatmentB)
 
     const ready = (width !== null && comparedTreatments !== null) || null
         , columnWidths = ready && calcColumnWidths(width)
 
     return (
       h(TableWrapper, {
-        innerRef: el => { this.el = el }
+        innerRef: el => { this.el = el },
       }, [
         h(TableHeaderWrapper, [
           ready && h('div', [-2, -4].map(col =>
@@ -173,24 +200,41 @@ class Table extends React.Component {
                 top: 0,
                 bottom: 0,
                 borderLeft: '1px solid #ccc',
-              }
+              },
             })
           )),
 
           h(TableHeaderRow, ready && [
             h(TableHeaderCell, {
-              left: R.sum(columnWidths.slice(0, -4))
+              left: R.sum(columnWidths.slice(0, -4)),
             }, treatmentA),
             h(TableHeaderCell, {
-              left: R.sum(columnWidths.slice(0, -2))
+              left: R.sum(columnWidths.slice(0, -2)),
             }, treatmentB),
           ]),
 
-          h(TableHeaderRow, ready && FIELDS.slice(1).map((label, i) =>
+          h(TableHeaderRow, ready && FIELDS.slice(1).map(({ label, sortKey }, i) =>
             h(TableHeaderCell, {
-              left: R.sum(columnWidths.slice(0, i + 1))
-            }, label)
-          ))
+              key: i,
+              left: R.sum(columnWidths.slice(0, i + 1)),
+              clickable: true,
+              onClick: () => {
+                this.setState(prev => ({
+                  sortBy: sortKey,
+                  order: prev.sortBy === sortKey
+                    ? order === 'asc' ? 'desc' : 'asc'
+                    : 'asc',
+                }))
+              },
+            }, [
+              label,
+              sortKey === sortBy
+                ? order === 'asc'
+                  ? ' ▾'
+                  : ' ▴'
+                : null,
+            ])
+          )),
         ]),
 
         h(TableBodyWrapper, { className: 'table-scroll' }, [
@@ -199,16 +243,15 @@ class Table extends React.Component {
               h('col', { key: i, width }),
             )),
 
-            h('tbody', ready && [...brushedGenes].map(gene =>
+            h('tbody', ready && this.getDisplayedGenes().map(gene =>
               h(GeneRow, {
                 key: `brushed-${gene.label}`,
                 saved: false,
                 gene,
-                treatmentRPKMs: [rpkmA, rpkmB].map(fn => fn(gene.label)),
               })
             )),
           ]),
-        ])
+        ]),
       ])
     )
   }
