@@ -41,12 +41,88 @@ pre {
 }
 `
 
+// Adapted from https://www.heropatterns.com/
+const svg = `
+<svg
+  width="42"
+  height="24"
+  viewBox="0 0 84 48" xmlns="http://www.w3.org/2000/svg">
+
+  <path
+    fill="white"
+    fill-opacity=".05"
+    fill-rule="evenodd"
+    d="
+      M0
+      0h12v6H0V0zm28
+      8h12v6H28V8zm14-8h12v6H42V0zm14
+      0h12v6H56V0zm0
+      8h12v6H56V8zM42
+      8h12v6H42V8zm0
+      16h12v6H42v-6zm14-8h12v6H56v-6zm14
+      0h12v6H70v-6zm0-16h12v6H70V0zM28
+      32h12v6H28v-6zM14
+      16h12v6H14v-6zM0
+      24h12v6H0v-6zm0
+      8h12v6H0v-6zm14
+      0h12v6H14v-6zm14
+      8h12v6H28v-6zm-14
+      0h12v6H14v-6zm28
+      0h12v6H42v-6zm14-8h12v6H56v-6zm0-8h12v6H56v-6zm14
+      8h12v6H70v-6zm0
+      8h12v6H70v-6zM14
+      24h12v6H14v-6zm14-8h12v6H28v-6zM14
+      8h12v6H14V8zM0
+      8h12v6H0V8z
+    "
+  />
+</svg>
+`
+
+
 const HeaderContainer = styled.header`
-  background-color: indianred;
+  background-color: darkslategray;
+  background-image: url("data:image/svg+xml,${encodeURIComponent(svg.trim())}");
   height: 100%;
-  padding: 0 1em 0 1em;
+  padding: 0 2em;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+
+  & h1 {
+    color: white;
+    font-size: 36px;
+  }
+
+  & select, & label {
+    display: inline-block;
+    height: 36px;
+    border: 0;
+    font-size: 16px;
+    padding: 6px 1em;
+  }
+
+  & label {
+    line-height: 24px;
+    background-color: #ddd;
+    font-weight: bold;
+    border-radius: 3px 0 0 3px;
+  }
+
+  & select {
+    padding-right: 2em;
+    appearance: none;
+    background-color: #fafafa;
+    font-family: SourceSansPro;
+    border-radius: 0 3px 3px 0;
+  }
+
+  & label::after {
+    position: absolute;
+    right: 8px;
+    content: "▼";
+    font-size: 12px;
+  }
 `
 
 
@@ -59,17 +135,27 @@ const Header = connect(state => ({
 
   return (
     h(HeaderContainer, [
-      currentProject && h('select', {
-        value: currentProject,
-        onChange: e => {
-          props.dispatch(Action.ChangeProject(e.target.value))
-        },
-      }, Object.keys(props.projects || {}).map(key =>
-        h('option', {
-          key,
-          value: key,
-        }, key)
-      )),
+      h('h1', 'SeqPeek'),
+
+      h('div', { style: { position: 'relative', display: 'flex' }}, [
+        currentProject && h('label', {
+          htmlFor: 'dataset-selector',
+        }, 'Dataset:'),
+
+        currentProject && h('select', {
+          id: 'dataset-selector',
+          value: currentProject,
+          onChange: e => {
+            props.dispatch(Action.ChangeProject(e.target.value))
+          },
+        }, Object.keys(props.projects || {}).map(key =>
+          h('option', {
+            key,
+            value: key,
+          }, key)
+        )),
+      ]),
+
     ])
   )
 })
@@ -78,8 +164,8 @@ const ApplicationContainer = styled.div`
   height: 100%;
   width: 100%;
   display: grid;
-  background-color: bisque;
-  grid-template-rows: 50px minmax(600px, 1fr);
+  background-color: hsla(45, 31%, 93%, 1);
+  grid-template-rows: 64px minmax(600px, 1fr);
 `
 
 class Application extends React.Component {
