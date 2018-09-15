@@ -18,7 +18,7 @@ const ViewerContainer = styled.div`
       "selectorA selectorA table " 130px
       "plot      pvalue    table " minmax(300px, 1fr)
       "selectorB selectorB table " 130px
-    / minmax(500px, 1fr) 100px minmax(500px, 780px)
+    / minmax(500px, 2fr) 100px minmax(800px, 1fr)
   ;
 
   ${
