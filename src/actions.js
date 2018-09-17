@@ -101,16 +101,13 @@ function initialize() {
     dispatch(Action.Log('Checking browser compatibility...'))
     await dispatch(Action.CheckCompatibility)
     dispatch(Action.Log('Browser compatible.'))
-    await delay(100)
     dispatch(Action.Log('Loading available projects...'))
     await dispatch(Action.LoadAvailableProjects)
     dispatch(Action.Log('Finished initialization. Starting application...'))
-    await delay(420)
 
     const projectKey = Object.keys(getState().projects)[0]
 
     dispatch(Action.ChangeProject(projectKey))
-
 
     return {}
   }
@@ -277,7 +274,15 @@ function loadAvailableProjects() {
       loadedProjects[projectBaseURL] = project
     }))
 
-    return { projects: loadedProjects }
+    const sortedLoadedProjects = {}
+
+    projects.forEach(project => {
+      if (loadedProjects.hasOwnProperty(project)) {
+        sortedLoadedProjects[project] = loadedProjects[project]
+      }
+    })
+
+    return { projects: sortedLoadedProjects }
   }
 }
 
