@@ -78,9 +78,17 @@ function GeneRow({
   addSavedGene,
   removeSavedGene,
   columnWidths,
+  setHoveredGene,
 }) {
   return (
-    h('tr', [
+    h('tr', {
+      onMouseEnter() {
+        setHoveredGene(data.gene)
+      },
+      onMouseLeave() {
+        setHoveredGene(null)
+      },
+    }, [
       h(TableCell, [
         h(SaveMarker, {
           href: '',
@@ -183,6 +191,8 @@ class Table extends React.Component {
       sortBy: FIELDS[1].sortPath,
       order: 'asc',
     }
+
+    this.setHoveredGene = this.setHoveredGene.bind(this)
   }
 
   componentDidMount() {
@@ -247,6 +257,12 @@ class Table extends React.Component {
     this.setState({
       width: this.el.querySelector('.table-scroll').clientWidth,
     })
+  }
+
+  setHoveredGene(gene) {
+    const { dispatch } = this.props
+
+    dispatch(Action.SetHoveredGene(gene))
   }
 
   render() {
@@ -329,6 +345,7 @@ class Table extends React.Component {
               h(GeneRow, {
                 key: `brushed-${data.gene.label}`,
                 saved: false,
+                setHoveredGene: this.setHoveredGene,
                 columnWidths,
                 addSavedGene(gene) {
                   const newSavedGenes = new Set(savedGenes)

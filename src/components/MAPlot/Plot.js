@@ -59,11 +59,15 @@ class Plot extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const dataLens = R.lensPath(['view', 'pairwiseData'])
-        , updatedData = R.view(dataLens, this.props)
+    const didChange = lens =>
+      R.view(lens, this.props) !== R.view(lens, prevProps)
 
-    if (updatedData !== R.view(dataLens, prevProps)) {
+    if (didChange(R.lensPath(['view', 'pairwiseData']))) {
       this.drawBins()
+    }
+
+    if (didChange(R.lensPath(['view', 'hoveredGene']))) {
+      this.updateHoveredGene()
     }
   }
 
@@ -109,9 +113,7 @@ class Plot extends React.Component {
         dispatch(Action.SetBrushedGenes(brushedGenes))
       })
 
-    d3.select(this.plotG)
-      .append('g')
-      .call(brush)
+    d3.select(this.plotG).select('.brush').call(brush)
   }
 
   drawAxes() {
@@ -211,6 +213,38 @@ class Plot extends React.Component {
         .attr('fill', d => d.color)
   }
 
+  updateHoveredGene() {
+    const { xScale, yScale } = this.state
+        , { hoveredGene } = this.props.view
+
+    const container = d3.select(this.svg).select('.hovered-marker')
+
+    container.selectAll('circle')
+      .transition()
+      .duration(360)
+      .ease(d3.easeCubicOut)
+      .style('opacity', 0)
+      .remove()
+
+    if (hoveredGene === null) return;
+
+    container.append('circle')
+      .attr('cx', xScale(hoveredGene.logCPM))
+      .attr('cy', yScale(hoveredGene.logFC))
+      .attr('r', 20)
+      .attr('opacity', 1)
+      .attr('fill', 'none')
+      .attr('stroke', 'coral')
+      .attr('stroke-width', 2)
+
+    container.append('circle')
+      .attr('cx', xScale(hoveredGene.logCPM))
+      .attr('cy', yScale(hoveredGene.logFC))
+      .attr('opacity', 1)
+      .attr('r', 3)
+      .attr('fill', 'coral')
+  }
+
   render() {
     const {
       height,
@@ -287,6 +321,12 @@ class Plot extends React.Component {
           h('g.y-axis'),
 
           h('g.squares'),
+
+          h('g.watched-genes'),
+
+          h('g.brush'),
+
+          h('g.hovered-marker'),
         ]),
 
       ])

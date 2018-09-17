@@ -81,6 +81,15 @@ const Action = module.exports = makeTypedAction({
     response: {
     },
   },
+
+  SetHoveredGene: {
+    exec: R.always({}),
+    request: {
+      gene: R.T,
+    },
+    response: {
+    },
+  },
 })
 
 function delay(time) {

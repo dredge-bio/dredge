@@ -10,6 +10,8 @@ function view(project) {
     comparedTreatments: null,
     pairwiseData: null,
 
+    hoveredGene: null,
+
     savedGenes: new Set(),
     brushedGenes: new Set(),
   }
@@ -75,6 +77,15 @@ module.exports = function reducer(state=initialState(), action) {
           ))
         )(state)
       },
+
+      SetHoveredGene(gene) {
+        return R.assocPath(
+          ['currentView', 'hoveredGene'],
+          gene,
+          state
+        )
+      },
+
 
       SetBrushedGenes(genes) {
         return R.assocPath(
