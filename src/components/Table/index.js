@@ -4,6 +4,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , Table = require('./Table')
     , WatchedGenes = require('./WatchedGenes')
+    , HeatMap = require('./HeatMap')
 
 const ComparisonContainer = styled.div`
   display: grid;
@@ -16,6 +17,6 @@ module.exports = function ComparisonInformation() {
   return h(ComparisonContainer, [
     h(WatchedGenes),
     h(Table),
-    h('div'),
+    h(HeatMap),
   ])
 }

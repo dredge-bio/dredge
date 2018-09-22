@@ -1,6 +1,7 @@
 "use strict";
 
 const R = require('ramda')
+    , d3 = require('d3')
     , { makeTypedAction } = require('org-async-actions')
 
 function isIterable(obj) {
@@ -86,6 +87,15 @@ const Action = module.exports = makeTypedAction({
     exec: R.always({}),
     request: {
       gene: R.T,
+    },
+    response: {
+    },
+  },
+
+  SetFocusedGene: {
+    exec: R.always({}),
+    request: {
+      gene: String,
     },
     response: {
     },
@@ -245,7 +255,7 @@ function loadAvailableProjects() {
           rpkms = rpkms.map(row => {
             row = row.split('\t')
             genes.push(row.shift())
-            return row
+            return row.map(parseFloat)
           })
 
           const geneIndices = R.invertObj(genes)
@@ -265,6 +275,37 @@ function loadAvailableProjects() {
         } catch (e) {
           log('Gene RPKM measurements file malformed')
         }
+      })
+
+      await fetch(`${projectBaseURL}/grid.csv`).then(async resp => {
+        if (!resp.ok) {
+          log('No grid configuration found')
+          project.grid = null
+          return
+        }
+
+
+        try {
+          let grid = d3.csvParseRows(await resp.text())
+
+          grid = grid.map(row => row.map(treatment => {
+            if (!treatment) return null
+
+            if (!project.treatments.hasOwnProperty(treatment)) {
+              throw new Error(`Treatment ${treatment} not in project ${projectBaseURL}`)
+            }
+
+            return treatment
+          }))
+
+          project.grid = grid;
+
+          log('Loaded grid configuration')
+        } catch (e) {
+          project.grid = null
+          log('Grid configuration file malformed')
+        }
+
       })
 
       log('Finished loading')

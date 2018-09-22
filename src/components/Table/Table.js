@@ -77,6 +77,7 @@ function GeneRow({
   data,
   addSavedGene,
   removeSavedGene,
+  setFocusedGene,
   columnWidths,
   setHoveredGene,
 }) {
@@ -87,6 +88,9 @@ function GeneRow({
       },
       onMouseLeave() {
         setHoveredGene(null)
+      },
+      onClick() {
+        setFocusedGene(data.gene.label)
       },
     }, [
       h(TableCell, [
@@ -360,6 +364,9 @@ class Table extends React.Component {
                   newSavedGenes.delete(gene)
 
                   dispatch(Action.SetSavedGenes(newSavedGenes))
+                },
+                setFocusedGene(geneName) {
+                  dispatch(Action.SetFocusedGene(geneName))
                 },
                 data,
               })
