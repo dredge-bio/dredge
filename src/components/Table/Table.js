@@ -214,6 +214,11 @@ class Table extends React.Component {
       : savedGenes
 
     const genes = [...listedGenes].map(geneName => {
+      if (!pairwiseData) return {
+        gene: { label: geneName },
+        saved: savedGenes.has(geneName),
+      }
+
       const gene = pairwiseData.get(geneName)
 
       const [

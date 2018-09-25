@@ -229,6 +229,7 @@ class Plot extends React.Component {
       .remove()
 
     if (hoveredGene === null) return;
+    if (pairwiseData === null) return;
 
     const { logCPM, logFC } = pairwiseData.get(hoveredGene)
 
