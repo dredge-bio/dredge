@@ -79,27 +79,27 @@ module.exports = function reducer(state=initialState(), action) {
         )(state)
       },
 
-      SetHoveredGene(gene) {
+      SetHoveredGene(geneName) {
         return R.assocPath(
           ['currentView', 'hoveredGene'],
-          gene,
+          geneName,
           state
         )
       },
 
 
-      SetBrushedGenes(genes) {
+      SetBrushedGenes(geneNames) {
         return R.assocPath(
           ['currentView', 'brushedGenes'],
-          new Set(genes),
+          new Set(geneNames),
           state
         )
       },
 
-      SetSavedGenes(genes) {
+      SetSavedGenes(geneNames) {
         return R.assocPath(
           ['currentView', 'savedGenes'],
-          new Set(genes),
+          new Set(geneNames),
           state
         )
       },

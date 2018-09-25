@@ -84,7 +84,7 @@ function GeneRow({
   return (
     h('tr', {
       onMouseEnter() {
-        setHoveredGene(data.gene)
+        setHoveredGene(data.gene.label)
       },
       onMouseLeave() {
         setHoveredGene(null)
@@ -101,9 +101,9 @@ function GeneRow({
             e.preventDefault()
 
             if (data.saved) {
-              removeSavedGene(data.gene)
+              removeSavedGene(data.gene.label)
             } else {
-              addSavedGene(data.gene)
+              addSavedGene(data.gene.label)
             }
 
           },
@@ -205,7 +205,7 @@ class Table extends React.Component {
 
   getDisplayedGenes() {
     const { sortBy, order } = this.state
-        , { project, savedGenes, brushedGenes, comparedTreatments } = this.props.view
+        , { project, savedGenes, brushedGenes, comparedTreatments, pairwiseData } = this.props.view
         , { rpkmsForTreatmentGene } = project
         , [ treatmentA, treatmentB ] = comparedTreatments
 
@@ -213,7 +213,9 @@ class Table extends React.Component {
       ? brushedGenes
       : savedGenes
 
-    const genes = [...listedGenes].map(gene => {
+    const genes = [...listedGenes].map(geneName => {
+      const gene = pairwiseData.get(geneName)
+
       const [
         treatmentA_RPKMMean,
         treatmentA_RPKMMedian,
@@ -226,7 +228,7 @@ class Table extends React.Component {
 
       return {
         gene,
-        saved: savedGenes.has(gene),
+        saved: savedGenes.has(geneName),
         treatmentA_RPKMMean,
         treatmentA_RPKMMedian,
         treatmentB_RPKMMean,

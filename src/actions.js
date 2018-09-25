@@ -61,14 +61,14 @@ const Action = module.exports = makeTypedAction({
       TreatmentB: String,
     },
     response: {
-      pairwiseData: Object, // Table?
+      pairwiseData: d => d.constructor === Map,
     },
   },
 
   SetSavedGenes: {
     exec: R.always({}),
     request: {
-      genes: isIterable,
+      geneNames: isIterable,
     },
     response: {
     },
@@ -77,7 +77,7 @@ const Action = module.exports = makeTypedAction({
   SetBrushedGenes: {
     exec: R.always({}),
     request: {
-      genes: isIterable,
+      geneNames: isIterable,
     },
     response: {
     },
@@ -86,7 +86,7 @@ const Action = module.exports = makeTypedAction({
   SetHoveredGene: {
     exec: R.always({}),
     request: {
-      gene: R.T,
+      geneName: d => typeof d === 'string' || d === null,
     },
     response: {
     },
@@ -95,7 +95,7 @@ const Action = module.exports = makeTypedAction({
   SetFocusedGene: {
     exec: R.always({}),
     request: {
-      gene: String,
+      geneName: String,
     },
     response: {
     },
@@ -388,14 +388,14 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       .map(row => {
         const [ label, logFC, logCPM, pValue ] = row.split('\t')
 
-        return {
+        return [label, {
           label,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logCPM: parseFloat(logCPM),
           pValue: parseFloat(pValue),
-        }
+        }]
       })
 
-    return { pairwiseData }
+    return { pairwiseData: new Map(pairwiseData) }
   }
 }

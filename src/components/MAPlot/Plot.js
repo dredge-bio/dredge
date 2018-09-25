@@ -108,7 +108,10 @@ class Plot extends React.Component {
 
         brushedBins.attr('fill', d => d.brushedColor)
 
-        const brushedGenes = R.chain(R.prop('genes'), brushedBins.data())
+        const brushedGenes = R.pipe(
+          R.chain(R.prop('genes')),
+          R.map(R.prop('label'))
+        )(brushedBins.data())
 
         dispatch(Action.SetBrushedGenes(brushedGenes))
       })
@@ -178,8 +181,7 @@ class Plot extends React.Component {
       return;
     }
 
-
-    const bins = getBins(pairwiseData, xScale, yScale, 8)
+    const bins = getBins([...pairwiseData.values()], xScale, yScale, 8)
 
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([-300,150])
@@ -215,7 +217,7 @@ class Plot extends React.Component {
 
   updateHoveredGene() {
     const { xScale, yScale } = this.state
-        , { hoveredGene } = this.props.view
+        , { hoveredGene, pairwiseData } = this.props.view
 
     const container = d3.select(this.svg).select('.hovered-marker')
 
@@ -228,9 +230,11 @@ class Plot extends React.Component {
 
     if (hoveredGene === null) return;
 
+    const { logCPM, logFC } = pairwiseData.get(hoveredGene)
+
     container.append('circle')
-      .attr('cx', xScale(hoveredGene.logCPM))
-      .attr('cy', yScale(hoveredGene.logFC))
+      .attr('cx', xScale(logCPM))
+      .attr('cy', yScale(logFC))
       .attr('r', 20)
       .attr('opacity', 1)
       .attr('fill', 'none')
@@ -238,8 +242,8 @@ class Plot extends React.Component {
       .attr('stroke-width', 2)
 
     container.append('circle')
-      .attr('cx', xScale(hoveredGene.logCPM))
-      .attr('cy', yScale(hoveredGene.logFC))
+      .attr('cx', xScale(logCPM))
+      .attr('cy', yScale(logFC))
       .attr('opacity', 1)
       .attr('r', 3)
       .attr('fill', 'coral')
