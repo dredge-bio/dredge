@@ -81,7 +81,7 @@ const svg = `
 
 
 const HeaderContainer = styled.header`
-  background-color: darkslategray;
+  background-color: hsl(205, 35%, 25%);
   background-image: url("data:image/svg+xml,${encodeURIComponent(svg.trim())}");
   height: 100%;
   padding: 0 2em;
