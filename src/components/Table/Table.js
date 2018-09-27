@@ -80,6 +80,7 @@ function GeneRow({
   setFocusedGene,
   columnWidths,
   setHoveredGene,
+  focusedGene,
 }) {
   return (
     h('tr', {
@@ -89,9 +90,14 @@ function GeneRow({
       onMouseLeave() {
         setHoveredGene(null)
       },
-      onClick() {
+      onClick(e) {
+        if (e.target.nodeName.toLowerCase() === 'a') return
+
         setFocusedGene(data.gene.label)
       },
+      style: focusedGene !== data.gene.label ? null : {
+        backgroundColor: '#e6e6e6',
+      }
     }, [
       h(TableCell, [
         h(SaveMarker, {
@@ -172,7 +178,11 @@ const TableBodyWrapper = styled.div`
   background-color: white;
 
   & tr:hover {
-    background-color: lightblue;
+    background-color: #e6e6e6;
+  }
+
+  & :hover {
+    cursor: pointer;
   }
 `
 
@@ -197,10 +207,55 @@ class Table extends React.Component {
     }
 
     this.setHoveredGene = this.setHoveredGene.bind(this)
+    this.handleKeyDown = this.handleKeyDown.bind(this)
   }
 
   componentDidMount() {
     this.refreshSize()
+    window.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleKeyDown(e) {
+    const { dispatch } = this.props
+
+    switch (e.code) {
+      case "ArrowUp":
+      case "ArrowDown":
+        e.preventDefault()
+
+        const selectedIdx = R.findIndex(
+          d => R.pathEq(['view', 'focusedGene'], d.gene.label, this.props),
+          this.displayedGenes
+        )
+
+        if (selectedIdx === -1) return
+
+        let nextSelection
+
+        if (e.code === "ArrowDown") {
+          if (selectedIdx + 1 === this.displayedGenes.length) return
+
+          nextSelection = this.displayedGenes[selectedIdx + 1].gene.label
+        }
+
+        if (e.code === "ArrowUp") {
+          if (selectedIdx - 1 === -1) return
+
+          nextSelection = this.displayedGenes[selectedIdx - 1].gene.label
+        }
+
+        dispatch(Action.SetFocusedGene(nextSelection))
+        break;
+
+      case "Space":
+        e.preventDefault()
+        console.log("space");
+        break;
+    }
   }
 
   getDisplayedGenes() {
@@ -242,7 +297,7 @@ class Table extends React.Component {
     })
 
 
-    return R.sort(
+    return this.displayedGenes = R.sort(
       (order === 'asc' ? R.ascend : R.descend)(R.path(sortBy)),
       genes
     )
@@ -279,7 +334,7 @@ class Table extends React.Component {
   render() {
     const { width, sortBy, order } = this.state
         , { dispatch, view } = this.props
-        , { comparedTreatments, savedGenes } = view
+        , { comparedTreatments, savedGenes, focusedGene } = view
         , [ treatmentA, treatmentB ] = (comparedTreatments || [])
 
     const ready = (width !== null && comparedTreatments !== null) || null
@@ -358,6 +413,7 @@ class Table extends React.Component {
                 saved: false,
                 setHoveredGene: this.setHoveredGene,
                 columnWidths,
+                focusedGene,
                 addSavedGene(gene) {
                   const newSavedGenes = new Set(savedGenes)
 
