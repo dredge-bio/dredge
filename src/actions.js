@@ -180,7 +180,11 @@ function loadAvailableProjects() {
       const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
           , project = {}
 
-      const treatmentsResp = await fetch(`${projectBaseURL}/treatments.json`)
+      const treatmentsResp = await fetch(`${projectBaseURL}/treatments.json`, {
+        headers: new Headers({
+          'Cache-Control': 'no-cache',
+        }),
+      })
 
       if (!treatmentsResp.ok) {
         log(`Could not download \`treatments.json\` file from ${projectBaseURL}/treatments.json. Aborting.`)
@@ -277,7 +281,11 @@ function loadAvailableProjects() {
         }
       })
 
-      await fetch(`${projectBaseURL}/grid.csv`).then(async resp => {
+      await fetch(`${projectBaseURL}/grid.csv`, {
+        headers: new Headers({
+          'Cache-Control': 'no-cache',
+        }),
+      }).then(async resp => {
         if (!resp.ok) {
           log('No grid configuration found')
           project.grid = null
