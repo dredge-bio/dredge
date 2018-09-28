@@ -6,6 +6,7 @@ const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
+    , Action = require('../../actions')
 
 
 const HeatMapContainer = styled.div`
@@ -24,7 +25,7 @@ class HeatMap extends React.Component {
   }
 
   render() {
-    const { grid, gene, rpkmsForTreatmentGene, treatments } = this.props
+    const { dispatch, grid, gene, rpkmsForTreatmentGene, treatments, comparedTreatments } = this.props
         , { hoveredTreatment } = this.state
 
     if (!grid || !gene || !rpkmsForTreatmentGene) {
@@ -87,6 +88,13 @@ class HeatMap extends React.Component {
         h(HeatMapContainer, squares.map(square =>
           h('div', {
             title: treatments[square.treatment].label,
+            onClick: e => {
+              const newComparedTreatments = e.shiftKey
+                ? [comparedTreatments[0], square.treatment]
+                : [square.treatment, comparedTreatments[1]]
+
+              dispatch(Action.SetPairwiseComparison(...newComparedTreatments))
+            },
             onMouseEnter: () => {
               this.setState({ hoveredTreatment: square.treatment })
             },
@@ -112,6 +120,7 @@ class HeatMap extends React.Component {
 
 
 module.exports = connect(R.applySpec({
+  comparedTreatments: R.path(['currentView', 'comparedTreatments']),
   grid: R.path(['currentView', 'project', 'grid']),
   gene: R.path(['currentView', 'focusedGene']),
   rpkmsForTreatmentGene: R.path(['currentView', 'project', 'rpkmsForTreatmentGene']),

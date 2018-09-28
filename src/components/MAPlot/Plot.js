@@ -87,6 +87,8 @@ class Plot extends React.Component {
     const brush = this.brush = d3.brush()
       .extent([[x0, y1], [x1, y0]])
       .on('end', () => {
+        if (!this.binSelection) return
+
         // Reset each bin to its original fill
         this.binSelection.attr('fill', d => d.color)
 
