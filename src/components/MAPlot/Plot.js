@@ -64,6 +64,7 @@ class Plot extends React.Component {
 
     if (didChange(R.lensPath(['view', 'pairwiseData']))) {
       this.drawBins()
+      this.clearBrush()
     }
 
     if (didChange(R.lensPath(['view', 'hoveredGene']))) {
@@ -83,7 +84,7 @@ class Plot extends React.Component {
     const [ x0, x1 ] = xScale.domain().map(xScale)
     const [ y0, y1 ] = yScale.domain().map(yScale)
 
-    const brush = d3.brush()
+    const brush = this.brush = d3.brush()
       .extent([[x0, y1], [x1, y0]])
       .on('end', () => {
         // Reset each bin to its original fill
@@ -116,7 +117,11 @@ class Plot extends React.Component {
         dispatch(Action.SetBrushedGenes(brushedGenes))
       })
 
-    d3.select(this.plotG).select('.brush').call(brush)
+    const brushSel = d3.select(this.plotG).select('.brush')
+
+    brushSel.call(brush)
+
+    this.clearBrush = () => brushSel.call(brush.move, null)
   }
 
   drawAxes() {
