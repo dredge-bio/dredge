@@ -72,70 +72,88 @@ function dashesOrFixed(number, places = 2) {
   return number == null ? '--' : number.toFixed(places)
 }
 
+class GeneRow extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    return (
+      nextProps.saved !== this.props.saved ||
+      !R.equals(nextProps.columnWidths, this.props.columnWidths) ||
+      (
+        nextProps.focusedGene === this.props.data.gene.label &&
+        this.props.focusedGene !== this.props.data.gene.label
+      ) ||
+      (
+        this.props.focusedGene === this.props.data.gene.label &&
+        nextProps.focusedGene !== this.props.data.gene.label
+      )
+    )
+  }
 
-function GeneRow({
-  data,
-  addSavedGene,
-  removeSavedGene,
-  setFocusedGene,
-  columnWidths,
-  setHoveredGene,
-  focusedGene,
-}) {
-  return (
-    h('tr', {
-      onMouseEnter() {
-        setHoveredGene(data.gene.label)
-      },
-      onMouseLeave() {
-        setHoveredGene(null)
-      },
-      onClick(e) {
-        if (e.target.nodeName.toLowerCase() === 'a') return
+  render() {
+    const {
+      data,
+      addSavedGene,
+      removeSavedGene,
+      setFocusedGene,
+      columnWidths,
+      setHoveredGene,
+      focusedGene,
+    } = this.props
 
-        setFocusedGene(data.gene.label)
-      },
-      style: focusedGene !== data.gene.label ? null : {
-        backgroundColor: '#e6e6e6',
-      }
-    }, [
-      h(TableCell, [
-        h(SaveMarker, {
-          href: '',
-          saved: data.saved,
-          onClick(e) {
-            e.preventDefault()
+    return (
+      h('tr', {
+        onMouseEnter() {
+          setHoveredGene(data.gene.label)
+        },
+        onMouseLeave() {
+          setHoveredGene(null)
+        },
+        onClick(e) {
+          if (e.target.nodeName.toLowerCase() === 'a') return
 
-            if (data.saved) {
-              removeSavedGene(data.gene.label)
-            } else {
-              addSavedGene(data.gene.label)
-            }
+          setFocusedGene(data.gene.label)
+        },
+        style: focusedGene !== data.gene.label ? null : {
+          backgroundColor: '#e6e6e6',
+        }
+      }, [
+        h(TableCell, [
+          h(SaveMarker, {
+            href: '',
+            saved: data.saved,
+            onClick(e) {
+              e.preventDefault()
 
-          },
-        }, data.saved ? '×' : '<'),
-      ]),
+              if (data.saved) {
+                removeSavedGene(data.gene.label)
+              } else {
+                addSavedGene(data.gene.label)
+              }
 
-      h(TableCell, { cellWidth: columnWidths[1] }, [
-        h('div.gene-label', data.gene.label),
-      ]),
+            },
+          }, data.saved ? '×' : '<'),
+        ]),
 
-      h(TableCell, dashesOrFixed(data.gene.pValue, 3)),
+        h(TableCell, { cellWidth: columnWidths[1] }, [
+          h('div', this.rendered),
+          h('div.gene-label', data.gene.label),
+        ]),
 
-      h(TableCell, dashesOrFixed(data.gene.logCPM)),
+        h(TableCell, dashesOrFixed(data.gene.pValue, 3)),
 
-      h(TableCell, dashesOrFixed(data.gene.logFC)),
+        h(TableCell, dashesOrFixed(data.gene.logCPM)),
 
-      h(TableCell, dashesOrFixed(data.treatmentA_RPKMMean)),
+        h(TableCell, dashesOrFixed(data.gene.logFC)),
 
-      h(TableCell, dashesOrFixed(data.treatmentA_RPKMMedian)),
+        h(TableCell, dashesOrFixed(data.treatmentA_RPKMMean)),
 
-      h(TableCell, dashesOrFixed(data.treatmentB_RPKMMean)),
+        h(TableCell, dashesOrFixed(data.treatmentA_RPKMMedian)),
 
-      h(TableCell, dashesOrFixed(data.treatmentB_RPKMMedian)),
+        h(TableCell, dashesOrFixed(data.treatmentB_RPKMMean)),
 
-    ])
-  )
+        h(TableCell, dashesOrFixed(data.treatmentB_RPKMMedian)),
+      ])
+    )
+  }
 }
 
 const TableWrapper = styled.div`
@@ -268,6 +286,16 @@ class Table extends React.Component {
       ? brushedGenes
       : savedGenes
 
+    const reuse = (
+      this.displayedGenes &&
+      this.displayedGenes.order === order &&
+      this.displayedGenes.sortBy === sortBy &&
+      this.displayedGenes.pairwiseData === pairwiseData &&
+      R.equals(this.displayedGenes.listedGenes, listedGenes)
+    )
+
+    if (reuse) return this.displayedGenes;
+
     const genes = [...listedGenes].map(geneName => {
       if (!pairwiseData) return {
         gene: { label: geneName },
@@ -296,11 +324,19 @@ class Table extends React.Component {
       }
     })
 
-
-    return this.displayedGenes = R.sort(
+    this.displayedGenes = R.sort(
       (order === 'asc' ? R.ascend : R.descend)(R.path(sortBy)),
       genes
     )
+
+    Object.assign(this.displayedGenes, {
+      order,
+      sortBy,
+      pairwiseData,
+      listedGenes,
+    })
+
+    return this.displayedGenes
   }
 
   getDisplayMessage() {
@@ -409,7 +445,7 @@ class Table extends React.Component {
 
             h('tbody', ready && this.getDisplayedGenes().map(data =>
               h(GeneRow, {
-                key: `brushed-${data.gene.label}`,
+                key: `${data.gene.label}-${treatmentA}-${treatmentB}`,
                 saved: false,
                 setHoveredGene: this.setHoveredGene,
                 columnWidths,
