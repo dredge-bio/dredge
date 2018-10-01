@@ -281,6 +281,83 @@ function loadAvailableProjects() {
         }
       })
 
+      await fetch(`${projectBaseURL}/icons.svg`, {
+        headers: new Headers({
+          'Cache-Control': 'no-cache',
+        }),
+      }).then(async resp => {
+        if (!resp.ok) {
+          log('No SVG icon found')
+          project.svg = null
+          return
+        }
+
+        try {
+          const svg = await resp.text()
+              , parser = new DOMParser()
+              , svgDoc = parser.parseFromString(svg, 'image/svg+xml')
+              , iterator = svgDoc.createNodeIterator(svgDoc, NodeFilter.SHOW_ELEMENT)
+              , treatmentNames = new Set(Object.keys(project.treatments))
+
+          let curNode
+
+          ;[...svgDoc.querySelectorAll('title')].forEach(el => {
+            el.parentNode.removeChild(el)
+          })
+
+          while ( (curNode = iterator.nextNode()) ) {
+            switch (curNode.nodeName.toLowerCase()) {
+              case 'path':
+              case 'rect':
+              case 'circle':
+              case 'elipse':
+              case 'polyline':
+              case 'polygon': {
+                let treatment = null
+
+                const popTreatmentFromAttr = attr => {
+                  treatment = curNode.getAttribute(attr)
+                  if (treatmentNames.has(treatment)) {
+                    curNode.removeAttribute(attr)
+                    return true
+                  }
+                  return false
+                }
+
+                popTreatmentFromAttr('id') || popTreatmentFromAttr('name')
+
+                if (treatment) {
+                  const { label } = project.treatments[treatment]
+
+                  curNode.setAttribute('data-treatment', treatment)
+
+                  const titleEl = document.createElement('title')
+                  titleEl.textContent = label || treatment
+
+                  curNode.appendChild(titleEl)
+                  treatmentNames.delete(treatment)
+                }
+
+                break;
+              }
+            }
+
+            // Remove ID, since multiple instances of this SVG will be in the
+            // document. Alternatively, the whole thing could always be wrapped
+            // in an iframe, but that would require inter-frame communication,
+            // which seems like a pain in the ass.
+            curNode.removeAttribute('id')
+          }
+
+          project.svg = svgDoc.firstChild.outerHTML
+          log('Loaded SVG icon')
+        } catch (e) {
+          project.svg = null
+          log('SVG icon file malformed')
+        }
+      })
+
+
       await fetch(`${projectBaseURL}/grid.csv`, {
         headers: new Headers({
           'Cache-Control': 'no-cache',

@@ -79,7 +79,7 @@ class Viewer extends React.Component {
         h('div.grid--selectorA', [
           h(TreatmentSelector, {
             selectedTreatment: treatmentA,
-            handleSelectTreatment: treatment => {
+            onSelectTreatment: treatment => {
               dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
             },
           }),
@@ -98,7 +98,7 @@ class Viewer extends React.Component {
         h('div.grid--selectorB', [
           h(TreatmentSelector, {
             selectedTreatment: treatmentB,
-            handleSelectTreatment: treatment => {
+            onSelectTreatment: treatment => {
               dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
             },
           }),
