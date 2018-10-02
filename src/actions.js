@@ -457,9 +457,9 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
     if (respA.ok) {
       resp = respA
+      reverse = true
     } else if (respB.ok) {
       resp = respB
-      reverse = true
     } else {
       throw new Error(`Could not download pairwise test from ${fileURLA} or ${fileURLB}`)
     }
