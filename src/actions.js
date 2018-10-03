@@ -67,7 +67,7 @@ const Action = module.exports = makeTypedAction({
   },
 
   SetSavedGenes: {
-    exec: R.always({}),
+    exec: setSavedGenes,
     request: {
       geneNames: isIterable,
     },
@@ -132,7 +132,10 @@ function changeProject(projectURL) {
         , { treatments } = project
         , [ treatmentA, treatmentB ] = Object.keys(treatments).slice(3)
 
+    const persistedSavedGenes = JSON.parse(localStorage[projectURL + '-watched'] || '[]')
+
     dispatch(Action.SetPairwiseComparison(treatmentA, treatmentB))
+    dispatch(Action.SetSavedGenes(persistedSavedGenes))
 
     return {}
   }
@@ -502,5 +505,16 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       })
 
     return { pairwiseData: new Map(pairwiseData) }
+  }
+}
+
+function setSavedGenes(savedGenes) {
+  return (dispatch, getState) => {
+    const key = getState().currentView.project.baseURL + '-watched'
+        , savedGenesStr = JSON.stringify([...savedGenes])
+
+    localStorage.setItem(key, savedGenesStr)
+
+    return {}
   }
 }
