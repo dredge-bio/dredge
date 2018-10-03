@@ -3,6 +3,7 @@
 const R = require('ramda')
     , d3 = require('d3')
     , { makeTypedAction } = require('org-async-actions')
+    , TrieSearch = require('trie-search')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
@@ -230,7 +231,7 @@ function loadAvailableProjects() {
             R.split('\n'),
             R.map(R.pipe(
               R.split(','),
-              arr => [arr[0], [arr.slice(1)]]
+              arr => [arr[0], arr.slice(1)]
             )),
             R.fromPairs,
           )(aliases)
@@ -264,6 +265,8 @@ function loadAvailableProjects() {
 
           const geneIndices = R.invertObj(genes)
               , replicateIndices = R.invertObj(replicates)
+
+          project.genes = genes
 
           project.rpkmsForTreatmentGene = (treatmentID, geneName) => {
             const treatment = project.treatments[treatmentID]
@@ -398,6 +401,23 @@ function loadAvailableProjects() {
       project.baseURL = projectBaseURL
       project.pairwiseComparisonCache = {}
       loadedProjects[projectBaseURL] = project
+
+      const corpus = {}
+          , ts = new TrieSearch()
+
+      project.genes.forEach(gene => {
+        corpus[gene] = gene
+      })
+
+      Object.entries(project.geneAliases || {}).forEach(([ gene, aliases ]) => {
+        aliases.forEach(alias => {
+          corpus[alias] = gene
+        })
+      })
+
+      ts.addFromObject(corpus);
+
+      project.searchGenes = name => ts.get(name)
     }))
 
     const sortedLoadedProjects = {}

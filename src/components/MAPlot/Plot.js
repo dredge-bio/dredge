@@ -238,7 +238,11 @@ class Plot extends React.Component {
     if (hoveredGene === null) return;
     if (pairwiseData === null) return;
 
-    const { logCPM, logFC } = pairwiseData.get(hoveredGene)
+    const data = pairwiseData.get(hoveredGene)
+
+    if (!data) return
+
+    const { logCPM, logFC } = data
 
     container.append('circle')
       .attr('cx', xScale(logCPM))

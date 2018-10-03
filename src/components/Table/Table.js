@@ -319,7 +319,7 @@ class Table extends React.Component {
         }
       }
 
-      const gene = pairwiseData.get(geneName)
+      const gene = pairwiseData.get(geneName) || { label: geneName }
 
       const [
         treatmentA_RPKMMean,
@@ -328,7 +328,7 @@ class Table extends React.Component {
         treatmentB_RPKMMedian,
       ] = R.chain(
         rpkms => [d3.mean(rpkms), d3.median(rpkms)],
-        [rpkmsForTreatmentGene(treatmentA, gene.label), rpkmsForTreatmentGene(treatmentB, gene.label)]
+        [rpkmsForTreatmentGene(treatmentA, geneName), rpkmsForTreatmentGene(treatmentB, geneName)]
       )
 
       return {

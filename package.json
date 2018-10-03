@@ -16,6 +16,7 @@
     "redux": "^4.0.0",
     "styled-components": "^3.4.2",
     "tape": "^4.2.0",
+    "trie-search": "^1.2.8",
     "union-type": "github:ptgolden/union-type"
   },
   "devDependencies": {
