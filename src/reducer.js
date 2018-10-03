@@ -97,10 +97,15 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       SetSavedGenes(geneNames) {
-        const { currentView: { brushedGenes, focusedGene, savedGenes }} = state
+        const { currentView: { brushedGenes, focusedGene, savedGenes, hoveredGene }} = state
             , nextSavedGenes = new Set(geneNames)
 
         let nextFocusedGene = focusedGene
+          , nextHoveredGene = hoveredGene
+
+        if (!nextSavedGenes.has(hoveredGene)) {
+          nextHoveredGene = null
+        }
 
         // If we're viewing saved genes, and the focused gene has been removed
         // from the saved genes, then move focus to the next one (if it exists)
@@ -135,6 +140,7 @@ module.exports = function reducer(state=initialState(), action) {
         return R.over(R.lensProp('currentView'), R.flip(R.merge)({
           savedGenes: nextSavedGenes,
           focusedGene: nextFocusedGene,
+          hoveredGene: nextHoveredGene,
         }), state)
       },
 
