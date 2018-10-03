@@ -97,11 +97,45 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       SetSavedGenes(geneNames) {
-        return R.assocPath(
-          ['currentView', 'savedGenes'],
-          new Set(geneNames),
-          state
+        const { currentView: { brushedGenes, focusedGene, savedGenes }} = state
+            , nextSavedGenes = new Set(geneNames)
+
+        let nextFocusedGene = focusedGene
+
+        // If we're viewing saved genes, and the focused gene has been removed
+        // from the saved genes, then move focus to the next one (if it exists)
+        const moveFocusedGene = (
+          focusedGene &&
+          !brushedGenes.size &&
+          savedGenes.has(focusedGene) &&
+          !nextSavedGenes.has(focusedGene)
         )
+
+        if (moveFocusedGene && nextSavedGenes.size === 0) {
+          nextFocusedGene = null
+        } else if (moveFocusedGene) {
+          const savedGenesArr = [...savedGenes]
+              , idx = savedGenesArr.indexOf(focusedGene)
+              , inNextSaved = gene => nextSavedGenes.has(gene)
+
+          // First search for the next one from the list of previous genes
+          // that's in the next one
+          nextFocusedGene = R.find(inNextSaved, savedGenesArr.slice(idx))
+
+          // If there's nothing available, then go backwards
+          if (!nextFocusedGene) {
+            nextFocusedGene = R.find(inNextSaved, savedGenesArr.slice(0, idx).reverse())
+          }
+
+          // If there's nothing found, then focus on the first of the new saved
+          // genes
+          nextFocusedGene = [...nextSavedGenes][0]
+        }
+
+        return R.over(R.lensProp('currentView'), R.flip(R.merge)({
+          savedGenes: nextSavedGenes,
+          focusedGene: nextFocusedGene,
+        }), state)
       },
 
       SetFocusedGene(geneName) {

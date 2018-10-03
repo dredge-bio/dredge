@@ -91,6 +91,7 @@ class GeneRow extends React.Component {
   render() {
     const {
       data,
+      saved,
       addSavedGene,
       removeSavedGene,
       setFocusedGene,
@@ -114,23 +115,23 @@ class GeneRow extends React.Component {
         },
         style: focusedGene !== data.gene.label ? null : {
           backgroundColor: '#e6e6e6',
-        }
+        },
       }, [
         h(TableCell, [
           h(SaveMarker, {
             href: '',
-            saved: data.saved,
+            saved,
             onClick(e) {
               e.preventDefault()
 
-              if (data.saved) {
+              if (saved) {
                 removeSavedGene(data.gene.label)
               } else {
                 addSavedGene(data.gene.label)
               }
 
             },
-          }, data.saved ? '×' : '<'),
+          }, saved ? '×' : '<'),
         ]),
 
         h(TableCell, { cellWidth: columnWidths[1] }, [
@@ -224,8 +225,11 @@ class Table extends React.Component {
       order: 'asc',
     }
 
+    this.setFocusedGene = this.setFocusedGene.bind(this)
     this.setHoveredGene = this.setHoveredGene.bind(this)
     this.handleKeyDown = this.handleKeyDown.bind(this)
+    this.addSavedGene = this.addSavedGene.bind(this)
+    this.removeSavedGene = this.removeSavedGene.bind(this)
   }
 
   componentDidMount() {
@@ -238,11 +242,11 @@ class Table extends React.Component {
   }
 
   handleKeyDown(e) {
-    const { dispatch } = this.props
+    const { dispatch, view } = this.props
 
     switch (e.code) {
       case "ArrowUp":
-      case "ArrowDown":
+      case "ArrowDown": {
         e.preventDefault()
 
         const selectedIdx = R.findIndex(
@@ -268,11 +272,22 @@ class Table extends React.Component {
 
         dispatch(Action.SetFocusedGene(nextSelection))
         break;
+      }
 
-      case "Space":
+      case "Space": {
         e.preventDefault()
-        console.log("space");
+
+        const { focusedGene, savedGenes } = view
+
+        if (focusedGene) {
+          if (savedGenes.has(focusedGene)) {
+            this.removeSavedGene(focusedGene)
+          } else {
+            this.addSavedGene(focusedGene)
+          }
+        }
         break;
+      }
     }
   }
 
@@ -297,9 +312,11 @@ class Table extends React.Component {
     if (reuse) return this.displayedGenes;
 
     const genes = [...listedGenes].map(geneName => {
-      if (!pairwiseData) return {
-        gene: { label: geneName },
-        saved: savedGenes.has(geneName),
+      if (!pairwiseData) {
+        return {
+          gene: { label: geneName },
+          saved: savedGenes.has(geneName),
+        }
       }
 
       const gene = pairwiseData.get(geneName)
@@ -316,7 +333,6 @@ class Table extends React.Component {
 
       return {
         gene,
-        saved: savedGenes.has(geneName),
         treatmentA_RPKMMean,
         treatmentA_RPKMMedian,
         treatmentB_RPKMMean,
@@ -361,15 +377,39 @@ class Table extends React.Component {
     })
   }
 
-  setHoveredGene(gene) {
+  addSavedGene(geneName) {
+    const { dispatch, view: { savedGenes }} = this.props
+        , newSavedGenes = new Set(savedGenes)
+
+    newSavedGenes.add(geneName)
+
+    dispatch(Action.SetSavedGenes(newSavedGenes))
+  }
+
+  removeSavedGene(geneName) {
+    const { dispatch, view: { savedGenes }} = this.props
+        , newSavedGenes = new Set(savedGenes)
+
+    newSavedGenes.delete(geneName)
+
+    dispatch(Action.SetSavedGenes(newSavedGenes))
+  }
+
+  setFocusedGene(geneName) {
     const { dispatch } = this.props
 
-    dispatch(Action.SetHoveredGene(gene))
+    dispatch(Action.SetFocusedGene(geneName))
+  }
+
+  setHoveredGene(geneName) {
+    const { dispatch } = this.props
+
+    dispatch(Action.SetHoveredGene(geneName))
   }
 
   render() {
     const { width, sortBy, order } = this.state
-        , { dispatch, view } = this.props
+        , { view } = this.props
         , { comparedTreatments, savedGenes, focusedGene } = view
         , [ treatmentA, treatmentB ] = (comparedTreatments || [])
 
@@ -446,27 +486,13 @@ class Table extends React.Component {
             h('tbody', ready && this.getDisplayedGenes().map(data =>
               h(GeneRow, {
                 key: `${data.gene.label}-${treatmentA}-${treatmentB}`,
-                saved: false,
+                saved: savedGenes.has(data.gene.label),
                 setHoveredGene: this.setHoveredGene,
                 columnWidths,
                 focusedGene,
-                addSavedGene(gene) {
-                  const newSavedGenes = new Set(savedGenes)
-
-                  newSavedGenes.add(gene)
-
-                  dispatch(Action.SetSavedGenes(newSavedGenes))
-                },
-                removeSavedGene(gene) {
-                  const newSavedGenes = new Set(savedGenes)
-
-                  newSavedGenes.delete(gene)
-
-                  dispatch(Action.SetSavedGenes(newSavedGenes))
-                },
-                setFocusedGene(geneName) {
-                  dispatch(Action.SetFocusedGene(geneName))
-                },
+                addSavedGene: this.addSavedGene,
+                removeSavedGene: this.removeSavedGene,
+                setFocusedGene: this.setFocusedGene,
                 data,
               })
             )),

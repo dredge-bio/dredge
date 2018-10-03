@@ -29,7 +29,7 @@ const SelectorWrapper = styled.div`
   }
 
   & svg .treatment-selected {
-    fill: lightblue;
+    fill: lightsteelblue;
   }
 `
 
