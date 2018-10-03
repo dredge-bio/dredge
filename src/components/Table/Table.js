@@ -340,8 +340,13 @@ class Table extends React.Component {
       }
     })
 
+    const comparator =
+      sortBy.includes('label')
+        ? R.pipe(R.path(sortBy), R.toLower)
+        : R.path(sortBy)
+
     this.displayedGenes = R.sort(
-      (order === 'asc' ? R.ascend : R.descend)(R.path(sortBy)),
+      (order === 'asc' ? R.ascend : R.descend)(comparator),
       genes
     )
 
