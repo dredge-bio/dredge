@@ -199,6 +199,25 @@ function loadAvailableProjects() {
       const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
           , project = {}
 
+      const projectMetadataResp = await fetch(`${projectBaseURL}/project.json`, {
+        headers: new Headers({
+          'Cache-Control': 'no-cache',
+        }),
+      })
+
+      if (!projectMetadataResp.ok) {
+        log(`Could not download \`project.json\` file from ${projectBaseURL}/project.json. Aborting.`)
+        return
+      }
+
+      try {
+        project.metadata = await projectMetadataResp.json()
+        log(`Loaded project metadata`)
+      } catch (e) {
+        log(`${projectBaseURL}/project.json is not a valid JSON file. Aborting.`)
+        return
+      }
+
       const treatmentsResp = await fetch(`${projectBaseURL}/treatments.json`, {
         headers: new Headers({
           'Cache-Control': 'no-cache',

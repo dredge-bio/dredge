@@ -41,16 +41,20 @@ class Plot extends React.Component {
       const plotHeight = props.height - padding.t - padding.b
           , plotWidth = props.width - padding.l - padding.r
 
+      const [ xDomain, yDomain ] = props.rpkmLimits
+
+      console.log(xDomain, yDomain)
+
       return {
         height: props.height,
         width: props.width,
         plotHeight,
         plotWidth,
         xScale: d3.scaleLinear()
-          .domain([0, 16])
+          .domain(xDomain)
           .range([0, plotWidth]),
         yScale: d3.scaleLinear()
-          .domain([-20, 20])
+          .domain(yDomain)
           .range([plotHeight, 0]),
       }
     }
@@ -141,8 +145,8 @@ class Plot extends React.Component {
 
     yScale.ticks().forEach(y => {
       yEl.append('line')
-        .attr('x1', Math.ceil(xScale(0)))
-        .attr('x2', Math.ceil(xScale(16)))
+        .attr('x1', Math.ceil(xScale(xScale.domain()[0])))
+        .attr('x2', Math.ceil(xScale(xScale.domain()[1])))
         .attr('y1', Math.ceil(yScale(y)))
         .attr('y2', Math.ceil(yScale(y)))
         .attr('stroke', '#eee')
@@ -153,8 +157,8 @@ class Plot extends React.Component {
       yEl.append('line')
         .attr('x1', Math.ceil(xScale(x)))
         .attr('x2', Math.ceil(xScale(x)))
-        .attr('y1', Math.ceil(yScale(20)))
-        .attr('y2', Math.ceil(yScale(-20)))
+        .attr('y1', Math.ceil(yScale(yScale.domain()[0])))
+        .attr('y2', Math.ceil(yScale(yScale.domain()[1])))
         .attr('stroke', '#eee')
         .attr('stroke-width', 1)
     })
@@ -350,4 +354,6 @@ class Plot extends React.Component {
   }
 }
 
-module.exports = connect()(Plot)
+module.exports = connect(state => ({
+  rpkmLimits: R.path(['currentView', 'project', 'metadata', 'rpkmLimits'], state)
+}))(Plot)

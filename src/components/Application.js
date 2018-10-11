@@ -135,7 +135,11 @@ const Header = connect(state => ({
 
   return (
     h(HeaderContainer, [
-      h('h1', 'SeqPeek'),
+      h('h1', {
+        style: {
+          fontFamily: 'SourceSansPro',
+        }
+      }, R.path(['project', 'metadata', 'label'], props.currentView) || 'Differential Expression Gene Finder'),
 
       h('div', { style: { position: 'relative', display: 'flex' }}, [
         currentProject && h('label', {
