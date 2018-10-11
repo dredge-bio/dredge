@@ -8,10 +8,17 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , Action = require('../../actions')
 
-
 const HeatMapContainer = styled.div`
-  position: relative;
+  width: 0px;
   flex: 1;
+
+  & svg {
+    height: 100%;
+  }
+
+  & rect {
+    stroke: black;
+  }
 `
 
 
@@ -41,25 +48,29 @@ class HeatMap extends React.Component {
     const colorScale = d3.scaleSequential(d3.interpolateOranges)
       .domain([0, maxRPKM])
 
+    const SQUARE_WIDTH = 20
+
     const xScale = d3.scaleLinear()
-      .domain([0, grid[0].length])
-      .range([0, 100])
+      .domain([0, grid[0].length - 1])
+      .range([0, SQUARE_WIDTH * (grid[0].length - 1)])
 
     const yScale = d3.scaleLinear()
-      .domain([0, grid.length])
-      .range([0, 100])
+      .domain([0, grid.length - 1])
+      .range([SQUARE_WIDTH * (grid.length - 1), 0])
 
     const squares = R.pipe(
+      // For fixing
+      // grid => grid.reverse().map((row, i) =>
       grid => grid.map((row, i) =>
         row.map((treatment, j) => treatment && {
           treatment,
-          style: {
-            background: colorScale(rpkms[i][j]),
-            left: `${xScale(j)}%`,
-            width: `calc(${xScale(1)}% - 1px)`,
-            top: `${yScale(i)}%`,
-            height: `${yScale(1)}%`,
-          },
+          attrs: {
+            fill: colorScale(rpkms[i][j]),
+            x: xScale(j),
+            y: yScale(i),
+            height: SQUARE_WIDTH,
+            width: SQUARE_WIDTH,
+          }
         })
       ),
       R.chain(R.filter(R.identity))
@@ -85,34 +96,28 @@ class HeatMap extends React.Component {
 
           hoveredTreatment && treatments[hoveredTreatment].label,
         ]),
-        h(HeatMapContainer, squares.map(square =>
-          h('div', {
-            title: treatments[square.treatment].label,
-            onClick: e => {
-              const newComparedTreatments = e.shiftKey
-                ? [comparedTreatments[0], square.treatment]
-                : [square.treatment, comparedTreatments[1]]
+        h(HeatMapContainer, [
+          h('svg', {
+            viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH} ${yScale.range()[0] + SQUARE_WIDTH}`,
+          }, squares.map(square =>
+            h('rect', Object.assign({}, square.attrs, {
+              // title: treatments[square.treatment].label,
+              onClick: e => {
+                const newComparedTreatments = e.shiftKey
+                  ? [comparedTreatments[0], square.treatment]
+                  : [square.treatment, comparedTreatments[1]]
 
-              dispatch(Action.SetPairwiseComparison(...newComparedTreatments))
-            },
-            onMouseEnter: () => {
-              this.setState({ hoveredTreatment: square.treatment })
-            },
-            onMouseLeave: () => {
-              this.setState({ hoveredTreatment: null })
-            },
-            style: Object.assign({
-              position: 'absolute',
-              boxSizing: 'content-box',
-              marginLeft: square.treatment === hoveredTreatment ? '-2px' : 0,
-              marginTop: square.treatment === hoveredTreatment ? '-2px' : 0,
-              zIndex: square.treatment === hoveredTreatment ? 1 : 'unset',
-              border: square.treatment === hoveredTreatment
-                ? '4px solid #333'
-                : '1px solid #333'
-            }, square.style),
-          })
-        )),
+                dispatch(Action.SetPairwiseComparison(...newComparedTreatments))
+              },
+              onMouseEnter: () => {
+                this.setState({ hoveredTreatment: square.treatment })
+              },
+              onMouseLeave: () => {
+                this.setState({ hoveredTreatment: null })
+              },
+            }))
+          )),
+        ]),
       ])
     )
   }
