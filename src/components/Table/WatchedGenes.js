@@ -238,9 +238,27 @@ class WatchedGenes extends React.Component {
             }, 'Unwatch all'),
           ]),
           h('div', [
-            h(Button, 'Import'),
+            h(Button, {
+              onClick() {
+                const inputEl = document.createElement('input')
+                inputEl.type = 'file'
+                inputEl.onchange = () => {
+                  const { files } = inputEl
+
+                  if (files.length) {
+                    dispatch(Action.ImportSavedGenes(files[0]))
+                  }
+                }
+
+                inputEl.click()
+              },
+            }, 'Import'),
+
             h(Button, {
               disabled: savedGenes.size === 0,
+              onClick() {
+                dispatch(Action.ExportSavedGenes)
+              },
             }, 'Export'),
           ]),
         ]),

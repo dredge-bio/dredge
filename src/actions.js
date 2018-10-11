@@ -4,6 +4,7 @@ const R = require('ramda')
     , d3 = require('d3')
     , { makeTypedAction } = require('org-async-actions')
     , TrieSearch = require('trie-search')
+    , saveAs = require('file-saver')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
@@ -100,6 +101,20 @@ const Action = module.exports = makeTypedAction({
     },
     response: {
     },
+  },
+
+  ImportSavedGenes: {
+    exec: importSavedGenes,
+    request: {
+      file: Object,
+    },
+    response: {},
+  },
+
+  ExportSavedGenes: {
+    exec: exportSavedGenes,
+    request: {},
+    response: {},
   },
 })
 
@@ -514,6 +529,46 @@ function setSavedGenes(savedGenes) {
         , savedGenesStr = JSON.stringify([...savedGenes])
 
     localStorage.setItem(key, savedGenesStr)
+
+    return {}
+  }
+}
+
+function importSavedGenes(file) {
+  return (dispatch, getState) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = async e => {
+      const text = e.target.result
+
+      try {
+        const importedWatchedGenes = text.trim().split('\n')
+
+        // TODO: Filter out those things that aren't in `project.genes`
+
+        const existingWatchedGenes = getState().currentView.savedGenes
+
+        await dispatch(Action.SetSavedGenes(
+          [...importedWatchedGenes, ...existingWatchedGenes]
+        ))
+
+        resolve({})
+      } catch (e) {
+        reject('didn\'t work')
+      }
+    }
+
+    reader.readAsText(file)
+  })
+}
+
+function exportSavedGenes() {
+  return (dispatch, getState) => {
+    const { savedGenes } = getState().currentView
+
+    const blob = new Blob([ [...savedGenes].join('\n') ], { type: 'text/plain' })
+
+    saveAs(blob, 'saved-genes.txt')
 
     return {}
   }

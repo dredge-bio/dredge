@@ -151,6 +151,9 @@ module.exports = function reducer(state=initialState(), action) {
           state
         )
       },
+
+      ImportSavedGenes: R.always(state),
+      ExportSavedGenes: R.always(state),
     }),
 
     Pending: () => action.type.case({
