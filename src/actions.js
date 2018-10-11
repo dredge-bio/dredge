@@ -326,6 +326,8 @@ function loadAvailableProjects() {
             el.parentNode.removeChild(el)
           })
 
+          const anchorsToRemove = []
+
           while ( (curNode = iterator.nextNode()) ) {
             switch (curNode.nodeName.toLowerCase()) {
               case 'path':
@@ -357,6 +359,19 @@ function loadAvailableProjects() {
 
                   curNode.appendChild(titleEl)
                   treatmentNames.delete(treatment)
+
+                  // Illustrator, for some reason, makes all paths the child of
+                  // an anchor tag. That messes up our clicking business. We
+                  // could probably preventDefault() or stopPropagation()
+                  // somewhere, but I'm just removing them here.
+                  const replaceParent = (
+                    curNode.parentNode.nodeName.toLowerCase() === 'a' &&
+                    curNode.parentNode.children.length === 1
+                  )
+
+                  if (replaceParent) {
+                    anchorsToRemove.push(curNode.parentNode)
+                  }
                 }
 
                 break;
@@ -370,7 +385,11 @@ function loadAvailableProjects() {
             curNode.removeAttribute('id')
           }
 
-          project.svg = svgDoc.firstChild.outerHTML
+          anchorsToRemove.forEach(el => {
+            el.replaceWith(el.children[0])
+          })
+
+          project.svg = svgDoc.rootElement.outerHTML
           log('Loaded SVG icon')
         } catch (e) {
           project.svg = null
