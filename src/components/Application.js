@@ -91,7 +91,8 @@ const HeaderContainer = styled.header`
 
   & h1 {
     color: white;
-    font-size: 36px;
+    font-size: 28px;
+    letter-spacing: .6px;
   }
 
   & select, & label {
