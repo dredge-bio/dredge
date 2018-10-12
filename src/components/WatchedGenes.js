@@ -5,7 +5,7 @@ const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
-    , Action = require('../../actions')
+    , Action = require('../actions')
 
 function union(a, b) {
   const c = new Set()

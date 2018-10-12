@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , { connect  } = require('react-redux')
     , getBins = require('../../utils/bin')
     , Action = require('../../actions')
+    , onResize = require('../util/Sized')
 
 const padding = {
   l: 60,
@@ -37,13 +38,18 @@ class Plot extends React.Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (props.height !== state.height || props.width !== state.width) {
+    const update = (
+      props.width != null &&
+      props.height != null &&
+      props.width !== state.width &&
+      props.height !== state.height
+    )
+
+    if (update) {
       const plotHeight = props.height - padding.t - padding.b
           , plotWidth = props.width - padding.l - padding.r
 
       const [ xDomain, yDomain ] = props.rpkmLimits
-
-      console.log(xDomain, yDomain)
 
       return {
         height: props.height,
@@ -66,19 +72,22 @@ class Plot extends React.Component {
     const didChange = lens =>
       R.view(lens, this.props) !== R.view(lens, prevProps)
 
-    if (didChange(R.lensPath(['view', 'pairwiseData']))) {
+    const redraw = (
+      (this.props.height != null && didChange(R.lensPath(['view', 'pairwiseData']))) ||
+      this.props.height != null && prevProps.height == null
+    )
+
+    if (redraw) {
       this.drawBins()
-      this.clearBrush()
+
+      if (!this.clearBrush) {
+        this.initBrush()
+      }
     }
 
     if (didChange(R.lensPath(['view', 'hoveredGene']))) {
       this.updateHoveredGene()
     }
-  }
-
-  componentDidMount() {
-    this.drawAxes()
-    this.initBrush()
   }
 
   initBrush() {
@@ -278,82 +287,105 @@ class Plot extends React.Component {
 
     const treatmentsText = (comparedTreatments || []).join('-')
 
+    if (this.props.width == null) {
+      return null
+    }
+
     return (
-      h('svg', {
-        viewBox: `0 0 ${width} ${height}`,
-        ref: el => { this.svg = el },
+      h('div', {
+        style: {
+          height: '100%',
+          width: '100%',
+          position: 'relative',
+        }
       }, [
-        h('text', {
-          x: width - padding.r,
-          y: padding.t - 4,
-          style: {
-            fontSize: 24,
-            fontWeight: 'bold',
-            textAnchor: 'end',
-            dominantBaseline: 'ideographic',
-          },
-        }, treatmentsText),
-
-        // X Axis label
-        h('text', {
-          dx: padding.l,
-          dy: padding.t,
-          x: plotWidth / 2,
-          y: plotHeight + (padding.b / 2) + 6, // extra pixels to bump it down from axis
-          style: {
-            fontWeight: 'bold',
-            textAnchor: 'middle',
-            dominantBaseline: 'central',
-          },
-        }, 'log₂ (Average Transcript Level)'),
-
-        // Y Axis label
-        h('text', {
-          x: 0,
-          y: (plotHeight / 2) + padding.t,
-          transform: `
-            rotate(-90, 0, ${plotHeight / 2 + padding.t})
-            translate(0, ${padding.l / 2 - 6})
-          `,
-          style: {
-            fontWeight: 'bold',
-            textAnchor: 'middle',
-            dominantBaseline: 'central',
-          },
-        }, 'log₂ (Fold Change)'),
-
-        h('g', {
-          ref: el => this.plotG = el,
-          transform: `translate(${padding.l}, ${padding.t})`,
+        h('svg', {
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          height: '100%',
+          viewBox: `0 0 ${width} ${height}`,
+          ref: el => { this.svg = el },
         }, [
-          h('rect', {
-            fill: '#f9f9f9',
-            stroke: '#ccc',
+          h('text', {
+            x: width - padding.r,
+            y: padding.t - 4,
+            style: {
+              fontSize: 24,
+              fontWeight: 'bold',
+              textAnchor: 'end',
+              dominantBaseline: 'ideographic',
+            },
+          }, treatmentsText),
+
+          // X Axis label
+          h('text', {
+            dx: padding.l,
+            dy: padding.t,
+            x: plotWidth / 2,
+            y: plotHeight + (padding.b / 2) + 6, // extra pixels to bump it down from axis
+            style: {
+              fontWeight: 'bold',
+              textAnchor: 'middle',
+              dominantBaseline: 'central',
+            },
+          }, 'log₂ (Average Transcript Level)'),
+
+          // Y Axis label
+          h('text', {
             x: 0,
-            y: 0,
-            width: plotWidth,
-            height: plotHeight,
-          }),
+            y: (plotHeight / 2) + padding.t,
+            transform: `
+              rotate(-90, 0, ${plotHeight / 2 + padding.t})
+              translate(0, ${padding.l / 2 - 6})
+            `,
+            style: {
+              fontWeight: 'bold',
+              textAnchor: 'middle',
+              dominantBaseline: 'central',
+            },
+          }, 'log₂ (Fold Change)'),
 
-          h('g.x-axis', {
-            transform: `translate(0, ${plotHeight})`,
-          }),
-          h('g.y-axis'),
+          h('g', {
+            ref: el => this.plotG = el,
+            transform: `translate(${padding.l}, ${padding.t})`,
+          }, [
+            h('rect', {
+              fill: '#f9f9f9',
+              stroke: '#ccc',
+              x: 0,
+              y: 0,
+              width: plotWidth,
+              height: plotHeight,
+            }),
 
-          h('g.squares'),
+            h('g.x-axis', {
+              transform: `translate(0, ${plotHeight})`,
+            }),
+            h('g.y-axis'),
 
-          h('g.watched-genes'),
+            h('g.squares'),
 
-          h('g.brush'),
+            h('g.watched-genes'),
 
-          h('g.hovered-marker'),
-        ]),
+            h('g.brush'),
 
+            h('g.hovered-marker'),
+          ]),
+
+        ])
       ])
     )
   }
 }
 
-module.exports = connect(state => ({
-  rpkmLimits: R.path(['currentView', 'project', 'metadata', 'rpkmLimits'], state)
-}))(Plot)
+module.exports = R.pipe(
+  connect(R.applySpec({
+    rpkmLimits: R.path(['currentView', 'project', 'metadata', 'rpkmLimits']),
+    pairwiseData: R.path(['currentView', 'pairwiseData']),
+  })),
+  onResize(el => ({
+    width: el.clientWidth,
+    height: el.clientHeight,
+  }))
+)(Plot)

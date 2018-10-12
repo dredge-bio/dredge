@@ -6,11 +6,7 @@ const h = require('react-hyperscript')
 
 function Log({ log }) {
   return (
-    h('div', {
-      style: {
-        padding: '1em',
-      },
-    }, [
+    h('div', [
       h('h2', 'Log'),
       h('pre', { style: { overflow: 'auto' }}, log.join('\n')),
     ])

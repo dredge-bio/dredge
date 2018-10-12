@@ -6,7 +6,8 @@ const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
-    , Action = require('../../actions')
+    , Action = require('../actions')
+    , onResize = require('./util/Sized')
 
 const TableCell = styled.td`
   padding: 0;
@@ -220,7 +221,6 @@ class Table extends React.Component {
     super()
 
     this.state = {
-      width: null,
       sortBy: FIELDS[1].sortPath,
       order: 'asc',
     }
@@ -233,7 +233,6 @@ class Table extends React.Component {
   }
 
   componentDidMount() {
-    this.refreshSize()
     window.addEventListener('keydown', this.handleKeyDown);
   }
 
@@ -376,12 +375,6 @@ class Table extends React.Component {
     }
   }
 
-  refreshSize() {
-    this.setState({
-      width: this.el.querySelector('.table-scroll').clientWidth,
-    })
-  }
-
   addSavedGene(geneName) {
     const { dispatch, view: { savedGenes }} = this.props
         , newSavedGenes = new Set(savedGenes)
@@ -413,20 +406,18 @@ class Table extends React.Component {
   }
 
   render() {
-    const { width, sortBy, order } = this.state
-        , { view } = this.props
+    const { sortBy, order } = this.state
+        , { width, view } = this.props
         , { comparedTreatments, savedGenes, focusedGene } = view
-        , [ treatmentA, treatmentB ] = (comparedTreatments || [])
+        , [ treatmentA, treatmentB ] = comparedTreatments || [ null, null ]
+        , columnWidths = calcColumnWidths(width)
 
-    const ready = (width !== null && comparedTreatments !== null) || null
-        , columnWidths = ready && calcColumnWidths(width)
+    const ready = width == null ? null : true
 
     return (
-      h(TableWrapper, {
-        innerRef: el => { this.el = el },
-      }, [
-        h(TableHeaderWrapper, [
-          ready && h('div', [-2, -4].map(col =>
+      h(TableWrapper, [
+        h(TableHeaderWrapper, ready && [
+          h('div', [-2, -4].map(col =>
             h('span', {
               style: {
                 position: 'absolute',
@@ -438,22 +429,23 @@ class Table extends React.Component {
             })
           )),
 
-          h(TableHeaderRow, ready && [
+          h(TableHeaderRow, [
             h('div', {
               style: {
                 marginLeft: 24,
               },
             }, this.getDisplayMessage()),
 
-            h(TableHeaderCell, {
+            ready && h(TableHeaderCell, {
               left: R.sum(columnWidths.slice(0, -4)),
             }, treatmentA),
-            h(TableHeaderCell, {
+
+            ready && h(TableHeaderCell, {
               left: R.sum(columnWidths.slice(0, -2)),
             }, treatmentB),
           ]),
 
-          h(TableHeaderRow, ready && FIELDS.slice(1).map(({ label, sortPath }, i) =>
+          h(TableHeaderRow, FIELDS.slice(1).map(({ label, sortPath }, i) =>
             h(TableHeaderCell, {
               key: i,
               left: R.sum(columnWidths.slice(0, i + 1)),
@@ -482,13 +474,13 @@ class Table extends React.Component {
           )),
         ]),
 
-        h(TableBodyWrapper, { className: 'table-scroll' }, [
+        h(TableBodyWrapper, { className: 'table-scroll' }, ready && [
           h('table', [
-            ready && h('colgroup', columnWidths.map((width, i) =>
+            h('colgroup', columnWidths.map((width, i) =>
               h('col', { key: i, width }),
             )),
 
-            h('tbody', ready && this.getDisplayedGenes().map(data =>
+            comparedTreatments && h('tbody', this.getDisplayedGenes().map(data =>
               h(GeneRow, {
                 key: `${data.gene.label}-${treatmentA}-${treatmentB}`,
                 saved: savedGenes.has(data.gene.label),
@@ -508,6 +500,11 @@ class Table extends React.Component {
   }
 }
 
-module.exports = connect(state => ({
-  view: state.currentView,
-}))(Table)
+module.exports = R.pipe(
+  connect(state => ({
+    view: state.currentView,
+  })),
+  onResize(el => ({
+    width: el.querySelector('.table-scroll').clientWidth,
+  }))
+)(Table)
