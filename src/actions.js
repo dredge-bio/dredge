@@ -94,6 +94,15 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
+  SetHoveredTreatment: {
+    exec: R.always({}),
+    request: {
+      treatmentName: d => typeof d === 'string' || d === null,
+    },
+    response: {
+    },
+  },
+
   SetFocusedGene: {
     exec: R.always({}),
     request: {

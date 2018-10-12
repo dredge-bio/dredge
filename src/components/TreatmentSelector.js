@@ -5,6 +5,7 @@ const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
+    , Action = require('../actions')
 
 const SelectorWrapper = styled.div`
   display: flex;
@@ -39,18 +40,22 @@ class TreatmentSelector extends React.Component {
     super()
 
     this.handleSVGClick = this.handleSVGClick.bind(this)
+    this.handleTreatmentEnter = this.handleTreatmentEnter.bind(this)
+    this.handleTreatmentLeave = this.handleTreatmentLeave.bind(this)
+
   }
 
   componentDidMount() {
-    const { svg } = this.props
+    const { svg, dispatch } = this.props
 
     this.svgEl.innerHTML = svg;
     this.svgEl.addEventListener('click', this.handleSVGClick)
-    this.updateSelectedTreatment()
-  }
 
-  componentWillUnmount() {
-    this.svgEl.removeEventListener('click', this.handleSVGClick)
+    ;[...this.svgEl.querySelectorAll('[data-treatment]')].forEach(el => {
+      el.addEventListener('mouseenter', this.handleTreatmentEnter)
+      el.addEventListener('mouseleave', this.handleTreatmentLeave)
+    })
+    this.updateSelectedTreatment()
   }
 
   componentDidUpdate(prevProps) {
@@ -81,6 +86,20 @@ class TreatmentSelector extends React.Component {
       onSelectTreatment(clickedTreatment)
     }
   }
+
+  handleTreatmentEnter(e) {
+    const { dispatch } = this.props
+        , treatment = R.path(['target', 'dataset', 'treatment'], e)
+
+    dispatch(Action.SetHoveredTreatment(treatment))
+  }
+
+  handleTreatmentLeave(e) {
+    const { dispatch } = this.props
+
+    dispatch(Action.SetHoveredTreatment(null))
+  }
+
 
   render() {
     const {
