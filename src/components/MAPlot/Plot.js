@@ -73,16 +73,21 @@ class Plot extends React.Component {
       R.view(lens, this.props) !== R.view(lens, prevProps)
 
     const redraw = (
-      (this.props.height != null && didChange(R.lensPath(['view', 'pairwiseData']))) ||
-      this.props.height != null && prevProps.height == null
+      this.props.height != null && (
+        didChange(R.lensPath(['view', 'pairwiseData'])) ||
+        this.props.height !== prevProps.height
+      )
     )
 
     if (redraw) {
       this.drawBins()
+      this.drawAxes()
 
       if (!this.clearBrush) {
         this.initBrush()
       }
+
+      this.clearBrush()
     }
 
     if (didChange(R.lensPath(['view', 'hoveredGene']))) {
@@ -145,10 +150,14 @@ class Plot extends React.Component {
     const xEl = d3.select(this.svg)
       .select('.x-axis')
 
+    xEl.selectAll('*').remove()
+
     xEl.call(d3.axisBottom().scale(xScale))
 
     const yEl = d3.select(this.svg)
       .select('.y-axis')
+
+    yEl.selectAll('*').remove()
 
     yEl.call(d3.axisLeft().scale(yScale));
 

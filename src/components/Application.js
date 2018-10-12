@@ -17,6 +17,7 @@ html, body, #application {
   width: 100%;
   margin: 0;
   padding: 0;
+  background-color: hsla(45, 31%, 93%, 1);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -140,11 +141,16 @@ const Header = connect(state => ({
 
   return (
     h(HeaderContainer, [
-      h('h1', {
-        style: {
-          fontFamily: 'SourceSansPro',
-        }
-      }, R.path(['project', 'metadata', 'label'], props.currentView) || 'Differential Expression Gene Finder'),
+      h('div', { style: { display: 'flex' }}, [
+        /* h('button', {
+          onClick: props.onRequestResize,
+        }, '↻'), */
+        h('h1', {
+          style: {
+            fontFamily: 'SourceSansPro',
+          }
+        }, R.path(['project', 'metadata', 'label'], props.currentView) || 'Differential Expression Gene Finder'),
+      ]),
 
       h('div', { style: { position: 'relative', display: 'flex' }}, [
         currentProject && h('label', {
@@ -170,18 +176,36 @@ const Header = connect(state => ({
 })
 
 const ApplicationContainer = styled.div`
-  height: 100%;
-  width: 100%;
   display: grid;
   background-color: hsla(45, 31%, 93%, 1);
   grid-template-rows: 64px minmax(600px, 1fr);
 `
 
+function getWindowDimensions() {
+  return {
+    height: window.innerHeight,
+    width: window.innerWidth,
+  }
+}
+
 class Application extends React.Component {
+  constructor() {
+    super();
+
+    this.state = getWindowDimensions()
+    this.handleRequestResize = this.handleRequestResize.bind(this)
+  }
+
   componentDidMount() {
     const { dispatch } = this.props
 
     dispatch(Action.Initialize)
+  }
+
+  handleRequestResize() {
+    this.setState(getWindowDimensions(), () => {
+      window.dispatchEvent(new Event('application-resize'))
+    })
   }
 
   render() {
@@ -197,8 +221,15 @@ class Application extends React.Component {
       mainEl = h(View)
     }
 
-    return h(ApplicationContainer, [
-      h(Header),
+    return h(ApplicationContainer, {
+      style: {
+        height: this.state.height,
+        width: this.state.width,
+      }
+    }, [
+      h(Header, {
+        onRequestResize: this.handleRequestResize
+      }),
       h('main', [
         mainEl,
       ]),
