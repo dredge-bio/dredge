@@ -10,6 +10,8 @@ function view(project) {
     comparedTreatments: null,
     pairwiseData: null,
 
+    pValueThreshold: 1,
+
     focusedGene: null,
     hoveredGene: null,
     hoveredTreatment: null,
@@ -149,6 +151,14 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assocPath(
           ['currentView', 'focusedGene'],
           geneName,
+          state
+        )
+      },
+
+      SetPValueThreshold(threshold) {
+        return R.assocPath(
+          ['currentView', 'pValueThreshold'],
+          threshold,
           state
         )
       },

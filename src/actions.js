@@ -112,6 +112,15 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
+  SetPValueThreshold: {
+    exec: R.always({}),
+    request: {
+      threshold: Number,
+    },
+    response: {
+    },
+  },
+
   ImportSavedGenes: {
     exec: importSavedGenes,
     request: {

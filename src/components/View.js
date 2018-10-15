@@ -10,6 +10,7 @@ const h = require('react-hyperscript')
     , Table = require('./Table')
     , WatchedGenes = require('./WatchedGenes')
     , InfoBox = require('./InfoBox')
+    , PValueSelector = require('./PValueSelector')
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -56,7 +57,7 @@ function Viewer({
 
 
       h(GridArea, { column: '10 / span 1', row: '2 / span 9' },
-        'P-Value',
+        h(PValueSelector),
       ),
 
 
