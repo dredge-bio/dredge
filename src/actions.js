@@ -2,6 +2,7 @@
 
 const R = require('ramda')
     , d3 = require('d3')
+    , path = require('path')
     , { makeTypedAction } = require('org-async-actions')
     , TrieSearch = require('trie-search')
     , saveAs = require('file-saver')
@@ -140,6 +141,156 @@ function delay(time) {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
+function fetchWithoutCache(url) {
+  return fetch(url, {
+    headers: new Headers({
+      'Cache-Control': 'no-cache',
+    }),
+  })
+}
+
+function fetchProjectResource(baseURL, log) {
+  return async (url, opts={}) => {
+    const fetchFn = opts.cache === false
+      ? fetchWithoutCache
+      : fetch
+
+    const fetchURL = path.join(baseURL, url)
+
+    const resp = await fetchFn(fetchURL)
+
+    if (!resp.ok) {
+      await (opts.onRespNotOK || (() => {
+        log(`No file found at ${fetchURL}`)
+      }))()
+
+      return false
+    }
+
+    try {
+      await opts.onRespOK(resp)
+      return true
+    } catch (err) {
+      await (opts.onError || (() => {
+        log(`Error processing file at ${fetchURL}`)
+      }))()
+      return false
+    }
+  }
+}
+
+async function parseRPKMFile(resp, treatments) {
+  let rpkms = (await resp.text()).split('\n')
+
+  const replicates = rpkms.shift().split('\t').slice(1)
+      , genes = []
+
+  rpkms = rpkms.map(row => {
+    row = row.split('\t')
+    genes.push(row.shift())
+    return row.map(parseFloat)
+  })
+
+  const geneIndices = R.invertObj(genes)
+      , replicateIndices = R.invertObj(replicates)
+
+  function rpkmsForTreatmentGene(treatmentID, geneName) {
+    const treatment = treatments[treatmentID]
+        , geneIdx = geneIndices[geneName]
+
+    return treatment.replicates.map(replicateID => {
+      const replicateIdx = replicateIndices[replicateID]
+      return rpkms[geneIdx][replicateIdx]
+    })
+  }
+
+  return {
+    genes,
+    rpkmsForTreatmentGene,
+  }
+}
+
+function cleanSVGString(svgString, treatments) {
+  const parser = new DOMParser()
+      , svgDoc = parser.parseFromString(svgString, 'image/svg+xml')
+      , iterator = svgDoc.createNodeIterator(svgDoc, NodeFilter.SHOW_ELEMENT)
+      , treatmentNames = new Set(Object.keys(treatments))
+
+  let curNode
+
+  ;[...svgDoc.querySelectorAll('title')].forEach(el => {
+    el.parentNode.removeChild(el)
+  })
+
+  const anchorsToRemove = []
+
+  while ( (curNode = iterator.nextNode()) ) {
+    switch (curNode.nodeName.toLowerCase()) {
+      case 'path':
+      case 'rect':
+      case 'circle':
+      case 'elipse':
+      case 'polyline':
+      case 'polygon': {
+        let treatment = null
+
+        const popTreatmentFromAttr = attr => {
+          treatment = curNode.getAttribute(attr)
+          if (treatmentNames.has(treatment)) {
+            curNode.removeAttribute(attr)
+            return true
+          }
+          return false
+        }
+
+        popTreatmentFromAttr('id') || popTreatmentFromAttr('name')
+
+        if (treatment) {
+          const { label } = treatments[treatment]
+
+          curNode.setAttribute('data-treatment', treatment)
+
+          const titleEl = document.createElement('title')
+          titleEl.textContent = label || treatment
+
+          curNode.appendChild(titleEl)
+          treatmentNames.delete(treatment)
+
+          // Illustrator, for some reason, makes all paths the child of
+          // an anchor tag. That messes up our clicking business. We
+          // could probably preventDefault() or stopPropagation()
+          // somewhere, but I'm just removing them here.
+          const replaceParent = (
+            curNode.parentNode.nodeName.toLowerCase() === 'a' &&
+            curNode.parentNode.children.length === 1
+          )
+
+          if (replaceParent) {
+            anchorsToRemove.push(curNode.parentNode)
+          }
+        }
+
+        break;
+      }
+    }
+
+    // Remove ID, since multiple instances of this SVG will be in the
+    // document. Alternatively, the whole thing could always be wrapped
+    // in an iframe, but that would require inter-frame communication,
+    // which seems like a pain in the ass.
+    curNode.removeAttribute('id')
+  }
+
+  anchorsToRemove.forEach(el => {
+    el.replaceWith(el.children[0])
+  })
+
+  return svgDoc.rootElement.outerHTML
+}
+
+
+// Actions ----------------
+
 function initialize() {
   return async (dispatch, getState) => {
     dispatch(Action.Log('Checking browser compatibility...'))
@@ -193,11 +344,7 @@ function loadAvailableProjects() {
   return async dispatch => {
     const loadedProjects = {}
 
-    const projectsResp = await fetch('projects.json', {
-      headers: new Headers({
-        'Cache-Control': 'no-cache',
-      }),
-    })
+    const projectsResp = await fetchWithoutCache('projects.json')
 
     if (!projectsResp.ok) {
       throw new Error("No project.json file available")
@@ -215,260 +362,102 @@ function loadAvailableProjects() {
 
     await Promise.all(projects.map(async projectBaseURL => {
       const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
+          , fetchResource = fetchProjectResource(projectBaseURL, log)
           , project = {}
 
-      const projectMetadataResp = await fetch(`${projectBaseURL}/project.json`, {
-        headers: new Headers({
-          'Cache-Control': 'no-cache',
+      let success
+
+      success = await fetchResource('project.json', {
+        cache: false,
+        async onRespOK(resp) {
+          project.metadata = await resp.json()
+          log('Loaded project metadata')
+        },
+      })
+
+      if (!success) {
+        log('Aborting.')
+        return false
+      }
+
+      success = await fetchResource(project.metadata.treatments, {
+        cache: false,
+        async onRespOK(resp) {
+          project.treatments = await resp.json()
+          log(`Loaded treatments`)
+        },
+      })
+
+      if (!success) {
+        log('Aborting.')
+        return false
+      }
+
+      await Promise.all([
+        fetchResource(project.metadata.geneAliases, {
+          onRespNotOK() {
+            project.geneAliases = {}
+            log('No gene aliases found')
+          },
+          async onRespOK(resp) {
+            const aliases = await resp.text()
+
+            project.geneAliases = R.pipe(
+              R.split('\n'),
+              R.map(R.pipe(
+                R.split(','),
+                arr => [arr[0], arr.slice(1)]
+              )),
+              R.fromPairs,
+            )(aliases)
+
+            log('Loaded gene aliases')
+          },
         }),
-      })
 
-      if (!projectMetadataResp.ok) {
-        log(`Could not download \`project.json\` file from ${projectBaseURL}/project.json. Aborting.`)
-        return
-      }
+        fetchResource(project.metadata.rpkmMeasures, {
+          onRespNotOK() {
+            project.rpkmsForTreatmentGene = R.always(null)
+            log('No gene aliases found')
+          },
 
-      try {
-        project.metadata = await projectMetadataResp.json()
-        log(`Loaded project metadata`)
-      } catch (e) {
-        log(`${projectBaseURL}/project.json is not a valid JSON file. Aborting.`)
-        return
-      }
-
-      const treatmentsResp = await fetch(`${projectBaseURL}/treatments.json`, {
-        headers: new Headers({
-          'Cache-Control': 'no-cache',
+          async onRespOK(resp) {
+            debugger;
+            const obj = await parseRPKMFile(resp, project.treatments)
+            debugger;
+            Object.assign(project, obj)
+            log('Loaded gene RPKM measurements')
+          },
         }),
-      })
 
-      if (!treatmentsResp.ok) {
-        log(`Could not download \`treatments.json\` file from ${projectBaseURL}/treatments.json. Aborting.`)
-        return
-      }
-
-      try {
-        project.treatments = await treatmentsResp.json()
-        log(`Loaded treatments`)
-      } catch (e) {
-        log(`${projectBaseURL}/treatments.json is not a valid JSON file. Aborting.`)
-        return
-      }
-
-      // TODO: Validate all of treatments, aliases, averages, medians
-
-      log('Checking for additional project statistics...')
-
-      await fetch(`${projectBaseURL}/gene_whitelist.txt`).then(async resp => {
-        if (!resp.ok) {
-          log('No gene whitelist found')
-          project.geneWhitelist = null
-          return
-        }
-
-        const whitelist = await resp.text()
-        project.geneWhitelist = new Set(whitelist.split('\n'))
-
-        log('Loaded gene whitelist')
-      })
-
-      await fetch(`${projectBaseURL}/gene_aliases.csv`).then(async resp => {
-        if (!resp.ok) {
-          log('No gene aliases found')
-          project.geneAliases = {}
-          return
-        }
-
-        const aliases = await resp.text()
-
-        try {
-          project.geneAliases = R.pipe(
-            R.split('\n'),
-            R.map(R.pipe(
-              R.split(','),
-              arr => [arr[0], arr.slice(1)]
-            )),
-            R.fromPairs,
-          )(aliases)
-
-          log('Loaded gene aliases')
-
-        } catch (e) {
-          log('Gene alias file malformed')
-          return
-        }
-      })
-
-      await fetch(`${projectBaseURL}/treatment_rpkms.tsv`).then(async resp => {
-        if (!resp.ok) {
-          log('No RPKM mean measurements found')
-          project.rpkmsForTreatmentGene = R.always(null)
-          return
-        }
-
-        let rpkms = (await resp.text()).split('\n')
-
-        try {
-          const replicates = rpkms.shift().split('\t').slice(1)
-              , genes = []
-
-          rpkms = rpkms.map(row => {
-            row = row.split('\t')
-            genes.push(row.shift())
-            return row.map(parseFloat)
-          })
-
-          const geneIndices = R.invertObj(genes)
-              , replicateIndices = R.invertObj(replicates)
-
-          project.genes = genes
-
-          project.rpkmsForTreatmentGene = (treatmentID, geneName) => {
-            const treatment = project.treatments[treatmentID]
-                , geneIdx = geneIndices[geneName]
-
-            return treatment.replicates.map(replicateID => {
-              const replicateIdx = replicateIndices[replicateID]
-              return rpkms[geneIdx][replicateIdx]
-            })
-          }
-
-          log('Loaded gene RPKM measurements')
-        } catch (e) {
-          log('Gene RPKM measurements file malformed')
-        }
-      })
-
-      await fetch(`${projectBaseURL}/icons.svg`, {
-        headers: new Headers({
-          'Cache-Control': 'no-cache',
+        fetchResource(project.metadata.diagram, {
+          cache: false,
+          async onRespOK(resp) {
+            project.svg = cleanSVGString(await resp.text(), project.treatments)
+            log('Loaded SVG icon')
+          },
         }),
-      }).then(async resp => {
-        if (!resp.ok) {
-          log('No SVG icon found')
-          project.svg = null
-          return
-        }
 
-        try {
-          const svg = await resp.text()
-              , parser = new DOMParser()
-              , svgDoc = parser.parseFromString(svg, 'image/svg+xml')
-              , iterator = svgDoc.createNodeIterator(svgDoc, NodeFilter.SHOW_ELEMENT)
-              , treatmentNames = new Set(Object.keys(project.treatments))
+        fetchResource(project.metadata.grid, {
+          cache: false,
+          async onRespOK(resp) {
+            let grid = d3.csvParseRows(await resp.text())
 
-          let curNode
+            grid = grid.map(row => row.map(treatment => {
+              if (!treatment) return null
 
-          ;[...svgDoc.querySelectorAll('title')].forEach(el => {
-            el.parentNode.removeChild(el)
-          })
-
-          const anchorsToRemove = []
-
-          while ( (curNode = iterator.nextNode()) ) {
-            switch (curNode.nodeName.toLowerCase()) {
-              case 'path':
-              case 'rect':
-              case 'circle':
-              case 'elipse':
-              case 'polyline':
-              case 'polygon': {
-                let treatment = null
-
-                const popTreatmentFromAttr = attr => {
-                  treatment = curNode.getAttribute(attr)
-                  if (treatmentNames.has(treatment)) {
-                    curNode.removeAttribute(attr)
-                    return true
-                  }
-                  return false
-                }
-
-                popTreatmentFromAttr('id') || popTreatmentFromAttr('name')
-
-                if (treatment) {
-                  const { label } = project.treatments[treatment]
-
-                  curNode.setAttribute('data-treatment', treatment)
-
-                  const titleEl = document.createElement('title')
-                  titleEl.textContent = label || treatment
-
-                  curNode.appendChild(titleEl)
-                  treatmentNames.delete(treatment)
-
-                  // Illustrator, for some reason, makes all paths the child of
-                  // an anchor tag. That messes up our clicking business. We
-                  // could probably preventDefault() or stopPropagation()
-                  // somewhere, but I'm just removing them here.
-                  const replaceParent = (
-                    curNode.parentNode.nodeName.toLowerCase() === 'a' &&
-                    curNode.parentNode.children.length === 1
-                  )
-
-                  if (replaceParent) {
-                    anchorsToRemove.push(curNode.parentNode)
-                  }
-                }
-
-                break;
+              if (!project.treatments.hasOwnProperty(treatment)) {
+                throw new Error(`Treatment ${treatment} not in project ${projectBaseURL}`)
               }
-            }
 
-            // Remove ID, since multiple instances of this SVG will be in the
-            // document. Alternatively, the whole thing could always be wrapped
-            // in an iframe, but that would require inter-frame communication,
-            // which seems like a pain in the ass.
-            curNode.removeAttribute('id')
-          }
+              return treatment
+            }))
 
-          anchorsToRemove.forEach(el => {
-            el.replaceWith(el.children[0])
-          })
-
-          project.svg = svgDoc.rootElement.outerHTML
-          log('Loaded SVG icon')
-        } catch (e) {
-          project.svg = null
-          log('SVG icon file malformed')
-        }
-      })
-
-
-      await fetch(`${projectBaseURL}/grid.csv`, {
-        headers: new Headers({
-          'Cache-Control': 'no-cache',
+            project.grid = grid;
+          },
         }),
-      }).then(async resp => {
-        if (!resp.ok) {
-          log('No grid configuration found')
-          project.grid = null
-          return
-        }
 
-
-        try {
-          let grid = d3.csvParseRows(await resp.text())
-
-          grid = grid.map(row => row.map(treatment => {
-            if (!treatment) return null
-
-            if (!project.treatments.hasOwnProperty(treatment)) {
-              throw new Error(`Treatment ${treatment} not in project ${projectBaseURL}`)
-            }
-
-            return treatment
-          }))
-
-          project.grid = grid;
-
-          log('Loaded grid configuration')
-        } catch (e) {
-          project.grid = null
-          log('Grid configuration file malformed')
-        }
-
-      })
+      ])
 
       log('Finished loading')
 
@@ -533,13 +522,15 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       throw new Error(`No such treatment: ${treatmentBKey}`)
     }
 
-    const comparisonFileKey = [
-      treatmentA.fileKey || treatmentAKey,
-      treatmentB.fileKey || treatmentBKey,
-    ]
+    const urlTemplate = project.metadata.pairwiseName || './pairwise_tests/%A_%B.txt'
 
-    const fileURLA = `${project.baseURL}/pairwise_tests/${comparisonFileKey.join('_')}.txt`
-        , fileURLB = `${project.baseURL}/pairwise_tests/${comparisonFileKey.reverse().join('_')}.txt`
+    const fileURLA = path.join(
+      project.baseURL,
+      urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey))
+
+    const fileURLB = path.join(
+      project.baseURL,
+      urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey))
 
     let reverse = false
       , resp
