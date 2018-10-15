@@ -34,7 +34,7 @@ function getBins(scale, unit) {
   return bins;
 }
 
-module.exports = function (data, xScale, yScale, unit=5) {
+function getPlotBins(data, xScale, yScale, unit=5) {
   const fcSorted = R.sortBy(R.prop('logFC'), data)
     , fcBins = getBins(yScale, unit)
     , cpmBins = getBins(xScale, unit)
@@ -81,4 +81,8 @@ module.exports = function (data, xScale, yScale, unit=5) {
   }
 
   return bins;
+}
+
+module.exports = {
+  getPlotBins,
 }

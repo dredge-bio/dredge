@@ -5,7 +5,7 @@ const h = require('react-hyperscript')
     , d3 = require('d3')
     , React = require('react')
     , { connect  } = require('react-redux')
-    , getBins = require('../../utils/bin')
+    , { getPlotBins } = require('../../utils')
     , Action = require('../../actions')
     , onResize = require('../util/Sized')
 
@@ -210,7 +210,7 @@ class Plot extends React.Component {
       return;
     }
 
-    const bins = getBins([...pairwiseData.values()], xScale, yScale, 8)
+    const bins = getPlotBins([...pairwiseData.values()], xScale, yScale, 8)
 
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([-300,150])
