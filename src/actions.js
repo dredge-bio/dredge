@@ -65,6 +65,18 @@ const Action = module.exports = makeTypedAction({
     },
     response: {
       pairwiseData: d => d.constructor === Map,
+      resort: Boolean,
+    },
+  },
+
+  UpdateDisplayedGenes: {
+    exec: updateDisplayedGenes,
+    request: {
+      sortPath: d => d == null || Array.isArray(d),
+      order: d => d == null || d === 'asc' || d === 'desc',
+    },
+    response: {
+      displayedGenes: Object,
     },
   },
 
@@ -74,15 +86,17 @@ const Action = module.exports = makeTypedAction({
       geneNames: isIterable,
     },
     response: {
+      resort: Boolean,
     },
   },
 
   SetBrushedGenes: {
-    exec: R.always({}),
+    exec: R.always({ resort: true }),
     request: {
       geneNames: isIterable,
     },
     response: {
+      resort: Boolean,
     },
   },
 
@@ -422,9 +436,7 @@ function loadAvailableProjects() {
           },
 
           async onRespOK(resp) {
-            debugger;
             const obj = await parseRPKMFile(resp, project.treatments)
-            debugger;
             Object.assign(project, obj)
             log('Loaded gene RPKM measurements')
           },
@@ -508,6 +520,7 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
       return {
         pairwiseData: cached,
+        resort: true,
       }
     }
 
@@ -566,7 +579,85 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
         }]
       })
 
-    return { pairwiseData: new Map(pairwiseData) }
+    return {
+      pairwiseData: new Map(pairwiseData),
+      resort: true,
+    }
+  }
+}
+
+function updateDisplayedGenes(sortPath, order) {
+  return (dispatch, getState) => {
+    const view = getState().currentView
+
+    const {
+      project,
+      savedGenes,
+      brushedGenes,
+      comparedTreatments,
+      pairwiseData,
+    } = view
+
+    const { rpkmsForTreatmentGene } = project
+        , [ treatmentA, treatmentB ] = comparedTreatments
+
+    const listedGenes = brushedGenes.size
+      ? brushedGenes
+      : savedGenes
+
+    const unsorted = [...listedGenes].map(geneName => {
+      if (!pairwiseData) {
+        return {
+          gene: { label: geneName },
+          saved: savedGenes.has(geneName),
+        }
+      }
+
+      const gene = pairwiseData.get(geneName) || { label: geneName }
+
+      const [
+        treatmentA_RPKMMean,
+        treatmentA_RPKMMedian,
+        treatmentB_RPKMMean,
+        treatmentB_RPKMMedian,
+      ] = R.chain(
+        rpkms => [d3.mean(rpkms), d3.median(rpkms)],
+        [rpkmsForTreatmentGene(treatmentA, geneName), rpkmsForTreatmentGene(treatmentB, geneName)]
+      )
+
+      return {
+        gene,
+        treatmentA_RPKMMean,
+        treatmentA_RPKMMedian,
+        treatmentB_RPKMMean,
+        treatmentB_RPKMMedian,
+      }
+    })
+
+    if (!sortPath) sortPath = view.sortPath
+    if (!order) order = view.order
+
+    const getter =
+      sortPath.includes('label')
+        ? R.pipe(R.path(sortPath), R.toLower)
+        : R.path(sortPath)
+
+    const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
+
+    const displayedGenes = R.sort(
+      (a, b) => {
+        a = getter(a)
+        b = getter(b)
+
+        if (a === undefined) return 1
+        if (b === undefined) return -1
+
+        return comparator(a, b)
+      },
+      unsorted
+    )
+
+    return { displayedGenes }
   }
 }
 
@@ -577,7 +668,7 @@ function setSavedGenes(savedGenes) {
 
     localStorage.setItem(key, savedGenesStr)
 
-    return {}
+    return { resort: true }
   }
 }
 

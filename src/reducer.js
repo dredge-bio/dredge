@@ -18,6 +18,10 @@ function view(project) {
 
     savedGenes: new Set(),
     brushedGenes: new Set(),
+
+    displayedGenes: null,
+    order: 'asc',
+    sortPath: ['gene', 'label'],
   }
 }
 
@@ -80,6 +84,26 @@ module.exports = function reducer(state=initialState(), action) {
             })
           ))
         )(state)
+      },
+
+      UpdateDisplayedGenes(sortPath, order) {
+        const { displayedGenes } = resp
+
+        const updated = { displayedGenes }
+
+        if (sortPath) {
+          updated.sortPath = sortPath
+        }
+
+        if (order) {
+          updated.order = order
+        }
+
+        return R.over(
+          R.lensProp('currentView'),
+          R.flip(R.merge)(updated),
+          state
+        )
       },
 
       SetHoveredGene(geneName) {
