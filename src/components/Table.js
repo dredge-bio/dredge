@@ -2,12 +2,12 @@
 
 const h = require('react-hyperscript')
     , R = require('ramda')
-    , d3 = require('d3')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , onResize = require('./util/Sized')
+    , { findParent } = require('../utils')
 
 const TableCell = styled.td`
   padding: 0;
@@ -74,19 +74,59 @@ function dashesOrFixed(number, places = 2) {
 }
 
 class GeneRow extends React.Component {
+  constructor() {
+    super()
+
+    this.handleMouseEnter = this.handleMouseEnter.bind(this)
+    this.handleMouseLeave = this.handleMouseLeave.bind(this)
+    this.handleClick = this.handleClick.bind(this)
+  }
+
   shouldComponentUpdate(nextProps) {
-    return (
-      nextProps.saved !== this.props.saved ||
-      !R.equals(nextProps.columnWidths, this.props.columnWidths) ||
-      (
-        nextProps.focusedGene === this.props.data.gene.label &&
-        this.props.focusedGene !== this.props.data.gene.label
-      ) ||
-      (
-        this.props.focusedGene === this.props.data.gene.label &&
-        nextProps.focusedGene !== this.props.data.gene.label
-      )
-    )
+    let update = false
+
+    for (const k in nextProps) {
+      if (k === 'focusedGene') {
+        const geneName = this.props.data.gene.label
+
+        update = (
+          (nextProps[k] === geneName && this.props[k] !== geneName) ||
+          (nextProps[k] !== geneName && this.props[k] === geneName)
+        )
+      } else if (k === 'pValueThreshold') {
+        const pValueMeasure = this.props.data.gene.pValue
+
+        update = (
+          (pValueMeasure < nextProps[k] && pValueMeasure >= this.props[k]) ||
+          (pValueMeasure >= nextProps[k] && pValueMeasure < this.props[k])
+        )
+      } else if (nextProps[k] !== this.props[k]) {
+        update = true
+      }
+
+      if (update) break;
+    }
+    return update
+  }
+
+  handleMouseEnter(e) {
+    const { setHoveredGene } = this.props
+
+    setHoveredGene(findParent('tr', e.target).dataset.geneName)
+  }
+
+  handleMouseLeave() {
+    const { setHoveredGene } = this.props
+
+    setHoveredGene(null)
+  }
+
+  handleClick(e) {
+    const { setFocusedGene } = this.props
+
+    if (e.target.nodeName.toLowerCase() === 'a') return
+
+    setFocusedGene(findParent('tr', e.target).dataset.geneName)
   }
 
   render() {
@@ -95,28 +135,25 @@ class GeneRow extends React.Component {
       saved,
       addSavedGene,
       removeSavedGene,
-      setFocusedGene,
       columnWidths,
-      setHoveredGene,
       focusedGene,
+      pValueThreshold,
     } = this.props
+
+    const { pValue } = data.gene
 
     return (
       h('tr', {
-        onMouseEnter() {
-          setHoveredGene(data.gene.label)
-        },
-        onMouseLeave() {
-          setHoveredGene(null)
-        },
-        onClick(e) {
-          if (e.target.nodeName.toLowerCase() === 'a') return
-
-          setFocusedGene(data.gene.label)
-        },
-        style: focusedGene !== data.gene.label ? null : {
-          backgroundColor: '#e6e6e6',
-        },
+        ['data-gene-name']: data.gene.label,
+        onMouseEnter: this.handleMouseEnter,
+        onMouseLeave: this.handleMouseLeave,
+        onClick: this.handleClick,
+        style: Object.assign({},
+          focusedGene !== data.gene.label
+            ? null : { backgroundColor: '#e6e6e6' },
+          (data.gene.pValue === undefined || pValue >= pValueThreshold)
+            ? { color: '#aaa' } : null
+        ),
       }, [
         h(TableCell, [
           h(SaveMarker, {
@@ -136,7 +173,6 @@ class GeneRow extends React.Component {
         ]),
 
         h(TableCell, { cellWidth: columnWidths[1] }, [
-          h('div', this.rendered),
           h('div.gene-label', data.gene.label),
         ]),
 
@@ -220,10 +256,7 @@ class Table extends React.Component {
   constructor() {
     super()
 
-    this.state = {
-      sortBy: FIELDS[1].sortPath,
-      order: 'asc',
-    }
+    this.state = {}
 
     this.setFocusedGene = this.setFocusedGene.bind(this)
     this.setHoveredGene = this.setHoveredGene.bind(this)
@@ -238,6 +271,17 @@ class Table extends React.Component {
 
   componentWillUnmount() {
     window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    if (state.width !== props.width) {
+      return {
+        width: props.width,
+        columnWidths: calcColumnWidths(props.width),
+      }
+    }
+
+    return null
   }
 
   handleKeyDown(e) {
@@ -290,75 +334,6 @@ class Table extends React.Component {
     }
   }
 
-  getDisplayedGenes() {
-    const { sortBy, order } = this.state
-        , { project, savedGenes, brushedGenes, comparedTreatments, pairwiseData } = this.props.view
-        , { rpkmsForTreatmentGene } = project
-        , [ treatmentA, treatmentB ] = comparedTreatments
-
-    const listedGenes = brushedGenes.size
-      ? brushedGenes
-      : savedGenes
-
-    const reuse = (
-      this.displayedGenes &&
-      this.displayedGenes.order === order &&
-      this.displayedGenes.sortBy === sortBy &&
-      this.displayedGenes.pairwiseData === pairwiseData &&
-      R.equals(this.displayedGenes.listedGenes, listedGenes)
-    )
-
-    if (reuse) return this.displayedGenes;
-
-    const genes = [...listedGenes].map(geneName => {
-      if (!pairwiseData) {
-        return {
-          gene: { label: geneName },
-          saved: savedGenes.has(geneName),
-        }
-      }
-
-      const gene = pairwiseData.get(geneName) || { label: geneName }
-
-      const [
-        treatmentA_RPKMMean,
-        treatmentA_RPKMMedian,
-        treatmentB_RPKMMean,
-        treatmentB_RPKMMedian,
-      ] = R.chain(
-        rpkms => [d3.mean(rpkms), d3.median(rpkms)],
-        [rpkmsForTreatmentGene(treatmentA, geneName), rpkmsForTreatmentGene(treatmentB, geneName)]
-      )
-
-      return {
-        gene,
-        treatmentA_RPKMMean,
-        treatmentA_RPKMMedian,
-        treatmentB_RPKMMean,
-        treatmentB_RPKMMedian,
-      }
-    })
-
-    const comparator =
-      sortBy.includes('label')
-        ? R.pipe(R.path(sortBy), R.toLower)
-        : R.path(sortBy)
-
-    this.displayedGenes = R.sort(
-      (order === 'asc' ? R.ascend : R.descend)(comparator),
-      genes
-    )
-
-    Object.assign(this.displayedGenes, {
-      order,
-      sortBy,
-      pairwiseData,
-      listedGenes,
-    })
-
-    return this.displayedGenes
-  }
-
   getDisplayMessage() {
     const { brushedGenes, savedGenes } = this.props.view
 
@@ -406,11 +381,19 @@ class Table extends React.Component {
   }
 
   render() {
-    const { sortBy, order } = this.state
-        , { width, view } = this.props
-        , { comparedTreatments, savedGenes, focusedGene } = view
-        , [ treatmentA, treatmentB ] = comparedTreatments || [ null, null ]
-        , columnWidths = calcColumnWidths(width)
+    const { width, view, dispatch } = this.props
+        , { columnWidths } = this.state
+
+    const {
+      comparedTreatments,
+      savedGenes,
+      focusedGene,
+      displayedGenes,
+      order,
+      pValueThreshold,
+    } = view
+
+    const [ treatmentA, treatmentB ] = comparedTreatments || [ null, null ]
 
     const ready = width == null ? null : true
 
@@ -451,16 +434,16 @@ class Table extends React.Component {
               left: R.sum(columnWidths.slice(0, i + 1)),
               clickable: true,
               onClick: () => {
-                this.setState(prev => ({
-                  sortBy: sortPath,
-                  order: prev.sortBy === sortPath
-                    ? order === 'asc' ? 'desc' : 'asc'
-                    : 'asc',
-                }))
+                dispatch(Action.UpdateDisplayedGenes(
+                  sortPath,
+                  (R.equals(view.sortPath, sortPath) && order === 'asc')
+                    ? 'desc'
+                    : 'asc'
+                ))
               },
             }, [
               label,
-              sortPath === sortBy
+              R.equals(sortPath, view.sortPath)
                 ? h('span', {
                     style: {
                       position: 'relative',
@@ -468,7 +451,7 @@ class Table extends React.Component {
                       top: -1,
                       left: 1,
                     },
-                  }, order === 'asc' ? ' ▾' : ' ▴')
+                  }, view.order === 'asc' ? ' ▾' : ' ▴')
                 : null,
             ])
           )),
@@ -480,17 +463,18 @@ class Table extends React.Component {
               h('col', { key: i, width }),
             )),
 
-            comparedTreatments && h('tbody', this.getDisplayedGenes().map(data =>
+            displayedGenes && h('tbody', displayedGenes.map(data =>
               h(GeneRow, {
                 key: `${data.gene.label}-${treatmentA}-${treatmentB}`,
+                data,
                 saved: savedGenes.has(data.gene.label),
                 setHoveredGene: this.setHoveredGene,
-                columnWidths,
-                focusedGene,
                 addSavedGene: this.addSavedGene,
                 removeSavedGene: this.removeSavedGene,
                 setFocusedGene: this.setFocusedGene,
-                data,
+                pValueThreshold,
+                columnWidths,
+                focusedGene,
               })
             )),
           ]),

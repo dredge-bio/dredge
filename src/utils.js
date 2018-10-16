@@ -3,6 +3,18 @@
 const R = require('ramda')
     , d3 = require('d3')
 
+function findParent(selector, el) {
+  let curEl = el
+
+  do {
+    if (curEl.matches(selector)) {
+      break
+    }
+  } while ((curEl = curEl.parentNode))
+
+  return curEl
+}
+
 function getBins(scale, unit) {
   const [ min, max ] = d3.extent(scale.range())
       , reversed = scale.range()[0] !== min
@@ -84,5 +96,6 @@ function getPlotBins(data, xScale, yScale, unit=5) {
 }
 
 module.exports = {
+  findParent,
   getPlotBins,
 }
