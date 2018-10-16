@@ -72,25 +72,33 @@ class Plot extends React.Component {
     const didChange = lens =>
       R.view(lens, this.props) !== R.view(lens, prevProps)
 
-    const redraw = (
+    const redrawBins = (
       this.props.height != null && (
-        didChange(R.lensPath(['view', 'pairwiseData'])) ||
+        didChange(R.lensProp('pairwiseData')) ||
+        didChange(R.lensProp('pValueThreshold')) ||
         this.props.height !== prevProps.height
       )
     )
 
-    if (redraw) {
+    const redrawAxes = (
+      this.props.height != null &&
+      this.props.height !== prevProps.height
+    )
+
+    if (!this.clearBrush) {
+      this.initBrush()
+    }
+
+    if (redrawBins) {
       this.drawBins()
-      this.drawAxes()
-
-      if (!this.clearBrush) {
-        this.initBrush()
-      }
-
       this.clearBrush()
     }
 
-    if (didChange(R.lensPath(['view', 'hoveredGene']))) {
+    if (redrawAxes) {
+      this.drawAxes()
+    }
+
+    if (didChange(R.lensProp('hoveredGene'))) {
       this.updateHoveredGene()
     }
   }
@@ -185,7 +193,7 @@ class Plot extends React.Component {
 
   drawBins() {
     const { xScale, yScale } = this.state
-        , { pairwiseData } = this.props.view
+        , { pairwiseData, pValueThreshold } = this.props
 
     this.binSelection = null;
 
@@ -210,7 +218,11 @@ class Plot extends React.Component {
       return;
     }
 
-    const bins = getPlotBins([...pairwiseData.values()], xScale, yScale, 8)
+    const bins = getPlotBins(
+      [...pairwiseData.values()].filter(({ pValue }) => pValue < pValueThreshold),
+      xScale,
+      yScale,
+      8)
 
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([-300,150])
@@ -246,7 +258,7 @@ class Plot extends React.Component {
 
   updateHoveredGene() {
     const { xScale, yScale } = this.state
-        , { hoveredGene, pairwiseData } = this.props.view
+        , { hoveredGene, pairwiseData } = this.props
 
     const container = d3.select(this.svg).select('.hovered-marker')
 
@@ -291,8 +303,7 @@ class Plot extends React.Component {
       plotWidth,
     } = this.state
 
-    const { view={} } = this.props
-        , { comparedTreatments } = view
+    const { comparedTreatments } = this.props
 
     const treatmentsText = (comparedTreatments || []).join('-')
 
@@ -392,6 +403,9 @@ module.exports = R.pipe(
   connect(R.applySpec({
     rpkmLimits: R.path(['currentView', 'project', 'metadata', 'rpkmLimits']),
     pairwiseData: R.path(['currentView', 'pairwiseData']),
+    pValueThreshold: R.path(['currentView', 'pValueThreshold']),
+    hoveredGenes: R.path(['currentView', 'hoveredGene']),
+    comparedTreatments: R.path(['currentView', 'comparedTreatments']),
   })),
   onResize(el => ({
     width: el.clientWidth,
