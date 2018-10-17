@@ -12,11 +12,7 @@ const COLOR_SCALE = d3.interpolateOranges
     , SQUARE_WIDTH = 20
 
 const HeatMapContainer = styled.svg`
-  position: absolute;
-  height: 100%;
-  margin: auto;
-  top: 0;
-  bottom: 0;
+  maxHeight: 100%;
 
   & rect {
     stroke: black;
@@ -100,7 +96,7 @@ class HeatMap extends React.Component {
         viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH + 2} ${yScale.range()[1] + SQUARE_WIDTH + 2}`,
         preserveAspectRatio: 'xMinYMid meet',
         style: {
-          maxHeight: (yScale.domain()[1] + 1) * SQUARE_WIDTH,
+          height: (yScale.domain()[1] + 1) * SQUARE_WIDTH,
         },
       }, [
         h('g', {

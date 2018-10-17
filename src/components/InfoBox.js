@@ -19,6 +19,9 @@ const InfoBoxContainer = styled.div`
   & > :nth-child(2) {
     flex-grow: 1;
     position: relative;
+
+    display: flex;
+    align-items: center;
   }
 `
 
@@ -38,32 +41,24 @@ function InfoBox({
       ]),
 
       h('div', comparedTreatments && [
+        h(HeatMap),
+
         h('div', {
           style: {
-            position: 'absolute',
-            height: '100%',
-            width: '50%',
-            left: 0,
+            position: 'relative',
+            marginLeft: '2rem',
+            flexGrow: 1,
           }
         }, [
-          h(HeatMap),
-        ]),
-
-        gene && h('div', {
-          style: {
-            position: 'absolute',
-            height: '100%',
-            width: '50%',
-            right: 0,
-          }
-        }, h(TreatmentSelector, {
-          gene,
-          tooltipPos: 'top',
-          heatmap: true,
-          onSelectTreatment(treatment) {
-            console.log(treatment)
-          },
-        })),
+          gene && h(TreatmentSelector, {
+            gene,
+            tooltipPos: 'top',
+            heatmap: true,
+            onSelectTreatment(treatment) {
+              console.log(treatment)
+            },
+          })
+        ])
       ]),
     ])
   )
