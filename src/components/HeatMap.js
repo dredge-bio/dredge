@@ -11,18 +11,12 @@ const h = require('react-hyperscript')
 const COLOR_SCALE = d3.interpolateOranges
     , SQUARE_WIDTH = 20
 
-const HeatMapContainer = styled.div`
-  position: relative;
+const HeatMapContainer = styled.svg`
+  position: absolute;
   height: 100%;
-
-  & svg {
-    position: absolute;
-    height: 100%;
-    margin: auto;
-    top: 0;
-    bottom: 0;
-    right: 0;
-  }
+  margin: auto;
+  top: 0;
+  bottom: 0;
 
   & rect {
     stroke: black;
@@ -102,27 +96,25 @@ class HeatMap extends React.Component {
     )(grid)
 
     return (
-      h(HeatMapContainer, [
-        h('svg', {
-          viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH + 2} ${yScale.range()[1] + SQUARE_WIDTH + 2}`,
-          preserveAspectRatio: 'xMinYMid meet',
-          style: {
-            maxHeight: (yScale.domain()[1] + 1) * SQUARE_WIDTH,
-          },
-        }, [
-          h('g', {
-            transform: 'translate(1,1)',
-          }, squares.map(square =>
-            h('rect', Object.assign({}, square.attrs, {
-              ['data-treatment']: square.treatment,
-              onClick: this.selectTreatment,
-              onMouseEnter: this.setHoveredTreatment,
-              onMouseLeave: this.clearHoveredTreatment,
-            }), [
-              h('title', treatments[square.treatment].label),
-            ])
-          )),
-        ]),
+      h(HeatMapContainer, {
+        viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH + 2} ${yScale.range()[1] + SQUARE_WIDTH + 2}`,
+        preserveAspectRatio: 'xMinYMid meet',
+        style: {
+          maxHeight: (yScale.domain()[1] + 1) * SQUARE_WIDTH,
+        },
+      }, [
+        h('g', {
+          transform: 'translate(1,1)',
+        }, squares.map(square =>
+          h('rect', Object.assign({}, square.attrs, {
+            ['data-treatment']: square.treatment,
+            onClick: this.selectTreatment,
+            onMouseEnter: this.setHoveredTreatment,
+            onMouseLeave: this.clearHoveredTreatment,
+          }), [
+            h('title', treatments[square.treatment].label),
+          ])
+        )),
       ])
     )
   }
