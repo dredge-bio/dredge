@@ -12,9 +12,9 @@ const COLOR_SCALE = d3.interpolateOranges
     , SQUARE_WIDTH = 20
 
 const HeatMapContainer = styled.svg`
-  maxHeight: 100%;
+  max-height: 100%;
 
-  & rect {
+  .heatmap-square {
     stroke: black;
   }
 `
@@ -54,7 +54,7 @@ class HeatMap extends React.Component {
   }
 
   render() {
-    const { grid, gene, rpkmsForTreatmentGene, treatments } = this.props
+    const { grid, gene, rpkmsForTreatmentGene, treatments, hoveredTreatment } = this.props
 
     if (!gene) return null
 
@@ -93,24 +93,36 @@ class HeatMap extends React.Component {
 
     return (
       h(HeatMapContainer, {
-        viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH + 2} ${yScale.range()[1] + SQUARE_WIDTH + 2}`,
+        viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH + 8} ${yScale.range()[1] + SQUARE_WIDTH + 8}`,
         preserveAspectRatio: 'xMinYMid meet',
         style: {
           height: (yScale.domain()[1] + 1) * SQUARE_WIDTH,
         },
       }, [
         h('g', {
-          transform: 'translate(1,1)',
-        }, squares.map(square =>
-          h('rect', Object.assign({}, square.attrs, {
-            ['data-treatment']: square.treatment,
-            onClick: this.selectTreatment,
-            onMouseEnter: this.setHoveredTreatment,
-            onMouseLeave: this.clearHoveredTreatment,
-          }), [
-            h('title', treatments[square.treatment].label),
-          ])
-        )),
+          transform: 'translate(4,4)',
+        }, [
+
+          h('g', squares.map(square =>
+            h('rect.heatmap-square', square.attrs),
+          )),
+
+          h('g', squares.map(square =>
+            h('rect', Object.assign({}, square.attrs, {
+              ['data-treatment']: square.treatment,
+              fill: 'transparent',
+              transform: 'translate(0, 0)',
+              stroke: square.treatment === hoveredTreatment ? 'blue' : 'none',
+              strokeWidth: square.treatment === hoveredTreatment ? 5 : 0,
+              onClick: this.selectTreatment,
+              onMouseEnter: this.setHoveredTreatment,
+              onMouseLeave: this.clearHoveredTreatment,
+            }), [
+              h('title', treatments[square.treatment].label),
+            ])
+          )),
+
+        ]),
       ])
     )
   }
@@ -118,6 +130,7 @@ class HeatMap extends React.Component {
 
 module.exports = connect(R.applySpec({
   comparedTreatments: R.path(['currentView', 'comparedTreatments']),
+  hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
   grid: R.path(['currentView', 'project', 'grid']),
   gene: R.either(
     R.path(['currentView', 'hoveredGene']),

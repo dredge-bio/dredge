@@ -32,6 +32,11 @@ const SelectorWrapper = styled.div`
   & svg .treatment-selected {
     fill: lightsteelblue;
   }
+
+  & .active {
+    stroke: blue;
+    stroke-width: 5px;
+  }
 `
 
 const Tooltip = styled.div`
@@ -98,6 +103,10 @@ class TreatmentSelector extends React.Component {
     if (this.props.gene !== prevProps.gene) {
       this.paintTreatments()
     }
+
+    if (this.props.paintHovered && this.props.hoveredTreatment !== prevProps.hoveredTreatment) {
+      this.paintHoveredTreatment()
+    }
   }
 
   updateSelectedTreatment() {
@@ -160,6 +169,22 @@ class TreatmentSelector extends React.Component {
     treatmentEls.forEach(([, el], i) => {
       el.style.fill = colorScale(rpkms[i])
     })
+  }
+
+  paintHoveredTreatment() {
+    const { hoveredTreatment } = this.props
+
+    ;[...this.svgEl.querySelectorAll('[data-treatment]')].forEach(el => {
+      el.classList.remove('active')
+    })
+
+    if (!hoveredTreatment) return
+
+    const el = this.svgEl.querySelector(`[data-treatment="${hoveredTreatment}"]`)
+
+    if (!el) return
+
+    el.classList.add('active')
   }
 
   handleTreatmentLeave() {
@@ -226,5 +251,6 @@ module.exports = connect(R.applySpec({
   svg: R.path(['currentView', 'project', 'svg']),
   treatments: R.path(['currentView', 'project', 'treatments']),
   loading: R.path(['currentView', 'loading']),
+  hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
   rpkmsForTreatmentGene: R.path(['currentView', 'project', 'rpkmsForTreatmentGene']),
 }))(TreatmentSelector)
