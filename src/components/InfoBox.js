@@ -5,6 +5,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
     , HeatMap = require('./HeatMap')
+    , TreatmentSelector = require('./TreatmentSelector')
 
 const InfoBoxContainer = styled.div`
   display: flex;
@@ -37,7 +38,32 @@ function InfoBox({
       ]),
 
       h('div', comparedTreatments && [
-        h(HeatMap),
+        h('div', {
+          style: {
+            position: 'absolute',
+            height: '100%',
+            width: '50%',
+            left: 0,
+          }
+        }, [
+          h(HeatMap),
+        ]),
+
+        gene && h('div', {
+          style: {
+            position: 'absolute',
+            height: '100%',
+            width: '50%',
+            right: 0,
+          }
+        }, h(TreatmentSelector, {
+          gene,
+          tooltipPos: 'top',
+          heatmap: true,
+          onSelectTreatment(treatment) {
+            console.log(treatment)
+          },
+        })),
       ]),
     ])
   )

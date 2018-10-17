@@ -2,6 +2,7 @@
 
 const h = require('react-hyperscript')
     , R = require('ramda')
+    , d3 = require('d3')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
@@ -19,7 +20,6 @@ const SelectorWrapper = styled.div`
   }
 
   & svg, & div.svg-wrapper {
-    height: 100%;
     width: 100%;
   }
 
@@ -40,7 +40,7 @@ const Tooltip = styled.div`
 
   left: 0;
   right: 0;
-  ${ props => props.pos === 'bottom' ? '' : 'bottom: 100%' }
+  ${ props => props.pos === 'bottom' ? 'top: 100%;' : 'bottom: 100%;' }
 
   text-align: center;
   font-weight: bold;
@@ -82,12 +82,21 @@ class TreatmentSelector extends React.Component {
       el.addEventListener('mouseenter', this.handleTreatmentEnter)
       el.addEventListener('mouseleave', this.handleTreatmentLeave)
     })
+
     this.updateSelectedTreatment()
+
+    if (this.props.gene) {
+      this.paintTreatments()
+    }
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.selectedTreatment !== prevProps.selectedTreatment) {
       this.updateSelectedTreatment()
+    }
+
+    if (this.props.gene !== prevProps.gene) {
+      this.paintTreatments()
     }
   }
 
@@ -120,6 +129,37 @@ class TreatmentSelector extends React.Component {
 
     this.setState({ _hoveredTreatment })
     dispatch(Action.SetHoveredTreatment(_hoveredTreatment))
+  }
+
+  paintTreatments() {
+    const { gene, treatments, rpkmsForTreatmentGene } = this.props
+
+    const treatmentEls = R.zip(
+      Object.keys(treatments),
+      Object.keys(treatments).map(
+        treatment =>
+          this.svgEl.querySelector(`[data-treatment="${treatment}"]`)))
+
+    treatmentEls.forEach(([, el]) => {
+      el.style.fill = '';
+    })
+
+    if (!gene) return
+
+    const rpkms = R.chain(R.pipe(
+      R.head,
+      treatment => rpkmsForTreatmentGene(treatment, gene),
+      d3.mean
+    ))(treatmentEls)
+
+    const maxRPKM = R.reduce(R.max, 1, rpkms)
+
+    const colorScale = d3.scaleSequential(d3.interpolateOranges)
+      .domain([0, maxRPKM])
+
+    treatmentEls.forEach(([, el], i) => {
+      el.style.fill = colorScale(rpkms[i])
+    })
   }
 
   handleTreatmentLeave() {
@@ -182,8 +222,9 @@ class TreatmentSelector extends React.Component {
   }
 }
 
-module.exports = connect(state => ({
-  svg: R.path(['currentView', 'project', 'svg'], state),
-  treatments: R.path(['currentView', 'project', 'treatments'], state),
-  loading: R.path(['currentView', 'loading'], state),
+module.exports = connect(R.applySpec({
+  svg: R.path(['currentView', 'project', 'svg']),
+  treatments: R.path(['currentView', 'project', 'treatments']),
+  loading: R.path(['currentView', 'loading']),
+  rpkmsForTreatmentGene: R.path(['currentView', 'project', 'rpkmsForTreatmentGene']),
 }))(TreatmentSelector)
