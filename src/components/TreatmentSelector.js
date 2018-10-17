@@ -128,7 +128,7 @@ class TreatmentSelector extends React.Component {
         , clickedTreatment = R.path(['target', 'dataset', 'treatment'], e)
 
     if (clickedTreatment) {
-      onSelectTreatment(clickedTreatment)
+      onSelectTreatment(clickedTreatment, e.shiftKey)
     }
   }
 
