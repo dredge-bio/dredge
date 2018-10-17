@@ -404,7 +404,7 @@ module.exports = R.pipe(
     rpkmLimits: R.path(['currentView', 'project', 'metadata', 'rpkmLimits']),
     pairwiseData: R.path(['currentView', 'pairwiseData']),
     pValueThreshold: R.path(['currentView', 'pValueThreshold']),
-    hoveredGenes: R.path(['currentView', 'hoveredGene']),
+    hoveredGene: R.path(['currentView', 'hoveredGene']),
     comparedTreatments: R.path(['currentView', 'comparedTreatments']),
   })),
   onResize(el => ({
