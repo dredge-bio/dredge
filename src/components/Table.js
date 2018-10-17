@@ -151,7 +151,7 @@ class GeneRow extends React.Component {
         style: Object.assign({},
           focusedGene !== data.gene.label
             ? null : { backgroundColor: '#e6e6e6' },
-          (data.gene.pValue === undefined || pValue >= pValueThreshold)
+          (data.gene.pValue === undefined || pValue > pValueThreshold)
             ? { color: '#aaa' } : null
         ),
       }, [
