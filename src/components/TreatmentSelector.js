@@ -34,10 +34,37 @@ const SelectorWrapper = styled.div`
   }
 `
 
+const Tooltip = styled.div`
+  position: absolute;
+  z-index: 1;
+
+  left: 0;
+  right: 0;
+  ${ props => props.pos === 'bottom' ? '' : 'bottom: 100%' }
+
+  text-align: center;
+  font-weight: bold;
+
+  & span {
+    display: inline-block;
+    padding: .75rem 1.5rem;
+
+    min-width: 200px;
+    background: #fafafa;
+
+    border: 1px solid #ccc;
+    borderRadius: 4px;
+  }
+`
+
 // Next TODO: Mount the SVG in the DOM and allow interacting with it
 class TreatmentSelector extends React.Component {
   constructor() {
     super()
+
+    this.state = {
+      _hoveredTreatment: null,
+    }
 
     this.handleSVGClick = this.handleSVGClick.bind(this)
     this.handleTreatmentEnter = this.handleTreatmentEnter.bind(this)
@@ -46,7 +73,7 @@ class TreatmentSelector extends React.Component {
   }
 
   componentDidMount() {
-    const { svg, dispatch } = this.props
+    const { svg } = this.props
 
     this.svgEl.innerHTML = svg;
     this.svgEl.addEventListener('click', this.handleSVGClick)
@@ -89,14 +116,16 @@ class TreatmentSelector extends React.Component {
 
   handleTreatmentEnter(e) {
     const { dispatch } = this.props
-        , treatment = R.path(['target', 'dataset', 'treatment'], e)
+        , _hoveredTreatment = R.path(['target', 'dataset', 'treatment'], e)
 
-    dispatch(Action.SetHoveredTreatment(treatment))
+    this.setState({ _hoveredTreatment })
+    dispatch(Action.SetHoveredTreatment(_hoveredTreatment))
   }
 
-  handleTreatmentLeave(e) {
+  handleTreatmentLeave() {
     const { dispatch } = this.props
 
+    this.setState({ _hoveredTreatment: null })
     dispatch(Action.SetHoveredTreatment(null))
   }
 
@@ -107,7 +136,10 @@ class TreatmentSelector extends React.Component {
       selectedTreatment,
       onSelectTreatment,
       loading,
+      tooltipPos,
     } = this.props
+
+    const { _hoveredTreatment } = this.state
 
     const initialLoad = loading && !selectedTreatment
 
@@ -118,9 +150,18 @@ class TreatmentSelector extends React.Component {
 
     return (
       h(SelectorWrapper, [
-        h('div.svg-wrapper', {
-          ref: el => { this.svgEl = el },
-        }),
+        h('div.svg-wrapper', [
+          h('div', {
+            ref: el => { this.svgEl = el },
+          }),
+
+          tooltipPos && _hoveredTreatment && h(Tooltip, {
+            pos: tooltipPos,
+          }, [
+            h('span', treatments[_hoveredTreatment].label),
+          ]),
+        ]),
+
         null && h('select', {
           value: selectedTreatment || '',
           disabled: initialLoad,

@@ -32,23 +32,41 @@ function Viewer({
 }) {
   return (
     h(ViewerContainer, [
-      h(GridArea, { column: '1 / span 10', row: '1 / span 1' },
-        treatmentA && h(TreatmentSelector, {
-          selectedTreatment: treatmentA,
-          onSelectTreatment: treatment => {
-            dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
+      h(GridArea, { column: '1 / span 10', row: '1 / span 1' }, [
+        h('div', {
+          style: {
+            height: '100%',
+            width: '100%',
+            position: 'relative',
           },
-        })
-      ),
+        }, [
+          treatmentA && h(TreatmentSelector, {
+            tooltipPos: 'bottom',
+            selectedTreatment: treatmentA,
+            onSelectTreatment: treatment => {
+              dispatch(Action.SetPairwiseComparison(treatment, treatmentB))
+            },
+          }),
+        ]),
+      ]),
 
-      h(GridArea, { column: '1 / span 10', row: '11 / span 2' },
-        treatmentB && h(TreatmentSelector, {
-          selectedTreatment: treatmentB,
-          onSelectTreatment: treatment => {
-            dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
+      h(GridArea, { column: '1 / span 10', row: '11 / span 2' }, [
+        h('div', {
+          style: {
+            height: '100%',
+            width: '100%',
+            position: 'relative',
           },
-        })
-      ),
+        }, [
+          treatmentB && h(TreatmentSelector, {
+            tooltipPos: 'top',
+            selectedTreatment: treatmentB,
+            onSelectTreatment: treatment => {
+              dispatch(Action.SetPairwiseComparison(treatmentA, treatment))
+            },
+          }),
+        ]),
+      ]),
 
 
       h(GridArea, { column: '1 / span 9', row: '2 / span 9', ['data-area']: 'plot' },
