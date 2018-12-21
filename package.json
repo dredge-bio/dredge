@@ -27,7 +27,7 @@
     "watchify": "^3.11.0"
   },
   "scripts": {
-    "watch": "mkdir -p dist && watchify -v -d -o dist/mabrowser.js src/index.js",
+    "watch": "mkdir -p dist && watchify -v -d -o dist/dredge.js src/index.js",
     "serve": "python3 -m http.server 9999"
   }
 }

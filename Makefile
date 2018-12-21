@@ -8,12 +8,12 @@ VERSION := $(shell npm ls --depth=0 --long 2> /dev/null | head -n 1 | cut -d@ -f
 
 BROWSERIFY_ENTRY = src/index.js
 
-JS_BUNDLE = dist/mabrowser.js
+JS_BUNDLE = dist/dredge.js
 VERSIONED_JS_BUNDLE = $(JS_BUNDLE:.js=-$(VERSION).js)
 MINIFIED_VERSIONED_JS_BUNDLE = $(VERSIONED_JS_BUNDLE:.js=.min.js)
 
 
-VERSIONED_DIRECTORY = mabrowser-$(VERSION)
+VERSIONED_DIRECTORY = dredge-$(VERSION)
 VERSIONED_ZIPFILE = dist/$(VERSIONED_DIRECTORY).zip
 
 JS_FILES = $(shell find src/ -type f -name *js -o -name *jsx)
