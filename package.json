@@ -21,7 +21,7 @@
     "union-type": "github:ptgolden/union-type"
   },
   "devDependencies": {
-    "browserify": "^16.2.2",
+    "browserify": "^16.2.3",
     "envify": "^3.4.0",
     "terser": "^3.11.0",
     "watchify": "^3.11.0"
