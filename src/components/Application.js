@@ -152,12 +152,16 @@ const Header = connect(state => ({
         }, R.path(['project', 'metadata', 'label'], props.currentView) || 'Differential Expression Gene Finder'),
       ]),
 
-      h('div', { style: { position: 'relative', display: 'flex' }}, [
+      h('div', { style: { position: 'relative', display: 'flex', background: 'white', }}, [
         currentProject && h('label', {
           htmlFor: 'dataset-selector',
         }, 'Dataset:'),
 
         currentProject && h('select', {
+          style: {
+            zIndex: 1,
+            background: 'transparent',
+          },
           id: 'dataset-selector',
           value: currentProject,
           onChange: e => {
