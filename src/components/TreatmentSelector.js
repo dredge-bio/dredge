@@ -20,7 +20,16 @@ const SelectorWrapper = styled.div`
   }
 
   & svg, & div.svg-wrapper {
+    height: 100%;
     width: 100%;
+  }
+
+  & div.svg-wrapper {
+    position: relative;
+  }
+
+  & svg {
+    position: absolute;
   }
 
   & svg path:hover,
