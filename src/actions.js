@@ -450,7 +450,7 @@ function loadAvailableProjects() {
           },
         }),
 
-        fetchResource(project.metadata.grid, {
+        project.metadata.grid && fetchResource(project.metadata.grid, {
           cache: false,
           async onRespOK(resp) {
             let grid = d3.csvParseRows(await resp.text())

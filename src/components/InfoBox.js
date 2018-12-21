@@ -172,6 +172,7 @@ class InfoBox extends React.Component {
 
           h('div', {
             style: {
+              alignSelf: 'stretch',
               position: 'relative',
               marginLeft: '2rem',
               flexGrow: 1,
