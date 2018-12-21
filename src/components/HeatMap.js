@@ -56,6 +56,8 @@ class HeatMap extends React.Component {
   render() {
     const { grid, gene, rpkmsForTreatmentGene, treatments, hoveredTreatment } = this.props
 
+    if (!grid) return null
+
     if (!gene) return null
 
     const rpkms = grid.map(row =>
