@@ -41,6 +41,7 @@ function Viewer({
           },
         }, [
           treatmentA && h(TreatmentSelector, {
+            useSelectBackup: true,
             tooltipPos: 'bottom',
             selectedTreatment: treatmentA,
             onSelectTreatment: treatment => {
@@ -59,6 +60,7 @@ function Viewer({
           },
         }, [
           treatmentB && h(TreatmentSelector, {
+            useSelectBackup: true,
             tooltipPos: 'top',
             selectedTreatment: treatmentB,
             onSelectTreatment: treatment => {

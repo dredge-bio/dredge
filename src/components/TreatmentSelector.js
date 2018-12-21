@@ -71,7 +71,6 @@ const Tooltip = styled.div`
   }
 `
 
-// Next TODO: Mount the SVG in the DOM and allow interacting with it
 class TreatmentSelector extends React.Component {
   constructor() {
     super()
@@ -89,6 +88,8 @@ class TreatmentSelector extends React.Component {
   componentDidMount() {
     const { svg } = this.props
 
+    if (!svg) return null
+
     this.svgEl.innerHTML = svg;
     this.svgEl.addEventListener('click', this.handleSVGClick)
 
@@ -105,6 +106,10 @@ class TreatmentSelector extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
+    const { svg } = this.props
+
+    if (!svg) return null
+
     if (this.props.selectedTreatment !== prevProps.selectedTreatment) {
       this.updateSelectedTreatment()
     }
@@ -206,6 +211,8 @@ class TreatmentSelector extends React.Component {
 
   render() {
     const {
+      svg,
+      useSelectBackup,
       treatments,
       selectedTreatment,
       onSelectTreatment,
@@ -224,7 +231,7 @@ class TreatmentSelector extends React.Component {
 
     return (
       h(SelectorWrapper, [
-        h('div.svg-wrapper', [
+        svg == null ? null :h('div.svg-wrapper', [
           h('div', {
             ref: el => { this.svgEl = el },
           }),
@@ -236,7 +243,7 @@ class TreatmentSelector extends React.Component {
           ]),
         ]),
 
-        null && h('select', {
+        !(svg == null && useSelectBackup) ? null : h('select', {
           value: selectedTreatment || '',
           disabled: initialLoad,
           onChange: e => {
