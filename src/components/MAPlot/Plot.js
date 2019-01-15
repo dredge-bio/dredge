@@ -49,7 +49,7 @@ class Plot extends React.Component {
       const plotHeight = props.height - padding.t - padding.b
           , plotWidth = props.width - padding.l - padding.r
 
-      const [ xDomain, yDomain ] = props.rpkmLimits
+      const [ xDomain, yDomain ] = props.abundanceLimits
 
       return {
         height: props.height,
@@ -401,7 +401,7 @@ class Plot extends React.Component {
 
 module.exports = R.pipe(
   connect(R.applySpec({
-    rpkmLimits: R.path(['currentView', 'project', 'metadata', 'rpkmLimits']),
+    abundanceLimits: R.path(['currentView', 'project', 'metadata', 'abundanceLimits']),
     pairwiseData: R.path(['currentView', 'pairwiseData']),
     pValueThreshold: R.path(['currentView', 'pValueThreshold']),
     hoveredGene: R.path(['currentView', 'hoveredGene']),

@@ -193,13 +193,13 @@ function fetchProjectResource(baseURL, log) {
   }
 }
 
-async function parseRPKMFile(resp, treatments) {
-  let rpkms = (await resp.text()).split('\n')
+async function parseAbundanceFile(resp, treatments) {
+  let abundances = (await resp.text()).split('\n')
 
-  const replicates = rpkms.shift().split('\t').slice(1)
+  const replicates = abundances.shift().split('\t').slice(1)
       , genes = []
 
-  rpkms = rpkms.map(row => {
+  abundances = abundances.map(row => {
     row = row.split('\t')
     genes.push(row.shift())
     return row.map(parseFloat)
@@ -208,19 +208,19 @@ async function parseRPKMFile(resp, treatments) {
   const geneIndices = R.invertObj(genes)
       , replicateIndices = R.invertObj(replicates)
 
-  function rpkmsForTreatmentGene(treatmentID, geneName) {
+  function abundancesForTreatmentGene(treatmentID, geneName) {
     const treatment = treatments[treatmentID]
         , geneIdx = geneIndices[geneName]
 
     return treatment.replicates.map(replicateID => {
       const replicateIdx = replicateIndices[replicateID]
-      return rpkms[geneIdx][replicateIdx]
+      return abundances[geneIdx][replicateIdx]
     })
   }
 
   return {
     genes,
-    rpkmsForTreatmentGene,
+    abundancesForTreatmentGene,
   }
 }
 
@@ -429,16 +429,16 @@ function loadAvailableProjects() {
           },
         }),
 
-        fetchResource(project.metadata.rpkmMeasures, {
+        fetchResource(project.metadata.abundanceMeasures, {
           onRespNotOK() {
-            project.rpkmsForTreatmentGene = R.always(null)
+            project.abundancesForTreatmentGene = R.always(null)
             log('No gene aliases found')
           },
 
           async onRespOK(resp) {
-            const obj = await parseRPKMFile(resp, project.treatments)
+            const obj = await parseAbundanceFile(resp, project.treatments)
             Object.assign(project, obj)
-            log('Loaded gene RPKM measurements')
+            log('Loaded gene abundance measurements')
           },
         }),
 
@@ -598,7 +598,7 @@ function updateDisplayedGenes(sortPath, order) {
       pairwiseData,
     } = view
 
-    const { rpkmsForTreatmentGene } = project
+    const { abundancesForTreatmentGene } = project
         , [ treatmentA, treatmentB ] = comparedTreatments
 
     const listedGenes = brushedGenes.size
@@ -616,21 +616,21 @@ function updateDisplayedGenes(sortPath, order) {
       const gene = pairwiseData.get(geneName) || { label: geneName }
 
       const [
-        treatmentA_RPKMMean,
-        treatmentA_RPKMMedian,
-        treatmentB_RPKMMean,
-        treatmentB_RPKMMedian,
+        treatmentA_AbundanceMean,
+        treatmentA_AbundanceMedian,
+        treatmentB_AbundanceMean,
+        treatmentB_AbundanceMedian,
       ] = R.chain(
-        rpkms => [d3.mean(rpkms), d3.median(rpkms)],
-        [rpkmsForTreatmentGene(treatmentA, geneName), rpkmsForTreatmentGene(treatmentB, geneName)]
+        abundances => [d3.mean(abundances), d3.median(abundances)],
+        [abundancesForTreatmentGene(treatmentA, geneName), abundancesForTreatmentGene(treatmentB, geneName)]
       )
 
       return {
         gene,
-        treatmentA_RPKMMean,
-        treatmentA_RPKMMedian,
-        treatmentB_RPKMMean,
-        treatmentB_RPKMMedian,
+        treatmentA_AbundanceMean,
+        treatmentA_AbundanceMedian,
+        treatmentB_AbundanceMean,
+        treatmentB_AbundanceMedian,
       }
     })
 

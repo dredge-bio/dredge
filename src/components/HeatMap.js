@@ -54,20 +54,20 @@ class HeatMap extends React.Component {
   }
 
   render() {
-    const { grid, gene, rpkmsForTreatmentGene, treatments, hoveredTreatment } = this.props
+    const { grid, gene, abundancesForTreatmentGene, treatments, hoveredTreatment } = this.props
 
     if (!grid) return null
 
     if (!gene) return null
 
-    const rpkms = grid.map(row =>
+    const abundances = grid.map(row =>
       row.map(treatment =>
-        treatment && d3.mean(rpkmsForTreatmentGene(treatment, gene))))
+        treatment && d3.mean(abundancesForTreatmentGene(treatment, gene))))
 
-    const maxRPKM = R.reduce(R.max, 1, R.flatten(rpkms).filter(R.identity))
+    const maxAbundance = R.reduce(R.max, 1, R.flatten(abundances).filter(R.identity))
 
     const colorScale = d3.scaleSequential(COLOR_SCALE)
-      .domain([0, maxRPKM])
+      .domain([0, maxAbundance])
 
     const xScale = d3.scaleLinear()
       .domain([0, grid[0].length - 1])
@@ -82,7 +82,7 @@ class HeatMap extends React.Component {
         row.map((treatment, j) => treatment && {
           treatment,
           attrs: {
-            fill: colorScale(rpkms[i][j]),
+            fill: colorScale(abundances[i][j]),
             x: xScale(j),
             y: yScale(i),
             height: SQUARE_WIDTH,
@@ -138,6 +138,6 @@ module.exports = connect(R.applySpec({
     R.path(['currentView', 'hoveredGene']),
     R.path(['currentView', 'focusedGene'])
   ),
-  rpkmsForTreatmentGene: R.path(['currentView', 'project', 'rpkmsForTreatmentGene']),
+  abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
   treatments: R.path(['currentView', 'project', 'treatments']),
 }))(HeatMap)

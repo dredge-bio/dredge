@@ -155,7 +155,7 @@ class TreatmentSelector extends React.Component {
   }
 
   paintTreatments() {
-    const { gene, treatments, rpkmsForTreatmentGene } = this.props
+    const { gene, treatments, abundancesForTreatmentGene } = this.props
 
     const treatmentEls = R.zip(
       Object.keys(treatments),
@@ -169,19 +169,19 @@ class TreatmentSelector extends React.Component {
 
     if (!gene) return
 
-    const rpkms = R.chain(R.pipe(
+    const abundances = R.chain(R.pipe(
       R.head,
-      treatment => rpkmsForTreatmentGene(treatment, gene),
+      treatment => abundancesForTreatmentGene(treatment, gene),
       d3.mean
     ))(treatmentEls)
 
-    const maxRPKM = R.reduce(R.max, 1, rpkms)
+    const maxAbundance = R.reduce(R.max, 1, abundances)
 
     const colorScale = d3.scaleSequential(d3.interpolateOranges)
-      .domain([0, maxRPKM])
+      .domain([0, maxAbundance])
 
     treatmentEls.forEach(([, el], i) => {
-      el.style.fill = colorScale(rpkms[i])
+      el.style.fill = colorScale(abundances[i])
     })
   }
 
@@ -268,5 +268,5 @@ module.exports = connect(R.applySpec({
   treatments: R.path(['currentView', 'project', 'treatments']),
   loading: R.path(['currentView', 'loading']),
   hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
-  rpkmsForTreatmentGene: R.path(['currentView', 'project', 'rpkmsForTreatmentGene']),
+  abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
 }))(TreatmentSelector)

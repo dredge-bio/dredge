@@ -45,10 +45,10 @@ const FIELDS = [
   { sortPath: ['gene', 'pValue'], label: 'P-Value' },
   { sortPath: ['gene', 'logCPM'], label: 'logCPM' },
   { sortPath: ['gene', 'logFC'], label: 'logFC' },
-  { sortPath: ['treatmentA_RPKMMean'], label: 'Mean RPKM' },
-  { sortPath: ['treatmentA_RPKMMedian'], label: 'Med. RPKM' },
-  { sortPath: ['treatmentB_RPKMMean'], label: 'Mean RPKM' },
-  { sortPath: ['treatmentB_RPKMMedian'], label: 'Med. RPKM' },
+  { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean Abundance' },
+  { sortPath: ['treatmentA_AbundanceMedian'], label: 'Med. Abundance' },
+  { sortPath: ['treatmentB_AbundanceMean'], label: 'Mean Abundance' },
+  { sortPath: ['treatmentB_AbundanceMedian'], label: 'Med. Abundance' },
 ]
 
 function calcColumnWidths(width) {
@@ -56,7 +56,7 @@ function calcColumnWidths(width) {
     // Pairwise information (logCPM, logFC, p-value)
     ...R.repeat(64, 3),
 
-    // Sample mean/median RPKMs
+    // Sample mean/median Abundances
     ...R.repeat(88, 4),
   ]
 
@@ -182,13 +182,13 @@ class GeneRow extends React.Component {
 
         h(TableCell, dashesOrFixed(data.gene.logFC)),
 
-        h(TableCell, dashesOrFixed(data.treatmentA_RPKMMean)),
+        h(TableCell, dashesOrFixed(data.treatmentA_AbundanceMean)),
 
-        h(TableCell, dashesOrFixed(data.treatmentA_RPKMMedian)),
+        h(TableCell, dashesOrFixed(data.treatmentA_AbundanceMedian)),
 
-        h(TableCell, dashesOrFixed(data.treatmentB_RPKMMean)),
+        h(TableCell, dashesOrFixed(data.treatmentB_AbundanceMean)),
 
-        h(TableCell, dashesOrFixed(data.treatmentB_RPKMMedian)),
+        h(TableCell, dashesOrFixed(data.treatmentB_AbundanceMedian)),
       ])
     )
   }

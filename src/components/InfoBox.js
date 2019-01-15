@@ -56,8 +56,8 @@ function ColorLegend({ gene, colorScale }) {
           marginBottom: 6,
           fontFamily: 'SourceSansPro',
         },
-      }, 'RPKMS'),
-    ].concat(colorScale.ticks(4).map((rpkm, i) =>
+      }, 'Abundance'),
+    ].concat(colorScale.ticks(4).map((abundance, i) =>
       h('div', {
         key: `${gene}-${i}`,
         style: {
@@ -71,7 +71,7 @@ function ColorLegend({ gene, colorScale }) {
           style: {
             fontFamily: 'SourceSansPro',
             alignSelf: 'stretch',
-            backgroundColor: colorScale(rpkm),
+            backgroundColor: colorScale(abundance),
             width: 20,
             marginRight: 4,
             border: '1px solid black',
@@ -82,7 +82,7 @@ function ColorLegend({ gene, colorScale }) {
           style: {
             fontSize: 12,
           },
-        }, rpkm),
+        }, abundance),
       ])
     )))
   )
@@ -125,7 +125,7 @@ class InfoBox extends React.Component {
       hoveredGene,
       treatments,
       comparedTreatments,
-      rpkmsForTreatmentGene,
+      abundancesForTreatmentGene,
     } = this.props
 
     const { hovered } = this.state
@@ -134,16 +134,16 @@ class InfoBox extends React.Component {
 
     let colorScale
 
-    if (gene && rpkmsForTreatmentGene) {
-      const rpkms = R.chain(R.pipe(
-        treatment => rpkmsForTreatmentGene(treatment, gene),
+    if (gene && abundancesForTreatmentGene) {
+      const abundances = R.chain(R.pipe(
+        treatment => abundancesForTreatmentGene(treatment, gene),
         d3.mean
       ))(Object.keys(treatments))
 
-      const maxRPKM = R.reduce(R.max, 1, rpkms)
+      const maxAbundance = R.reduce(R.max, 1, abundances)
 
       colorScale = d3.scaleSequential(d3.interpolateOranges)
-        .domain([0, maxRPKM])
+        .domain([0, maxAbundance])
     }
 
     return (
@@ -198,6 +198,6 @@ module.exports = connect(R.applySpec({
   focusedGene: R.path(['currentView', 'focusedGene']),
   hoveredGene: R.path(['currentView', 'hoveredGene']),
   treatments: R.path(['currentView', 'project', 'treatments']),
-  rpkmsForTreatmentGene: R.path(['currentView', 'project', 'rpkmsForTreatmentGene']),
+  abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
 }))(InfoBox)
 
