@@ -43,7 +43,7 @@ const FIELDS = [
   { sortPath: '', label: '' },
   { sortPath: ['gene', 'label'], label: 'Gene' },
   { sortPath: ['gene', 'pValue'], label: 'P-Value' },
-  { sortPath: ['gene', 'logCPM'], label: 'logCPM' },
+  { sortPath: ['gene', 'logATA'], label: 'logATA' },
   { sortPath: ['gene', 'logFC'], label: 'logFC' },
   { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean Abundance' },
   { sortPath: ['treatmentA_AbundanceMedian'], label: 'Med. Abundance' },
@@ -53,7 +53,7 @@ const FIELDS = [
 
 function calcColumnWidths(width) {
   const widths = [
-    // Pairwise information (logCPM, logFC, p-value)
+    // Pairwise information (logATA, logFC, p-value)
     ...R.repeat(64, 3),
 
     // Sample mean/median Abundances
@@ -178,7 +178,7 @@ class GeneRow extends React.Component {
 
         h(TableCell, dashesOrFixed(data.gene.pValue, 3)),
 
-        h(TableCell, dashesOrFixed(data.gene.logCPM)),
+        h(TableCell, dashesOrFixed(data.gene.logATA)),
 
         h(TableCell, dashesOrFixed(data.gene.logFC)),
 

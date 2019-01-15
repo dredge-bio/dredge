@@ -63,11 +63,11 @@ function getPlotBins(data, xScale, yScale, unit=5) {
     )
 
     curFC += inFCBin.length;
-    const cpmSorted = R.sortBy(R.prop('logCPM'), inFCBin);
+    const cpmSorted = R.sortBy(R.prop('logATA'), inFCBin);
 
     cpmBins.forEach(([ cpmMin, cpmMax, x0, x1 ]) => {
       const inCPMBin = R.takeWhile(
-        ({ logCPM }) => logCPM >= cpmMin && logCPM <= cpmMax,
+        ({ logATA }) => logATA >= cpmMin && logATA <= cpmMax,
         cpmSorted.slice(curCPM)
       )
 

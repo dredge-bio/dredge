@@ -276,10 +276,10 @@ class Plot extends React.Component {
 
     if (!data) return
 
-    const { logCPM, logFC } = data
+    const { logATA, logFC } = data
 
     container.append('circle')
-      .attr('cx', xScale(logCPM))
+      .attr('cx', xScale(logATA))
       .attr('cy', yScale(logFC))
       .attr('r', 20)
       .attr('opacity', 1)
@@ -288,7 +288,7 @@ class Plot extends React.Component {
       .attr('stroke-width', 2)
 
     container.append('circle')
-      .attr('cx', xScale(logCPM))
+      .attr('cx', xScale(logATA))
       .attr('cy', yScale(logFC))
       .attr('opacity', 1)
       .attr('r', 3)
@@ -349,7 +349,7 @@ class Plot extends React.Component {
               textAnchor: 'middle',
               dominantBaseline: 'central',
             },
-          }, 'log₂ (Average Transcript Level)'),
+          }, 'log₂ (Average Transcript Abundance)'),
 
           // Y Axis label
           h('text', {

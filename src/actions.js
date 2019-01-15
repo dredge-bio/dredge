@@ -569,12 +569,12 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       .split('\n')
       .slice(1) // Skip header
       .map(row => {
-        const [ label, logFC, logCPM, pValue ] = row.split('\t')
+        const [ label, logFC, logATA, pValue ] = row.split('\t')
 
         return [label, {
           label,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
-          logCPM: parseFloat(logCPM),
+          logATA: parseFloat(logATA),
           pValue: parseFloat(pValue),
         }]
       })
