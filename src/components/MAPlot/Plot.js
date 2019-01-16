@@ -91,6 +91,7 @@ class Plot extends React.Component {
 
     if (redrawBins) {
       this.drawBins()
+      this.drawSavedGenes()
       this.clearBrush()
     }
 
@@ -100,6 +101,10 @@ class Plot extends React.Component {
 
     if (didChange(R.lensProp('hoveredGene'))) {
       this.updateHoveredGene()
+    }
+
+    if (didChange(R.lensProp('savedGenes'))) {
+      this.drawSavedGenes()
     }
   }
 
@@ -256,6 +261,30 @@ class Plot extends React.Component {
         .attr('fill', d => d.color)
   }
 
+  drawSavedGenes() {
+    const { xScale, yScale } = this.state
+        , { savedGenes, pairwiseData } = this.props
+
+    if (!pairwiseData) return
+
+    d3.select(this.svg)
+      .select('.saved-genes')
+      .selectAll('circle')
+        .remove()
+
+    d3.select(this.svg)
+      .select('.saved-genes')
+      .selectAll('circle')
+      .data([...savedGenes])
+          .enter()
+        .append('circle')
+        .attr('cx', d => xScale(pairwiseData.get(d).logATA))
+        .attr('cy', d => yScale(pairwiseData.get(d).logFC))
+        .attr('r', 2)
+        .attr('fill', 'red')
+
+  }
+
   updateHoveredGene() {
     const { xScale, yScale } = this.state
         , { hoveredGene, pairwiseData } = this.props
@@ -317,7 +346,7 @@ class Plot extends React.Component {
           height: '100%',
           width: '100%',
           position: 'relative',
-        }
+        },
       }, [
         h('svg', {
           position: 'absolute',
@@ -386,14 +415,13 @@ class Plot extends React.Component {
 
             h('g.squares'),
 
-            h('g.watched-genes'),
+            h('g.saved-genes'),
 
             h('g.brush'),
 
             h('g.hovered-marker'),
           ]),
-
-        ])
+        ]),
       ])
     )
   }
@@ -402,6 +430,7 @@ class Plot extends React.Component {
 module.exports = R.pipe(
   connect(R.applySpec({
     abundanceLimits: R.path(['currentView', 'project', 'metadata', 'abundanceLimits']),
+    savedGenes: R.path(['currentView', 'savedGenes']),
     pairwiseData: R.path(['currentView', 'pairwiseData']),
     pValueThreshold: R.path(['currentView', 'pValueThreshold']),
     hoveredGene: R.path(['currentView', 'hoveredGene']),
