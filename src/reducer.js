@@ -60,6 +60,10 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('projects', resp.projects, state)
       },
 
+      UpdateProject(baseURL, updateFn) {
+        return R.over(R.lensPath(['projects', baseURL]), updateFn, state)
+      },
+
       CheckCompatibility() {
         return R.assoc('compatible', true, state)
       },

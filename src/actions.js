@@ -39,10 +39,16 @@ const Action = module.exports = makeTypedAction({
   LoadAvailableProjects: {
     exec: loadAvailableProjects,
     request: {},
-    response: {
-      // projects: Type.ListOf(Object),
-      projects: Object,
+    response: {},
+  },
+
+  UpdateProject: {
+    exec: R.always({}),
+    request: {
+      projectBaseURL: String,
+      update: Function,
     },
+    response: {},
   },
 
   ViewProject: {
@@ -158,13 +164,13 @@ const Action = module.exports = makeTypedAction({
 const fileMetadata = {
   geneAliases: {
     label: 'Gene aliases',
-    exec: async (url, project) => {
+    exec: async url => {
       const resp = await fetchResource(url)
 
       try {
         const aliases = await resp.text()
 
-        project.geneAliases = R.pipe(
+        const geneAliases = R.pipe(
           R.split('\n'),
           R.map(R.pipe(
             R.split(','),
@@ -172,6 +178,8 @@ const fileMetadata = {
           )),
           R.fromPairs,
         )(aliases)
+
+        return { geneAliases }
       } catch (e) {
         throw new Error('Error parsing file')
       }
@@ -184,7 +192,7 @@ const fileMetadata = {
       const resp = await fetchResource(url)
 
       try {
-        Object.assign(project, await parseAbundanceFile(resp, project.treatments))
+        return await parseAbundanceFile(resp, project.treatments)
       } catch (e) {
         throw new Error('Error parsing file')
       }
@@ -197,7 +205,9 @@ const fileMetadata = {
       const resp = await fetchResource(url, false)
 
       try {
-        project.svg = cleanSVGString(await resp.text(), project.treatments)
+        const svg = cleanSVGString(await resp.text(), project.treatments)
+
+        return { svg }
       } catch (e) {
         throw new Error('Error parsing file')
       }
@@ -224,7 +234,7 @@ const fileMetadata = {
           return treatment
         }))
 
-        project.grid = grid;
+        return { grid }
       } catch (e) {
         let message = 'Error parsing file'
 
@@ -431,7 +441,7 @@ function checkCompatibility() {
 }
 
 function loadAvailableProjects() {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     const makeLog = R.curry((projectBaseURL, label, url, status) => {
       return dispatch(Action.Log(
         projectBaseURL,
@@ -465,8 +475,12 @@ function loadAvailableProjects() {
     }
 
     await Promise.all(projects.map(async baseURL => {
-      const project = { baseURL }
-          , makeProjectLog = makeLog(baseURL)
+      const makeProjectLog = makeLog(baseURL)
+
+      dispatch(Action.UpdateProject(
+        baseURL,
+        R.always({ baseURL })
+      ))
 
       // START FIXME
       {
@@ -479,7 +493,12 @@ function loadAvailableProjects() {
           const resp = await fetchResource(url, false)
 
           try {
-            project.metadata = await resp.json()
+            const metadata = await resp.json()
+
+            await dispatch(Action.UpdateProject(
+              baseURL,
+              project => Object.assign({}, project, { metadata })
+            ))
           } catch (e) {
             throw new Error('Project metadata malformed')
           }
@@ -491,8 +510,10 @@ function loadAvailableProjects() {
         }
       }
 
+      const { metadata } = R.path(['projects', baseURL], getState())
+
       {
-        const url = path.join(baseURL, project.metadata.treatments)
+        const url = path.join(baseURL, metadata.treatments)
             , log = makeProjectLog('Project treatments', url)
 
         log(LoadingStatus.Pending(null))
@@ -501,7 +522,12 @@ function loadAvailableProjects() {
           const resp = await fetchResource(url, false)
 
           try {
-            project.treatments = await resp.json()
+            const treatments = await resp.json()
+
+            await dispatch(Action.UpdateProject(
+              baseURL,
+              project => Object.assign({}, project, { treatments })
+            ))
           } catch (e) {
             throw new Error('Project treatments malformed')
           }
@@ -512,9 +538,11 @@ function loadAvailableProjects() {
         }
       }
 
+      const project = R.path(['projects', baseURL], getState())
+
       await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
         let log = makeProjectLog(v.label)
-          , url = project.metadata[k]
+          , url = metadata[k]
 
         if (!url) {
           log(null, LoadingStatus.Missing('No filename specified.'))
@@ -527,7 +555,13 @@ function loadAvailableProjects() {
         log(LoadingStatus.Pending(null))
 
         try {
-          await v.exec(url, project)
+          const val = await v.exec(url, project)
+
+          await dispatch(Action.UpdateProject(
+            baseURL,
+            project => Object.assign({}, project, val)
+          ))
+
           log(LoadingStatus.OK(null))
         } catch(e) {
           log(LoadingStatus.Failed(e.message))
