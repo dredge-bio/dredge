@@ -29,7 +29,7 @@ function initialState() {
   return {
     initialized: false,
     compatible: null,
-    log: [],
+    log: {},
 
     projects: null,
     currentView: null,
@@ -42,11 +42,18 @@ module.exports = function reducer(state=initialState(), action) {
   return action.readyState.case({
     Success: resp => action.type.case({
       Initialize() {
+        return state
         return R.assoc('initialized', true, state)
       },
 
       Log() {
-        return R.over(R.lensProp('log'), val => val.concat(action.type.message), state)
+        const { project='', resourceName='', resourceURL='', status } = action.type
+
+        return R.set(
+          R.lensPath(['log', project || '', resourceURL]),
+          { status, url: resourceURL, label: resourceName },
+          state
+        )
       },
 
       LoadAvailableProjects() {

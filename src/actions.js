@@ -6,6 +6,7 @@ const R = require('ramda')
     , { makeTypedAction } = require('org-async-actions')
     , TrieSearch = require('trie-search')
     , saveAs = require('file-saver')
+    , { LoadingStatus } = require('./types')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
@@ -21,7 +22,10 @@ const Action = module.exports = makeTypedAction({
   Log: {
     exec: R.always({}),
     request: {
-      message: val => [].concat(val).every(val => typeof val === 'string'),
+      project: d => typeof d === 'string' || d === null,
+      resourceName: d => typeof d === 'string' || d === null,
+      resourceURL: d => typeof d === 'string' || d === null,
+      status: LoadingStatus,
     },
     response: {},
   },
@@ -151,46 +155,111 @@ const Action = module.exports = makeTypedAction({
   },
 })
 
+const fileMetadata = {
+  geneAliases: {
+    label: 'Gene aliases',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url)
+
+      try {
+        const aliases = await resp.text()
+
+        project.geneAliases = R.pipe(
+          R.split('\n'),
+          R.map(R.pipe(
+            R.split(','),
+            arr => [arr[0], arr.slice(1)]
+          )),
+          R.fromPairs,
+        )(aliases)
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  abundanceMeasures: {
+    label: 'Transcript abundance measures',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url)
+
+      try {
+        Object.assign(project, await parseAbundanceFile(resp, project.treatments))
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  diagram: {
+    label: 'SVG diagram',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url, false)
+
+      try {
+        project.svg = cleanSVGString(await resp.text(), project.treatments)
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  grid: {
+    label: 'Transcript grid',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url, false)
+
+      try {
+        let grid = d3.csvParseRows(await resp.text())
+
+        grid = grid.map(row => row.map(treatment => {
+          if (!treatment) return null
+
+          if (!project.treatments.hasOwnProperty(treatment)) {
+            const e = new Error()
+            e.reason = `Treatment ${treatment} not in project ${project.baseURL}`
+            throw e;
+          }
+
+          return treatment
+        }))
+
+        project.grid = grid;
+      } catch (e) {
+        let message = 'Error parsing file'
+
+        if (e.reason) {
+          message += `: ${e.reason}`
+        }
+
+        throw new Error(message)
+      }
+    },
+  },
+}
+
 function delay(time) {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
-function fetchWithoutCache(url) {
-  return fetch(url, {
-    headers: new Headers({
-      'Cache-Control': 'no-cache',
-    }),
-  })
-}
+async function fetchResource(url, cache=true) {
+  const headers = new Headers()
 
-function fetchProjectResource(baseURL, log) {
-  return async (url, opts={}) => {
-    const fetchFn = opts.cache === false
-      ? fetchWithoutCache
-      : fetch
-
-    const fetchURL = path.join(baseURL, url)
-
-    const resp = await fetchFn(fetchURL)
-
-    if (!resp.ok) {
-      await (opts.onRespNotOK || (() => {
-        log(`No file found at ${fetchURL}`)
-      }))()
-
-      return false
-    }
-
-    try {
-      await opts.onRespOK(resp)
-      return true
-    } catch (err) {
-      await (opts.onError || (() => {
-        log(`Error processing file at ${fetchURL}`)
-      }))()
-      return false
-    }
+  if (!cache) {
+    headers.append('Cache-Control', 'no-cache')
   }
+
+  const resp = await fetch(url, { headers })
+
+  if (!resp.ok) {
+    if (resp.status === 404) {
+      throw new Error('File not found')
+    }
+
+    throw new Error(`Error requesting file (${resp.statusText || resp.status })`)
+  }
+
+  return resp
 }
 
 async function parseAbundanceFile(resp, treatments) {
@@ -307,16 +376,23 @@ function cleanSVGString(svgString, treatments) {
 
 function initialize() {
   return async (dispatch, getState) => {
+    /*
     dispatch(Action.Log('Checking browser compatibility...'))
     await dispatch(Action.CheckCompatibility)
     dispatch(Action.Log('Browser compatible.'))
     dispatch(Action.Log('Loading available projects...'))
+    */
     await dispatch(Action.LoadAvailableProjects)
+
+    return {}
+
+    /*
     dispatch(Action.Log('Finished initialization. Starting application...'))
 
     const projectKey = Object.keys(getState().projects)[0]
 
     dispatch(Action.ChangeProject(projectKey))
+    */
 
     return {}
   }
@@ -356,126 +432,114 @@ function checkCompatibility() {
 
 function loadAvailableProjects() {
   return async dispatch => {
-    const loadedProjects = {}
-
-    const projectsResp = await fetchWithoutCache('projects.json')
-
-    if (!projectsResp.ok) {
-      throw new Error("No project.json file available")
-    }
+    const makeLog = R.curry((projectBaseURL, label, url, status) => {
+      return dispatch(Action.Log(
+        projectBaseURL,
+        label,
+        url,
+        status
+      ))
+    })
 
     let projects
 
-    try {
-      projects = await projectsResp.json()
-      if (!Array.isArray(projects)) throw new Error()
-      dispatch(Action.Log(`Loading projects: ${projects.join(', ')}`))
-    } catch (e) {
-      throw new Error("projects.json file is malformed")
+    {
+      const log = makeLog(null, 'Projects', 'projects.json')
+
+      log(LoadingStatus.Pending(null))
+
+      try {
+        const resp = await fetchResource('projects.json', false)
+
+        try {
+          projects = await resp.json()
+          if (!Array.isArray(projects)) throw new Error()
+        } catch (e) {
+          throw new Error('projects.json file is malformed')
+        }
+
+        log(LoadingStatus.OK(`Found ${projects.length} projects`))
+      } catch (e) {
+        log(LoadingStatus.Failed(e.message))
+      }
     }
 
-    await Promise.all(projects.map(async projectBaseURL => {
-      const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
-          , fetchResource = fetchProjectResource(projectBaseURL, log)
-          , project = {}
+    await Promise.all(projects.map(async baseURL => {
+      const project = { baseURL }
+          , makeProjectLog = makeLog(baseURL)
 
-      let success
+      // START FIXME
+      {
+        const url = path.join(baseURL, 'project.json')
+            , log = makeProjectLog('Project metadata', url)
 
-      success = await fetchResource('project.json', {
-        cache: false,
-        async onRespOK(resp) {
-          project.metadata = await resp.json()
-          log('Loaded project metadata')
-        },
-      })
+        log(LoadingStatus.Pending(null))
 
-      if (!success) {
-        log('Aborting.')
-        return false
+        try {
+          const resp = await fetchResource(url, false)
+
+          try {
+            project.metadata = await resp.json()
+          } catch (e) {
+            throw new Error('Project metadata malformed')
+          }
+
+          log(LoadingStatus.OK(null))
+        } catch (e) {
+          log(LoadingStatus.Failed(e.message))
+          return;
+        }
       }
 
-      success = await fetchResource(project.metadata.treatments, {
-        cache: false,
-        async onRespOK(resp) {
-          project.treatments = await resp.json()
-          log(`Loaded treatments`)
-        },
-      })
+      {
+        const url = path.join(baseURL, project.metadata.treatments)
+            , log = makeProjectLog('Project treatments', url)
 
-      if (!success) {
-        log('Aborting.')
-        return false
+        log(LoadingStatus.Pending(null))
+
+        try {
+          const resp = await fetchResource(url, false)
+
+          try {
+            project.treatments = await resp.json()
+          } catch (e) {
+            throw new Error('Project treatments malformed')
+          }
+          log(LoadingStatus.OK(null))
+        } catch (e) {
+          log(LoadingStatus.Failed(e.message))
+          return;
+        }
       }
 
-      await Promise.all([
-        fetchResource(project.metadata.geneAliases, {
-          onRespNotOK() {
-            project.geneAliases = {}
-            log('No gene aliases found')
-          },
-          async onRespOK(resp) {
-            const aliases = await resp.text()
+      await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
+        let log = makeProjectLog(v.label)
+          , url = project.metadata[k]
 
-            project.geneAliases = R.pipe(
-              R.split('\n'),
-              R.map(R.pipe(
-                R.split(','),
-                arr => [arr[0], arr.slice(1)]
-              )),
-              R.fromPairs,
-            )(aliases)
+        if (!url) {
+          log(null, LoadingStatus.Missing('No filename specified.'))
+          return;
+        }
 
-            log('Loaded gene aliases')
-          },
-        }),
+        log = log(url)
+        url = path.join(baseURL, url)
 
-        fetchResource(project.metadata.abundanceMeasures, {
-          onRespNotOK() {
-            project.abundancesForTreatmentGene = R.always(null)
-            log('No gene aliases found')
-          },
+        log(LoadingStatus.Pending(null))
 
-          async onRespOK(resp) {
-            const obj = await parseAbundanceFile(resp, project.treatments)
-            Object.assign(project, obj)
-            log('Loaded gene abundance measurements')
-          },
-        }),
+        try {
+          await v.exec(url, project)
+          log(LoadingStatus.OK(null))
+        } catch(e) {
+          log(LoadingStatus.Failed(e.message))
+        }
+      }))
 
-        fetchResource(project.metadata.diagram, {
-          cache: false,
-          async onRespOK(resp) {
-            project.svg = cleanSVGString(await resp.text(), project.treatments)
-            log('Loaded SVG icon')
-          },
-        }),
-
-        project.metadata.grid && fetchResource(project.metadata.grid, {
-          cache: false,
-          async onRespOK(resp) {
-            let grid = d3.csvParseRows(await resp.text())
-
-            grid = grid.map(row => row.map(treatment => {
-              if (!treatment) return null
-
-              if (!project.treatments.hasOwnProperty(treatment)) {
-                throw new Error(`Treatment ${treatment} not in project ${projectBaseURL}`)
-              }
-
-              return treatment
-            }))
-
-            project.grid = grid;
-          },
-        }),
-
-      ])
-
+      /*
       log('Finished loading')
+      */
 
-      project.baseURL = projectBaseURL
       project.pairwiseComparisonCache = {}
-      loadedProjects[projectBaseURL] = project
+      projects[baseURL] = project
 
       const corpus = {}
           , ts = new TrieSearch()
@@ -498,8 +562,8 @@ function loadAvailableProjects() {
     const sortedLoadedProjects = {}
 
     projects.forEach(project => {
-      if (loadedProjects.hasOwnProperty(project)) {
-        sortedLoadedProjects[project] = loadedProjects[project]
+      if (projects.hasOwnProperty(project)) {
+        sortedLoadedProjects[project] = projects[project]
       }
     })
 
