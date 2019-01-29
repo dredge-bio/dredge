@@ -474,7 +474,13 @@ function loadAvailableProjects() {
       }
     }
 
-    await Promise.all(projects.map(async baseURL => {
+    await Promise.all(projects.map(async projectBaseURL => {
+      if (!projectBaseURL.endsWith('/')) {
+        projectBaseURL += '/'
+      }
+
+      const baseURL = new URL(projectBaseURL, window.location.href).href
+
       const makeProjectLog = makeLog(baseURL)
 
       dispatch(Action.UpdateProject(
@@ -484,7 +490,7 @@ function loadAvailableProjects() {
 
       // START FIXME
       {
-        const url = path.join(baseURL, 'project.json')
+        const url = new URL('project.json', baseURL).href
             , log = makeProjectLog('Project metadata', url)
 
         log(LoadingStatus.Pending(null))
@@ -513,7 +519,7 @@ function loadAvailableProjects() {
       const { metadata } = R.path(['projects', baseURL], getState())
 
       {
-        const url = path.join(baseURL, metadata.treatments)
+        const url = new URL(metadata.treatments, baseURL).href
             , log = makeProjectLog('Project treatments', url)
 
         log(LoadingStatus.Pending(null))
@@ -549,8 +555,8 @@ function loadAvailableProjects() {
           return;
         }
 
+        url = new URL(url, baseURL).href
         log = log(url)
-        url = path.join(baseURL, url)
 
         log(LoadingStatus.Pending(null))
 
