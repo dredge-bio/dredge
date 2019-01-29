@@ -15,54 +15,96 @@ function Status({ status }) {
 }
 
 const LogProject = styled.div`
-  display: grid;
-  grid-template-columns: auto 1fr;
-  margin-bottom: 2em;
+  margin-top: 1rem;
 
-  .--label {
-    font-weight: bold;
-    grid-column: span 2;
+  .-label {
+    padding-right: .5em;
   }
 
-  span {
-    padding: 0 6px 0 10px;
+  .-message {
+    padding-top: 1px;
+    margin-top: -.2em;
+    margin-left: 24px;
+    grid-column: span 3;
+  }
+
+  .-grid {
+    display: grid;
+    align-items: center;
+    grid-template-columns: 24px auto 1fr;
+    row-gap: 2px;
+    margin-left: .5rem;
   }
 `
 
-function Log({ log }) {
-  const projectLogs = R.omit([''], log)
-      , notProjectLog = (log[''] || {})
-
+function Log({ infoLog, logsByProject }) {
   return (
-    h('div', [
+    h('div', {
+      style: {
+        padding: '.5em 1.33em',
+      },
+    }, [
       h('h2', 'Log'),
 
-      Object.entries(projectLogs).map(([ projectURL, files ]) =>
+      logsByProject.map(({ baseURL, label, files }) =>
         h(LogProject, {
-          key: projectURL,
+          key: baseURL,
         }, [
-          h('div.--label', [
-            projectURL,
+          h('h3', [
+            label,
           ]),
 
-          Object.values(files).map(({ url, label, status }) => [
-            h(Status, { key: `${label}-status`, status }),
-            h('div', { key: `${label}-label` }, [
-              h('div', label),
-              status.case({
-                Failed: message => !message ? null : h('div', {
+          h('div.-grid', [
+            Object.values(files).map(({ url, label, status }) => [
+              h(Status, { key: `${label}-status`, status }),
+
+              h('div.-label', { key: `${label}-label` }, [
+                label,
+              ]),
+
+              h('div', [
+                h('a', {
+                  href: url,
                   style: {
-                    color: 'red',
+                    color: '#666',
+                    fontSize: '80%',
                   },
-                }, message),
-                _: R.always(null),
-              }),
+                }, url),
+              ]),
+
+              h('div.-message', [
+                status.case({
+                  Failed: message => !message ? null : h('div', {
+                    style: {
+                      color: 'red',
+                    },
+                  }, [
+                    h('b', 'Error: '),
+                    message,
+                  ]),
+                  _: R.always(null),
+                }),
+              ]),
             ]),
-          ])
+          ]),
         ])
       ),
     ])
   )
 }
 
-module.exports = connect(R.pick(['log']))(Log)
+module.exports = connect(state => {
+  const projectLogs = R.omit([''], state.log) || {}
+      , infoLog = (state.log[''] || {})
+
+  const logsByProject = Object.entries(projectLogs).map(([ baseURL, files ]) => ({
+    baseURL,
+    label: R.path(['projects', baseURL, 'metadata', 'label'], state) || baseURL,
+    files,
+  }))
+
+  return {
+    infoLog,
+    logsByProject,
+  }
+})(Log)
