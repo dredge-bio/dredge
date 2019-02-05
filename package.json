@@ -8,6 +8,7 @@
     "d3": "^5.5.0",
     "dexie": "^1.2.0",
     "file-saver": "^2.0.0-rc.3",
+    "is-url": "^1.2.4",
     "org-async-actions": "^1.0.0",
     "ramda": "^0.25.0",
     "react": "^16.4.2",

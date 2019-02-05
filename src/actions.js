@@ -3,6 +3,7 @@
 const R = require('ramda')
     , d3 = require('d3')
     , path = require('path')
+    , isURL = require('is-url')
     , { makeTypedAction } = require('org-async-actions')
     , TrieSearch = require('trie-search')
     , saveAs = require('file-saver')
@@ -160,6 +161,105 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 })
+
+const metadataFields = {
+  label: {
+    label: 'Project label',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Must be a string')
+      }
+    },
+  },
+
+  url: {
+    label: 'Project URL',
+    test: val => {
+      if (!isURL(val)) {
+        throw new Error('Value should be a URL')
+      }
+    },
+  },
+
+  readme: {
+    label: 'Project Readme',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  abundanceLimits: {
+    label: 'Limits for abundance mesaures',
+    test: val => {
+      const isArrayOfTwo = val => Array.isArray(val) && val.length === 2
+
+      const ok = (
+        isArrayOfTwo(val) &&
+        isArrayOfTwo(val[0]) &&
+        isArrayOfTwo(val[1]) &&
+        typeof val[0][0] === 'number' &&
+        typeof val[0][1] === 'number' &&
+        typeof val[1][0] === 'number' &&
+        typeof val[1][1] === 'number'
+      )
+
+      if (!ok) {
+        throw new Error('Value must be an array of an array of two numbers')
+      }
+    },
+  },
+
+  treatments: {
+    label: 'Treatment descriptions',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  pairwiseName: {
+    label: 'Pairwise file naming format',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+
+      if (!(val.includes('%A') && val.includes('%B'))) {
+        throw new Error('Value should be a template for loading pairwise comparisons, using %A and %B as placeholders.')
+      }
+    },
+  },
+
+  geneAliases: {
+    label: 'Alternate names for genes',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  diagram: {
+    label: 'Project diagram',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  grid: {
+    label: 'Project grid',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+}
 
 const fileMetadata = {
   geneAliases: {
@@ -488,7 +588,8 @@ function loadAvailableProjects() {
         R.always({ baseURL })
       ))
 
-      // START FIXME
+      let loadedMetadata = {}
+
       {
         const url = new URL('project.json', baseURL).href
             , log = makeProjectLog('Project metadata', url)
@@ -499,12 +600,7 @@ function loadAvailableProjects() {
           const resp = await fetchResource(url, false)
 
           try {
-            const metadata = await resp.json()
-
-            await dispatch(Action.UpdateProject(
-              baseURL,
-              project => Object.assign({}, project, { metadata })
-            ))
+            loadedMetadata = await resp.json()
           } catch (e) {
             throw new Error('Project metadata malformed')
           }
@@ -514,6 +610,44 @@ function loadAvailableProjects() {
           log(LoadingStatus.Failed(e.message))
           return;
         }
+      }
+
+      const makeMetadataLog = (field, label) => {
+        const url = new URL(`project.json#${field}`).href
+            , log = makeProjectLog(label, url)
+
+        return log
+      }
+
+      {
+        await Promise.all(Object.entries(metadataFields).map(async ([ key, { label, test }]) => {
+          const url = new URL(`project.json#${key}`, baseURL).href
+              , log = makeProjectLog(label, url)
+
+          log(LoadingStatus.Pending(null))
+
+          const val = loadedMetadata[key]
+
+          if (!val) {
+            log(LoadingStatus.Missing('No value specified'))
+            return
+          }
+
+          try {
+            test(val);
+
+            log(LoadingStatus.OK(null))
+
+            await dispatch(Action.UpdateProject(
+              baseURL,
+              R.assocPath(['metadata', key], val)
+            ))
+
+            return Promise.resolve()
+          } catch (e) {
+            log(LoadingStatus.Failed(e.message))
+          }
+        }))
       }
 
       const { metadata } = R.path(['projects', baseURL], getState())
@@ -573,10 +707,6 @@ function loadAvailableProjects() {
           log(LoadingStatus.Failed(e.message))
         }
       }))
-
-      /*
-      log('Finished loading')
-      */
 
       project.pairwiseComparisonCache = {}
       projects[baseURL] = project

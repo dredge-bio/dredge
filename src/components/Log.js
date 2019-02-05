@@ -5,13 +5,20 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
 
-function Status({ status }) {
-  return status.case({
-    Pending: () => h('span', '...'),
-    Failed: () => h('span', '✖'),
-    Missing: () => h('span', '--'),
-    OK: () => h('span', '✔'),
+function Status({ status, indent }) {
+  const content = status.case({
+    Pending: () => '...',
+    Failed: () => '✖',
+    Missing: () => '--',
+    OK: () => '✔',
   })
+
+  return h('span', {
+    style: {
+      whiteSpace: 'nowrap',
+      marginLeft: indent ? '24px' : 0,
+    },
+  }, content)
 }
 
 const LogProject = styled.div`
@@ -31,7 +38,7 @@ const LogProject = styled.div`
   .-grid {
     display: grid;
     align-items: center;
-    grid-template-columns: 24px auto 1fr;
+    grid-template-columns: 18px auto 1fr;
     row-gap: 2px;
     margin-left: .5rem;
   }
@@ -46,7 +53,7 @@ function Log({ infoLog, logsByProject }) {
     }, [
       h('h2', 'Log'),
 
-      logsByProject.map(({ baseURL, label, files }) =>
+      logsByProject.map(({ baseURL, label, files, metadata }) =>
         h(LogProject, {
           key: baseURL,
         }, [
@@ -85,6 +92,28 @@ function Log({ infoLog, logsByProject }) {
                   _: R.always(null),
                 }),
               ]),
+
+              ...(!(url || '').endsWith('project.json') ? [] : (
+                Object.values(metadata).map(({ field, label, status }) => [
+                  h('div'),
+
+                  h('div', { style: { display: 'flex' }}, [
+                    h(Status, { key: `${label}-status`, status }),
+
+                    h('div.-label', {
+                      key: `${label}-label`,
+                      style: {
+                        position: 'absolute',
+                        marginLeft: '18px',
+                      }
+                    }, [
+                      label,
+                    ]),
+                  ]),
+
+                  h('div'),
+                ])
+              ))
             ]),
           ]),
         ])
@@ -100,7 +129,17 @@ module.exports = connect(state => {
   const logsByProject = Object.entries(projectLogs).map(([ baseURL, files ]) => ({
     baseURL,
     label: R.path(['projects', baseURL, 'metadata', 'label'], state) || baseURL,
-    files,
+    files: R.filter(d => {
+      if (typeof d.url !== 'string') return true
+      return !d.url.includes('project.json#')
+    }, files),
+    metadata: R.pipe(
+      R.filter(({ url }) => typeof url === 'string' && url.includes('project.json#')),
+      R.map(({ url, label, status }) => {
+        const [ , field ] = url.split('project.json#')
+        return { field, label, status }
+      })
+    )(files),
   }))
 
   return {
