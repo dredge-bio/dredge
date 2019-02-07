@@ -2,7 +2,6 @@
 
 const R = require('ramda')
     , d3 = require('d3')
-    , path = require('path')
     , isURL = require('is-url')
     , { makeTypedAction } = require('org-async-actions')
     , TrieSearch = require('trie-search')
@@ -183,6 +182,15 @@ const metadataFields = {
 
   readme: {
     label: 'Project Readme',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  abundanceMeasures: {
+    label: 'Treatment abundance measures',
     test: val => {
       if (typeof val !== 'string') {
         throw new Error('Value should be a URL pointing to a file')
@@ -494,15 +502,9 @@ function initialize() {
     */
     await dispatch(Action.LoadAvailableProjects)
 
-    return {}
-
-    /*
-    dispatch(Action.Log('Finished initialization. Starting application...'))
-
     const projectKey = Object.keys(getState().projects)[0]
 
     dispatch(Action.ChangeProject(projectKey))
-    */
 
     return {}
   }
@@ -612,13 +614,6 @@ function loadAvailableProjects() {
         }
       }
 
-      const makeMetadataLog = (field, label) => {
-        const url = new URL(`project.json#${field}`).href
-            , log = makeProjectLog(label, url)
-
-        return log
-      }
-
       {
         await Promise.all(Object.entries(metadataFields).map(async ([ key, { label, test }]) => {
           const url = new URL(`project.json#${key}`, baseURL).href
@@ -678,7 +673,7 @@ function loadAvailableProjects() {
         }
       }
 
-      const project = R.path(['projects', baseURL], getState())
+      let project = R.path(['projects', baseURL], getState())
 
       await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
         let log = makeProjectLog(v.label)
@@ -703,10 +698,14 @@ function loadAvailableProjects() {
           ))
 
           log(LoadingStatus.OK(null))
+
+          return Promise.resolve()
         } catch(e) {
           log(LoadingStatus.Failed(e.message))
         }
       }))
+
+      project = R.path(['projects', baseURL], getState())
 
       project.pairwiseComparisonCache = {}
       projects[baseURL] = project
@@ -737,7 +736,7 @@ function loadAvailableProjects() {
       }
     })
 
-    return { projects: sortedLoadedProjects }
+    return {}
   }
 }
 
@@ -771,13 +770,13 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
     const urlTemplate = project.metadata.pairwiseName || './pairwise_tests/%A_%B.txt'
 
-    const fileURLA = path.join(
-      project.baseURL,
-      urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey))
+    const fileURLA = new URL(
+      urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey),
+      project.baseURL).href
 
-    const fileURLB = path.join(
-      project.baseURL,
-      urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey))
+    const fileURLB = new URL(
+      urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey),
+      project.baseURL).href
 
     let reverse = false
       , resp

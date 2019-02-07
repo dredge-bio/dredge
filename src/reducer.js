@@ -42,7 +42,6 @@ module.exports = function reducer(state=initialState(), action) {
   return action.readyState.case({
     Success: resp => action.type.case({
       Initialize() {
-        return state
         return R.assoc('initialized', true, state)
       },
 
@@ -57,7 +56,7 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       LoadAvailableProjects() {
-        return R.assoc('projects', resp.projects, state)
+        return state
       },
 
       UpdateProject(baseURL, updateFn) {
