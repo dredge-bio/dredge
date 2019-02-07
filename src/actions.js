@@ -2,10 +2,11 @@
 
 const R = require('ramda')
     , d3 = require('d3')
-    , path = require('path')
+    , isURL = require('is-url')
     , { makeTypedAction } = require('org-async-actions')
     , TrieSearch = require('trie-search')
     , saveAs = require('file-saver')
+    , { LoadingStatus } = require('./types')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
@@ -21,7 +22,10 @@ const Action = module.exports = makeTypedAction({
   Log: {
     exec: R.always({}),
     request: {
-      message: val => [].concat(val).every(val => typeof val === 'string'),
+      project: d => typeof d === 'string' || d === null,
+      resourceName: d => typeof d === 'string' || d === null,
+      resourceURL: d => typeof d === 'string' || d === null,
+      status: LoadingStatus,
     },
     response: {},
   },
@@ -35,10 +39,16 @@ const Action = module.exports = makeTypedAction({
   LoadAvailableProjects: {
     exec: loadAvailableProjects,
     request: {},
-    response: {
-      // projects: Type.ListOf(Object),
-      projects: Object,
+    response: {},
+  },
+
+  UpdateProject: {
+    exec: R.always({}),
+    request: {
+      projectBaseURL: String,
+      update: Function,
     },
+    response: {},
   },
 
   ViewProject: {
@@ -151,46 +161,223 @@ const Action = module.exports = makeTypedAction({
   },
 })
 
+const metadataFields = {
+  label: {
+    label: 'Project label',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Must be a string')
+      }
+    },
+  },
+
+  url: {
+    label: 'Project URL',
+    test: val => {
+      if (!isURL(val)) {
+        throw new Error('Value should be a URL')
+      }
+    },
+  },
+
+  readme: {
+    label: 'Project Readme',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  abundanceMeasures: {
+    label: 'Treatment abundance measures',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  abundanceLimits: {
+    label: 'Limits for abundance mesaures',
+    test: val => {
+      const isArrayOfTwo = val => Array.isArray(val) && val.length === 2
+
+      const ok = (
+        isArrayOfTwo(val) &&
+        isArrayOfTwo(val[0]) &&
+        isArrayOfTwo(val[1]) &&
+        typeof val[0][0] === 'number' &&
+        typeof val[0][1] === 'number' &&
+        typeof val[1][0] === 'number' &&
+        typeof val[1][1] === 'number'
+      )
+
+      if (!ok) {
+        throw new Error('Value must be an array of an array of two numbers')
+      }
+    },
+  },
+
+  treatments: {
+    label: 'Treatment descriptions',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  pairwiseName: {
+    label: 'Pairwise file naming format',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+
+      if (!(val.includes('%A') && val.includes('%B'))) {
+        throw new Error('Value should be a template for loading pairwise comparisons, using %A and %B as placeholders.')
+      }
+    },
+  },
+
+  geneAliases: {
+    label: 'Alternate names for genes',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  diagram: {
+    label: 'Project diagram',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+
+  grid: {
+    label: 'Project grid',
+    test: val => {
+      if (typeof val !== 'string') {
+        throw new Error('Value should be a URL pointing to a file')
+      }
+    },
+  },
+}
+
+const fileMetadata = {
+  geneAliases: {
+    label: 'Gene aliases',
+    exec: async url => {
+      const resp = await fetchResource(url)
+
+      try {
+        const aliases = await resp.text()
+
+        const geneAliases = R.pipe(
+          R.split('\n'),
+          R.map(R.pipe(
+            R.split(','),
+            arr => [arr[0], arr.slice(1)]
+          )),
+          R.fromPairs,
+        )(aliases)
+
+        return { geneAliases }
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  abundanceMeasures: {
+    label: 'Transcript abundance measures',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url)
+
+      try {
+        return await parseAbundanceFile(resp, project.treatments)
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  diagram: {
+    label: 'SVG diagram',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url, false)
+
+      try {
+        const svg = cleanSVGString(await resp.text(), project.treatments)
+
+        return { svg }
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  grid: {
+    label: 'Transcript grid',
+    exec: async (url, project) => {
+      const resp = await fetchResource(url, false)
+
+      try {
+        let grid = d3.csvParseRows(await resp.text())
+
+        grid = grid.map(row => row.map(treatment => {
+          if (!treatment) return null
+
+          if (!project.treatments.hasOwnProperty(treatment)) {
+            const e = new Error()
+            e.reason = `Treatment ${treatment} not in project ${project.baseURL}`
+            throw e;
+          }
+
+          return treatment
+        }))
+
+        return { grid }
+      } catch (e) {
+        let message = 'Error parsing file'
+
+        if (e.reason) {
+          message += `: ${e.reason}`
+        }
+
+        throw new Error(message)
+      }
+    },
+  },
+}
+
 function delay(time) {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
-function fetchWithoutCache(url) {
-  return fetch(url, {
-    headers: new Headers({
-      'Cache-Control': 'no-cache',
-    }),
-  })
-}
+async function fetchResource(url, cache=true) {
+  const headers = new Headers()
 
-function fetchProjectResource(baseURL, log) {
-  return async (url, opts={}) => {
-    const fetchFn = opts.cache === false
-      ? fetchWithoutCache
-      : fetch
-
-    const fetchURL = path.join(baseURL, url)
-
-    const resp = await fetchFn(fetchURL)
-
-    if (!resp.ok) {
-      await (opts.onRespNotOK || (() => {
-        log(`No file found at ${fetchURL}`)
-      }))()
-
-      return false
-    }
-
-    try {
-      await opts.onRespOK(resp)
-      return true
-    } catch (err) {
-      await (opts.onError || (() => {
-        log(`Error processing file at ${fetchURL}`)
-      }))()
-      return false
-    }
+  if (!cache) {
+    headers.append('Cache-Control', 'no-cache')
   }
+
+  const resp = await fetch(url, { headers })
+
+  if (!resp.ok) {
+    if (resp.status === 404) {
+      throw new Error('File not found')
+    }
+
+    throw new Error(`Error requesting file (${resp.statusText || resp.status })`)
+  }
+
+  return resp
 }
 
 async function parseAbundanceFile(resp, treatments) {
@@ -307,12 +494,13 @@ function cleanSVGString(svgString, treatments) {
 
 function initialize() {
   return async (dispatch, getState) => {
+    /*
     dispatch(Action.Log('Checking browser compatibility...'))
     await dispatch(Action.CheckCompatibility)
     dispatch(Action.Log('Browser compatible.'))
     dispatch(Action.Log('Loading available projects...'))
+    */
     await dispatch(Action.LoadAvailableProjects)
-    dispatch(Action.Log('Finished initialization. Starting application...'))
 
     const projectKey = Object.keys(getState().projects)[0]
 
@@ -355,127 +543,172 @@ function checkCompatibility() {
 }
 
 function loadAvailableProjects() {
-  return async dispatch => {
-    const loadedProjects = {}
-
-    const projectsResp = await fetchWithoutCache('projects.json')
-
-    if (!projectsResp.ok) {
-      throw new Error("No project.json file available")
-    }
+  return async (dispatch, getState) => {
+    const makeLog = R.curry((projectBaseURL, label, url, status) => {
+      return dispatch(Action.Log(
+        projectBaseURL,
+        label,
+        url,
+        status
+      ))
+    })
 
     let projects
 
-    try {
-      projects = await projectsResp.json()
-      if (!Array.isArray(projects)) throw new Error()
-      dispatch(Action.Log(`Loading projects: ${projects.join(', ')}`))
-    } catch (e) {
-      throw new Error("projects.json file is malformed")
+    {
+      const log = makeLog(null, 'Projects', 'projects.json')
+
+      log(LoadingStatus.Pending(null))
+
+      try {
+        const resp = await fetchResource('projects.json', false)
+
+        try {
+          projects = await resp.json()
+          if (!Array.isArray(projects)) throw new Error()
+        } catch (e) {
+          throw new Error('projects.json file is malformed')
+        }
+
+        log(LoadingStatus.OK(`Found ${projects.length} projects`))
+      } catch (e) {
+        log(LoadingStatus.Failed(e.message))
+      }
     }
 
     await Promise.all(projects.map(async projectBaseURL => {
-      const log = message => dispatch(Action.Log(`${projectBaseURL}: ${message}`))
-          , fetchResource = fetchProjectResource(projectBaseURL, log)
-          , project = {}
-
-      let success
-
-      success = await fetchResource('project.json', {
-        cache: false,
-        async onRespOK(resp) {
-          project.metadata = await resp.json()
-          log('Loaded project metadata')
-        },
-      })
-
-      if (!success) {
-        log('Aborting.')
-        return false
+      if (!projectBaseURL.endsWith('/')) {
+        projectBaseURL += '/'
       }
 
-      success = await fetchResource(project.metadata.treatments, {
-        cache: false,
-        async onRespOK(resp) {
-          project.treatments = await resp.json()
-          log(`Loaded treatments`)
-        },
-      })
+      const baseURL = new URL(projectBaseURL, window.location.href).href
 
-      if (!success) {
-        log('Aborting.')
-        return false
+      const makeProjectLog = makeLog(baseURL)
+
+      dispatch(Action.UpdateProject(
+        baseURL,
+        R.always({ baseURL })
+      ))
+
+      let loadedMetadata = {}
+
+      {
+        const url = new URL('project.json', baseURL).href
+            , log = makeProjectLog('Project metadata', url)
+
+        log(LoadingStatus.Pending(null))
+
+        try {
+          const resp = await fetchResource(url, false)
+
+          try {
+            loadedMetadata = await resp.json()
+          } catch (e) {
+            throw new Error('Project metadata malformed')
+          }
+
+          log(LoadingStatus.OK(null))
+        } catch (e) {
+          log(LoadingStatus.Failed(e.message))
+          return;
+        }
       }
 
-      await Promise.all([
-        fetchResource(project.metadata.geneAliases, {
-          onRespNotOK() {
-            project.geneAliases = {}
-            log('No gene aliases found')
-          },
-          async onRespOK(resp) {
-            const aliases = await resp.text()
+      {
+        await Promise.all(Object.entries(metadataFields).map(async ([ key, { label, test }]) => {
+          const url = new URL(`project.json#${key}`, baseURL).href
+              , log = makeProjectLog(label, url)
 
-            project.geneAliases = R.pipe(
-              R.split('\n'),
-              R.map(R.pipe(
-                R.split(','),
-                arr => [arr[0], arr.slice(1)]
-              )),
-              R.fromPairs,
-            )(aliases)
+          log(LoadingStatus.Pending(null))
 
-            log('Loaded gene aliases')
-          },
-        }),
+          const val = loadedMetadata[key]
 
-        fetchResource(project.metadata.abundanceMeasures, {
-          onRespNotOK() {
-            project.abundancesForTreatmentGene = R.always(null)
-            log('No gene aliases found')
-          },
+          if (!val) {
+            log(LoadingStatus.Missing('No value specified'))
+            return
+          }
 
-          async onRespOK(resp) {
-            const obj = await parseAbundanceFile(resp, project.treatments)
-            Object.assign(project, obj)
-            log('Loaded gene abundance measurements')
-          },
-        }),
+          try {
+            test(val);
 
-        fetchResource(project.metadata.diagram, {
-          cache: false,
-          async onRespOK(resp) {
-            project.svg = cleanSVGString(await resp.text(), project.treatments)
-            log('Loaded SVG icon')
-          },
-        }),
+            log(LoadingStatus.OK(null))
 
-        project.metadata.grid && fetchResource(project.metadata.grid, {
-          cache: false,
-          async onRespOK(resp) {
-            let grid = d3.csvParseRows(await resp.text())
+            await dispatch(Action.UpdateProject(
+              baseURL,
+              R.assocPath(['metadata', key], val)
+            ))
 
-            grid = grid.map(row => row.map(treatment => {
-              if (!treatment) return null
+            return Promise.resolve()
+          } catch (e) {
+            log(LoadingStatus.Failed(e.message))
+          }
+        }))
+      }
 
-              if (!project.treatments.hasOwnProperty(treatment)) {
-                throw new Error(`Treatment ${treatment} not in project ${projectBaseURL}`)
-              }
+      const { metadata } = R.path(['projects', baseURL], getState())
 
-              return treatment
-            }))
+      {
+        const url = new URL(metadata.treatments, baseURL).href
+            , log = makeProjectLog('Project treatments', url)
 
-            project.grid = grid;
-          },
-        }),
+        log(LoadingStatus.Pending(null))
 
-      ])
+        try {
+          const resp = await fetchResource(url, false)
 
-      log('Finished loading')
+          try {
+            const treatments = await resp.json()
 
-      project.baseURL = projectBaseURL
+            await dispatch(Action.UpdateProject(
+              baseURL,
+              project => Object.assign({}, project, { treatments })
+            ))
+          } catch (e) {
+            throw new Error('Project treatments malformed')
+          }
+          log(LoadingStatus.OK(null))
+        } catch (e) {
+          log(LoadingStatus.Failed(e.message))
+          return;
+        }
+      }
+
+      let project = R.path(['projects', baseURL], getState())
+
+      await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
+        let log = makeProjectLog(v.label)
+          , url = metadata[k]
+
+        if (!url) {
+          log(null, LoadingStatus.Missing('No filename specified.'))
+          return;
+        }
+
+        url = new URL(url, baseURL).href
+        log = log(url)
+
+        log(LoadingStatus.Pending(null))
+
+        try {
+          const val = await v.exec(url, project)
+
+          await dispatch(Action.UpdateProject(
+            baseURL,
+            project => Object.assign({}, project, val)
+          ))
+
+          log(LoadingStatus.OK(null))
+
+          return Promise.resolve()
+        } catch(e) {
+          log(LoadingStatus.Failed(e.message))
+        }
+      }))
+
+      project = R.path(['projects', baseURL], getState())
+
       project.pairwiseComparisonCache = {}
-      loadedProjects[projectBaseURL] = project
+      projects[baseURL] = project
 
       const corpus = {}
           , ts = new TrieSearch()
@@ -498,12 +731,12 @@ function loadAvailableProjects() {
     const sortedLoadedProjects = {}
 
     projects.forEach(project => {
-      if (loadedProjects.hasOwnProperty(project)) {
-        sortedLoadedProjects[project] = loadedProjects[project]
+      if (projects.hasOwnProperty(project)) {
+        sortedLoadedProjects[project] = projects[project]
       }
     })
 
-    return { projects: sortedLoadedProjects }
+    return {}
   }
 }
 
@@ -537,13 +770,13 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
     const urlTemplate = project.metadata.pairwiseName || './pairwise_tests/%A_%B.txt'
 
-    const fileURLA = path.join(
-      project.baseURL,
-      urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey))
+    const fileURLA = new URL(
+      urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey),
+      project.baseURL).href
 
-    const fileURLB = path.join(
-      project.baseURL,
-      urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey))
+    const fileURLB = new URL(
+      urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey),
+      project.baseURL).href
 
     let reverse = false
       , resp

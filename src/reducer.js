@@ -29,7 +29,7 @@ function initialState() {
   return {
     initialized: false,
     compatible: null,
-    log: [],
+    log: {},
 
     projects: null,
     currentView: null,
@@ -46,11 +46,21 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       Log() {
-        return R.over(R.lensProp('log'), val => val.concat(action.type.message), state)
+        const { project='', resourceName='', resourceURL='', status } = action.type
+
+        return R.set(
+          R.lensPath(['log', project || '', resourceURL]),
+          { status, url: resourceURL, label: resourceName },
+          state
+        )
       },
 
       LoadAvailableProjects() {
-        return R.assoc('projects', resp.projects, state)
+        return state
+      },
+
+      UpdateProject(baseURL, updateFn) {
+        return R.over(R.lensPath(['projects', baseURL]), updateFn, state)
       },
 
       CheckCompatibility() {
