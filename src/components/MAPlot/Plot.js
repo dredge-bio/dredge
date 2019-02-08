@@ -144,7 +144,7 @@ class Plot extends React.Component {
 
         const brushedGenes = R.pipe(
           R.chain(R.prop('genes')),
-          R.map(R.prop('label'))
+          R.map(R.prop('id'))
         )(brushedBins.data())
 
         dispatch(Action.SetBrushedGenes(brushedGenes))

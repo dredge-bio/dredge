@@ -121,6 +121,7 @@ class InfoBox extends React.Component {
 
   render() {
     const {
+      getCanonicalGeneLabel,
       focusedGene,
       hoveredGene,
       treatments,
@@ -149,7 +150,7 @@ class InfoBox extends React.Component {
     return (
       h(InfoBoxContainer, [
         h('div', [
-          gene && h('h3', gene),
+          gene && h('h3', getCanonicalGeneLabel(gene)),
           h('div', {
             style: {
               fontSize: 12,
@@ -199,5 +200,6 @@ module.exports = connect(R.applySpec({
   hoveredGene: R.path(['currentView', 'hoveredGene']),
   treatments: R.path(['currentView', 'project', 'treatments']),
   abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
+  getCanonicalGeneLabel: R.path(['currentView', 'project', 'getCanonicalGeneLabel']),
 }))(InfoBox)
 

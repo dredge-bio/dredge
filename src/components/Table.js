@@ -87,11 +87,11 @@ class GeneRow extends React.Component {
 
     for (const k in nextProps) {
       if (k === 'focusedGene') {
-        const geneName = this.props.data.gene.label
+        const geneID = this.props.data.gene.id
 
         update = (
-          (nextProps[k] === geneName && this.props[k] !== geneName) ||
-          (nextProps[k] !== geneName && this.props[k] === geneName)
+          (nextProps[k] === geneID && this.props[k] !== geneID) ||
+          (nextProps[k] !== geneID && this.props[k] === geneID)
         )
       } else if (k === 'pValueThreshold') {
         const pValueMeasure = this.props.data.gene.pValue
@@ -144,12 +144,12 @@ class GeneRow extends React.Component {
 
     return (
       h('tr', {
-        ['data-gene-name']: data.gene.label,
+        ['data-gene-name']: data.gene.id,
         onMouseEnter: this.handleMouseEnter,
         onMouseLeave: this.handleMouseLeave,
         onClick: this.handleClick,
         style: Object.assign({},
-          focusedGene !== data.gene.label
+          focusedGene !== data.gene.id
             ? null : { backgroundColor: '#e6e6e6' },
           (data.gene.pValue === undefined || pValue > pValueThreshold)
             ? { color: '#aaa' } : null
@@ -163,9 +163,9 @@ class GeneRow extends React.Component {
               e.preventDefault()
 
               if (saved) {
-                removeSavedGene(data.gene.label)
+                removeSavedGene(data.gene.id)
               } else {
-                addSavedGene(data.gene.label)
+                addSavedGene(data.gene.id)
               }
 
             },
@@ -288,14 +288,16 @@ class Table extends React.Component {
   handleKeyDown(e) {
     const { dispatch, view } = this.props
 
+    const { displayedGenes } = view
+
     switch (e.code) {
       case "ArrowUp":
       case "ArrowDown": {
         e.preventDefault()
 
         const selectedIdx = R.findIndex(
-          d => R.pathEq(['view', 'focusedGene'], d.gene.label, this.props),
-          this.displayedGenes
+          d => R.pathEq(['view', 'focusedGene'], d.gene.id, this.props),
+          displayedGenes
         )
 
         if (selectedIdx === -1) return
@@ -303,15 +305,15 @@ class Table extends React.Component {
         let nextSelection
 
         if (e.code === "ArrowDown") {
-          if (selectedIdx + 1 === this.displayedGenes.length) return
+          if (selectedIdx + 1 === displayedGenes.length) return
 
-          nextSelection = this.displayedGenes[selectedIdx + 1].gene.label
+          nextSelection = displayedGenes[selectedIdx + 1].gene.id
         }
 
         if (e.code === "ArrowUp") {
           if (selectedIdx - 1 === -1) return
 
-          nextSelection = this.displayedGenes[selectedIdx - 1].gene.label
+          nextSelection = displayedGenes[selectedIdx - 1].gene.id
         }
 
         dispatch(Action.SetFocusedGene(nextSelection))
@@ -479,9 +481,9 @@ class Table extends React.Component {
 
             displayedGenes && h('tbody', displayedGenes.map(data =>
               h(GeneRow, {
-                key: `${data.gene.label}-${treatmentA}-${treatmentB}`,
+                key: `${data.gene.id}-${treatmentA}-${treatmentB}`,
                 data,
-                saved: savedGenes.has(data.gene.label),
+                saved: savedGenes.has(data.gene.id),
                 setHoveredGene: this.setHoveredGene,
                 addSavedGene: this.addSavedGene,
                 removeSavedGene: this.removeSavedGene,

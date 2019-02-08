@@ -282,6 +282,8 @@ const fileMetadata = {
           R.split('\n'),
           R.map(R.pipe(
             R.split(','),
+            R.map(R.trim),
+            R.filter(R.identity),
             arr => [arr[0], arr.slice(1)]
           )),
           R.fromPairs,
@@ -713,19 +715,27 @@ function loadAvailableProjects() {
       const corpus = {}
           , ts = new TrieSearch()
 
-      project.genes.forEach(gene => {
-        corpus[gene] = gene
-      })
-
       Object.entries(project.geneAliases || {}).forEach(([ gene, aliases ]) => {
         aliases.forEach(alias => {
           corpus[alias] = gene
         })
       })
 
+      if (project.genes) {
+        project.genes.forEach(gene => {
+          if (!(gene in corpus)) {
+            corpus[gene] = gene
+          }
+        })
+      }
+
       ts.addFromObject(corpus);
 
       project.searchGenes = name => ts.get(name)
+
+      // TODO: This could be a much smaller object, since it will only ever
+      // be generated from the abundance file. (Right?)
+      project.getCanonicalGeneLabel = gene => corpus[gene]
     }))
 
     const sortedLoadedProjects = {}
@@ -802,9 +812,12 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       .split('\n')
       .slice(1) // Skip header
       .map(row => {
-        const [ label, logFC, logATA, pValue ] = row.split('\t')
+        const [ id, logFC, logATA, pValue ] = row.split('\t')
 
-        return [label, {
+        const label = project.getCanonicalGeneLabel(id)
+
+        return [id, {
+          id,
           label,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logATA: parseFloat(logATA),
@@ -846,7 +859,10 @@ function updateDisplayedGenes(sortPath, order) {
         }
       }
 
-      const gene = pairwiseData.get(geneName) || { label: geneName }
+      const gene = pairwiseData.get(geneName) || {
+        id: geneName,
+        label: project.getCanonicalGeneLabel(geneName)
+      }
 
       const [
         treatmentA_AbundanceMean,
