@@ -37,7 +37,7 @@ const SaveMarker = styled.a`
   }
 `
 
-const HEADER_HEIGHT = 56;
+const HEADER_HEIGHT = 84;
 
 const FIELDS = [
   { sortPath: '', label: '' },
@@ -45,10 +45,10 @@ const FIELDS = [
   { sortPath: ['gene', 'pValue'], label: 'P-Value' },
   { sortPath: ['gene', 'logATA'], label: 'logATA' },
   { sortPath: ['gene', 'logFC'], label: 'logFC' },
-  { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean Abundance' },
-  { sortPath: ['treatmentA_AbundanceMedian'], label: 'Med. Abundance' },
-  { sortPath: ['treatmentB_AbundanceMean'], label: 'Mean Abundance' },
-  { sortPath: ['treatmentB_AbundanceMedian'], label: 'Med. Abundance' },
+  { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean' },
+  { sortPath: ['treatmentA_AbundanceMedian'], label: 'Median' },
+  { sortPath: ['treatmentB_AbundanceMean'], label: 'Mean' },
+  { sortPath: ['treatmentB_AbundanceMedian'], label: 'Median' },
 ]
 
 function calcColumnWidths(width) {
@@ -223,8 +223,8 @@ const TableHeaderWrapper = styled.div`
 
 const TableHeaderRow = styled.div`
   position: relative;
-  height: ${HEADER_HEIGHT / 2}px;
-  line-height: ${HEADER_HEIGHT / 2}px;
+  height: ${HEADER_HEIGHT / 3}px;
+  line-height: ${HEADER_HEIGHT / 3}px;
 `
 
 const TableBodyWrapper = styled.div`
@@ -250,6 +250,7 @@ const TableHeaderCell = styled.span`
   bottom: 0;
   left: ${props => props.left}px;
   ${props => props.clickable ? 'cursor: pointer;' : ''}
+  ${props => props.css}
 `
 
 class Table extends React.Component {
@@ -411,6 +412,19 @@ class Table extends React.Component {
               },
             })
           )),
+
+          h(TableHeaderRow, [
+            ready && h(TableHeaderCell, {
+              left: R.sum(columnWidths.slice(0, -4)),
+              css: {
+                right: 0,
+                borderBottom: '1px solid #ccc',
+                backgroundColor: '#f0f0f0',
+                marginLeft: '-7px',
+                paddingLeft: '7px',
+              },
+            }, 'Treatment abundance'),
+          ]),
 
           h(TableHeaderRow, [
             h('div', {
