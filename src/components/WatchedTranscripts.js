@@ -115,7 +115,7 @@ class Search extends React.Component {
     if (searchText !== prevSearchText) {
       this.setState({
         searchResults: searchText.length > 1
-          ? project.searchGenes(searchText)
+          ? project.searchTranscripts(searchText)
           : null,
       })
     }
@@ -134,7 +134,7 @@ class Search extends React.Component {
         h('input', {
           ref: el => { this.searchEl = el },
           value: searchText,
-          placeholder: 'Search for gene',
+          placeholder: 'Search for transcript',
           onChange: e => {
             this.setState({ searchText: e.target.value })
           },
@@ -160,7 +160,7 @@ class Search extends React.Component {
   }
 }
 
-class WatchedGenes extends React.Component {
+class WatchedTranscripts extends React.Component {
   constructor() {
     super()
 
@@ -170,7 +170,7 @@ class WatchedGenes extends React.Component {
   }
 
   render() {
-    const { dispatch, savedGenes, brushedGenes, project } = this.props
+    const { dispatch, savedTranscripts, brushedTranscripts, project } = this.props
         , { showSearch } = this.state
 
     return (
@@ -185,7 +185,7 @@ class WatchedGenes extends React.Component {
             fontSize: 16,
             marginBottom: '.25em',
           },
-        }, 'Watched genes'),
+        }, 'Watched transcripts'),
         h('div', {
           style: {
             display: 'flex',
@@ -195,11 +195,11 @@ class WatchedGenes extends React.Component {
           h('div', [
             !showSearch ? null : h(Search, {
               project,
-              onSelect: (geneName) => {
-                const newSavedGenes = new Set(savedGenes)
-                newSavedGenes.add(geneName)
+              onSelect: (transcriptName) => {
+                const newSavedTranscripts = new Set(savedTranscripts)
+                newSavedTranscripts.add(transcriptName)
 
-                dispatch(Action.SetSavedGenes(newSavedGenes))
+                dispatch(Action.SetSavedTranscripts(newSavedTranscripts))
 
                 this.setState({ showSearch: false })
               },
@@ -214,26 +214,26 @@ class WatchedGenes extends React.Component {
             }, 'Search'),
 
             h(Button, {
-              disabled: brushedGenes.size === 0,
+              disabled: brushedTranscripts.size === 0,
               onClick() {
-                dispatch(Action.SetSavedGenes(
-                  union(savedGenes, brushedGenes)
+                dispatch(Action.SetSavedTranscripts(
+                  union(savedTranscripts, brushedTranscripts)
                 ))
               },
             }, 'Watch selected'),
 
             h(Button, {
-              disabled: brushedGenes.size === 0,
+              disabled: brushedTranscripts.size === 0,
               onClick() {
-                dispatch(Action.SetSavedGenes(
-                  difference(savedGenes, brushedGenes)
+                dispatch(Action.SetSavedTranscripts(
+                  difference(savedTranscripts, brushedTranscripts)
                 ))
               },
             }, 'Unwatch selected'),
             h(Button, {
-              disabled: savedGenes.size === 0,
+              disabled: savedTranscripts.size === 0,
               onClick() {
-                dispatch(Action.SetSavedGenes(new Set()))
+                dispatch(Action.SetSavedTranscripts(new Set()))
               },
             }, 'Unwatch all'),
           ]),
@@ -246,7 +246,7 @@ class WatchedGenes extends React.Component {
                   const { files } = inputEl
 
                   if (files.length) {
-                    dispatch(Action.ImportSavedGenes(files[0]))
+                    dispatch(Action.ImportSavedTranscripts(files[0]))
                   }
                 }
 
@@ -255,9 +255,9 @@ class WatchedGenes extends React.Component {
             }, 'Import'),
 
             h(Button, {
-              disabled: savedGenes.size === 0,
+              disabled: savedTranscripts.size === 0,
               onClick() {
-                dispatch(Action.ExportSavedGenes)
+                dispatch(Action.ExportSavedTranscripts)
               },
             }, 'Export'),
           ]),
@@ -269,6 +269,6 @@ class WatchedGenes extends React.Component {
 
 module.exports = connect(state => ({
   project: R.path(['currentView', 'project'], state),
-  savedGenes: R.path(['currentView', 'savedGenes'], state),
-  brushedGenes: R.path(['currentView', 'brushedGenes'], state),
-}))(WatchedGenes)
+  savedTranscripts: R.path(['currentView', 'savedTranscripts'], state),
+  brushedTranscripts: R.path(['currentView', 'brushedTranscripts'], state),
+}))(WatchedTranscripts)

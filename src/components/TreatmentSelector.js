@@ -100,7 +100,7 @@ class TreatmentSelector extends React.Component {
 
     this.updateSelectedTreatment()
 
-    if (this.props.gene) {
+    if (this.props.transcript) {
       this.paintTreatments()
     }
   }
@@ -114,7 +114,7 @@ class TreatmentSelector extends React.Component {
       this.updateSelectedTreatment()
     }
 
-    if (this.props.gene !== prevProps.gene) {
+    if (this.props.transcript !== prevProps.transcript) {
       this.paintTreatments()
     }
 
@@ -155,7 +155,7 @@ class TreatmentSelector extends React.Component {
   }
 
   paintTreatments() {
-    const { gene, treatments, abundancesForTreatmentGene } = this.props
+    const { transcript, treatments, abundancesForTreatmentTranscript } = this.props
 
     const treatmentEls = R.zip(
       Object.keys(treatments),
@@ -167,11 +167,11 @@ class TreatmentSelector extends React.Component {
       el.style.fill = '';
     })
 
-    if (!gene) return
+    if (!transcript) return
 
     const abundances = R.chain(R.pipe(
       R.head,
-      treatment => abundancesForTreatmentGene(treatment, gene),
+      treatment => abundancesForTreatmentTranscript(treatment, transcript),
       d3.mean
     ))(treatmentEls)
 
@@ -268,5 +268,5 @@ module.exports = connect(R.applySpec({
   treatments: R.path(['currentView', 'project', 'treatments']),
   loading: R.path(['currentView', 'loading']),
   hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
-  abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
+  abundancesForTreatmentTranscript: R.path(['currentView', 'project', 'abundancesForTreatmentTranscript']),
 }))(TreatmentSelector)

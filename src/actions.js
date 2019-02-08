@@ -79,41 +79,41 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
-  UpdateDisplayedGenes: {
-    exec: updateDisplayedGenes,
+  UpdateDisplayedTranscripts: {
+    exec: updateDisplayedTranscripts,
     request: {
       sortPath: d => d == null || Array.isArray(d),
       order: d => d == null || d === 'asc' || d === 'desc',
     },
     response: {
-      displayedGenes: Object,
+      displayedTranscripts: Object,
     },
   },
 
-  SetSavedGenes: {
-    exec: setSavedGenes,
+  SetSavedTranscripts: {
+    exec: setSavedTranscripts,
     request: {
-      geneNames: isIterable,
+      transcriptNames: isIterable,
     },
     response: {
       resort: Boolean,
     },
   },
 
-  SetBrushedGenes: {
+  SetBrushedTranscripts: {
     exec: R.always({ resort: true }),
     request: {
-      geneNames: isIterable,
+      transcriptNames: isIterable,
     },
     response: {
       resort: Boolean,
     },
   },
 
-  SetHoveredGene: {
+  SetHoveredTranscript: {
     exec: R.always({}),
     request: {
-      geneName: d => typeof d === 'string' || d === null,
+      transcriptName: d => typeof d === 'string' || d === null,
     },
     response: {
     },
@@ -128,10 +128,10 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
-  SetFocusedGene: {
+  SetFocusedTranscript: {
     exec: R.always({}),
     request: {
-      geneName: String,
+      transcriptName: String,
     },
     response: {
     },
@@ -146,16 +146,16 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
-  ImportSavedGenes: {
-    exec: importSavedGenes,
+  ImportSavedTranscripts: {
+    exec: importSavedTranscripts,
     request: {
       file: Object,
     },
     response: {},
   },
 
-  ExportSavedGenes: {
-    exec: exportSavedGenes,
+  ExportSavedTranscripts: {
+    exec: exportSavedTranscripts,
     request: {},
     response: {},
   },
@@ -241,8 +241,8 @@ const metadataFields = {
     },
   },
 
-  geneAliases: {
-    label: 'Alternate names for genes',
+  transcriptAliases: {
+    label: 'Alternate names for transcripts',
     test: val => {
       if (typeof val !== 'string') {
         throw new Error('Value should be a URL pointing to a file')
@@ -270,15 +270,15 @@ const metadataFields = {
 }
 
 const fileMetadata = {
-  geneAliases: {
-    label: 'Gene aliases',
+  transcriptAliases: {
+    label: 'Transcript aliases',
     exec: async url => {
       const resp = await fetchResource(url)
 
       try {
         const aliases = await resp.text()
 
-        const geneAliases = R.pipe(
+        const transcriptAliases = R.pipe(
           R.split('\n'),
           R.map(R.pipe(
             R.split(','),
@@ -289,7 +289,7 @@ const fileMetadata = {
           R.fromPairs,
         )(aliases)
 
-        return { geneAliases }
+        return { transcriptAliases }
       } catch (e) {
         throw new Error('Error parsing file')
       }
@@ -386,30 +386,30 @@ async function parseAbundanceFile(resp, treatments) {
   let abundances = (await resp.text()).split('\n')
 
   const replicates = abundances.shift().split('\t').slice(1)
-      , genes = []
+      , transcripts = []
 
   abundances = abundances.map(row => {
     row = row.split('\t')
-    genes.push(row.shift())
+    transcripts.push(row.shift())
     return row.map(parseFloat)
   })
 
-  const geneIndices = R.invertObj(genes)
+  const transcriptIndices = R.invertObj(transcripts)
       , replicateIndices = R.invertObj(replicates)
 
-  function abundancesForTreatmentGene(treatmentID, geneName) {
+  function abundancesForTreatmentTranscript(treatmentID, transcriptName) {
     const treatment = treatments[treatmentID]
-        , geneIdx = geneIndices[geneName]
+        , transcriptIdx = transcriptIndices[transcriptName]
 
     return treatment.replicates.map(replicateID => {
       const replicateIdx = replicateIndices[replicateID]
-      return abundances[geneIdx][replicateIdx]
+      return abundances[transcriptIdx][replicateIdx]
     })
   }
 
   return {
-    genes,
-    abundancesForTreatmentGene,
+    transcripts,
+    abundancesForTreatmentTranscript,
   }
 }
 
@@ -520,10 +520,10 @@ function changeProject(projectURL) {
         , { treatments } = project
         , [ treatmentA, treatmentB ] = Object.keys(treatments).slice(3)
 
-    const persistedSavedGenes = JSON.parse(localStorage[projectURL + '-watched'] || '[]')
+    const persistedSavedTranscripts = JSON.parse(localStorage[projectURL + '-watched'] || '[]')
 
     dispatch(Action.SetPairwiseComparison(treatmentA, treatmentB))
-    dispatch(Action.SetSavedGenes(persistedSavedGenes))
+    dispatch(Action.SetSavedTranscripts(persistedSavedTranscripts))
 
     return {}
   }
@@ -715,27 +715,27 @@ function loadAvailableProjects() {
       const corpus = {}
           , ts = new TrieSearch()
 
-      Object.entries(project.geneAliases || {}).forEach(([ gene, aliases ]) => {
+      Object.entries(project.transcriptAliases || {}).forEach(([ transcript, aliases ]) => {
         aliases.forEach(alias => {
-          corpus[alias] = gene
+          corpus[alias] = transcript
         })
       })
 
-      if (project.genes) {
-        project.genes.forEach(gene => {
-          if (!(gene in corpus)) {
-            corpus[gene] = gene
+      if (project.transcripts) {
+        project.transcripts.forEach(transcript => {
+          if (!(transcript in corpus)) {
+            corpus[transcript] = transcript
           }
         })
       }
 
       ts.addFromObject(corpus);
 
-      project.searchGenes = name => ts.get(name)
+      project.searchTranscripts = name => ts.get(name)
 
       // TODO: This could be a much smaller object, since it will only ever
       // be generated from the abundance file. (Right?)
-      project.getCanonicalGeneLabel = gene => corpus[gene]
+      project.getCanonicalTranscriptLabel = transcript => corpus[transcript]
     }))
 
     const sortedLoadedProjects = {}
@@ -814,7 +814,7 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       .map(row => {
         const [ id, logFC, logATA, pValue ] = row.split('\t')
 
-        const label = project.getCanonicalGeneLabel(id)
+        const label = project.getCanonicalTranscriptLabel(id)
 
         return [id, {
           id,
@@ -832,36 +832,36 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
   }
 }
 
-function updateDisplayedGenes(sortPath, order) {
+function updateDisplayedTranscripts(sortPath, order) {
   return (dispatch, getState) => {
     const view = getState().currentView
 
     const {
       project,
-      savedGenes,
-      brushedGenes,
+      savedTranscripts,
+      brushedTranscripts,
       comparedTreatments,
       pairwiseData,
     } = view
 
-    const { abundancesForTreatmentGene } = project
+    const { abundancesForTreatmentTranscript } = project
         , [ treatmentA, treatmentB ] = comparedTreatments
 
-    const listedGenes = brushedGenes.size
-      ? brushedGenes
-      : savedGenes
+    const listedTranscripts = brushedTranscripts.size
+      ? brushedTranscripts
+      : savedTranscripts
 
-    const unsorted = [...listedGenes].map(geneName => {
+    const unsorted = [...listedTranscripts].map(transcriptName => {
       if (!pairwiseData) {
         return {
-          gene: { label: geneName },
-          saved: savedGenes.has(geneName),
+          transcript: { label: transcriptName },
+          saved: savedTranscripts.has(transcriptName),
         }
       }
 
-      const gene = pairwiseData.get(geneName) || {
-        id: geneName,
-        label: project.getCanonicalGeneLabel(geneName)
+      const transcript = pairwiseData.get(transcriptName) || {
+        id: transcriptName,
+        label: project.getCanonicalTranscriptLabel(transcriptName)
       }
 
       const [
@@ -871,11 +871,11 @@ function updateDisplayedGenes(sortPath, order) {
         treatmentB_AbundanceMedian,
       ] = R.chain(
         abundances => [d3.mean(abundances), d3.median(abundances)],
-        [abundancesForTreatmentGene(treatmentA, geneName), abundancesForTreatmentGene(treatmentB, geneName)]
+        [abundancesForTreatmentTranscript(treatmentA, transcriptName), abundancesForTreatmentTranscript(treatmentB, transcriptName)]
       )
 
       return {
-        gene,
+        transcript,
         treatmentA_AbundanceMean,
         treatmentA_AbundanceMedian,
         treatmentB_AbundanceMean,
@@ -893,7 +893,7 @@ function updateDisplayedGenes(sortPath, order) {
 
     const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
 
-    const displayedGenes = R.sort(
+    const displayedTranscripts = R.sort(
       (a, b) => {
         a = getter(a)
         b = getter(b)
@@ -906,22 +906,22 @@ function updateDisplayedGenes(sortPath, order) {
       unsorted
     )
 
-    return { displayedGenes }
+    return { displayedTranscripts }
   }
 }
 
-function setSavedGenes(savedGenes) {
+function setSavedTranscripts(savedTranscripts) {
   return (dispatch, getState) => {
     const key = getState().currentView.project.baseURL + '-watched'
-        , savedGenesStr = JSON.stringify([...savedGenes])
+        , savedTranscriptsStr = JSON.stringify([...savedTranscripts])
 
-    localStorage.setItem(key, savedGenesStr)
+    localStorage.setItem(key, savedTranscriptsStr)
 
     return { resort: true }
   }
 }
 
-function importSavedGenes(file) {
+function importSavedTranscripts(file) {
   return (dispatch, getState) => new Promise((resolve, reject) => {
     const reader = new FileReader()
 
@@ -929,14 +929,14 @@ function importSavedGenes(file) {
       const text = e.target.result
 
       try {
-        const importedWatchedGenes = text.trim().split('\n')
+        const importedWatchedTranscripts = text.trim().split('\n')
 
-        // TODO: Filter out those things that aren't in `project.genes`
+        // TODO: Filter out those things that aren't in `project.transcripts`
 
-        const existingWatchedGenes = getState().currentView.savedGenes
+        const existingWatchedTranscripts = getState().currentView.savedTranscripts
 
-        await dispatch(Action.SetSavedGenes(
-          [...importedWatchedGenes, ...existingWatchedGenes]
+        await dispatch(Action.SetSavedTranscripts(
+          [...importedWatchedTranscripts, ...existingWatchedTranscripts]
         ))
 
         resolve({})
@@ -949,13 +949,13 @@ function importSavedGenes(file) {
   })
 }
 
-function exportSavedGenes() {
+function exportSavedTranscripts() {
   return (dispatch, getState) => {
-    const { savedGenes } = getState().currentView
+    const { savedTranscripts } = getState().currentView
 
-    const blob = new Blob([ [...savedGenes].join('\n') ], { type: 'text/plain' })
+    const blob = new Blob([ [...savedTranscripts].join('\n') ], { type: 'text/plain' })
 
-    saveAs(blob, 'saved-genes.txt')
+    saveAs(blob, 'saved-transcripts.txt')
 
     return {}
   }

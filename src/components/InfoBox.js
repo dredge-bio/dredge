@@ -34,7 +34,7 @@ const InfoBoxContainer = styled.div`
   }
 `
 
-function ColorLegend({ gene, colorScale }) {
+function ColorLegend({ transcript, colorScale }) {
   return (
     h('div', {
       style: {
@@ -59,7 +59,7 @@ function ColorLegend({ gene, colorScale }) {
       }, 'Abundance'),
     ].concat(colorScale.ticks(4).map((abundance, i) =>
       h('div', {
-        key: `${gene}-${i}`,
+        key: `${transcript}-${i}`,
         style: {
           flexGrow: 1,
           display: 'flex',
@@ -121,23 +121,23 @@ class InfoBox extends React.Component {
 
   render() {
     const {
-      getCanonicalGeneLabel,
-      focusedGene,
-      hoveredGene,
+      getCanonicalTranscriptLabel,
+      focusedTranscript,
+      hoveredTranscript,
       treatments,
       comparedTreatments,
-      abundancesForTreatmentGene,
+      abundancesForTreatmentTranscript,
     } = this.props
 
     const { hovered } = this.state
 
-    const gene = hoveredGene || focusedGene || null
+    const transcript = hoveredTranscript || focusedTranscript || null
 
     let colorScale
 
-    if (gene && abundancesForTreatmentGene) {
+    if (transcript && abundancesForTreatmentTranscript) {
       const abundances = R.chain(R.pipe(
-        treatment => abundancesForTreatmentGene(treatment, gene),
+        treatment => abundancesForTreatmentTranscript(treatment, transcript),
         d3.mean
       ))(Object.keys(treatments))
 
@@ -150,7 +150,7 @@ class InfoBox extends React.Component {
     return (
       h(InfoBoxContainer, [
         h('div', [
-          gene && h('h3', getCanonicalGeneLabel(gene)),
+          transcript && h('h3', getCanonicalTranscriptLabel(transcript)),
           h('div', {
             style: {
               fontSize: 12,
@@ -159,7 +159,7 @@ class InfoBox extends React.Component {
               right: '33%',
               bottom: '-.33em',
             },
-          }, gene && hovered && [
+          }, transcript && hovered && [
             'Click a treatment to set top of comparison. Shift+Click to set bottom.',
           ]),
         ]),
@@ -179,8 +179,8 @@ class InfoBox extends React.Component {
               flexGrow: 1,
             },
           }, [
-            gene && h(TreatmentSelector, {
-              gene,
+            transcript && h(TreatmentSelector, {
+              transcript,
               paintHovered: true,
               tooltipPos: 'top',
               heatmap: true,
@@ -196,10 +196,10 @@ class InfoBox extends React.Component {
 module.exports = connect(R.applySpec({
   comparedTreatments: R.path(['currentView', 'comparedTreatments']),
   hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
-  focusedGene: R.path(['currentView', 'focusedGene']),
-  hoveredGene: R.path(['currentView', 'hoveredGene']),
+  focusedTranscript: R.path(['currentView', 'focusedTranscript']),
+  hoveredTranscript: R.path(['currentView', 'hoveredTranscript']),
   treatments: R.path(['currentView', 'project', 'treatments']),
-  abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
-  getCanonicalGeneLabel: R.path(['currentView', 'project', 'getCanonicalGeneLabel']),
+  abundancesForTreatmentTranscript: R.path(['currentView', 'project', 'abundancesForTreatmentTranscript']),
+  getCanonicalTranscriptLabel: R.path(['currentView', 'project', 'getCanonicalTranscriptLabel']),
 }))(InfoBox)
 

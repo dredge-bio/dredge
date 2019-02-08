@@ -54,15 +54,15 @@ class HeatMap extends React.Component {
   }
 
   render() {
-    const { grid, gene, abundancesForTreatmentGene, treatments, hoveredTreatment } = this.props
+    const { grid, transcript, abundancesForTreatmentTranscript, treatments, hoveredTreatment } = this.props
 
     if (!grid) return null
 
-    if (!gene) return null
+    if (!transcript) return null
 
     const abundances = grid.map(row =>
       row.map(treatment =>
-        treatment && d3.mean(abundancesForTreatmentGene(treatment, gene))))
+        treatment && d3.mean(abundancesForTreatmentTranscript(treatment, transcript))))
 
     const maxAbundance = R.reduce(R.max, 1, R.flatten(abundances).filter(R.identity))
 
@@ -134,10 +134,10 @@ module.exports = connect(R.applySpec({
   comparedTreatments: R.path(['currentView', 'comparedTreatments']),
   hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
   grid: R.path(['currentView', 'project', 'grid']),
-  gene: R.either(
-    R.path(['currentView', 'hoveredGene']),
-    R.path(['currentView', 'focusedGene'])
+  transcript: R.either(
+    R.path(['currentView', 'hoveredTranscript']),
+    R.path(['currentView', 'focusedTranscript'])
   ),
-  abundancesForTreatmentGene: R.path(['currentView', 'project', 'abundancesForTreatmentGene']),
+  abundancesForTreatmentTranscript: R.path(['currentView', 'project', 'abundancesForTreatmentTranscript']),
   treatments: R.path(['currentView', 'project', 'treatments']),
 }))(HeatMap)

@@ -12,7 +12,7 @@ const h = require('react-hyperscript')
 const TableCell = styled.td`
   padding: 0;
 
-  & .gene-label {
+  & .transcript-label {
     width: ${props => props.cellWidth - 4}px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -41,10 +41,10 @@ const HEADER_HEIGHT = 84;
 
 const FIELDS = [
   { sortPath: '', label: '' },
-  { sortPath: ['gene', 'label'], label: 'Gene' },
-  { sortPath: ['gene', 'pValue'], label: 'P-Value' },
-  { sortPath: ['gene', 'logATA'], label: 'logATA' },
-  { sortPath: ['gene', 'logFC'], label: 'logFC' },
+  { sortPath: ['transcript', 'label'], label: 'Transcript' },
+  { sortPath: ['transcript', 'pValue'], label: 'P-Value' },
+  { sortPath: ['transcript', 'logATA'], label: 'logATA' },
+  { sortPath: ['transcript', 'logFC'], label: 'logFC' },
   { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean' },
   { sortPath: ['treatmentA_AbundanceMedian'], label: 'Median' },
   { sortPath: ['treatmentB_AbundanceMean'], label: 'Mean' },
@@ -61,7 +61,7 @@ function calcColumnWidths(width) {
   ]
 
   return [
-    // the little icon to save/remove genes
+    // the little icon to save/remove transcripts
     28,
 
     width - 28 - R.sum(widths),
@@ -73,7 +73,7 @@ function dashesOrFixed(number, places = 2) {
   return number == null ? '--' : number.toFixed(places)
 }
 
-class GeneRow extends React.Component {
+class TranscriptRow extends React.Component {
   constructor() {
     super()
 
@@ -86,15 +86,15 @@ class GeneRow extends React.Component {
     let update = false
 
     for (const k in nextProps) {
-      if (k === 'focusedGene') {
-        const geneID = this.props.data.gene.id
+      if (k === 'focusedTranscript') {
+        const transcriptID = this.props.data.transcript.id
 
         update = (
-          (nextProps[k] === geneID && this.props[k] !== geneID) ||
-          (nextProps[k] !== geneID && this.props[k] === geneID)
+          (nextProps[k] === transcriptID && this.props[k] !== transcriptID) ||
+          (nextProps[k] !== transcriptID && this.props[k] === transcriptID)
         )
       } else if (k === 'pValueThreshold') {
-        const pValueMeasure = this.props.data.gene.pValue
+        const pValueMeasure = this.props.data.transcript.pValue
 
         update = (
           (pValueMeasure < nextProps[k] && pValueMeasure >= this.props[k]) ||
@@ -110,48 +110,48 @@ class GeneRow extends React.Component {
   }
 
   handleMouseEnter(e) {
-    const { setHoveredGene } = this.props
+    const { setHoveredTranscript } = this.props
 
-    setHoveredGene(findParent('tr', e.target).dataset.geneName)
+    setHoveredTranscript(findParent('tr', e.target).dataset.transcriptName)
   }
 
   handleMouseLeave() {
-    const { setHoveredGene } = this.props
+    const { setHoveredTranscript } = this.props
 
-    setHoveredGene(null)
+    setHoveredTranscript(null)
   }
 
   handleClick(e) {
-    const { setFocusedGene } = this.props
+    const { setFocusedTranscript } = this.props
 
     if (e.target.nodeName.toLowerCase() === 'a') return
 
-    setFocusedGene(findParent('tr', e.target).dataset.geneName)
+    setFocusedTranscript(findParent('tr', e.target).dataset.transcriptName)
   }
 
   render() {
     const {
       data,
       saved,
-      addSavedGene,
-      removeSavedGene,
+      addSavedTranscript,
+      removeSavedTranscript,
       columnWidths,
-      focusedGene,
+      focusedTranscript,
       pValueThreshold,
     } = this.props
 
-    const { pValue } = data.gene
+    const { pValue } = data.transcript
 
     return (
       h('tr', {
-        ['data-gene-name']: data.gene.id,
+        ['data-transcript-name']: data.transcript.id,
         onMouseEnter: this.handleMouseEnter,
         onMouseLeave: this.handleMouseLeave,
         onClick: this.handleClick,
         style: Object.assign({},
-          focusedGene !== data.gene.id
+          focusedTranscript !== data.transcript.id
             ? null : { backgroundColor: '#e6e6e6' },
-          (data.gene.pValue === undefined || pValue > pValueThreshold)
+          (data.transcript.pValue === undefined || pValue > pValueThreshold)
             ? { color: '#aaa' } : null
         ),
       }, [
@@ -163,9 +163,9 @@ class GeneRow extends React.Component {
               e.preventDefault()
 
               if (saved) {
-                removeSavedGene(data.gene.id)
+                removeSavedTranscript(data.transcript.id)
               } else {
-                addSavedGene(data.gene.id)
+                addSavedTranscript(data.transcript.id)
               }
 
             },
@@ -173,14 +173,14 @@ class GeneRow extends React.Component {
         ]),
 
         h(TableCell, { cellWidth: columnWidths[1] }, [
-          h('div.gene-label', data.gene.label),
+          h('div.transcript-label', data.transcript.label),
         ]),
 
-        h(TableCell, dashesOrFixed(data.gene.pValue, 3)),
+        h(TableCell, dashesOrFixed(data.transcript.pValue, 3)),
 
-        h(TableCell, dashesOrFixed(data.gene.logATA)),
+        h(TableCell, dashesOrFixed(data.transcript.logATA)),
 
-        h(TableCell, dashesOrFixed(data.gene.logFC)),
+        h(TableCell, dashesOrFixed(data.transcript.logFC)),
 
         h(TableCell, dashesOrFixed(data.treatmentA_AbundanceMean)),
 
@@ -259,11 +259,11 @@ class Table extends React.Component {
 
     this.state = {}
 
-    this.setFocusedGene = this.setFocusedGene.bind(this)
-    this.setHoveredGene = this.setHoveredGene.bind(this)
+    this.setFocusedTranscript = this.setFocusedTranscript.bind(this)
+    this.setHoveredTranscript = this.setHoveredTranscript.bind(this)
     this.handleKeyDown = this.handleKeyDown.bind(this)
-    this.addSavedGene = this.addSavedGene.bind(this)
-    this.removeSavedGene = this.removeSavedGene.bind(this)
+    this.addSavedTranscript = this.addSavedTranscript.bind(this)
+    this.removeSavedTranscript = this.removeSavedTranscript.bind(this)
   }
 
   componentDidMount() {
@@ -288,7 +288,7 @@ class Table extends React.Component {
   handleKeyDown(e) {
     const { dispatch, view } = this.props
 
-    const { displayedGenes } = view
+    const { displayedTranscripts } = view
 
     switch (e.code) {
       case "ArrowUp":
@@ -296,8 +296,8 @@ class Table extends React.Component {
         e.preventDefault()
 
         const selectedIdx = R.findIndex(
-          d => R.pathEq(['view', 'focusedGene'], d.gene.id, this.props),
-          displayedGenes
+          d => R.pathEq(['view', 'focusedTranscript'], d.transcript.id, this.props),
+          displayedTranscripts
         )
 
         if (selectedIdx === -1) return
@@ -305,31 +305,31 @@ class Table extends React.Component {
         let nextSelection
 
         if (e.code === "ArrowDown") {
-          if (selectedIdx + 1 === displayedGenes.length) return
+          if (selectedIdx + 1 === displayedTranscripts.length) return
 
-          nextSelection = displayedGenes[selectedIdx + 1].gene.id
+          nextSelection = displayedTranscripts[selectedIdx + 1].transcript.id
         }
 
         if (e.code === "ArrowUp") {
           if (selectedIdx - 1 === -1) return
 
-          nextSelection = displayedGenes[selectedIdx - 1].gene.id
+          nextSelection = displayedTranscripts[selectedIdx - 1].transcript.id
         }
 
-        dispatch(Action.SetFocusedGene(nextSelection))
+        dispatch(Action.SetFocusedTranscript(nextSelection))
         break;
       }
 
       case "Space": {
         e.preventDefault()
 
-        const { focusedGene, savedGenes } = view
+        const { focusedTranscript, savedTranscripts } = view
 
-        if (focusedGene) {
-          if (savedGenes.has(focusedGene)) {
-            this.removeSavedGene(focusedGene)
+        if (focusedTranscript) {
+          if (savedTranscripts.has(focusedTranscript)) {
+            this.removeSavedTranscript(focusedTranscript)
           } else {
-            this.addSavedGene(focusedGene)
+            this.addSavedTranscript(focusedTranscript)
           }
         }
         break;
@@ -338,49 +338,49 @@ class Table extends React.Component {
   }
 
   getDisplayMessage() {
-    const { brushedGenes, savedGenes } = this.props.view
+    const { brushedTranscripts, savedTranscripts } = this.props.view
 
     function text(verb, number) {
-      return `${number} ${verb} gene${number > 1 ? 's' : ''}`
+      return `${number} ${verb} transcript${number > 1 ? 's' : ''}`
     }
 
-    if (brushedGenes.size) {
-      return text('selected', brushedGenes.size)
-    } else if (savedGenes.size) {
-      return text('watched', savedGenes.size)
+    if (brushedTranscripts.size) {
+      return text('selected', brushedTranscripts.size)
+    } else if (savedTranscripts.size) {
+      return text('watched', savedTranscripts.size)
     } else {
       return null
     }
   }
 
-  addSavedGene(geneName) {
-    const { dispatch, view: { savedGenes }} = this.props
-        , newSavedGenes = new Set(savedGenes)
+  addSavedTranscript(transcriptName) {
+    const { dispatch, view: { savedTranscripts }} = this.props
+        , newSavedTranscripts = new Set(savedTranscripts)
 
-    newSavedGenes.add(geneName)
+    newSavedTranscripts.add(transcriptName)
 
-    dispatch(Action.SetSavedGenes(newSavedGenes))
+    dispatch(Action.SetSavedTranscripts(newSavedTranscripts))
   }
 
-  removeSavedGene(geneName) {
-    const { dispatch, view: { savedGenes }} = this.props
-        , newSavedGenes = new Set(savedGenes)
+  removeSavedTranscript(transcriptName) {
+    const { dispatch, view: { savedTranscripts }} = this.props
+        , newSavedTranscripts = new Set(savedTranscripts)
 
-    newSavedGenes.delete(geneName)
+    newSavedTranscripts.delete(transcriptName)
 
-    dispatch(Action.SetSavedGenes(newSavedGenes))
+    dispatch(Action.SetSavedTranscripts(newSavedTranscripts))
   }
 
-  setFocusedGene(geneName) {
+  setFocusedTranscript(transcriptName) {
     const { dispatch } = this.props
 
-    dispatch(Action.SetFocusedGene(geneName))
+    dispatch(Action.SetFocusedTranscript(transcriptName))
   }
 
-  setHoveredGene(geneName) {
+  setHoveredTranscript(transcriptName) {
     const { dispatch } = this.props
 
-    dispatch(Action.SetHoveredGene(geneName))
+    dispatch(Action.SetHoveredTranscript(transcriptName))
   }
 
   render() {
@@ -389,9 +389,9 @@ class Table extends React.Component {
 
     const {
       comparedTreatments,
-      savedGenes,
-      focusedGene,
-      displayedGenes,
+      savedTranscripts,
+      focusedTranscript,
+      displayedTranscripts,
       order,
       pValueThreshold,
     } = view
@@ -450,7 +450,7 @@ class Table extends React.Component {
               left: R.sum(columnWidths.slice(0, i + 1)),
               clickable: true,
               onClick: () => {
-                dispatch(Action.UpdateDisplayedGenes(
+                dispatch(Action.UpdateDisplayedTranscripts(
                   sortPath,
                   (R.equals(view.sortPath, sortPath) && order === 'asc')
                     ? 'desc'
@@ -479,18 +479,18 @@ class Table extends React.Component {
               h('col', { key: i, width }),
             )),
 
-            displayedGenes && h('tbody', displayedGenes.map(data =>
-              h(GeneRow, {
-                key: `${data.gene.id}-${treatmentA}-${treatmentB}`,
+            displayedTranscripts && h('tbody', displayedTranscripts.map(data =>
+              h(TranscriptRow, {
+                key: `${data.transcript.id}-${treatmentA}-${treatmentB}`,
                 data,
-                saved: savedGenes.has(data.gene.id),
-                setHoveredGene: this.setHoveredGene,
-                addSavedGene: this.addSavedGene,
-                removeSavedGene: this.removeSavedGene,
-                setFocusedGene: this.setFocusedGene,
+                saved: savedTranscripts.has(data.transcript.id),
+                setHoveredTranscript: this.setHoveredTranscript,
+                addSavedTranscript: this.addSavedTranscript,
+                removeSavedTranscript: this.removeSavedTranscript,
+                setFocusedTranscript: this.setFocusedTranscript,
                 pValueThreshold,
                 columnWidths,
-                focusedGene,
+                focusedTranscript,
               })
             )),
           ]),

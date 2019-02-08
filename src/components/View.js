@@ -8,7 +8,7 @@ const h = require('react-hyperscript')
     , TreatmentSelector = require('./TreatmentSelector')
     , Action = require('../actions')
     , Table = require('./Table')
-    , WatchedGenes = require('./WatchedGenes')
+    , WatchedTranscripts = require('./WatchedTranscripts')
     , InfoBox = require('./InfoBox')
     , PValueSelector = require('./PValueSelector')
 
@@ -89,7 +89,7 @@ function Viewer({
             height: '100%',
           }
         }, [
-          h(WatchedGenes),
+          h(WatchedTranscripts),
           h('div', {
             ['data-area']: 'table',
 

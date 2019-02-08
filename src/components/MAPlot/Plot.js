@@ -18,7 +18,7 @@ const padding = {
 
 const GRID_SQUARE_UNIT = 8
 
-const GENE_BIN_MULTIPLIERS = {
+const TRANSCRIPT_BIN_MULTIPLIERS = {
   1: .35,
   2: .5,
   3: .65,
@@ -91,7 +91,7 @@ class Plot extends React.Component {
 
     if (redrawBins) {
       this.drawBins()
-      this.drawSavedGenes()
+      this.drawSavedTranscripts()
       this.clearBrush()
     }
 
@@ -99,12 +99,12 @@ class Plot extends React.Component {
       this.drawAxes()
     }
 
-    if (didChange(R.lensProp('hoveredGene'))) {
-      this.updateHoveredGene()
+    if (didChange(R.lensProp('hoveredTranscript'))) {
+      this.updateHoveredTranscript()
     }
 
-    if (didChange(R.lensProp('savedGenes'))) {
-      this.drawSavedGenes()
+    if (didChange(R.lensProp('savedTranscripts'))) {
+      this.drawSavedTranscripts()
     }
   }
 
@@ -124,7 +124,7 @@ class Plot extends React.Component {
         this.binSelection.attr('fill', d => d.color)
 
         if (!d3.event.selection) {
-          dispatch(Action.SetBrushedGenes([]))
+          dispatch(Action.SetBrushedTranscripts([]))
           return
         }
 
@@ -142,12 +142,12 @@ class Plot extends React.Component {
 
         brushedBins.attr('fill', d => d.brushedColor)
 
-        const brushedGenes = R.pipe(
-          R.chain(R.prop('genes')),
+        const brushedTranscripts = R.pipe(
+          R.chain(R.prop('transcripts')),
           R.map(R.prop('id'))
         )(brushedBins.data())
 
-        dispatch(Action.SetBrushedGenes(brushedGenes))
+        dispatch(Action.SetBrushedTranscripts(brushedTranscripts))
       })
 
     const brushSel = d3.select(this.plotG).select('.brush')
@@ -236,16 +236,16 @@ class Plot extends React.Component {
       .domain([-500,150])
 
     bins.forEach(bin => {
-      bin.multiplier = GENE_BIN_MULTIPLIERS[bin.genes.length] || 1
-      if (bin.genes.length < 5) {
+      bin.multiplier = TRANSCRIPT_BIN_MULTIPLIERS[bin.transcripts.length] || 1
+      if (bin.transcripts.length < 5) {
         bin.color = colorScale(5)
         bin.brushedColor = brushedColorScale(5)
-      } else if (bin.genes.length >= 150) {
+      } else if (bin.transcripts.length >= 150) {
         bin.color = colorScale(150)
         bin.brushedColor = brushedColorScale(150)
       } else {
-        bin.color = colorScale(bin.genes.length)
-        bin.brushedColor = brushedColorScale(bin.genes.length)
+        bin.color = colorScale(bin.transcripts.length)
+        bin.brushedColor = brushedColorScale(bin.transcripts.length)
       }
     })
 
@@ -261,21 +261,21 @@ class Plot extends React.Component {
         .attr('fill', d => d.color)
   }
 
-  drawSavedGenes() {
+  drawSavedTranscripts() {
     const { xScale, yScale } = this.state
-        , { savedGenes, pairwiseData } = this.props
+        , { savedTranscripts, pairwiseData } = this.props
 
     if (!pairwiseData) return
 
     d3.select(this.svg)
-      .select('.saved-genes')
+      .select('.saved-transcripts')
       .selectAll('circle')
         .remove()
 
     d3.select(this.svg)
-      .select('.saved-genes')
+      .select('.saved-transcripts')
       .selectAll('circle')
-      .data([...savedGenes])
+      .data([...savedTranscripts])
           .enter()
         .append('circle')
         .attr('cx', d => xScale(pairwiseData.get(d).logATA))
@@ -285,9 +285,9 @@ class Plot extends React.Component {
 
   }
 
-  updateHoveredGene() {
+  updateHoveredTranscript() {
     const { xScale, yScale } = this.state
-        , { hoveredGene, pairwiseData } = this.props
+        , { hoveredTranscript, pairwiseData } = this.props
 
     const container = d3.select(this.svg).select('.hovered-marker')
 
@@ -298,10 +298,10 @@ class Plot extends React.Component {
       .style('opacity', 0)
       .remove()
 
-    if (hoveredGene === null) return;
+    if (hoveredTranscript === null) return;
     if (pairwiseData === null) return;
 
-    const data = pairwiseData.get(hoveredGene)
+    const data = pairwiseData.get(hoveredTranscript)
 
     if (!data) return
 
@@ -413,7 +413,7 @@ class Plot extends React.Component {
 
             h('g.squares'),
 
-            h('g.saved-genes'),
+            h('g.saved-transcripts'),
 
             h('g.brush'),
 
@@ -428,10 +428,10 @@ class Plot extends React.Component {
 module.exports = R.pipe(
   connect(R.applySpec({
     abundanceLimits: R.path(['currentView', 'project', 'metadata', 'abundanceLimits']),
-    savedGenes: R.path(['currentView', 'savedGenes']),
+    savedTranscripts: R.path(['currentView', 'savedTranscripts']),
     pairwiseData: R.path(['currentView', 'pairwiseData']),
     pValueThreshold: R.path(['currentView', 'pValueThreshold']),
-    hoveredGene: R.path(['currentView', 'hoveredGene']),
+    hoveredTranscript: R.path(['currentView', 'hoveredTranscript']),
     treatmentsLabel: state => {
       const view = state.currentView
 

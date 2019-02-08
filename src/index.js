@@ -25,8 +25,8 @@ function _createStore() {
             pairwiseData,
             order,
             sortPath,
-            brushedGenes,
-            savedGenes,
+            brushedTranscripts,
+            savedTranscripts,
           } = (getState().currentView || {})
 
           const triggerResort = (
@@ -44,11 +44,11 @@ function _createStore() {
               lastTriggeredSort[0] !== pairwiseData ||
               lastTriggeredSort[1] !== order ||
               lastTriggeredSort[2] !== sortPath ||
-              lastTriggeredSort[3] !== brushedGenes ||
-              lastTriggeredSort[4] !== savedGenes
+              lastTriggeredSort[3] !== brushedTranscripts ||
+              lastTriggeredSort[4] !== savedTranscripts
             ) {
-              dispatch(Action.UpdateDisplayedGenes(null, null))
-              lastTriggeredSort = [ pairwiseData, order, sortPath, brushedGenes, savedGenes ]
+              dispatch(Action.UpdateDisplayedTranscripts(null, null))
+              lastTriggeredSort = [ pairwiseData, order, sortPath, brushedTranscripts, savedTranscripts ]
             }
           }
 

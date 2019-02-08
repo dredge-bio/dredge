@@ -80,16 +80,16 @@ function getPlotBins(data, xScale, yScale, unit=5) {
           fcMax,
           cpmMin,
           cpmMax,
-          genes: inCPMBin,
+          transcripts: inCPMBin,
         })
       }
     });
   });
 
-  const numGenesBinned = bins.reduce((a, b) => a + b.genes.length, 0)
+  const numTranscriptsBinned = bins.reduce((a, b) => a + b.transcripts.length, 0)
 
-  if (data.length !== numGenesBinned) {
-    console.warn(`Warning: ${data.length} genes in sample but only ${numGenesBinned} put in bins`)
+  if (data.length !== numTranscriptsBinned) {
+    console.warn(`Warning: ${data.length} transcripts in sample but only ${numTranscriptsBinned} put in bins`)
   }
 
   return bins;

@@ -149,7 +149,7 @@ const Header = connect(state => ({
           style: {
             fontFamily: 'SourceSansPro',
           }
-        }, R.path(['project', 'metadata', 'label'], props.currentView) || 'dredge: Differential Expression Gene Explorer'),
+        }, R.path(['project', 'metadata', 'label'], props.currentView) || 'dredge: Differential Expression Transcript Explorer'),
       ]),
 
       h('div', { style: { position: 'relative', display: 'flex', background: 'white', }}, [

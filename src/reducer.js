@@ -12,16 +12,16 @@ function view(project) {
 
     pValueThreshold: 1,
 
-    focusedGene: null,
-    hoveredGene: null,
+    focusedTranscript: null,
+    hoveredTranscript: null,
     hoveredTreatment: null,
 
-    savedGenes: new Set(),
-    brushedGenes: new Set(),
+    savedTranscripts: new Set(),
+    brushedTranscripts: new Set(),
 
-    displayedGenes: null,
+    displayedTranscripts: null,
     order: 'asc',
-    sortPath: ['gene', 'label'],
+    sortPath: ['transcript', 'label'],
   }
 }
 
@@ -90,16 +90,16 @@ module.exports = function reducer(state=initialState(), action) {
             R.flip(R.merge)({
               pairwiseData,
               comparedTreatments: [treatmentA, treatmentB],
-              brushedGenes: new Set(),
+              brushedTranscripts: new Set(),
             })
           ))
         )(state)
       },
 
-      UpdateDisplayedGenes(sortPath, order) {
-        const { displayedGenes } = resp
+      UpdateDisplayedTranscripts(sortPath, order) {
+        const { displayedTranscripts } = resp
 
-        const updated = { displayedGenes }
+        const updated = { displayedTranscripts }
 
         if (sortPath) {
           updated.sortPath = sortPath
@@ -116,75 +116,75 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
 
-      SetHoveredGene(geneName) {
+      SetHoveredTranscript(transcriptName) {
         return R.assocPath(
-          ['currentView', 'hoveredGene'],
-          geneName,
+          ['currentView', 'hoveredTranscript'],
+          transcriptName,
           state
         )
       },
 
 
-      SetBrushedGenes(geneNames) {
+      SetBrushedTranscripts(transcriptNames) {
         return R.assocPath(
-          ['currentView', 'brushedGenes'],
-          new Set(geneNames),
+          ['currentView', 'brushedTranscripts'],
+          new Set(transcriptNames),
           state
         )
       },
 
-      SetSavedGenes(geneNames) {
-        const { currentView: { brushedGenes, focusedGene, savedGenes, hoveredGene }} = state
-            , nextSavedGenes = new Set(geneNames)
+      SetSavedTranscripts(transcriptNames) {
+        const { currentView: { brushedTranscripts, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
+            , nextSavedTranscripts = new Set(transcriptNames)
 
-        let nextFocusedGene = focusedGene
-          , nextHoveredGene = hoveredGene
+        let nextFocusedTranscript = focusedTranscript
+          , nextHoveredTranscript = hoveredTranscript
 
-        if (!nextSavedGenes.has(hoveredGene)) {
-          nextHoveredGene = null
+        if (!nextSavedTranscripts.has(hoveredTranscript)) {
+          nextHoveredTranscript = null
         }
 
-        // If we're viewing saved genes, and the focused gene has been removed
-        // from the saved genes, then move focus to the next one (if it exists)
-        const moveFocusedGene = (
-          focusedGene &&
-          !brushedGenes.size &&
-          savedGenes.has(focusedGene) &&
-          !nextSavedGenes.has(focusedGene)
+        // If we're viewing saved transcripts, and the focused transcript has been removed
+        // from the saved transcripts, then move focus to the next one (if it exists)
+        const moveFocusedTranscript = (
+          focusedTranscript &&
+          !brushedTranscripts.size &&
+          savedTranscripts.has(focusedTranscript) &&
+          !nextSavedTranscripts.has(focusedTranscript)
         )
 
-        if (moveFocusedGene && nextSavedGenes.size === 0) {
-          nextFocusedGene = null
-        } else if (moveFocusedGene) {
-          const savedGenesArr = [...savedGenes]
-              , idx = savedGenesArr.indexOf(focusedGene)
-              , inNextSaved = gene => nextSavedGenes.has(gene)
+        if (moveFocusedTranscript && nextSavedTranscripts.size === 0) {
+          nextFocusedTranscript = null
+        } else if (moveFocusedTranscript) {
+          const savedTranscriptsArr = [...savedTranscripts]
+              , idx = savedTranscriptsArr.indexOf(focusedTranscript)
+              , inNextSaved = transcript => nextSavedTranscripts.has(transcript)
 
-          // First search for the next one from the list of previous genes
+          // First search for the next one from the list of previous transcripts
           // that's in the next one
-          nextFocusedGene = R.find(inNextSaved, savedGenesArr.slice(idx))
+          nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(idx))
 
           // If there's nothing available, then go backwards
-          if (!nextFocusedGene) {
-            nextFocusedGene = R.find(inNextSaved, savedGenesArr.slice(0, idx).reverse())
+          if (!nextFocusedTranscript) {
+            nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(0, idx).reverse())
           }
 
           // If there's nothing found, then focus on the first of the new saved
-          // genes
-          nextFocusedGene = [...nextSavedGenes][0]
+          // transcripts
+          nextFocusedTranscript = [...nextSavedTranscripts][0]
         }
 
         return R.over(R.lensProp('currentView'), R.flip(R.merge)({
-          savedGenes: nextSavedGenes,
-          focusedGene: nextFocusedGene,
-          hoveredGene: nextHoveredGene,
+          savedTranscripts: nextSavedTranscripts,
+          focusedTranscript: nextFocusedTranscript,
+          hoveredTranscript: nextHoveredTranscript,
         }), state)
       },
 
-      SetFocusedGene(geneName) {
+      SetFocusedTranscript(transcriptName) {
         return R.assocPath(
-          ['currentView', 'focusedGene'],
-          geneName,
+          ['currentView', 'focusedTranscript'],
+          transcriptName,
           state
         )
       },
@@ -205,8 +205,8 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
 
-      ImportSavedGenes: R.always(state),
-      ExportSavedGenes: R.always(state),
+      ImportSavedTranscripts: R.always(state),
+      ExportSavedTranscripts: R.always(state),
     }),
 
     Pending: () => action.type.case({
@@ -225,7 +225,7 @@ module.exports = function reducer(state=initialState(), action) {
             R.flip(R.merge)({
               pairwiseData: null,
               comparedTreatments: [treatmentA, treatmentB],
-              brushedGenes: new Set(),
+              brushedTranscripts: new Set(),
             })
           ))
         )(state)
