@@ -332,9 +332,7 @@ class Plot extends React.Component {
       plotWidth,
     } = this.state
 
-    const { comparedTreatments } = this.props
-
-    const treatmentsText = (comparedTreatments || []).join('-')
+    const { treatmentsLabel } = this.props
 
     if (this.props.width == null) {
       return null
@@ -365,7 +363,7 @@ class Plot extends React.Component {
               textAnchor: 'end',
               dominantBaseline: 'ideographic',
             },
-          }, treatmentsText),
+          }, treatmentsLabel),
 
           // X Axis label
           h('text', {
@@ -434,7 +432,17 @@ module.exports = R.pipe(
     pairwiseData: R.path(['currentView', 'pairwiseData']),
     pValueThreshold: R.path(['currentView', 'pValueThreshold']),
     hoveredGene: R.path(['currentView', 'hoveredGene']),
-    comparedTreatments: R.path(['currentView', 'comparedTreatments']),
+    treatmentsLabel: state => {
+      const view = state.currentView
+
+      if (!view) return null
+
+      const { project, comparedTreatments } = view
+
+      return (comparedTreatments || [])
+        .map(t => R.path(['treatments', t, 'label'], project) || t)
+        .join(' vs. ')
+    },
   })),
   onResize(el => ({
     width: el.clientWidth,
