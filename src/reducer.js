@@ -76,6 +76,10 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       ViewProject(projectKey) {
+        if (R.path(['currentView', 'project', 'id'], state) === projectKey) {
+          return state
+        }
+
         const project = state.projects[projectKey]
 
         return R.assoc('currentView', view(project), state)

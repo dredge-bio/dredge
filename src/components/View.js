@@ -3,7 +3,7 @@
 const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
-    , { Navigable, Route } = require('org-shell')
+    , { Navigable } = require('org-shell')
     , MAPlot = require('./MAPlot')
     , TreatmentSelector = require('./TreatmentSelector')
     , Action = require('../actions')
@@ -28,10 +28,21 @@ const GridArea = styled.div`
 class Viewer extends React.Component {
   async componentDidMount() {
     await this.updateTreatments({})
+    await this.updateView({ opts: {}})
   }
 
   async componentDidUpdate(prevProps) {
     await this.updateTreatments(prevProps)
+    this.updateView(prevProps)
+
+  }
+
+  updateView(prevProps) {
+    const { dispatch } = this.props
+
+    if (this.props.opts.p !== prevProps.opts.p) {
+      dispatch(Action.SetPValueThreshold(this.props.opts.p || 1))
+    }
   }
 
   async updateTreatments(prevProps) {
@@ -59,7 +70,7 @@ class Viewer extends React.Component {
   }
 
   render() {
-    const { dispatch, updateOpts, treatmentA, treatmentB } = this.props
+    const { updateOpts, treatmentA, treatmentB } = this.props
 
     return (
       h(ViewerContainer, [
@@ -108,7 +119,7 @@ class Viewer extends React.Component {
 
 
         h(GridArea, { column: '10 / span 1', row: '3 / span 8' },
-          h(PValueSelector),
+          h(PValueSelector, { updateOpts }),
         ),
 
 

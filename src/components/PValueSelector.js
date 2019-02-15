@@ -49,13 +49,16 @@ class PValueSelector extends React.Component {
   }
 
   handleChange(e) {
-    const { dispatch } = this.props
+    const { dispatch, updateOpts } = this.props
 
     const threshold = e.target.value != undefined
       ? parseFloat(e.target.value)
       : parseFloat(e.target.dataset.threshold)
 
-    dispatch(Action.SetPValueThreshold(threshold))
+    updateOpts(opts =>
+      threshold === 1
+        ? R.omit(['p'], opts)
+        : Object.assign({}, opts, { p: threshold }))
   }
 
   render () {
