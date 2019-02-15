@@ -112,6 +112,8 @@ class Plot extends React.Component {
     const { dispatch } = this.props
         , { xScale, yScale } = this.state
 
+    if (!xScale) return
+
     const [ x0, x1 ] = xScale.domain().map(xScale)
     const [ y0, y1 ] = yScale.domain().map(yScale)
 

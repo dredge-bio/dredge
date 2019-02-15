@@ -1,68 +1,58 @@
 "use strict";
 
 const h = require('react-hyperscript')
-    , R = require('ramda')
-    , { typedAsyncActionMiddleware } = require('org-async-actions')
+    , createStore = require('./store')
+    , { ORGShell, Route } = require('org-shell')
     , { render } = require('react-dom')
-    , { applyMiddleware, compose, createStore } = require('redux')
-    , { Provider } = require('react-redux')
     , Application = require('./components/Application')
-    , reducer = require('./reducer')
     , Action = require('./actions')
 
-function _createStore() {
-  let lastTriggeredSort = []
+const resources = {
+  '': {
+    onBeforeRoute: async (dispatch, params, redirectTo) => {
+      redirectTo(new Route('home'))
+    },
+  },
 
-  return createStore(
-    reducer,
-    compose(
-      applyMiddleware(
-        typedAsyncActionMiddleware(),
-        ({ dispatch, getState }) => next => action => {
-          const res = next(action)
+  'home': {
+    onBeforeRoute: async (dispatch, params, redirectTo) => {
+      await dispatch(Action.Initialize)
 
-          const {
-            pairwiseData,
-            order,
-            sortPath,
-            brushedTranscripts,
-            savedTranscripts,
-          } = (getState().currentView || {})
+      if (!params.project) {
+        const resp = await dispatch(Action.GetDefaultProject)
+        const { projectKey } = resp.readyState.response
 
-          const triggerResort = (
-            action.readyState &&
-            action.readyState.case({
-              Success: R.T,
-              _: R.F,
-            }) &&
-            action.readyState.response.resort &&
-            pairwiseData
-          )
+        redirectTo(new Route('home', { project: projectKey }))
+        return
+      }
 
-          if (triggerResort) {
-            if (
-              lastTriggeredSort[0] !== pairwiseData ||
-              lastTriggeredSort[1] !== order ||
-              lastTriggeredSort[2] !== sortPath ||
-              lastTriggeredSort[3] !== brushedTranscripts ||
-              lastTriggeredSort[4] !== savedTranscripts
-            ) {
-              dispatch(Action.UpdateDisplayedTranscripts(null, null))
-              lastTriggeredSort = [ pairwiseData, order, sortPath, brushedTranscripts, savedTranscripts ]
-            }
-          }
+      await dispatch(Action.ViewProject(params.project))
+    },
+    mapStateToProps: (state, ownProps) => {
+      const { treatmentA, treatmentB } = ownProps.opts
+          , projectKey = ownProps.params.project
 
-          return res
-        }
-      ),
-      window.devToolsExtension ? window.devToolsExtension() : a => a
-    )
-  )
+      return { projectKey, treatmentA, treatmentB }
+    },
+    Component: require('./components/View'),
+  },
+
+  'project-browse': {
+    onBeforeRoute: async (dispatch) => {
+      dispatch(Action.Initialize)
+    },
+  },
 }
 
+const Main = ORGShell({
+  createStore,
+  resources,
+  onRouteChange(route, store) {
+    // console.log(route)
+  },
+}, Application)
+
 render(
-  h(Provider, { store: _createStore() }, [
-    h(Application),
-  ]),
+  h(Main),
   document.getElementById('application')
 )

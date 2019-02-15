@@ -45,7 +45,7 @@ const Action = module.exports = makeTypedAction({
   UpdateProject: {
     exec: R.always({}),
     request: {
-      projectBaseURL: String,
+      projectKey: String,
       update: Function,
     },
     response: {},
@@ -54,7 +54,7 @@ const Action = module.exports = makeTypedAction({
   ViewProject: {
     exec: R.always({}),
     request: {
-      projectBaseURL: String,
+      projectKey: String,
     },
     response: {},
   },
@@ -62,9 +62,17 @@ const Action = module.exports = makeTypedAction({
   ChangeProject: {
     exec: changeProject,
     request: {
-      projectBaseURL: String,
+      projectKey: String,
     },
     response: {},
+  },
+
+  GetDefaultProject: {
+    exec: getDefaultProject,
+    request: {},
+    response: {
+      projectKey: String,
+    },
   },
 
   SetPairwiseComparison: {
@@ -78,6 +86,18 @@ const Action = module.exports = makeTypedAction({
       resort: Boolean,
     },
   },
+
+  GetDefaultPairwiseComparison: {
+    exec: getDefaultPairwiseComparison,
+    request: {
+      projectKey: String,
+    },
+    response: {
+      treatmentA: String,
+      treatmentB: String,
+    },
+  },
+
 
   UpdateDisplayedTranscripts: {
     exec: updateDisplayedTranscripts,
@@ -337,7 +357,7 @@ const fileMetadata = {
 
           if (!project.treatments.hasOwnProperty(treatment)) {
             const e = new Error()
-            e.reason = `Treatment ${treatment} not in project ${project.baseURL}`
+            e.reason = `Treatment ${treatment} not in project ${project.projectKey}`
             throw e;
           }
 
@@ -496,6 +516,8 @@ function cleanSVGString(svgString, treatments) {
 
 function initialize() {
   return async (dispatch, getState) => {
+    if (getState().initialized) return {}
+
     /*
     dispatch(Action.Log('Checking browser compatibility...'))
     await dispatch(Action.CheckCompatibility)
@@ -504,28 +526,37 @@ function initialize() {
     */
     await dispatch(Action.LoadAvailableProjects)
 
+    /*
     const projectKey = Object.keys(getState().projects)[0]
 
     dispatch(Action.ChangeProject(projectKey))
+    */
 
     return {}
   }
 }
 
-function changeProject(projectURL) {
+function changeProject(projectKey) {
   return async (dispatch, getState) => {
-    await dispatch(Action.ViewProject(projectURL))
+    await dispatch(Action.ViewProject(projectKey))
 
-    const project = getState().projects[projectURL]
+    const project = getState().projects[projectKey]
         , { treatments } = project
         , [ treatmentA, treatmentB ] = Object.keys(treatments).slice(3)
 
-    const persistedSavedTranscripts = JSON.parse(localStorage[projectURL + '-watched'] || '[]')
+    const persistedSavedTranscripts = JSON.parse(localStorage[project.originalBaseURL + '-watched'] || '[]')
 
-    dispatch(Action.SetPairwiseComparison(treatmentA, treatmentB))
     dispatch(Action.SetSavedTranscripts(persistedSavedTranscripts))
 
     return {}
+  }
+}
+
+function getDefaultProject() {
+  return async (dispatch, getState) => {
+    return {
+      projectKey: Object.keys(getState().projects)[0]
+    }
   }
 }
 
@@ -544,11 +575,24 @@ function checkCompatibility() {
   }
 }
 
+function getDefaultPairwiseComparison(projectKey) {
+  return async (dispatch, getState) => {
+    const project = getState().projects[projectKey]
+        , { treatments } = project
+        , [ treatmentA, treatmentB ] = Object.keys(treatments)
+
+    return {
+      treatmentA,
+      treatmentB,
+    }
+  }
+}
+
 function loadAvailableProjects() {
   return async (dispatch, getState) => {
-    const makeLog = R.curry((projectBaseURL, label, url, status) => {
+    const makeLog = R.curry((projectKey, label, url, status) => {
       return dispatch(Action.Log(
-        projectBaseURL,
+        projectKey,
         label,
         url,
         status
@@ -567,7 +611,7 @@ function loadAvailableProjects() {
 
         try {
           projects = await resp.json()
-          if (!Array.isArray(projects)) throw new Error()
+          if (typeof projects !== 'object') throw new Error()
         } catch (e) {
           throw new Error('projects.json file is malformed')
         }
@@ -578,18 +622,24 @@ function loadAvailableProjects() {
       }
     }
 
-    await Promise.all(projects.map(async projectBaseURL => {
+    await Promise.all(Object.entries(projects).map(async ([ projectKey, projectBaseURL ]) => {
+      let resolvedBaseURL = projectBaseURL
+
       if (!projectBaseURL.endsWith('/')) {
-        projectBaseURL += '/'
+        resolvedBaseURL += '/'
       }
 
-      const baseURL = new URL(projectBaseURL, window.location.href).href
+      const baseURL = new URL(resolvedBaseURL, window.location.href).href
 
-      const makeProjectLog = makeLog(baseURL)
+      const makeProjectLog = makeLog(projectKey)
 
       dispatch(Action.UpdateProject(
-        baseURL,
-        R.always({ baseURL })
+        projectKey,
+        R.always({
+          id: projectKey,
+          originalBaseURL: projectBaseURL,
+          baseURL,
+        })
       ))
 
       let loadedMetadata = {}
@@ -636,7 +686,7 @@ function loadAvailableProjects() {
             log(LoadingStatus.OK(null))
 
             await dispatch(Action.UpdateProject(
-              baseURL,
+              projectKey,
               R.assocPath(['metadata', key], val)
             ))
 
@@ -647,7 +697,7 @@ function loadAvailableProjects() {
         }))
       }
 
-      const { metadata } = R.path(['projects', baseURL], getState())
+      const { metadata } = R.path(['projects', projectKey], getState())
 
       {
         const url = new URL(metadata.treatments, baseURL).href
@@ -662,7 +712,7 @@ function loadAvailableProjects() {
             const treatments = await resp.json()
 
             await dispatch(Action.UpdateProject(
-              baseURL,
+              projectKey,
               project => Object.assign({}, project, { treatments })
             ))
           } catch (e) {
@@ -675,7 +725,7 @@ function loadAvailableProjects() {
         }
       }
 
-      let project = R.path(['projects', baseURL], getState())
+      let project = R.path(['projects', projectKey], getState())
 
       await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
         let log = makeProjectLog(v.label)
@@ -695,7 +745,7 @@ function loadAvailableProjects() {
           const val = await v.exec(url, project)
 
           await dispatch(Action.UpdateProject(
-            baseURL,
+            projectKey,
             project => Object.assign({}, project, val)
           ))
 
@@ -707,10 +757,10 @@ function loadAvailableProjects() {
         }
       }))
 
-      project = R.path(['projects', baseURL], getState())
+      project = R.path(['projects', projectKey], getState())
 
       project.pairwiseComparisonCache = {}
-      projects[baseURL] = project
+      projects[projectKey] = project
 
       const corpus = {}
           , ts = new TrieSearch()
@@ -737,14 +787,6 @@ function loadAvailableProjects() {
       // be generated from the abundance file. (Right?)
       project.getCanonicalTranscriptLabel = transcript => corpus[transcript]
     }))
-
-    const sortedLoadedProjects = {}
-
-    projects.forEach(project => {
-      if (projects.hasOwnProperty(project)) {
-        sortedLoadedProjects[project] = projects[project]
-      }
-    })
 
     return {}
   }
@@ -861,7 +903,7 @@ function updateDisplayedTranscripts(sortPath, order) {
 
       const transcript = pairwiseData.get(transcriptName) || {
         id: transcriptName,
-        label: project.getCanonicalTranscriptLabel(transcriptName)
+        label: project.getCanonicalTranscriptLabel(transcriptName),
       }
 
       const [
@@ -912,7 +954,7 @@ function updateDisplayedTranscripts(sortPath, order) {
 
 function setSavedTranscripts(savedTranscripts) {
   return (dispatch, getState) => {
-    const key = getState().currentView.project.baseURL + '-watched'
+    const key = getState().currentView.project.originalBaseURL + '-watched'
         , savedTranscriptsStr = JSON.stringify([...savedTranscripts])
 
     localStorage.setItem(key, savedTranscriptsStr)

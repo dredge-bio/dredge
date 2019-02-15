@@ -7,7 +7,7 @@ function view(project) {
     project,
     loading: false,
 
-    comparedTreatments: null,
+    // comparedTreatments: null,
     pairwiseData: null,
 
     pValueThreshold: 1,
@@ -59,8 +59,8 @@ module.exports = function reducer(state=initialState(), action) {
         return state
       },
 
-      UpdateProject(baseURL, updateFn) {
-        return R.over(R.lensPath(['projects', baseURL]), updateFn, state)
+      UpdateProject(key, updateFn) {
+        return R.over(R.lensPath(['projects', key]), updateFn, state)
       },
 
       CheckCompatibility() {
@@ -71,8 +71,12 @@ module.exports = function reducer(state=initialState(), action) {
         return state
       },
 
-      ViewProject(projectBaseURL) {
-        const project = state.projects[projectBaseURL]
+      GetDefaultProject() {
+        return state
+      },
+
+      ViewProject(projectKey) {
+        const project = state.projects[projectKey]
 
         return R.assoc('currentView', view(project), state)
       },
@@ -94,6 +98,10 @@ module.exports = function reducer(state=initialState(), action) {
             })
           ))
         )(state)
+      },
+
+      GetDefaultPairwiseComparison() {
+        return state
       },
 
       UpdateDisplayedTranscripts(sortPath, order) {

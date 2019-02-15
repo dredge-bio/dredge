@@ -8,8 +8,6 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , Log = require('./Log')
-    , View = require('./View')
-    , ProjectSelector = require('./ProjectSelector')
 
 injectGlobal`
 html, body, #application {
@@ -148,11 +146,11 @@ const Header = connect(state => ({
         h('h1', {
           style: {
             fontFamily: 'SourceSansPro',
-          }
+          },
         }, R.path(['project', 'metadata', 'label'], props.currentView) || 'dredge: Differential Expression Transcript Explorer'),
       ]),
 
-      h('div', { style: { position: 'relative', display: 'flex', background: 'white', }}, [
+      h('div', { style: { position: 'relative', display: 'flex', background: 'white' }}, [
         currentProject && h('label', {
           htmlFor: 'dataset-selector',
         }, 'Dataset:'),
@@ -171,7 +169,7 @@ const Header = connect(state => ({
           h('option', {
             key,
             value: key,
-          }, key)
+          }, props.projects[key].metadata.label || key)
         )),
       ]),
 
@@ -200,12 +198,6 @@ class Application extends React.Component {
     this.handleRequestResize = this.handleRequestResize.bind(this)
   }
 
-  componentDidMount() {
-    const { dispatch } = this.props
-
-    dispatch(Action.Initialize)
-  }
-
   handleRequestResize() {
     this.setState(getWindowDimensions(), () => {
       window.dispatchEvent(new Event('application-resize'))
@@ -213,34 +205,30 @@ class Application extends React.Component {
   }
 
   render() {
-    const { initialized, currentView } = this.props
+    const { initialized, children } = this.props
 
     let mainEl
 
     if (!initialized) {
       mainEl = h(Log)
-    } else if (!currentView) {
-      mainEl = h(ProjectSelector)
     } else {
-      mainEl = h(View)
+      mainEl = children
     }
 
     return h(ApplicationContainer, {
       style: {
         height: this.state.height,
         width: this.state.width,
-      }
+      },
     }, [
       h(Header, {
-        onRequestResize: this.handleRequestResize
+        onRequestResize: this.handleRequestResize,
       }),
-      h('main', [
-        mainEl,
-      ]),
+      h('main', [].concat(mainEl)),
     ])
   }
 }
 
 module.exports = connect(
-  R.pick(['initialized', 'currentView'])
+  R.pick(['initialized'])
 )(Application)

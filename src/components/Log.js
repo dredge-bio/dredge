@@ -57,11 +57,15 @@ function Log({ infoLog, logsByProject }) {
         h(LogProject, {
           key: baseURL,
         }, [
-          h('h3', [
+          h('h3', {
+            key: 'project-label',
+          }, [
             label,
           ]),
 
-          h('div.-grid', [
+          h('div.-grid', {
+            key: 'grid',
+          }, [
             Object.values(files).map(({ url, label, status }) => [
               h(Status, { key: `${label}-status`, status }),
 
@@ -69,7 +73,9 @@ function Log({ infoLog, logsByProject }) {
                 label,
               ]),
 
-              h('div', [
+              h('div', {
+                key: `${label}-link`,
+              }, [
                 h('a', {
                   href: url,
                   style: {
@@ -79,7 +85,9 @@ function Log({ infoLog, logsByProject }) {
                 }, url),
               ]),
 
-              h('div.-message', [
+              h('div.-message', {
+                key: `${label}-message`,
+              }, [
                 status.case({
                   Failed: message => !message ? null : h('div', {
                     style: {
@@ -95,13 +103,14 @@ function Log({ infoLog, logsByProject }) {
 
               ...(!(url || '').endsWith('project.json') ? [] : (
                 Object.values(metadata).map(({ field, label, status }) => [
-                  h('div'),
+                  h('div', {
+                    key: `project-${field}-spacer`
+                  }),
 
-                  h('div', { style: { display: 'flex' }}, [
-                    h(Status, { key: `${label}-status`, status }),
+                  h('div', { key: `project-${field}-info`, style: { display: 'flex' }}, [
+                    h(Status, { status }),
 
                     h('div.-label', {
-                      key: `${label}-label`,
                       style: {
                         position: 'absolute',
                         marginLeft: '18px',
@@ -111,7 +120,9 @@ function Log({ infoLog, logsByProject }) {
                     ]),
                   ]),
 
-                  h('div'),
+                  h('div', {
+                    key: `project-${field}-spacer2`
+                  }),
                 ])
               ))
             ]),
