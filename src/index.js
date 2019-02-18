@@ -26,7 +26,7 @@ const resources = {
         return
       }
 
-      await dispatch(Action.ViewProject(params.project))
+      await dispatch(Action.LoadProject(params.project))
     },
     mapStateToProps: (state, ownProps) => {
       const { treatmentA, treatmentB } = ownProps.opts

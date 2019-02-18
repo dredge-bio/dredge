@@ -51,20 +51,14 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
-  ViewProject: {
-    exec: R.always({}),
+  LoadProject: {
+    exec: loadProject,
     request: {
       projectKey: String,
     },
-    response: {},
-  },
-
-  ChangeProject: {
-    exec: changeProject,
-    request: {
-      projectKey: String,
+    response: {
+      savedTranscripts: Object,
     },
-    response: {},
   },
 
   GetDefaultProject: {
@@ -521,44 +515,28 @@ function initialize() {
   return async (dispatch, getState) => {
     if (getState().initialized) return {}
 
-    /*
-    dispatch(Action.Log('Checking browser compatibility...'))
-    await dispatch(Action.CheckCompatibility)
-    dispatch(Action.Log('Browser compatible.'))
-    dispatch(Action.Log('Loading available projects...'))
-    */
     await dispatch(Action.LoadAvailableProjects)
-
-    /*
-    const projectKey = Object.keys(getState().projects)[0]
-
-    dispatch(Action.ChangeProject(projectKey))
-    */
 
     return {}
   }
 }
 
-function changeProject(projectKey) {
+function loadProject(projectKey) {
   return async (dispatch, getState) => {
-    await dispatch(Action.ViewProject(projectKey))
-
     const project = getState().projects[projectKey]
-        , { treatments } = project
-        , [ treatmentA, treatmentB ] = Object.keys(treatments).slice(3)
+        , savedTranscriptKey = project.originalBaseURL + '-watched'
 
-    const persistedSavedTranscripts = JSON.parse(localStorage[project.originalBaseURL + '-watched'] || '[]')
+    const savedTranscripts = new Set(
+      JSON.parse(localStorage[savedTranscriptKey] || '[]'))
 
-    dispatch(Action.SetSavedTranscripts(persistedSavedTranscripts))
-
-    return {}
+    return { savedTranscripts }
   }
 }
 
 function getDefaultProject() {
   return async (dispatch, getState) => {
     return {
-      projectKey: Object.keys(getState().projects)[0]
+      projectKey: Object.keys(getState().projects)[0],
     }
   }
 }

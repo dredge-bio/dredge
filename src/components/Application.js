@@ -163,7 +163,7 @@ const Header = connect(state => ({
           id: 'dataset-selector',
           value: currentProject,
           onChange: e => {
-            props.dispatch(Action.ChangeProject(e.target.value))
+            props.dispatch(Action.LoadProject(e.target.value))
           },
         }, Object.keys(props.projects || {}).map(key =>
           h('option', {

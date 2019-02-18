@@ -2,8 +2,8 @@
 
 const R = require('ramda')
 
-function view(project) {
-  return {
+function view(project, extra) {
+  return Object.assign({
     project,
     loading: false,
 
@@ -22,7 +22,7 @@ function view(project) {
     displayedTranscripts: null,
     order: 'asc',
     sortPath: ['transcript', 'label'],
-  }
+  }, extra)
 }
 
 function initialState() {
@@ -67,22 +67,19 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('compatible', true, state)
       },
 
-      ChangeProject() {
-        return state
-      },
-
-      GetDefaultProject() {
-        return state
-      },
-
-      ViewProject(projectKey) {
+      LoadProject(projectKey) {
         if (R.path(['currentView', 'project', 'id'], state) === projectKey) {
           return state
         }
 
-        const project = state.projects[projectKey]
+        const { savedTranscripts } = resp
+            , project = state.projects[projectKey]
 
-        return R.assoc('currentView', view(project), state)
+        return R.assoc('currentView', view(project, { savedTranscripts }), state)
+      },
+
+      GetDefaultProject() {
+        return state
       },
 
       SetPairwiseComparison(treatmentA, treatmentB) {
