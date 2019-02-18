@@ -20,7 +20,12 @@ function PlotContainer({
         position: 'relative',
       },
     }, [
-      height === null ? null : h(Plot, { view, height, width }),
+      height === null ? null : h(Plot, {
+        key: view.project.id,
+        view,
+        height,
+        width
+      }),
       h(LoadingIndicator, { loading: view.loading }),
     ])
   )

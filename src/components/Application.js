@@ -4,6 +4,7 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
+    , { Navigable, Route } = require('org-shell')
     , { injectGlobal } = require('styled-components')
     , { connect } = require('react-redux')
     , Action = require('../actions')
@@ -131,11 +132,15 @@ const HeaderContainer = styled.header`
 
 
 
-const Header = connect(state => ({
-  projects: state.projects,
-  currentView: state.currentView,
-}))(function Header(props) {
-  const currentProject = R.path(['project', 'baseURL'], props.currentView)
+const Header = R.pipe(
+  connect(state => ({
+    projects: state.projects,
+    currentView: state.currentView,
+  })),
+  Navigable
+)(function Header(props) {
+  const { navigateTo } = props
+      , currentProject = R.path(['project', 'id'], props.currentView)
 
   return (
     h(HeaderContainer, [
@@ -163,7 +168,7 @@ const Header = connect(state => ({
           id: 'dataset-selector',
           value: currentProject,
           onChange: e => {
-            props.dispatch(Action.LoadProject(e.target.value))
+            navigateTo(new Route('home', { project: e.target.value }))
           },
         }, Object.keys(props.projects || {}).map(key =>
           h('option', {
