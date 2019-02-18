@@ -277,7 +277,7 @@ class Plot extends React.Component {
     d3.select(this.svg)
       .select('.saved-transcripts')
       .selectAll('circle')
-      .data([...savedTranscripts])
+      .data([...savedTranscripts].filter(x => pairwiseData.has(x)))
           .enter()
         .append('circle')
         .attr('cx', d => xScale(pairwiseData.get(d).logATA))
