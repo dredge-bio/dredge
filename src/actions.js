@@ -289,6 +289,14 @@ const metadataFields = {
   },
 }
 
+function trim(x) {
+  return x.trim()
+}
+
+function notBlank(x) {
+  return x
+}
+
 const fileMetadata = {
   transcriptAliases: {
     label: 'Transcript aliases',
@@ -297,17 +305,12 @@ const fileMetadata = {
 
       try {
         const aliases = await resp.text()
+            , transcriptAliases = {}
 
-        const transcriptAliases = R.pipe(
-          R.split('\n'),
-          R.map(R.pipe(
-            R.split(','),
-            R.map(R.trim),
-            R.filter(R.identity),
-            arr => [arr[0], arr.slice(1)]
-          )),
-          R.fromPairs,
-        )(aliases)
+        for (const line of aliases.split('\n')) {
+          const [ canonical, ...others ] = line.split('\n').map(trim).filter(notBlank)
+          transcriptAliases[canonical] = others
+        }
 
         return { transcriptAliases }
       } catch (e) {
