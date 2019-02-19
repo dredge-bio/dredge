@@ -4,6 +4,7 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
+    , { Flex, Button } = require('rebass')
     , { connect } = require('react-redux')
     , Action = require('../actions')
 
@@ -26,28 +27,9 @@ function difference(a, b) {
   return c
 }
 
-const Button = styled.button`
-  border: 1px solid #666;
-  border-radius: 3px;
-  background-color: white;
-  padding: 6px 12px;
-
-  font-weight: bold;
-  font-size: 14px;
-
-  cursor: pointer;
-
-  &:not(:last-of-type) {
+const ButtonContainer = styled.div`
+  button:not(:last-of-type) {
     margin-right: 8px;
-  }
-
-  &:hover:not(:disabled) {
-    background-color: #f0f0f0;
-  }
-
-  &:disabled {
-    opacity: .75;
-    cursor: not-allowed;
   }
 `
 
@@ -186,13 +168,10 @@ class WatchedTranscripts extends React.Component {
             marginBottom: '.25em',
           },
         }, 'Watched transcripts'),
-        h('div', {
-          style: {
-            display: 'flex',
-            justifyContent: 'space-between',
-          },
+        h(Flex, {
+          justifyContent: 'space-between',
         }, [
-          h('div', [
+          h(ButtonContainer, [
             !showSearch ? null : h(Search, {
               project,
               onSelect: (transcriptName) => {
@@ -237,7 +216,7 @@ class WatchedTranscripts extends React.Component {
               },
             }, 'Unwatch all'),
           ]),
-          h('div', [
+          h(ButtonContainer, [
             h(Button, {
               onClick() {
                 const inputEl = document.createElement('input')

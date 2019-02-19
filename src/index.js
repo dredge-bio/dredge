@@ -3,19 +3,22 @@
 const h = require('react-hyperscript')
     , createStore = require('./store')
     , { ORGShell, Route } = require('org-shell')
+    , { Provider } = require('react-redux')
     , { render } = require('react-dom')
+    , { ThemeProvider } = require('styled-components')
+    , theme = require('./theme')
     , Application = require('./components/Application')
     , Action = require('./actions')
 
 const resources = {
   '': {
-    onBeforeRoute: async (dispatch, params, redirectTo) => {
+    onBeforeRoute: async (params, redirectTo) => {
       redirectTo(new Route('home'))
     },
   },
 
   'home': {
-    onBeforeRoute: async (dispatch, params, redirectTo) => {
+    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
       await dispatch(Action.Initialize)
 
       if (!params.project) {
@@ -28,31 +31,32 @@ const resources = {
 
       await dispatch(Action.LoadProject(params.project))
     },
-    mapStateToProps: (state, ownProps) => {
-      const { treatmentA, treatmentB } = ownProps.opts
-          , projectKey = ownProps.params.project
-
-      return { projectKey, treatmentA, treatmentB }
-    },
     Component: require('./components/View'),
   },
 
-  'project-browse': {
-    onBeforeRoute: async (dispatch) => {
-      dispatch(Action.Initialize)
-    },
+  'new': {
+    Component: require('./components/NewProject'),
   },
 }
 
+const store = createStore()
+
 const Main = ORGShell({
-  createStore,
+  extraArgs: {
+    dispatch: store.dispatch,
+    getState: store.getState,
+  },
   resources,
-  onRouteChange(route, store) {
+  onRouteChange(route) {
     // console.log(route)
   },
 }, Application)
 
 render(
-  h(Main),
+  h(Provider, { store },
+    h(ThemeProvider, { theme },
+      h(Main)
+    ),
+  ),
   document.getElementById('application')
 )

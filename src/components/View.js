@@ -1,9 +1,11 @@
 "use strict";
 
 const h = require('react-hyperscript')
+    , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
     , { Navigable } = require('org-shell')
+    , { connect } = require('react-redux')
     , MAPlot = require('./MAPlot')
     , TreatmentSelector = require('./TreatmentSelector')
     , Action = require('../actions')
@@ -55,7 +57,7 @@ class Viewer extends React.Component {
       const { response } = resp.readyState
       treatmentA = response.treatmentA
       treatmentB = response.treatmentB
-      updateOpts(opts => Object.assign(opts, { treatmentA, treatmentB }))
+      updateOpts(opts => Object.assign({}, opts, { treatmentA, treatmentB }))
       return
     }
 
@@ -87,7 +89,7 @@ class Viewer extends React.Component {
               tooltipPos: 'bottom',
               selectedTreatment: treatmentA,
               onSelectTreatment: treatment => {
-                updateOpts(opts => Object.assign(opts, { treatmentA: treatment }))
+                updateOpts(opts => Object.assign({}, opts, { treatmentA: treatment }))
               },
             }),
           ]),
@@ -106,7 +108,7 @@ class Viewer extends React.Component {
               tooltipPos: 'top',
               selectedTreatment: treatmentB,
               onSelectTreatment: treatment => {
-                updateOpts(opts => Object.assign(opts, { treatmentB: treatment }))
+                updateOpts(opts => Object.assign({}, opts, { treatmentB: treatment }))
               },
             }),
           ]),
@@ -154,4 +156,12 @@ class Viewer extends React.Component {
   }
 }
 
-module.exports = Navigable(Viewer)
+module.exports = R.pipe(
+  Navigable,
+  connect((state, ownProps) => {
+    const { treatmentA, treatmentB } = ownProps.opts
+        , projectKey = ownProps.params.project
+
+    return { projectKey, treatmentA, treatmentB }
+  }),
+)(Viewer)

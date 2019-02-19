@@ -5,12 +5,12 @@ const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
     , { Navigable, Route } = require('org-shell')
-    , { injectGlobal } = require('styled-components')
+    , { createGlobalStyle } = require('styled-components')
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , Log = require('./Log')
 
-injectGlobal`
+const GlobalStyle = createGlobalStyle`
 html, body, #application {
   height: 100%;
   width: 100%;
@@ -220,17 +220,21 @@ class Application extends React.Component {
       mainEl = children
     }
 
-    return h(ApplicationContainer, {
-      style: {
-        height: this.state.height,
-        width: this.state.width,
-      },
-    }, [
-      h(Header, {
-        onRequestResize: this.handleRequestResize,
-      }),
-      h('main', [].concat(mainEl)),
-    ])
+    return [
+      h(GlobalStyle, { key: 'style' }),
+      h(ApplicationContainer, {
+        key: 'container',
+        style: {
+          height: this.state.height,
+          width: this.state.width,
+        },
+      }, [
+        h(Header, {
+          onRequestResize: this.handleRequestResize,
+        }),
+        h('main', [].concat(mainEl)),
+      ])
+    ]
   }
 }
 
