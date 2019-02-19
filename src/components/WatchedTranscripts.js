@@ -9,12 +9,7 @@ const h = require('react-hyperscript')
     , Action = require('../actions')
 
 function union(a, b) {
-  const c = new Set()
-
-  a.forEach(x => c.add(x))
-  b.forEach(x => c.add(x))
-
-  return c
+  return new Set([...a, ...b])
 }
 
 function difference(a, b) {
@@ -214,7 +209,7 @@ class WatchedTranscripts extends React.Component {
               onClick() {
                 dispatch(Action.SetSavedTranscripts(new Set()))
               },
-            }, 'Unwatch all'),
+            }, 'Clear'),
           ]),
           h(ButtonContainer, [
             h(Button, {
