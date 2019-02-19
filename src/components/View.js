@@ -149,7 +149,7 @@ class Viewer extends React.Component {
         ]),
 
         h(GridArea, { column: '12 / span 13', row: '10 / span 3' },
-          h(InfoBox)
+          h(InfoBox, { updateOpts })
         ),
       ])
     )

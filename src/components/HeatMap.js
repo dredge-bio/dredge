@@ -30,14 +30,17 @@ class HeatMap extends React.Component {
   }
 
   selectTreatment(e) {
-    const { dispatch, comparedTreatments } = this.props
+    const { updateOpts, comparedTreatments } = this.props
         , selectedTreatment = e.target.dataset.treatment
 
-    const newComparedTreatments = e.shiftKey
+    const [ treatmentA, treatmentB ] = e.shiftKey
       ? [comparedTreatments[0], selectedTreatment]
       : [selectedTreatment, comparedTreatments[1]]
 
-    dispatch(Action.SetPairwiseComparison(...newComparedTreatments))
+    updateOpts(opts => Object.assign({}, opts, {
+      treatmentA,
+      treatmentB,
+    }))
   }
 
   setHoveredTreatment(e) {

@@ -8,7 +8,6 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , HeatMap = require('./HeatMap')
     , TreatmentSelector = require('./TreatmentSelector')
-    , Action = require('../actions')
 
 const InfoBoxContainer = styled.div`
   display: flex;
@@ -110,13 +109,16 @@ class InfoBox extends React.Component {
   }
 
   handleSelectTreatment(selectedTreatment, shiftKey) {
-      const { dispatch, comparedTreatments } = this.props
+    const { updateOpts, comparedTreatments } = this.props
 
-      const newComparedTreatments = shiftKey
-        ? [comparedTreatments[0], selectedTreatment]
-        : [selectedTreatment, comparedTreatments[1]]
+    const [ treatmentA, treatmentB ] = shiftKey
+      ? [comparedTreatments[0], selectedTreatment]
+      : [selectedTreatment, comparedTreatments[1]]
 
-      dispatch(Action.SetPairwiseComparison(...newComparedTreatments))
+    updateOpts(opts => Object.assign({}, opts, {
+      treatmentA,
+      treatmentB,
+    }))
   }
 
   render() {
@@ -127,6 +129,7 @@ class InfoBox extends React.Component {
       treatments,
       comparedTreatments,
       abundancesForTreatmentTranscript,
+      updateOpts,
     } = this.props
 
     const { hovered } = this.state
@@ -169,7 +172,7 @@ class InfoBox extends React.Component {
         }, comparedTreatments && [
           colorScale && h(ColorLegend, { colorScale }),
 
-          h(HeatMap),
+          h(HeatMap, { updateOpts }),
 
           h('div', {
             style: {
