@@ -17,6 +17,13 @@ const resources = {
     },
   },
 
+  'help': {
+    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
+      await dispatch(Action.Initialize)
+    },
+    Component: require('./components/Help'),
+  },
+
   'home': {
     onBeforeRoute: async (params, redirectTo, { dispatch }) => {
       await dispatch(Action.Initialize)
