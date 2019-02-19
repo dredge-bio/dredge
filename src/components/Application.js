@@ -11,6 +11,7 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , Log = require('./Log')
+    , { version } = require('../../package.json')
 
 const GlobalStyle = createGlobalStyle`
 html, body, #application {
@@ -217,51 +218,60 @@ const Header = R.pipe(
             )),
           ]),
 
-          currentProject && (
-            h(AriaMenuButton.Wrapper, {
+          h(AriaMenuButton.Wrapper, {
+            style: {
+              position: 'relative',
+            },
+            onSelection: val => {
+              if (val === 'help') {
+                navigateTo(new Route('help'))
+              } else if (val === 'resize') {
+                this.props.onRequestResize()
+              } else if (val === 'new-project') {
+                navigateTo(new Route('new-project'))
+              }
+            },
+          }, [
+            h(Button, {
+              ml: 2,
               style: {
-                position: 'relative',
-              },
-              onSelection: val => {
-                if (val === 'help') {
-                  navigateTo(new Route('help'))
-                } else if (val === 'resize') {
-                  this.props.onRequestResize()
-                } else if (val === 'new-project') {
-                  navigateTo(new Route('new-project'))
-                }
+                padding: 0,
               },
             }, [
-              h(Button, {
-                ml: 2,
+              h(AriaMenuButton.Button, {
                 style: {
-                  padding: 0,
+                  fontSize: '16px',
+                  padding: '9px 14px',
+                  display: 'inline-block',
                 },
-              }, [
-                h(AriaMenuButton.Button, {
-                  style: {
-                    fontSize: '16px',
-                    padding: '9px 14px',
-                    display: 'inline-block',
-                  },
-                }, 'Menu'),
-              ]),
+              }, 'Menu'),
+            ]),
 
-              h(Menu, [
-                h('ul', [
-                  h('li', {}, h(AriaMenuButton.MenuItem, {
-                    value: 'help',
-                  }, 'Help')),
-                  h('li', {}, h(AriaMenuButton.MenuItem, {
-                    value: 'resize',
-                  }, 'Resize to window')),
-                  h('li', {}, h(AriaMenuButton.MenuItem, {
-                    value: 'new-project',
-                  }, 'Create new project')),
-                ]),
+            h(Menu, [
+              h('ul', [
+                h('li', {}, h(AriaMenuButton.MenuItem, {
+                  value: 'help',
+                }, 'Help')),
+                h('li', {}, h(AriaMenuButton.MenuItem, {
+                  value: 'resize',
+                }, 'Resize to window')),
+                h('li', {}, h(AriaMenuButton.MenuItem, {
+                  value: 'new-project',
+                }, 'Create new project')),
+
+                h(Box, {
+                  is: 'li',
+                  style: {
+                    color: '#666',
+                    padding: '1em',
+                    borderTop: '1px solid #ccc',
+                    fontSize: '12px',
+                    textAlign: 'center',
+                  },
+                }, `DRedGe v${version}`),
               ]),
-            ])
-          )
+            ]),
+          ])
         ]),
 
       ])
