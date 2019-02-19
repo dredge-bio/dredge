@@ -34,7 +34,7 @@ const resources = {
     Component: require('./components/View'),
   },
 
-  'new': {
+  'new-project': {
     Component: require('./components/NewProject'),
   },
 }

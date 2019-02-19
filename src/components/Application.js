@@ -4,6 +4,8 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
+    , { Flex, Box, Button } = require('rebass')
+    , AriaMenuButton = require('react-aria-menubutton')
     , { Navigable, Route } = require('org-shell')
     , { createGlobalStyle } = require('styled-components')
     , { connect } = require('react-redux')
@@ -131,6 +133,35 @@ const HeaderContainer = styled.header`
 `
 
 
+const Menu = styled(AriaMenuButton.Menu)`
+  position: absolute;
+  top: 42px;
+  right: 0;
+  z-index: 1;
+
+  width: 200px;
+  box-shadow: -1px 1px 8px #888;
+
+  border: 1px solid #ccc;
+  background-color: white;
+
+  ul {
+    padding: 0;
+    list-style-type: none;
+  }
+
+  [role="menuitem"] {
+    cursor: pointer;
+    padding: .5em 1em;
+  }
+
+  [role="menuitem"]:hover,
+  [role="menuitem"]:focus {
+    background-color: #ccc;
+  }
+`
+
+
 
 const Header = R.pipe(
   connect(state => ({
@@ -138,48 +169,104 @@ const Header = R.pipe(
     currentView: state.currentView,
   })),
   Navigable
-)(function Header(props) {
-  const { navigateTo } = props
-      , currentProject = R.path(['project', 'id'], props.currentView)
+)(class Header extends React.Component {
+  constructor() {
+    super()
 
-  return (
-    h(HeaderContainer, [
-      h('div', { style: { display: 'flex' }}, [
-        /* h('button', {
-          onClick: props.onRequestResize,
-        }, '↻'), */
-        h('h1', {
-          style: {
-            fontFamily: 'SourceSansPro',
-          },
-        }, R.path(['project', 'metadata', 'label'], props.currentView) || 'dredge: Differential Expression Transcript Explorer'),
-      ]),
+    this.state = {
+      isOpen: false,
+    }
+  }
 
-      h('div', { style: { position: 'relative', display: 'flex', background: 'white' }}, [
-        currentProject && h('label', {
-          htmlFor: 'dataset-selector',
-        }, 'Dataset:'),
+  render() {
+    const { navigateTo } = this.props
+        , { isOpen } = this.state
+        , currentProject = R.path(['project', 'id'], this.props.currentView)
 
-        currentProject && h('select', {
-          style: {
-            zIndex: 1,
-            background: 'transparent',
-          },
-          id: 'dataset-selector',
-          value: currentProject,
-          onChange: e => {
-            navigateTo(new Route('home', { project: e.target.value }))
-          },
-        }, Object.keys(props.projects || {}).map(key =>
-          h('option', {
-            key,
-            value: key,
-          }, props.projects[key].metadata.label || key)
-        )),
-      ]),
+    return (
+      h(HeaderContainer, [
+        h('div', { style: { display: 'flex' }}, [
+          h('h1', {
+            style: {
+              fontFamily: 'SourceSansPro',
+            },
+          }, R.path(['project', 'metadata', 'label'], this.props.currentView) || 'dredge: Differential Expression Transcript Explorer'),
+        ]),
 
-    ])
-  )
+        h(Flex, { alignItems: 'center' }, [
+          h('div', { style: { position: 'relative', display: 'flex', background: 'white' }}, [
+            currentProject && h('label', {
+              htmlFor: 'dataset-selector',
+            }, 'Dataset:'),
+
+            currentProject && h('select', {
+              style: {
+                zIndex: 1,
+                background: 'transparent',
+              },
+              id: 'dataset-selector',
+              value: currentProject,
+              onChange: e => {
+                navigateTo(new Route('home', { project: e.target.value }))
+              },
+            }, Object.keys(this.props.projects || {}).map(key =>
+              h('option', {
+                key,
+                value: key,
+              }, this.props.projects[key].metadata.label || key)
+            )),
+          ]),
+
+          currentProject && (
+            h(AriaMenuButton.Wrapper, {
+              style: {
+                position: 'relative',
+              },
+              onSelection: val => {
+                if (val === 'help') {
+                  navigateTo(new Route('help'))
+                } else if (val === 'resize') {
+                  this.props.onRequestResize()
+                } else if (val === 'new-project') {
+                  navigateTo(new Route('new-project'))
+                }
+              },
+            }, [
+              h(Button, {
+                ml: 2,
+                style: {
+                  padding: 0,
+                },
+              }, [
+                h(AriaMenuButton.Button, {
+                  style: {
+                    fontSize: '16px',
+                    padding: '9px 14px',
+                    display: 'inline-block',
+                  },
+                }, 'Menu'),
+              ]),
+
+              h(Menu, [
+                h('ul', [
+                  h('li', {}, h(AriaMenuButton.MenuItem, {
+                    value: 'help',
+                  }, 'Help')),
+                  h('li', {}, h(AriaMenuButton.MenuItem, {
+                    value: 'resize',
+                  }, 'Resize to window')),
+                  h('li', {}, h(AriaMenuButton.MenuItem, {
+                    value: 'new-project',
+                  }, 'Create new project')),
+                ]),
+              ]),
+            ])
+          )
+        ]),
+
+      ])
+    )
+  }
 })
 
 const ApplicationContainer = styled.div`
