@@ -42,6 +42,13 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
+  // FIXME: this is dumb
+  ResetViewedProject: {
+    exec: R.always({}),
+    request: {},
+    response: {},
+  },
+
   LoadRemoteProject: {
     exec: loadRemoteProject,
     request: {

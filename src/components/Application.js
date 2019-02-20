@@ -139,7 +139,7 @@ const Menu = styled(AriaMenuButton.Menu)`
   right: 0;
   z-index: 1;
 
-  width: 200px;
+  width: ${props => props.width || '240px'};
   box-shadow: -1px 1px 8px #888;
 
   border: 1px solid #ccc;
@@ -169,112 +169,117 @@ const Header = R.pipe(
     currentView: state.currentView,
   })),
   Navigable
-)(class Header extends React.Component {
-  constructor() {
-    super()
+)(function Header({
+  navigateTo,
+  currentView,
+  projects,
+  onRequestResize,
+}) {
+  const currentProject = R.path(['project', 'id'], currentView)
 
-    this.state = {
-      isOpen: false,
-    }
-  }
+  return (
+    h(HeaderContainer, [
+      h('div', { style: { display: 'flex' }}, [
+        h('h1', {
+          style: {
+            fontFamily: 'SourceSansPro',
+          },
+        }, R.path(['project', 'metadata', 'label'], currentView) || 'dredge: Differential Expression Transcript Explorer'),
+      ]),
 
-  render() {
-    const { navigateTo } = this.props
-        , currentProject = R.path(['project', 'id'], this.props.currentView)
-
-    return (
-      h(HeaderContainer, [
-        h('div', { style: { display: 'flex' }}, [
-          h('h1', {
+      h(Flex, { alignItems: 'center' }, [
+        h(AriaMenuButton.Wrapper, {
+          style: {
+            position: 'relative',
+          },
+          onSelection: project => {
+            navigateTo(new Route('home', { project }))
+          },
+        }, [
+          h(Button, {
+            ml: 2,
             style: {
-              fontFamily: 'SourceSansPro',
-            },
-          }, R.path(['project', 'metadata', 'label'], this.props.currentView) || 'dredge: Differential Expression Transcript Explorer'),
-        ]),
-
-        h(Flex, { alignItems: 'center' }, [
-          h('div', { style: { position: 'relative', display: 'flex', background: 'white' }}, [
-            currentProject && h('label', {
-              htmlFor: 'dataset-selector',
-            }, 'Dataset:'),
-
-            currentProject && h('select', {
-              style: {
-                zIndex: 1,
-                background: 'transparent',
-              },
-              id: 'dataset-selector',
-              value: currentProject,
-              onChange: e => {
-                navigateTo(new Route('home', { project: e.target.value }))
-              },
-            }, Object.keys(this.props.projects || {}).map(key =>
-              h('option', {
-                key,
-                value: key,
-              }, this.props.projects[key].metadata.label || key)
-            )),
-          ]),
-
-          h(AriaMenuButton.Wrapper, {
-            style: {
-              position: 'relative',
-            },
-            onSelection: val => {
-              if (val === 'help') {
-                navigateTo(new Route('help'))
-              } else if (val === 'resize') {
-                this.props.onRequestResize()
-              } else if (val === 'new-project') {
-                navigateTo(new Route('new-project'))
-              }
+              padding: 0,
             },
           }, [
-            h(Button, {
-              ml: 2,
+            h(AriaMenuButton.Button, {
               style: {
-                padding: 0,
+                fontSize: '16px',
+                padding: '9px 14px',
+                display: 'inline-block',
               },
-            }, [
-              h(AriaMenuButton.Button, {
-                style: {
-                  fontSize: '16px',
-                  padding: '9px 14px',
-                  display: 'inline-block',
-                },
-              }, 'Menu'),
-            ]),
+            }, 'Open dataset'),
+          ]),
 
-            h(Menu, [
-              h('ul', [
-                h('li', {}, h(AriaMenuButton.MenuItem, {
-                  value: 'help',
-                }, 'Help')),
-                h('li', {}, h(AriaMenuButton.MenuItem, {
-                  value: 'resize',
-                }, 'Resize to window')),
-                h('li', {}, h(AriaMenuButton.MenuItem, {
-                  value: 'new-project',
-                }, 'Create new project')),
-
-                h(Box, {
-                  is: 'li',
-                  style: {
-                    color: '#666',
-                    padding: '1em',
-                    borderTop: '1px solid #ccc',
-                    fontSize: '12px',
-                    textAlign: 'center',
-                  },
-                }, `DRedGe v${version}`),
-              ]),
-            ]),
+          h(Menu, {
+            width: '400px',
+          }, [
+            h('ul', Object.entries(projects || {}).map(([ key, val ]) =>
+              h('li', { key }, h(AriaMenuButton.MenuItem, {
+                value: key,
+              }, R.path(['metadata', 'label'], val) || key))
+            )),
           ]),
         ]),
 
-      ])
-    )
-  }
+        h(AriaMenuButton.Wrapper, {
+          style: {
+            position: 'relative',
+          },
+          onSelection: val => {
+            if (val === 'help') {
+              navigateTo(new Route('help'))
+            } else if (val === 'resize') {
+              onRequestResize()
+            } else if (val === 'new-project') {
+              navigateTo(new Route('new-project'))
+            }
+          },
+        }, [
+          h(Button, {
+            ml: 2,
+            style: {
+              padding: 0,
+            },
+          }, [
+            h(AriaMenuButton.Button, {
+              style: {
+                fontSize: '16px',
+                padding: '9px 14px',
+                display: 'inline-block',
+              },
+            }, 'Menu'),
+          ]),
+
+          h(Menu, [
+            h('ul', [
+              h('li', {}, h(AriaMenuButton.MenuItem, {
+                value: 'help',
+              }, 'Help')),
+              h('li', {}, h(AriaMenuButton.MenuItem, {
+                value: 'resize',
+              }, 'Resize to window')),
+              h('li', {}, h(AriaMenuButton.MenuItem, {
+                value: 'new-project',
+              }, 'Create new project')),
+
+              h(Box, {
+                is: 'li',
+                style: {
+                  color: '#666',
+                  padding: '1em',
+                  borderTop: '1px solid #ccc',
+                  fontSize: '12px',
+                  textAlign: 'center',
+                },
+              }, `DRedGe v${version}`),
+            ]),
+          ]),
+        ]),
+      ]),
+
+    ])
+  )
 })
 
 const ApplicationContainer = styled.div`
@@ -325,6 +330,7 @@ class Application extends React.Component {
         },
       }, [
         h(Header, {
+          initialized,
           onRequestResize: this.handleRequestResize,
         }),
         h('main', [].concat(mainEl)),

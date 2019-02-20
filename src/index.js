@@ -54,8 +54,10 @@ const Main = ORGShell({
     getState: store.getState,
   },
   resources,
-  onRouteChange(route) {
-    // console.log(route)
+  onRouteChange(route, { dispatch }) {
+    if (route.resourceName !== 'home') {
+      dispatch(Action.ResetViewedProject)
+    }
   },
 }, Application)
 

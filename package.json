@@ -10,7 +10,7 @@
     "file-saver": "^2.0.0-rc.3",
     "is-url": "^1.2.4",
     "org-async-actions": "^1.0.0",
-    "org-shell": "^4.0.0",
+    "org-shell": "^4.1.0",
     "ramda": "^0.26.1",
     "react": "^16.8.2",
     "react-aria-menubutton": "^6.1.0",
