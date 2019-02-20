@@ -36,7 +36,7 @@ const resources = {
         return
       }
 
-      await dispatch(Action.LoadProject(params.project))
+      await dispatch(Action.LoadRemoteProject(params.project))
     },
     Component: require('./components/View'),
   },

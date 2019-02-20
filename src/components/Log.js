@@ -104,7 +104,7 @@ function Log({ infoLog, logsByProject }) {
               ...(!(url || '').endsWith('project.json') ? [] : (
                 Object.values(metadata).map(({ field, label, status }) => [
                   h('div', {
-                    key: `project-${field}-spacer`
+                    key: `project-${field}-spacer`,
                   }),
 
                   h('div', { key: `project-${field}-info`, style: { display: 'flex' }}, [
@@ -114,17 +114,17 @@ function Log({ infoLog, logsByProject }) {
                       style: {
                         position: 'absolute',
                         marginLeft: '18px',
-                      }
+                      },
                     }, [
                       label,
                     ]),
                   ]),
 
                   h('div', {
-                    key: `project-${field}-spacer2`
+                    key: `project-${field}-spacer2`,
                   }),
                 ])
-              ))
+              )),
             ]),
           ]),
         ])
@@ -133,25 +133,31 @@ function Log({ infoLog, logsByProject }) {
   )
 }
 
-module.exports = connect(state => {
+module.exports = connect((state, ownProps) => {
   const projectLogs = R.omit([''], state.log) || {}
       , infoLog = (state.log[''] || {})
+      , { loadingProject } = ownProps
 
-  const logsByProject = Object.entries(projectLogs).map(([ baseURL, files ]) => ({
-    baseURL,
-    label: R.path(['projects', baseURL, 'metadata', 'label'], state) || baseURL,
-    files: R.filter(d => {
-      if (typeof d.url !== 'string') return true
-      return !d.url.includes('project.json#')
-    }, files),
-    metadata: R.pipe(
-      R.filter(({ url }) => typeof url === 'string' && url.includes('project.json#')),
-      R.map(({ url, label, status }) => {
-        const [ , field ] = url.split('project.json#')
-        return { field, label, status }
-      })
-    )(files),
-  }))
+  const logsByProject = Object.entries(projectLogs)
+    .filter(([ key ]) =>
+      loadingProject
+        ? key === loadingProject
+        : true)
+    .map(([ baseURL, files ]) => ({
+      baseURL,
+      label: R.path(['projects', baseURL, 'metadata', 'label'], state) || baseURL,
+      files: R.filter(d => {
+        if (typeof d.url !== 'string') return true
+        return !d.url.includes('project.json#')
+      }, files),
+      metadata: R.pipe(
+        R.filter(({ url }) => typeof url === 'string' && url.includes('project.json#')),
+        R.map(({ url, label, status }) => {
+          const [ , field ] = url.split('project.json#')
+          return { field, label, status }
+        })
+      )(files),
+    }))
 
   return {
     infoLog,

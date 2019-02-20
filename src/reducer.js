@@ -67,7 +67,7 @@ module.exports = function reducer(state=initialState(), action) {
         return R.assoc('compatible', true, state)
       },
 
-      LoadProject(projectKey) {
+      LoadRemoteProject(projectKey) {
         if (R.path(['currentView', 'project', 'id'], state) === projectKey) {
           return state
         }

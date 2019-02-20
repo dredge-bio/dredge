@@ -42,6 +42,16 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
+  LoadRemoteProject: {
+    exec: loadRemoteProject,
+    request: {
+      projectKey: String,
+    },
+    response: {
+      savedTranscripts: Object,
+    },
+  },
+
   UpdateProject: {
     exec: R.always({}),
     request: {
@@ -49,16 +59,6 @@ const Action = module.exports = makeTypedAction({
       update: Function,
     },
     response: {},
-  },
-
-  LoadProject: {
-    exec: loadProject,
-    request: {
-      projectKey: String,
-    },
-    response: {
-      savedTranscripts: Object,
-    },
   },
 
   GetDefaultProject: {
@@ -315,11 +315,11 @@ const fileMetadata = {
 
   abundanceMeasures: {
     label: 'Transcript abundance measures',
-    exec: async (url, project) => {
+    exec: async (url, treatments) => {
       const resp = await fetchResource(url)
 
       try {
-        return await parseAbundanceFile(resp, project.treatments)
+        return await parseAbundanceFile(resp, treatments)
       } catch (e) {
         throw new Error('Error parsing file')
       }
@@ -328,11 +328,11 @@ const fileMetadata = {
 
   diagram: {
     label: 'SVG diagram',
-    exec: async (url, project) => {
+    exec: async (url, treatments) => {
       const resp = await fetchResource(url, false)
 
       try {
-        const svg = cleanSVGString(await resp.text(), project.treatments)
+        const svg = cleanSVGString(await resp.text(), treatments)
 
         return { svg }
       } catch (e) {
@@ -343,7 +343,7 @@ const fileMetadata = {
 
   grid: {
     label: 'Transcript grid',
-    exec: async (url, project) => {
+    exec: async (url, treatments) => {
       const resp = await fetchResource(url, false)
 
       try {
@@ -352,9 +352,9 @@ const fileMetadata = {
         grid = grid.map(row => row.map(treatment => {
           if (!treatment) return null
 
-          if (!project.treatments.hasOwnProperty(treatment)) {
+          if (!treatments.hasOwnProperty(treatment)) {
             const e = new Error()
-            e.reason = `Treatment ${treatment} not in project ${project.projectKey}`
+            e.reason = `Treatment ${treatment} not in project`
             throw e;
           }
 
@@ -521,18 +521,6 @@ function initialize() {
   }
 }
 
-function loadProject(projectKey) {
-  return async (dispatch, getState) => {
-    const project = getState().projects[projectKey]
-        , savedTranscriptKey = project.originalBaseURL + '-watched'
-
-    const savedTranscripts = new Set(
-      JSON.parse(localStorage[savedTranscriptKey] || '[]'))
-
-    return { savedTranscripts }
-  }
-}
-
 function getDefaultProject() {
   return async (dispatch, getState) => {
     return {
@@ -569,8 +557,145 @@ function getDefaultPairwiseComparison(projectKey) {
   }
 }
 
-function loadAvailableProjects() {
+function loadRemoteProject(projectKey) {
   return async (dispatch, getState) => {
+    const {
+      metadata,
+      originalBaseURL,
+      baseURL,
+      loaded,
+    } = R.path(['projects', projectKey], getState())
+
+    if (!loaded) {
+      await dispatch(Action.UpdateProject(
+        projectKey,
+        project => Object.assign({}, project, { loading: true })))
+
+
+      const onUpdate = val => dispatch(Action.UpdateProject(
+        projectKey,
+        project => Object.assign({}, project, val)))
+
+      const makeLog = (label, url) => status => dispatch(Action.Log(
+        projectKey,
+        label,
+        url,
+        status
+      ))
+
+      try {
+        await loadProject(baseURL, metadata, makeLog, onUpdate)
+      } catch (e) {
+        await dispatch(Action.UpdateProject(
+          projectKey,
+          project => Object.assign({}, project, { loading: false, failed: true })))
+
+        return
+      }
+
+      const project = R.path(['projects', projectKey], getState())
+
+      const corpus = {}
+          , ts = new TrieSearch()
+
+      Object.entries(project.transcriptAliases || {}).forEach(([ transcript, aliases ]) => {
+        aliases.forEach(alias => {
+          corpus[alias] = transcript
+        })
+      })
+
+      if (project.transcripts) {
+        project.transcripts.forEach(transcript => {
+          if (!(transcript in corpus)) {
+            corpus[transcript] = transcript
+          }
+        })
+      }
+
+      ts.addFromObject(corpus);
+
+      await dispatch(Action.UpdateProject(
+        projectKey,
+        project => Object.assign({}, project, {
+          loaded: true,
+          loading: false,
+          pairwiseComparisonCache: {},
+          searchTranscripts: name => ts.get(name),
+
+          // TODO: This could be a much smaller object, since it will only ever
+          // be generated from the abundance file. (Right?)
+          getCanonicalTranscriptLabel: transcript => corpus[transcript],
+        })))
+    }
+
+    const savedTranscriptKey = originalBaseURL + '-watched'
+
+    const savedTranscripts = new Set(
+      JSON.parse(localStorage[savedTranscriptKey] || '[]'))
+
+    return { savedTranscripts }
+  }
+}
+
+async function loadProject(baseURL, metadata, makeLog, onUpdate) {
+  let failed = false
+    , treatments
+
+  // Load treatments before anything else
+  {
+    const url = new URL(metadata.treatments, baseURL).href
+        , log = makeLog('Project treatments', url)
+
+    await log(LoadingStatus.Pending(null))
+
+    try {
+      const resp = await fetchResource(url, false)
+
+      try {
+        treatments = await resp.json()
+
+        await onUpdate({ treatments })
+
+      } catch (e) {
+        failed = true
+        throw new Error('Project treatments malformed')
+      }
+      await log(LoadingStatus.OK(null))
+    } catch (e) {
+      await log(LoadingStatus.Failed(e.message))
+      return;
+    }
+  }
+
+  if (failed) {
+    throw new Error('Could not load project because treatments not available')
+  }
+
+  await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
+    let url = metadata[k]
+
+    if (!url) {
+      makeLog(v.label, null)(LoadingStatus.Missing('No filename specified.'))
+      return;
+    }
+
+    url = new URL(url, baseURL).href
+    const log = makeLog(v.label, url)
+
+    await log(LoadingStatus.Pending(null))
+
+    try {
+      const val = await v.exec(url, treatments)
+      await onUpdate(val)
+      await log(LoadingStatus.OK(null))
+    } catch(e) {
+      await log(LoadingStatus.Failed(e.message))
+    }
+  }))
+}
+
+function loadAvailableProjects() {
+  return async (dispatch) => {
     const makeLog = R.curry((projectKey, label, url, status) => {
       return dispatch(Action.Log(
         projectKey,
@@ -631,6 +756,8 @@ function loadAvailableProjects() {
 
         log(LoadingStatus.Pending(null))
 
+        await delay(0)
+
         try {
           const resp = await fetchResource(url, false)
 
@@ -640,9 +767,9 @@ function loadAvailableProjects() {
             throw new Error('Project metadata malformed')
           }
 
-          log(LoadingStatus.OK(null))
+          await log(LoadingStatus.OK(null))
         } catch (e) {
-          log(LoadingStatus.Failed(e.message))
+          await log(LoadingStatus.Failed(e.message))
           return;
         }
       }
@@ -652,7 +779,7 @@ function loadAvailableProjects() {
           const url = new URL(`project.json#${key}`, baseURL).href
               , log = makeProjectLog(label, url)
 
-          log(LoadingStatus.Pending(null))
+          await log(LoadingStatus.Pending(null))
 
           const val = loadedMetadata[key]
 
@@ -664,7 +791,7 @@ function loadAvailableProjects() {
           try {
             test(val);
 
-            log(LoadingStatus.OK(null))
+            await log(LoadingStatus.OK(null))
 
             await dispatch(Action.UpdateProject(
               projectKey,
@@ -673,105 +800,18 @@ function loadAvailableProjects() {
 
             return Promise.resolve()
           } catch (e) {
-            log(LoadingStatus.Failed(e.message))
+            await log(LoadingStatus.Failed(e.message))
           }
         }))
       }
-
-      const { metadata } = R.path(['projects', projectKey], getState())
-
-      {
-        const url = new URL(metadata.treatments, baseURL).href
-            , log = makeProjectLog('Project treatments', url)
-
-        log(LoadingStatus.Pending(null))
-
-        try {
-          const resp = await fetchResource(url, false)
-
-          try {
-            const treatments = await resp.json()
-
-            await dispatch(Action.UpdateProject(
-              projectKey,
-              project => Object.assign({}, project, { treatments })
-            ))
-          } catch (e) {
-            throw new Error('Project treatments malformed')
-          }
-          log(LoadingStatus.OK(null))
-        } catch (e) {
-          log(LoadingStatus.Failed(e.message))
-          return;
-        }
-      }
-
-      let project = R.path(['projects', projectKey], getState())
-
-      await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
-        let log = makeProjectLog(v.label)
-          , url = metadata[k]
-
-        if (!url) {
-          log(null, LoadingStatus.Missing('No filename specified.'))
-          return;
-        }
-
-        url = new URL(url, baseURL).href
-        log = log(url)
-
-        log(LoadingStatus.Pending(null))
-
-        try {
-          const val = await v.exec(url, project)
-
-          await dispatch(Action.UpdateProject(
-            projectKey,
-            project => Object.assign({}, project, val)
-          ))
-
-          log(LoadingStatus.OK(null))
-
-          return Promise.resolve()
-        } catch(e) {
-          log(LoadingStatus.Failed(e.message))
-        }
-      }))
-
-      project = R.path(['projects', projectKey], getState())
-
-      project.pairwiseComparisonCache = {}
-      projects[projectKey] = project
-
-      const corpus = {}
-          , ts = new TrieSearch()
-
-      Object.entries(project.transcriptAliases || {}).forEach(([ transcript, aliases ]) => {
-        aliases.forEach(alias => {
-          corpus[alias] = transcript
-        })
-      })
-
-      if (project.transcripts) {
-        project.transcripts.forEach(transcript => {
-          if (!(transcript in corpus)) {
-            corpus[transcript] = transcript
-          }
-        })
-      }
-
-      ts.addFromObject(corpus);
-
-      project.searchTranscripts = name => ts.get(name)
-
-      // TODO: This could be a much smaller object, since it will only ever
-      // be generated from the abundance file. (Right?)
-      project.getCanonicalTranscriptLabel = transcript => corpus[transcript]
     }))
+
+    await delay(100)
 
     return {}
   }
 }
+
 
 // Load the table produced by the edgeR function `exactTest`:
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>

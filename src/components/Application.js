@@ -9,7 +9,6 @@ const h = require('react-hyperscript')
     , { Navigable, Route } = require('org-shell')
     , { createGlobalStyle } = require('styled-components')
     , { connect } = require('react-redux')
-    , Action = require('../actions')
     , Log = require('./Log')
     , { version } = require('../../package.json')
 
@@ -181,7 +180,6 @@ const Header = R.pipe(
 
   render() {
     const { navigateTo } = this.props
-        , { isOpen } = this.state
         , currentProject = R.path(['project', 'id'], this.props.currentView)
 
     return (
@@ -271,7 +269,7 @@ const Header = R.pipe(
                 }, `DRedGe v${version}`),
               ]),
             ]),
-          ])
+          ]),
         ]),
 
       ])
@@ -307,12 +305,12 @@ class Application extends React.Component {
   }
 
   render() {
-    const { initialized, children } = this.props
+    const { initialized, loadingProject, children } = this.props
 
     let mainEl
 
-    if (!initialized) {
-      mainEl = h(Log)
+    if (!initialized || loadingProject) {
+      mainEl = h(Log, { loadingProject })
     } else {
       mainEl = children
     }
@@ -330,11 +328,25 @@ class Application extends React.Component {
           onRequestResize: this.handleRequestResize,
         }),
         h('main', [].concat(mainEl)),
-      ])
+      ]),
     ]
   }
 }
 
-module.exports = connect(
-  R.pick(['initialized'])
-)(Application)
+module.exports = connect(state => {
+  const { initialized, projects } = state
+
+  let loadingProject = null
+
+  for (const [ k, v ] of Object.entries(projects || {})) {
+    if (v.loading) {
+      loadingProject = k
+      break;
+    }
+  }
+
+  return {
+    initialized,
+    loadingProject,
+  }
+})(Application)
