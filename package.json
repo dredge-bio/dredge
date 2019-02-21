@@ -4,6 +4,11 @@
   "license": "GPL-3.0",
   "version": "3.5.0",
   "private": true,
+  "browserify": {
+    "transform": [
+      "envify"
+    ]
+  },
   "dependencies": {
     "d3": "^5.5.0",
     "dexie": "^1.2.0",
@@ -26,7 +31,7 @@
   },
   "devDependencies": {
     "browserify": "^16.2.3",
-    "envify": "^3.4.0",
+    "envify": "^3.4.1",
     "terser": "^3.11.0",
     "watchify": "^3.11.0"
   },
