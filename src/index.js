@@ -42,6 +42,9 @@ const resources = {
   },
 
   'new-project': {
+    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
+      await dispatch(Action.Initialize)
+    },
     Component: require('./components/NewProject'),
   },
 }
