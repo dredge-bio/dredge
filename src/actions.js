@@ -309,7 +309,7 @@ const fileMetadata = {
             , transcriptAliases = {}
 
         for (const line of aliases.split('\n')) {
-          const [ canonical, ...others ] = line.split('\n').map(trim).filter(notBlank)
+          const [ canonical, ...others ] = line.split(',').map(trim).filter(notBlank)
           transcriptAliases[canonical] = others
         }
 
