@@ -174,8 +174,15 @@ const Header = R.pipe(
   currentView,
   projects,
   onRequestResize,
+  loadingProject,
 }) {
   const currentProject = R.path(['project', 'id'], currentView)
+
+  let headerText = R.path(['project', 'metadata', 'label'], currentView)
+
+  if (!headerText || !!loadingProject) {
+    headerText = 'DrEdGE: Differential Expression Gene Explorer'
+  }
 
   return (
     h(HeaderContainer, [
@@ -184,7 +191,7 @@ const Header = R.pipe(
           style: {
             fontFamily: 'SourceSansPro',
           },
-        }, R.path(['project', 'metadata', 'label'], currentView) || 'dredge: Differential Expression Transcript Explorer'),
+        }, headerText)
       ]),
 
       h(Flex, { alignItems: 'center' }, [
@@ -272,7 +279,7 @@ const Header = R.pipe(
                   fontSize: '12px',
                   textAlign: 'center',
                 },
-              }, `DRedGe v${version}`),
+              }, `DrEdGE v${version}`),
             ]),
           ]),
         ]),
@@ -315,7 +322,7 @@ class Application extends React.Component {
     let mainEl
 
     if (!initialized || loadingProject) {
-      mainEl = h(Log, { loadingProject })
+      mainEl = h(Log, { initializing: !initialized, loadingProject })
     } else {
       mainEl = children
     }
@@ -331,6 +338,7 @@ class Application extends React.Component {
       }, [
         h(Header, {
           initialized,
+          loadingProject,
           onRequestResize: this.handleRequestResize,
         }),
         h('main', [].concat(mainEl)),

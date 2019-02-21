@@ -4,10 +4,16 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
+    , LoadingIcon = require('./LoadingIcon')
+
+const IconWrapper = styled.span`
+  svg {
+  }
+`
 
 function Status({ status, indent }) {
   const content = status.case({
-    Pending: () => '...',
+    Pending: () => h(IconWrapper, {}, h(LoadingIcon)),
     Failed: () => '✖',
     Missing: () => '--',
     OK: () => '✔',
@@ -44,14 +50,22 @@ const LogProject = styled.div`
   }
 `
 
-function Log({ infoLog, logsByProject }) {
+function Log({ infoLog, initializing, loadingProject, logsByProject }) {
+  let label = 'Log'
+
+  if (initializing) {
+    label = 'Initializing...'
+  } else if (loadingProject) {
+    label = 'Loading project...'
+  }
+
   return (
     h('div', {
       style: {
         padding: '.5em 1.33em',
       },
     }, [
-      h('h2', 'Log'),
+      h('h2', label),
 
       logsByProject.map(({ baseURL, label, files, metadata }) =>
         h(LogProject, {
