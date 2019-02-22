@@ -316,9 +316,12 @@ const fileMetadata = {
         const aliases = await resp.text()
             , transcriptAliases = {}
 
+        let i = 0;
         for (const line of aliases.split('\n')) {
-          const [ canonical, ...others ] = line.split(',').map(trim).filter(notBlank)
+          const [ canonical, ...others ] = line.split(/\t|,/).map(trim).filter(notBlank)
           transcriptAliases[canonical] = others
+          i++
+          if (i % 1500 === 0) await delay(0)
         }
 
         return { transcriptAliases }
@@ -391,7 +394,11 @@ const fileMetadata = {
 }
 
 function delay(time) {
-  return new Promise(resolve => setTimeout(resolve, time))
+  if (time === 0 && window.setTimeout) {
+    return new Promise(resolve => setImmediate(resolve))
+  } else {
+    return new Promise(resolve => setTimeout(resolve, time))
+  }
 }
 
 async function fetchResource(url, cache=true) {
@@ -415,19 +422,39 @@ async function fetchResource(url, cache=true) {
 }
 
 async function parseAbundanceFile(resp, treatments) {
-  let abundances = (await resp.text()).split('\n')
+  let abundanceRows = (await resp.text()).split('\n')
 
-  const replicates = abundances.shift().split('\t').slice(1)
+  const replicates = abundanceRows.shift().split('\t').slice(1)
       , transcripts = []
+      , abundances = []
 
-  abundances = abundances.map(row => {
+  let i = 0
+
+  for (let row of abundanceRows) {
     row = row.split('\t')
     transcripts.push(row.shift())
-    return row.map(parseFloat)
-  })
+    abundances.push(row.map(parseFloat))
+    i++
 
-  const transcriptIndices = R.invertObj(transcripts)
-      , replicateIndices = R.invertObj(replicates)
+    if (i % 1000 === 0) await delay(0)
+  }
+
+  const transcriptIndices = {}
+      , replicateIndices = {}
+
+  i = 0
+  for (let t of transcripts) {
+    transcriptIndices[t] = i;
+    i++
+    if (i % 1000 === 0) await delay(0)
+  }
+
+  i = 0
+  for (let r of replicates) {
+    replicateIndices[r] = i;
+    i++
+    if (i % 1000 === 0) await delay(0)
+  }
 
   function abundancesForTreatmentTranscript(treatmentID, transcriptName) {
     const treatment = treatments[treatmentID]
@@ -614,12 +641,15 @@ function loadRemoteProject(projectKey) {
         projectKey,
         project => Object.assign({}, project, val)))
 
-      const makeLog = (label, url) => status => dispatch(Action.Log(
-        projectKey,
-        label,
-        url,
-        status
-      ))
+      const makeLog = (label, url) => async status => {
+        await delay(0)
+        return dispatch(Action.Log(
+          projectKey,
+          label,
+          url,
+          status
+        ))
+      }
 
       try {
         await loadProject(baseURL, metadata, makeLog, onUpdate)
@@ -637,21 +667,31 @@ function loadRemoteProject(projectKey) {
       const corpus = {}
           , ts = new TrieSearch()
 
-      Object.entries(project.transcriptAliases || {}).forEach(([ transcript, aliases ]) => {
-        aliases.forEach(alias => {
-          corpus[alias] = transcript
-        })
-      })
+      {
+        const log = makeLog('Transcript corpus', null)
 
-      if (project.transcripts) {
-        project.transcripts.forEach(transcript => {
-          if (!(transcript in corpus)) {
-            corpus[transcript] = transcript
-          }
-        })
+        await log(LoadingStatus.Pending(null))
+
+        let i = 0
+        for (const [ transcript, aliases ] of Object.entries(project.transcriptAliases)) {
+          aliases.forEach(alias => {
+            corpus[alias] = transcript
+          })
+          i++
+          if (i % 500 === 0) await delay(0)
+        }
+
+        if (project.transcripts) {
+          project.transcripts.forEach(transcript => {
+            if (!(transcript in corpus)) {
+              corpus[transcript] = transcript
+            }
+          })
+        }
+
+        ts.addFromObject(corpus);
+        await log(LoadingStatus.OK(null))
       }
-
-      ts.addFromObject(corpus);
 
       await dispatch(Action.UpdateProject(
         projectKey,
@@ -749,7 +789,7 @@ function loadAvailableProjects() {
     {
       const log = makeLog(null, 'Projects', 'projects.json')
 
-      log(LoadingStatus.Pending(null))
+      await log(LoadingStatus.Pending(null))
 
       try {
         const resp = await fetchResource('projects.json', false)
@@ -761,9 +801,9 @@ function loadAvailableProjects() {
           throw new Error('projects.json file is malformed')
         }
 
-        log(LoadingStatus.OK(`Found ${projects.length} projects`))
+        await log(LoadingStatus.OK(`Found ${projects.length} projects`))
       } catch (e) {
-        log(LoadingStatus.Failed(e.message))
+        await log(LoadingStatus.Failed(e.message))
       }
     }
 
@@ -793,9 +833,7 @@ function loadAvailableProjects() {
         const url = new URL('project.json', baseURL).href
             , log = makeProjectLog('Project metadata', url)
 
-        log(LoadingStatus.Pending(null))
-
-        await delay(0)
+        await log(LoadingStatus.Pending(null))
 
         try {
           const resp = await fetchResource(url, false)
@@ -823,7 +861,7 @@ function loadAvailableProjects() {
           const val = loadedMetadata[key]
 
           if (!val) {
-            log(LoadingStatus.Missing('No value specified'))
+            await log(LoadingStatus.Missing('No value specified'))
             return
           }
 
@@ -836,8 +874,6 @@ function loadAvailableProjects() {
               projectKey,
               R.assocPath(['metadata', key], val)
             ))
-
-            return Promise.resolve()
           } catch (e) {
             await log(LoadingStatus.Failed(e.message))
           }
