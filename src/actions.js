@@ -566,12 +566,33 @@ function getDefaultPairwiseComparison(projectKey) {
 
 function loadRemoteProject(projectKey) {
   return async (dispatch, getState) => {
+    if (projectKey === '__LOCAL') {
+      const localProjectData = JSON.parse(localStorage.getItem('local-project'))
+          , metadata = R.omit(['baseURL'], localProjectData)
+          , originalBaseURL = localProjectData.baseURL
+
+      let resolvedBaseURL = localProjectData.baseURL
+      if (!resolvedBaseURL.endsWith('/')) resolvedBaseURL += '/'
+      resolvedBaseURL = new URL(resolvedBaseURL, window.location.href).href
+
+      await dispatch(Action.UpdateProject(
+        projectKey,
+        R.always({
+          id: projectKey,
+          originalBaseURL,
+          baseURL: resolvedBaseURL,
+          metadata,
+        })
+      ))
+    }
+
     const {
       metadata,
       originalBaseURL,
       baseURL,
       loaded,
     } = R.path(['projects', projectKey], getState())
+
 
     if (!loaded) {
       await dispatch(Action.UpdateProject(

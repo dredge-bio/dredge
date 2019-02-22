@@ -17,5 +17,5 @@ module.exports = {
       opacity: .5,
       cursor: 'not-allowed',
     },
-  }
+  },
 }

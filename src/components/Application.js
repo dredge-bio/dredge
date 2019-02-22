@@ -189,9 +189,20 @@ const Header = R.pipe(
       h('div', { style: { display: 'flex' }}, [
         h('h1', {
           style: {
+            display: 'flex',
             fontFamily: 'SourceSansPro',
           },
-        }, headerText)
+        }, [
+          headerText,
+          currentProject !== '__LOCAL' ? null : (
+            h(Button, {
+              ml: 2,
+              onClick() {
+                navigateTo(new Route('new-project'))
+              },
+            }, '‹ Return to editing')
+          )
+        ])
       ]),
 
       h(Flex, { alignItems: 'center' }, [

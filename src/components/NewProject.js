@@ -3,8 +3,10 @@
 const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
-    , { Flex, Box, Heading } = require('rebass')
+    , { Flex, Box, Button, Heading } = require('rebass')
     , styled = require('styled-components').default
+    , debounce = require('debounce')
+    , { Navigable, Route } = require('org-shell')
 
 const Field = styled(Box)`
 &[data-required=true] label span::after {
@@ -18,7 +20,7 @@ const Field = styled(Box)`
 
 .help-text {
   color: #666;
-  width: 600px;
+  max-width: 640px;
   line-height: 19px;
 }
 
@@ -33,7 +35,7 @@ const Field = styled(Box)`
 
 .resolved-url-link * {
   font-family: monospace;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .label-text {
@@ -124,36 +126,56 @@ function Input(props) {
   )
 }
 
-module.exports = class NewProject extends React.Component {
+const DEFAULT_SETTINGS = {
+  baseURL: '',
+  label: '',
+  url: '',
+  readme: '',
+  abundanceLimits: [
+    [0, 100],
+    [0, 100],
+  ],
+  treatments: './treatments.json',
+  pairwiseName: './pairwise_data/%A_%B.txt',
+  transcriptAliases: './aliases.txt',
+  abundanceMeasures: './abundanceMeasures.txt',
+  diagram: './diagram.svg',
+}
+
+module.exports = Navigable(class NewProject extends React.Component {
   constructor() {
     super();
 
     this.setField = this.setField.bind(this)
 
-    this.state = {
-      baseURL: '',
-      label: '',
-      url: '',
-      readme: '',
-      abundanceLimits: [
-        [0, 100],
-        [0, 100],
-      ],
-      treatments: './treatments.json',
-      pairwiseName: './pairwise_data/%A_%B.txt',
-      transcriptAliases: './aliases.txt',
-      abundanceMeasures: './abundanceMeasures.txt',
-      diagram: './diagram.svg',
-    }
+    let existing = {}
+
+    try {
+      existing = JSON.parse(localStorage.getItem('local-project'))
+    } catch (e) {}
+
+    this.state = Object.assign(R.clone(DEFAULT_SETTINGS), existing)
+
+    this.persist = () => localStorage.setItem('local-project', JSON.stringify(this.state))
+    this.debouncedPersist = debounce(this.persist, 250)
   }
 
   setField(fieldName, fn=R.identity) {
     return e => {
-      this.setState({ [fieldName]: fn(e.target.value) })
+      this.setState({ [fieldName]: fn(e.target.value) }, this.debouncedPersist)
     }
   }
 
+  getProjectJSON() {
+    const state = R.clone(this.state)
+        , metadata = R.omit(['baseURL'], state)
+
+    return metadata
+  }
+
   render() {
+    const { navigateTo } = this.props
+
     let isRelativeURL = false
 
     let baseURL = this.state.baseURL
@@ -171,85 +193,112 @@ module.exports = class NewProject extends React.Component {
       h(Box, { p: 3 }, [
         h(Heading, { as: 'h1', fontSize: 5 }, 'New project'),
 
-        h(Heading, { as: 'h2', mb: 2, mt: 3 }, 'Basics'),
+        h(Box, { my: 3 }, [
+          h(Button, {
+            mr: 5,
+            onClick: () => {
+              this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
+            },
+          }, 'Reset form'),
 
-        h(Box, [
-          h(Input, {
-            label: 'Project name',
-            required: true,
-            onChange: this.setField('label'),
-            value: this.state.label,
-          }),
+          h(Button, {
+            mr: 5,
+            onClick: () => {
+              navigateTo(new Route('home', { project: '__LOCAL' }))
+            },
+          }, 'Test'),
 
-          h(Input, {
-            label: 'Root URL',
-            help: 'The URL that will be the basis for all further URLs. If this value is not an absolute URL, it will be resolved relative to the page on which DrEdGE is hosted.',
-            required: true,
-            onChange: this.setField('baseURL'),
-            value: this.state.baseURL,
-            showURL: resolve(''),
-            isRelativeURL,
-          }),
 
-          h(Input, {
-            label: 'Treatments URL',
-            help: 'The URL that contains information about individual treatments in the dataset',
-            required: true,
-            onChange: this.setField('treatments'),
-            value: this.state.treatments,
-            showURL: this.state.treatments && resolve(this.state.treatments),
-            isRelativeURL,
-          }),
+          h(Button, {
+            mr: 2,
+          }, 'Load'),
+
+          h(Button, {
+            mr: 2,
+          }, 'Save'),
         ]),
 
-        h(Heading, { as: 'h2', mb: 2, mt: 5 }, 'Configuration'),
-
         h(Box, [
-          h(Input, {
-            label: 'Pairwise comparison URL template',
-            help: h(Box, [
-              h(Box, { as: 'p', mb: 2 }, 'A template to generate the URLs to pairwise comparison data. The characters \'%A\' will be replaced with the name of the first treatment, and \'%B\' the second.'),
-              h('p', [
-                'For example: If my dataset contained the pairwise comparison for treatments T1 and T2 in the directory ',
-                h('code', 'pairwise_tests/T1-T2.csv'),
-                ' the value in this field would be ',
-                h('code', 'pairwise_tests/%A-%B.csv'),
+          h(Heading, { as: 'h2', mb: 2 }, 'Basics'),
+
+          h(Box, [
+            h(Input, {
+              label: 'Project name',
+              required: true,
+              onChange: this.setField('label'),
+              value: this.state.label,
+            }),
+
+            h(Input, {
+              label: 'Root URL',
+              help: 'The URL that will be the basis for all further URLs. If this value is not an absolute URL, it will be resolved relative to the page on which DrEdGE is hosted.',
+              required: true,
+              onChange: this.setField('baseURL'),
+              value: this.state.baseURL,
+              showURL: resolve(''),
+              isRelativeURL,
+            }),
+
+            h(Input, {
+              label: 'Treatments URL',
+              help: 'The URL that contains information about individual treatments in the dataset',
+              required: true,
+              onChange: this.setField('treatments'),
+              value: this.state.treatments,
+              showURL: this.state.treatments && resolve(this.state.treatments),
+              isRelativeURL,
+            }),
+          ]),
+
+          h(Heading, { as: 'h2', mb: 2, mt: 4 }, 'Configuration'),
+
+          h(Box, [
+            h(Input, {
+              label: 'Pairwise comparison URL template',
+              help: h(Box, [
+                h(Box, { as: 'p', mb: 2 }, 'A template to generate the URLs to pairwise comparison data. The characters \'%A\' will be replaced with the name of the first treatment, and \'%B\' the second.'),
+                h('p', [
+                  'For example: If my dataset contained the pairwise comparison for treatments T1 and T2 in the directory ',
+                  h('code', 'pairwise_tests/T1-T2.csv'),
+                  ' the value in this field would be ',
+                  h('code', 'pairwise_tests/%A-%B.csv'),
+                ]),
               ]),
-            ]),
-            onChange: this.setField('pairwiseName'),
-            value: this.state.pairwiseName,
-            showURL: this.state.pairwiseName && resolve(this.state.pairwiseName),
-            isRelativeURL,
-          }),
+              onChange: this.setField('pairwiseName'),
+              value: this.state.pairwiseName,
+              showURL: this.state.pairwiseName && resolve(this.state.pairwiseName),
+              isRelativeURL,
+            }),
 
-          h(Input, {
-            label: 'Transcript aliases URL',
-            help: 'The URL that contains information about alternate names for transcripts in the dataset. This should be a CSV file whose first column contains the canonical label for a transcript, and whose other columns contain alternate names.',
-            onChange: this.setField('transcriptAliases'),
-            value: this.state.transcriptAliases,
-            showURL: this.state.transcriptAliases && resolve(this.state.transcriptAliases),
-            isRelativeURL,
-          }),
+            h(Input, {
+              label: 'Transcript aliases URL',
+              help: 'The URL that contains information about alternate names for transcripts in the dataset. This should be a CSV file whose first column contains the canonical label for a transcript, and whose other columns contain alternate names.',
+              onChange: this.setField('transcriptAliases'),
+              value: this.state.transcriptAliases,
+              showURL: this.state.transcriptAliases && resolve(this.state.transcriptAliases),
+              isRelativeURL,
+            }),
 
-          h(Input, {
-            label: 'Abundance measures URL',
-            help: 'The URL of the file containing abundance measures for each transcript by treatement.',
-            onChange: this.setField('abundanceMeasures'),
-            value: this.state.abundanceMeasures,
-            showURL: this.state.abundanceMeasures && resolve(this.state.abundanceMeasures),
-            isRelativeURL,
-          }),
+            h(Input, {
+              label: 'Abundance measures URL',
+              help: 'The URL of the file containing abundance measures for each transcript by treatement.',
+              onChange: this.setField('abundanceMeasures'),
+              value: this.state.abundanceMeasures,
+              showURL: this.state.abundanceMeasures && resolve(this.state.abundanceMeasures),
+              isRelativeURL,
+            }),
 
-          h(Input, {
-            label: 'Diagram URL',
-            help: 'The URL of the SVG diagram for this project',
-            onChange: this.setField('diagram'),
-            value: this.state.diagram,
-            showURL: this.state.diagram && resolve(this.state.diagram),
-            isRelativeURL,
-          }),
+            h(Input, {
+              label: 'Diagram URL',
+              help: 'The URL of the SVG diagram for this project',
+              onChange: this.setField('diagram'),
+              value: this.state.diagram,
+              showURL: this.state.diagram && resolve(this.state.diagram),
+              isRelativeURL,
+            }),
+          ])
         ]),
       ])
     )
   }
-}
+})
