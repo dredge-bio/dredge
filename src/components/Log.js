@@ -50,11 +50,13 @@ const LogProject = styled.div`
   }
 `
 
-function Log({ infoLog, initializing, loadingProject, logsByProject }) {
+function Log({ infoLog, initializing, failedProject, loadingProject, logsByProject }) {
   let label = 'Log'
 
   if (initializing) {
     label = 'Initializing...'
+  } else if (failedProject) {
+    label = 'Failed to load project'
   } else if (loadingProject) {
     label = 'Loading project...'
   }
@@ -150,12 +152,14 @@ function Log({ infoLog, initializing, loadingProject, logsByProject }) {
 module.exports = connect((state, ownProps) => {
   const projectLogs = R.omit([''], state.log) || {}
       , infoLog = (state.log[''] || {})
-      , { loadingProject } = ownProps
+      , { loadingProject, failedProject } = ownProps
+
+  const showProject = loadingProject || failedProject
 
   const logsByProject = Object.entries(projectLogs)
     .filter(([ key ]) =>
-      loadingProject
-        ? key === loadingProject
+      showProject
+        ? key === showProject
         : true)
     .map(([ baseURL, files ]) => ({
       baseURL,

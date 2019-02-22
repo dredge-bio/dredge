@@ -46,11 +46,21 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       Log() {
-        const { project='', resourceName='', resourceURL='', status } = action.type
+        const { project, resourceName='', resourceURL='', status } = action.type
 
         return R.set(
           R.lensPath(['log', project || '', resourceURL]),
           { status, url: resourceURL, label: resourceName },
+          state
+        )
+      },
+
+      ResetLog() {
+        const { project } = action.type
+
+        return R.set(
+          R.lensPath(['log', project || '']),
+          {},
           state
         )
       },

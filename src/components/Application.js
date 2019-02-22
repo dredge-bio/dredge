@@ -201,8 +201,8 @@ const Header = R.pipe(
                 navigateTo(new Route('new-project'))
               },
             }, '‹ Return to editing')
-          )
-        ])
+          ),
+        ]),
       ]),
 
       h(Flex, { alignItems: 'center' }, [
@@ -328,12 +328,16 @@ class Application extends React.Component {
   }
 
   render() {
-    const { initialized, loadingProject, children } = this.props
+    const { initialized, loadingProject, failedProject, children } = this.props
 
     let mainEl
 
-    if (!initialized || loadingProject) {
-      mainEl = h(Log, { initializing: !initialized, loadingProject })
+    if (!initialized || loadingProject || failedProject) {
+      mainEl = h(Log, {
+        initializing: !initialized,
+        loadingProject,
+        failedProject,
+      })
     } else {
       mainEl = children
     }
@@ -358,10 +362,11 @@ class Application extends React.Component {
   }
 }
 
-module.exports = connect(state => {
+module.exports = connect((state, ownProps) => {
   const { initialized, projects } = state
 
   let loadingProject = null
+    , failedProject = null
 
   for (const [ k, v ] of Object.entries(projects || {})) {
     if (v.loading) {
@@ -370,8 +375,18 @@ module.exports = connect(state => {
     }
   }
 
+  const setFailedProject = (
+    ('project' in (ownProps.params || {})) &&
+    R.path([ownProps.params.project, 'failed'], projects || {})
+  )
+
+  if (setFailedProject) {
+    failedProject = ownProps.params.project
+  }
+
   return {
     initialized,
     loadingProject,
+    failedProject,
   }
 })(Application)

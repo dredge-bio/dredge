@@ -30,6 +30,14 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
+  ResetLog: {
+    exec: R.always({}),
+    request: {
+      project: d => typeof d === 'string' || d === null,
+    },
+    response: {},
+  },
+
   CheckCompatibility: {
     exec: checkCompatibility,
     request: {},
@@ -575,6 +583,8 @@ function loadRemoteProject(projectKey) {
       if (!resolvedBaseURL.endsWith('/')) resolvedBaseURL += '/'
       resolvedBaseURL = new URL(resolvedBaseURL, window.location.href).href
 
+      await dispatch(Action.ResetLog(projectKey))
+
       await dispatch(Action.UpdateProject(
         projectKey,
         R.always({
@@ -614,11 +624,12 @@ function loadRemoteProject(projectKey) {
       try {
         await loadProject(baseURL, metadata, makeLog, onUpdate)
       } catch (e) {
+
         await dispatch(Action.UpdateProject(
           projectKey,
           project => Object.assign({}, project, { loading: false, failed: true })))
 
-        return
+        return { savedTranscripts: new Set() }
       }
 
       const project = R.path(['projects', projectKey], getState())
@@ -690,8 +701,8 @@ async function loadProject(baseURL, metadata, makeLog, onUpdate) {
       }
       await log(LoadingStatus.OK(null))
     } catch (e) {
+      failed = true
       await log(LoadingStatus.Failed(e.message))
-      return;
     }
   }
 
