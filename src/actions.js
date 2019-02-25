@@ -671,8 +671,7 @@ function loadRemoteProject(projectKey) {
         await log(LoadingStatus.Pending(null))
 
         let i = 0
-        for (const [ transcript, aliases ] of Object.entries(project.transcriptAliases)) {
-          aliases.forEach(alias => {
+        for (const [ transcript, aliases ] of Object.entries(project.transcriptAliases || {})) { aliases.forEach(alias => {
             corpus[alias] = transcript
           })
           i++
