@@ -86,11 +86,10 @@ const svg = `
 `
 
 
-const HeaderContainer = styled.header`
+const HeaderContainer = styled(Box)`
   background-color: hsl(205, 35%, 25%);
   background-image: url("data:image/svg+xml,${encodeURIComponent(svg.trim())}");
   height: 100%;
-  padding: 0 2em;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -185,7 +184,10 @@ const Header = R.pipe(
   }
 
   return (
-    h(HeaderContainer, [
+    h(HeaderContainer, {
+      as: 'header',
+      px: 4,
+    }, [
       h('div', { style: { display: 'flex' }}, [
         h('h1', {
           style: {
@@ -333,11 +335,11 @@ class Application extends React.Component {
     let mainEl
 
     if (!initialized || loadingProject || failedProject) {
-      mainEl = h(Log, {
+      mainEl = h(Box, { px: 3, py: 2 }, h(Log, {
         initializing: !initialized,
         loadingProject,
         failedProject,
-      })
+      }))
     } else {
       mainEl = children
     }
