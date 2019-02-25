@@ -25,11 +25,8 @@ LIB_FILES = $(shell find lib/ -type f)
 ZIPPED_FILES = $(VERSIONED_JS_BUNDLE) \
 	       $(MINIFIED_VERSIONED_JS_BUNDLE) \
 	       $(LIB_FILES) \
-	       LICENSE \
-	       README.md \
 	       favicon.ico \
-	       index.html \
-	       about.html
+	       index.html
 
 
 ###################
