@@ -6,6 +6,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { Navigable } = require('org-shell')
     , { connect } = require('react-redux')
+    , { Box, Button } = require('rebass')
     , MAPlot = require('./MAPlot')
     , TreatmentSelector = require('./TreatmentSelector')
     , Action = require('../actions')
@@ -13,6 +14,7 @@ const h = require('react-hyperscript')
     , WatchedTranscripts = require('./WatchedTranscripts')
     , InfoBox = require('./InfoBox')
     , PValueSelector = require('./PValueSelector')
+    , Log = require('./Log')
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -156,7 +158,7 @@ class Viewer extends React.Component {
   }
 }
 
-module.exports = R.pipe(
+const WrappedViewer = R.pipe(
   Navigable,
   connect((state, ownProps) => {
     const { treatmentA, treatmentB } = ownProps.opts
@@ -165,3 +167,27 @@ module.exports = R.pipe(
     return { projectKey, treatmentA, treatmentB }
   }),
 )(Viewer)
+
+module.exports = props => {
+  const { project } = props.params
+      , [ showView, setShowView ] = React.useState(project !== '__LOCAL')
+
+  if (!showView) {
+    return (
+      h(Box, { px: 3, py: 2 }, [
+        h(Log, {
+          loadingProject: project,
+        }),
+        h(Box, { mt: 4 }, [
+          h(Button, {
+            onClick() {
+              setShowView(true)
+            }
+          }, 'Continue'),
+        ]),
+      ])
+    )
+  }
+
+  return h(WrappedViewer, props)
+}

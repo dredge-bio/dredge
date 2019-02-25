@@ -62,11 +62,7 @@ function Log({ infoLog, initializing, failedProject, loadingProject, logsByProje
   }
 
   return (
-    h('div', {
-      style: {
-        padding: '.5em 1.33em',
-      },
-    }, [
+    h('div', [
       h('h2', label),
 
       logsByProject.map(({ baseURL, label, files, metadata }) =>
