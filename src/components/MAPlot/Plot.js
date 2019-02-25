@@ -146,7 +146,7 @@ class Plot extends React.Component {
 
         const brushedTranscripts = R.pipe(
           R.chain(R.prop('transcripts')),
-          R.map(R.prop('id'))
+          R.map(R.prop('name'))
         )(brushedBins.data())
 
         dispatch(Action.SetBrushedTranscripts(brushedTranscripts))

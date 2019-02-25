@@ -4,7 +4,6 @@ const R = require('ramda')
     , d3 = require('d3')
     , isURL = require('is-url')
     , { makeTypedAction } = require('org-async-actions')
-    , TrieSearch = require('trie-search')
     , saveAs = require('file-saver')
     , { LoadingStatus } = require('./types')
 
@@ -421,7 +420,7 @@ async function fetchResource(url, cache=true) {
   return resp
 }
 
-async function parseAbundanceFile(resp, treatments) {
+async function parseAbundanceFile(resp) {
   const abundanceRows = (await resp.text()).split('\n')
       , replicates = abundanceRows.shift().split('\t').slice(1)
       , transcripts = []
@@ -438,36 +437,10 @@ async function parseAbundanceFile(resp, treatments) {
     if (i % 1000 === 0) await delay(0)
   }
 
-  const transcriptIndices = {}
-      , replicateIndices = {}
-
-  i = 0
-  for (const t of transcripts) {
-    transcriptIndices[t] = i;
-    i++
-    if (i % 1000 === 0) await delay(0)
-  }
-
-  i = 0
-  for (const r of replicates) {
-    replicateIndices[r] = i;
-    i++
-    if (i % 1000 === 0) await delay(0)
-  }
-
-  function abundancesForTreatmentTranscript(treatmentID, transcriptName) {
-    const treatment = treatments[treatmentID]
-        , transcriptIdx = transcriptIndices[transcriptName]
-
-    return treatment.replicates.map(replicateID => {
-      const replicateIdx = replicateIndices[replicateID]
-      return abundances[transcriptIdx][replicateIdx]
-    })
-  }
-
   return {
     transcripts,
-    abundancesForTreatmentTranscript,
+    replicates,
+    abundances,
   }
 }
 
@@ -663,31 +636,89 @@ function loadRemoteProject(projectKey) {
       const project = R.path(['projects', projectKey], getState())
 
       const corpus = {}
-          , ts = new TrieSearch()
+          , corpusVals = []
+
+      const log = makeLog('Transcript corpus', null)
 
       {
-        const log = makeLog('Transcript corpus', null)
 
         await log(LoadingStatus.Pending(null))
 
         let i = 0
-        for (const [ transcript, aliases ] of Object.entries(project.transcriptAliases || {})) { aliases.forEach(alias => {
+        for (const [ transcript, aliases ] of Object.entries(project.transcriptAliases || {})) {
+          [...aliases, transcript].forEach(alias => {
             corpus[alias] = transcript
+            corpusVals.push([alias, transcript])
           })
+
           i++
-          if (i % 500 === 0) await delay(0)
+          if (i % 300 === 0) await delay(0)
         }
 
+        i = 0
         if (project.transcripts) {
           project.transcripts.forEach(transcript => {
             if (!(transcript in corpus)) {
               corpus[transcript] = transcript
+              corpusVals.push([transcript, transcript])
             }
           })
+          i++
+          if (i % 300 === 0) await delay(0)
         }
 
-        ts.addFromObject(corpus);
-        await log(LoadingStatus.OK(null))
+      }
+
+      const searchTranscripts = (name, limit=20) => {
+        const results = []
+
+        for (const x of corpusVals) {
+          if (x[0].startsWith(name)) {
+            results.push({
+              alias: x[0],
+              canonical: x[1],
+            })
+
+            if (results.length === limit) break;
+          }
+        }
+
+        return results
+      }
+
+      const getCanonicalTranscriptLabel = transcript => corpus[transcript]
+
+      const transcriptIndices = {}
+          , replicateIndices = {}
+
+      {
+        let i = 0
+        for (const t of project.transcripts) {
+          transcriptIndices[getCanonicalTranscriptLabel(t)] = i;
+          i++
+          if (i % 500 === 0) await delay(0)
+        }
+      }
+
+      {
+        let i = 0
+        for (const r of project.replicates) {
+          replicateIndices[r] = i;
+          i++
+          if (i % 500 === 0) await delay(0)
+        }
+      }
+
+      await log(LoadingStatus.OK(null))
+
+      const abundancesForTreatmentTranscript = (treatmentID, transcriptName) => {
+        const treatment = project.treatments[treatmentID]
+            , transcriptIdx = transcriptIndices[getCanonicalTranscriptLabel(transcriptName)]
+
+        return treatment.replicates.map(replicateID => {
+          const replicateIdx = replicateIndices[replicateID]
+          return project.abundances[transcriptIdx][replicateIdx]
+        })
       }
 
       await dispatch(Action.UpdateProject(
@@ -696,11 +727,9 @@ function loadRemoteProject(projectKey) {
           loaded: true,
           loading: false,
           pairwiseComparisonCache: {},
-          searchTranscripts: name => ts.get(name),
-
-          // TODO: This could be a much smaller object, since it will only ever
-          // be generated from the abundance file. (Right?)
-          getCanonicalTranscriptLabel: transcript => corpus[transcript],
+          searchTranscripts,
+          getCanonicalTranscriptLabel,
+          abundancesForTreatmentTranscript,
         })))
     }
 
@@ -943,11 +972,10 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       .map(row => {
         const [ id, logFC, logATA, pValue ] = row.split('\t')
 
-        const label = project.getCanonicalTranscriptLabel(id)
+        const name = project.getCanonicalTranscriptLabel(id)
 
-        return [id, {
-          id,
-          label,
+        return [name, {
+          name,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logATA: parseFloat(logATA),
           pValue: parseFloat(pValue),
@@ -983,14 +1011,13 @@ function updateDisplayedTranscripts(sortPath, order) {
     const unsorted = [...listedTranscripts].map(transcriptName => {
       if (!pairwiseData) {
         return {
-          transcript: { label: transcriptName },
+          transcript: { name: transcriptName },
           saved: savedTranscripts.has(transcriptName),
         }
       }
 
       const transcript = pairwiseData.get(transcriptName) || {
-        id: transcriptName,
-        label: project.getCanonicalTranscriptLabel(transcriptName),
+        name: project.getCanonicalTranscriptLabel(transcriptName),
       }
 
       const [
@@ -1016,7 +1043,7 @@ function updateDisplayedTranscripts(sortPath, order) {
     if (!order) order = view.order
 
     const getter =
-      sortPath.includes('label')
+      sortPath.includes('name')
         ? R.pipe(R.path(sortPath), R.toLower)
         : R.path(sortPath)
 

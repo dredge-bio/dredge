@@ -41,7 +41,7 @@ const HEADER_HEIGHT = 84;
 
 const FIELDS = [
   { sortPath: '', label: '' },
-  { sortPath: ['transcript', 'label'], label: 'Transcript' },
+  { sortPath: ['transcript', 'name'], label: 'Transcript' },
   { sortPath: ['transcript', 'pValue'], label: 'P-Value' },
   { sortPath: ['transcript', 'logATA'], label: 'logATA' },
   { sortPath: ['transcript', 'logFC'], label: 'logFC' },
@@ -87,7 +87,7 @@ class TranscriptRow extends React.Component {
 
     for (const k in nextProps) {
       if (k === 'focusedTranscript') {
-        const transcriptID = this.props.data.transcript.id
+        const transcriptID = this.props.data.transcript.name
 
         update = (
           (nextProps[k] === transcriptID && this.props[k] !== transcriptID) ||
@@ -144,12 +144,12 @@ class TranscriptRow extends React.Component {
 
     return (
       h('tr', {
-        ['data-transcript-name']: data.transcript.id,
+        ['data-transcript-name']: data.transcript.name,
         onMouseEnter: this.handleMouseEnter,
         onMouseLeave: this.handleMouseLeave,
         onClick: this.handleClick,
         style: Object.assign({},
-          focusedTranscript !== data.transcript.id
+          focusedTranscript !== data.transcript.name
             ? null : { backgroundColor: '#e6e6e6' },
           (data.transcript.pValue === undefined || pValue > pValueThreshold)
             ? { color: '#aaa' } : null
@@ -163,9 +163,9 @@ class TranscriptRow extends React.Component {
               e.preventDefault()
 
               if (saved) {
-                removeSavedTranscript(data.transcript.id)
+                removeSavedTranscript(data.transcript.name)
               } else {
-                addSavedTranscript(data.transcript.id)
+                addSavedTranscript(data.transcript.name)
               }
 
             },
@@ -173,7 +173,7 @@ class TranscriptRow extends React.Component {
         ]),
 
         h(TableCell, { cellWidth: columnWidths[1] }, [
-          h('div.transcript-label', data.transcript.label),
+          h('div.transcript-label', data.transcript.name),
         ]),
 
         h(TableCell, dashesOrFixed(data.transcript.pValue, 3)),
@@ -296,7 +296,7 @@ class Table extends React.Component {
         e.preventDefault()
 
         const selectedIdx = R.findIndex(
-          d => R.pathEq(['view', 'focusedTranscript'], d.transcript.id, this.props),
+          d => R.pathEq(['view', 'focusedTranscript'], d.transcript.name, this.props),
           displayedTranscripts
         )
 
@@ -307,13 +307,13 @@ class Table extends React.Component {
         if (e.code === "ArrowDown") {
           if (selectedIdx + 1 === displayedTranscripts.length) return
 
-          nextSelection = displayedTranscripts[selectedIdx + 1].transcript.id
+          nextSelection = displayedTranscripts[selectedIdx + 1].transcript.name
         }
 
         if (e.code === "ArrowUp") {
           if (selectedIdx - 1 === -1) return
 
-          nextSelection = displayedTranscripts[selectedIdx - 1].transcript.id
+          nextSelection = displayedTranscripts[selectedIdx - 1].transcript.name
         }
 
         dispatch(Action.SetFocusedTranscript(nextSelection))
@@ -481,9 +481,9 @@ class Table extends React.Component {
 
             displayedTranscripts && h('tbody', displayedTranscripts.map(data =>
               h(TranscriptRow, {
-                key: `${data.transcript.id}-${treatmentA}-${treatmentB}`,
+                key: `${data.transcript.name}-${treatmentA}-${treatmentB}`,
                 data,
-                saved: savedTranscripts.has(data.transcript.id),
+                saved: savedTranscripts.has(data.transcript.name),
                 setHoveredTranscript: this.setHoveredTranscript,
                 addSavedTranscript: this.addSavedTranscript,
                 removeSavedTranscript: this.removeSavedTranscript,

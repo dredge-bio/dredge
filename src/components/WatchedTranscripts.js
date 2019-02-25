@@ -64,7 +64,7 @@ const SearchContainer = styled.div`
 
   & li a {
     color: blue;
-    display: block;
+    display: inline-block;
     text-decoration: none;
     padding: 4px 8px;
   }
@@ -120,16 +120,21 @@ class Search extends React.Component {
         h('ul', {}, searchResults && (
           searchResults.length === 0
             ? h('i', 'No results')
-            : searchResults.map(({ _key_, value }) =>
+            : searchResults.map(({ alias, canonical }) =>
                 h('li', {
-                  key: _key_,
-                }, h('a', {
-                  href: '#',
-                  onClick: e => {
-                    e.preventDefault()
-                    onSelect(value)
-                  },
-                }, _key_)),
+                  key: alias,
+                }, [
+                  h('a', {
+                    href: '#',
+                    onClick: e => {
+                      e.preventDefault()
+                      onSelect(canonical)
+                    },
+                  }, alias),
+
+                  h('span', ` (${canonical})`),
+
+                ]),
               )
         )),
       ])
