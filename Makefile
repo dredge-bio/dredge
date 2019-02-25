@@ -38,6 +38,18 @@ all: node_modules $(MINIFIED_VERSIONED_JS_BUNDLE)
 watch: | dist
 	$(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(BROWSERIFY_ENTRY)
 
+REMOTE_DIR := /run/user/1001/gvfs/smb-share:server=web.bio.unc.edu,share=dredge
+
+upload: # $(VERSIONED_ZIPFILE)
+	rm -f $(REMOTE_DIR)/dredge-*.js \
+	      $(REMOTE_DIR)/dredge-*.zip \
+	      $(addprefix $(REMOTE_DIR)/,$(ZIPPED_FILES)) > /dev/null
+	cp $< $(REMOTE_DIR) > /dev/null
+	cd $(REMOTE_DIR) && \
+		unzip -o $(notdir $(VERSIONED_ZIPFILE)) && \
+		mv $(notdir $(VERSIONED_DIRECTORY))/* . && \
+		rmdir $(notdir $(VERSIONED_DIRECTORY))
+
 zip: $(VERSIONED_ZIPFILE)
 
 serve:
