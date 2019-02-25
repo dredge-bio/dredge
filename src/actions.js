@@ -422,9 +422,8 @@ async function fetchResource(url, cache=true) {
 }
 
 async function parseAbundanceFile(resp, treatments) {
-  let abundanceRows = (await resp.text()).split('\n')
-
-  const replicates = abundanceRows.shift().split('\t').slice(1)
+  const abundanceRows = (await resp.text()).split('\n')
+      , replicates = abundanceRows.shift().split('\t').slice(1)
       , transcripts = []
       , abundances = []
 
@@ -443,14 +442,14 @@ async function parseAbundanceFile(resp, treatments) {
       , replicateIndices = {}
 
   i = 0
-  for (let t of transcripts) {
+  for (const t of transcripts) {
     transcriptIndices[t] = i;
     i++
     if (i % 1000 === 0) await delay(0)
   }
 
   i = 0
-  for (let r of replicates) {
+  for (const r of replicates) {
     replicateIndices[r] = i;
     i++
     if (i % 1000 === 0) await delay(0)
