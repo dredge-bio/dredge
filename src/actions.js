@@ -604,7 +604,8 @@ function loadRemoteProject(projectKey) {
     if (projectKey === '__LOCAL') {
       const localProjectData = JSON.parse(localStorage.getItem('local-project'))
           , metadata = R.omit(['baseURL'], localProjectData)
-          , originalBaseURL = localProjectData.baseURL
+
+      localStorage.removeItem(projectKey + '-watched')
 
       let resolvedBaseURL = localProjectData.baseURL
       if (!resolvedBaseURL.endsWith('/')) resolvedBaseURL += '/'
@@ -616,7 +617,6 @@ function loadRemoteProject(projectKey) {
         projectKey,
         R.always({
           id: projectKey,
-          originalBaseURL,
           baseURL: resolvedBaseURL,
           metadata,
         })
@@ -625,7 +625,6 @@ function loadRemoteProject(projectKey) {
 
     const {
       metadata,
-      originalBaseURL,
       baseURL,
       loaded,
     } = R.path(['projects', projectKey], getState())
@@ -707,7 +706,7 @@ function loadRemoteProject(projectKey) {
         })))
     }
 
-    const savedTranscriptKey = originalBaseURL + '-watched'
+    const savedTranscriptKey = projectKey + '-watched'
 
     const savedTranscripts = new Set(
       JSON.parse(localStorage[savedTranscriptKey] || '[]'))
@@ -807,14 +806,10 @@ function loadAvailableProjects() {
       }
     }
 
-    await Promise.all(Object.entries(projects).map(async ([ projectKey, projectBaseURL ]) => {
-      let resolvedBaseURL = projectBaseURL
+    await Promise.all(Object.entries(projects).map(async ([ projectKey, configURL ]) => {
+      configURL = new URL(configURL, window.location.href).href
 
-      if (!projectBaseURL.endsWith('/')) {
-        resolvedBaseURL += '/'
-      }
-
-      const baseURL = new URL(resolvedBaseURL, window.location.href).href
+      const baseURL = new URL('./', configURL).href
 
       const makeProjectLog = makeLog(projectKey)
 
@@ -822,7 +817,6 @@ function loadAvailableProjects() {
         projectKey,
         R.always({
           id: projectKey,
-          originalBaseURL: projectBaseURL,
           baseURL,
         })
       ))
@@ -830,13 +824,12 @@ function loadAvailableProjects() {
       let loadedMetadata = {}
 
       {
-        const url = new URL('project.json', baseURL).href
-            , log = makeProjectLog('Project metadata', url)
+        const log = makeProjectLog('Project metadata', configURL)
 
         await log(LoadingStatus.Pending(null))
 
         try {
-          const resp = await fetchResource(url, false)
+          const resp = await fetchResource(configURL, false)
 
           try {
             loadedMetadata = await resp.json()
@@ -1050,7 +1043,7 @@ function updateDisplayedTranscripts(sortPath, order) {
 
 function setSavedTranscripts(savedTranscripts) {
   return (dispatch, getState) => {
-    const key = getState().currentView.project.originalBaseURL + '-watched'
+    const key = getState().currentView.project.id + '-watched'
         , savedTranscriptsStr = JSON.stringify([...savedTranscripts])
 
     localStorage.setItem(key, savedTranscriptsStr)
