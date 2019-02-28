@@ -536,7 +536,7 @@ t4    154.1   0.4     555.1     6.2`,
             h(Paragraph, [
               `First, open a terminal and change directories to ${projectRoot}. Next, download the R script `,
               h('a', {
-                href: 'JSON_treatments.R',
+                href: 'r-scripts/JSON_treatments.R',
               }, 'JSON_treatments.R'),
               '. Then run the script using the command:',
             ]),
@@ -560,7 +560,7 @@ t4    154.1   0.4     555.1     6.2`,
             h(Paragraph, [
               'Run the pairwise comparison generation script in much the same way, using the R script ',
               h('a', {
-                href: 'pairwise_comparisons.R',
+                href: 'r-scripts/pairwise_comparisons.R',
               }, 'pairwise_comparisons.R'),
             ]),
 
