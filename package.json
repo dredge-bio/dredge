@@ -12,7 +12,7 @@
   "dependencies": {
     "d3": "^5.5.0",
     "debounce": "^1.2.0",
-    "file-saver": "^2.0.0-rc.3",
+    "file-saver": "^2.0.1",
     "is-url": "^1.2.4",
     "org-async-actions": "^1.0.0",
     "org-shell": "^4.1.0",

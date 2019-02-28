@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , debounce = require('debounce')
     , { Navigable, Route } = require('org-shell')
+    , { saveAs } = require('file-saver')
 
 const Container = styled(Box)`
 code {
@@ -263,6 +264,13 @@ module.exports = Navigable(class NewProject extends React.Component {
 
           h(Button, {
             mr: 2,
+            onClick: () => {
+              const blob = new Blob(
+                [JSON.stringify(this.getProjectJSON(), true, '  ')],
+                { type: 'application/json;charset=utf-8' })
+
+              saveAs(blob, 'project.json')
+            },
           }, 'Save'),
         ]),
 
@@ -554,6 +562,29 @@ t4    154.1   0.4     555.1     6.2`,
               h('a', {
                 href: 'pairwise_comparisons.R',
               }, 'pairwise_comparisons.R'),
+            ]),
+
+            h(Heading, { as: 'h3', mb: 2, fontSize: 3 }, 'Saving configuration'),
+            h(Paragraph, [
+              'Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, and save the file inside the ',
+              h('code', projectRoot),
+              ' folder. By default, the file is called "project.json"',
+            ]),
+
+            h(Paragraph, [
+              'Create a file called "projects.json" inside the base dredge folder: ',
+              h('code', projectRoot + '/projects.json'),
+              '. This will give DrEdGE information about all the projects to load. It should contain a JSON object whose keys are short labels for the project to load, and whose values are paths to the projects\' configuration files. In our case, this file should contain:',
+            ]),
+
+            h(Paragraph, { as: 'pre' }, [
+`{
+  "my_project": "my_project/project.json"
+}`,
+            ]),
+
+            h(Paragraph, [
+              'Restart DrEdGE, and hopefully your project will be available.',
             ]),
           ]),
         ]),
