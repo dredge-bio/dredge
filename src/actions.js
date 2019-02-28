@@ -833,7 +833,7 @@ function loadAvailableProjects() {
       }
     }
 
-    await Promise.all(Object.entries(projects).map(async ([ projectKey, configURL ]) => {
+    await Promise.all(Object.entries(projects || {}).map(async ([ projectKey, configURL ]) => {
       configURL = new URL(configURL, window.location.href).href
 
       const baseURL = new URL('./', configURL).href
