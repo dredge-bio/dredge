@@ -8,8 +8,6 @@ NPM_BIN := node_modules/.bin
 
 VERSION := $(shell npm ls --depth=0 --long 2> /dev/null | head -n 1 | cut -d@ -f 2)
 
-BROWSERIFY_ENTRY = src/index.js
-
 JS_BUNDLE = dist/$(PROJECT_NAME).js
 VERSIONED_JS_BUNDLE = $(JS_BUNDLE:.js=-$(VERSION).js)
 MINIFIED_VERSIONED_JS_BUNDLE = $(VERSIONED_JS_BUNDLE:.js=.min.js)
@@ -17,14 +15,19 @@ MINIFIED_VERSIONED_JS_BUNDLE = $(VERSIONED_JS_BUNDLE:.js=.min.js)
 VERSIONED_DIRECTORY = dist/$(PROJECT_NAME)-$(VERSION)
 VERSIONED_ZIPFILE = $(VERSIONED_DIRECTORY).zip
 
+BROWSERIFY_ENTRY = src/index.js
+BROWSERIFY_PREAMBLE = ZIP_FILENAME=$(notdir $(VERSIONED_ZIPFILE))
+
 REMOTE_DIR := /run/user/1001/gvfs/smb-share:server=web.bio.unc.edu,share=dredge
 
 JS_FILES = $(shell find src/ -type f -name *js)
 LIB_FILES = $(shell find lib/ -type f)
+R_FILES = $(shell find r-scripts/ -type f)
 
 ZIPPED_FILES = $(VERSIONED_JS_BUNDLE) \
 	       $(MINIFIED_VERSIONED_JS_BUNDLE) \
 	       $(LIB_FILES) \
+	       $(R_FILES) \
 	       favicon.ico \
 	       index.html
 
@@ -36,7 +39,7 @@ ZIPPED_FILES = $(VERSIONED_JS_BUNDLE) \
 all: node_modules $(MINIFIED_VERSIONED_JS_BUNDLE)
 
 watch: | dist
-	$(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(BROWSERIFY_ENTRY)
+	$(BROWSERIFY_PREAMBLE) $(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(BROWSERIFY_ENTRY)
 
 upload: $(VERSIONED_ZIPFILE)
 	rm -f $(REMOTE_DIR)/dredge-*.js \
@@ -72,7 +75,7 @@ node_modules: package.json
 	npm install
 
 $(VERSIONED_JS_BUNDLE): $(JS_FILES) | dist
-	NODE_ENV=production $(NPM_BIN)/browserify -d $(BROWSERIFY_ENTRY) > $@
+	$(BROWSERIFY_PREAMBLE) NODE_ENV=production $(NPM_BIN)/browserify -d $(BROWSERIFY_ENTRY) > $@
 
 $(MINIFIED_VERSIONED_JS_BUNDLE): $(VERSIONED_JS_BUNDLE)
 	$(NPM_BIN)/terser $< -o $@ --compress
@@ -82,6 +85,7 @@ $(VERSIONED_ZIPFILE): $(ZIPPED_FILES) | dist
 	mkdir -p $(VERSIONED_DIRECTORY)
 	cp $^ $(VERSIONED_DIRECTORY)
 	cd $(VERSIONED_DIRECTORY) && mkdir lib && mv $(notdir $(LIB_FILES)) lib
+	cd $(VERSIONED_DIRECTORY) && mkdir r-scripts && mv $(notdir $(R_FILES)) r-scripts
 	sed -i \
 		-e 's|$(JS_BUNDLE)|$(notdir $(MINIFIED_VERSIONED_JS_BUNDLE))|' \
 		$(VERSIONED_DIRECTORY)/index.html
