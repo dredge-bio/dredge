@@ -46,6 +46,7 @@ upload: $(VERSIONED_ZIPFILE)
 	      $(REMOTE_DIR)/dredge-*.zip \
 	      $(addprefix $(REMOTE_DIR)/,$(ZIPPED_FILES))
 	-rmdir $(REMOTE_DIR)/lib
+	-rmdir $(REMOTE_DIR)/r-scripts
 	cp $< $(REMOTE_DIR)
 	-cd $(REMOTE_DIR) && unzip -o $(notdir $(VERSIONED_ZIPFILE))
 	cd $(REMOTE_DIR) && \
