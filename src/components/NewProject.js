@@ -208,10 +208,10 @@ module.exports = Navigable(class NewProject extends React.Component {
     this.debouncedPersist = debounce(this.persist, 250)
   }
 
-  setField(fieldName) {
+  setField(fieldName, fn=R.identity) {
     const lens = R.lensPath([].concat(fieldName))
     return e => {
-      this.setState(R.set(lens, e.target.value), this.debouncedPersist)
+      this.setState(R.set(lens, fn(e.target.value)), this.debouncedPersist)
     }
   }
 
@@ -337,13 +337,13 @@ module.exports = Navigable(class NewProject extends React.Component {
                   h('span.axis-label-type', 'min'),
                   h(LimitInput, {
                     value: this.state.abundanceLimits[0][0],
-                    onChange: this.setField(['abundanceLimits', 0, 0]),
+                    onChange: this.setField(['abundanceLimits', 0, 0], parseFloat),
                   }),
 
                   h('span.axis-label-type', 'max'),
                   h(LimitInput, {
                     value: this.state.abundanceLimits[0][1],
-                    onChange: this.setField(['abundanceLimits', 0, 1]),
+                    onChange: this.setField(['abundanceLimits', 0, 1], parseFloat),
                   }),
                 ]),
               ]),
@@ -355,13 +355,13 @@ module.exports = Navigable(class NewProject extends React.Component {
                   h('span.axis-label-type', 'min'),
                   h(LimitInput, {
                     value: this.state.abundanceLimits[1][0],
-                    onChange: this.setField(['abundanceLimits', 1, 0]),
+                    onChange: this.setField(['abundanceLimits', 1, 0], parseFloat),
                   }),
 
                   h('span.axis-label-type', 'max'),
                   h(LimitInput, {
                     value: this.state.abundanceLimits[1][1],
-                    onChange: this.setField(['abundanceLimits', 1, 1]),
+                    onChange: this.setField(['abundanceLimits', 1, 1], parseFloat),
                   }),
                 ]),
               ]),
