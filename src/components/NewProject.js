@@ -184,7 +184,7 @@ const DEFAULT_SETTINGS = {
     [0, 100],
   ],
   treatments: './treatments.json',
-  pairwiseName: './pairwise_data/%A_%B.txt',
+  pairwiseName: './pairwise_files/%A_%B.txt',
   transcriptAliases: './aliases.txt',
   abundanceMeasures: './abundanceMeasures.txt',
   diagram: './diagram.svg',
