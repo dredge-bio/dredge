@@ -181,7 +181,7 @@ const DEFAULT_SETTINGS = {
   readme: '',
   abundanceLimits: [
     [0, 100],
-    [0, 100],
+    [-100, 100],
   ],
   treatments: './treatments.json',
   pairwiseName: './pairwise_files/%A_%B.txt',
