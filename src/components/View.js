@@ -50,12 +50,12 @@ class Viewer extends React.Component {
   }
 
   async updateTreatments(prevProps) {
-    const { dispatch, updateOpts, projectKey } = this.props
+    const { dispatch, updateOpts } = this.props
 
     let { treatmentA, treatmentB } = this.props
 
     if (!treatmentA || !treatmentB) {
-      const resp = await dispatch(Action.GetDefaultPairwiseComparison(projectKey))
+      const resp = await dispatch(Action.GetDefaultPairwiseComparison)
       const { response } = resp.readyState
       treatmentA = response.treatmentA
       treatmentB = response.treatmentB
@@ -162,27 +162,42 @@ const WrappedViewer = R.pipe(
   Navigable,
   connect((state, ownProps) => {
     const { treatmentA, treatmentB } = ownProps.opts
-        , projectKey = ownProps.params.project
 
-    return { projectKey, treatmentA, treatmentB }
+    return { treatmentA, treatmentB }
   }),
 )(Viewer)
 
-module.exports = props => {
-  const { project } = props.params
-      , [ showView, setShowView ] = React.useState(project !== '__LOCAL')
+module.exports = connect(R.pick(['view', 'projects']))(props => {
+  const { view: { source }, projects } = props
 
-  if (!showView) {
+  if (!source) return null
+
+  const project = projects[source.key]
+
+  // Always prompt to continue if this is a local project
+  const [ mustContinue, setMustContinue ] = React.useState(
+    project.loaded && source.case({
+      Local: R.T,
+      Global: R.F,
+    }))
+
+  const showLog = (
+    mustContinue ||
+    project.failed === true ||
+    project.loaded === false
+  )
+
+  if (showLog) {
     return (
       h(Box, { px: 3, py: 2 }, [
         h(Log, {
-          loadingProject: project,
+          loadingProject: source.key,
         }),
-        h(Box, { mt: 4 }, [
+        !(mustContinue && !project.failed) ? null : h(Box, { mt: 4 }, [
           h(Button, {
             onClick() {
-              setShowView(true)
-            }
+              setMustContinue(false)
+            },
           }, 'Continue'),
         ]),
       ])
@@ -190,4 +205,4 @@ module.exports = props => {
   }
 
   return h(WrappedViewer, props)
-}
+})

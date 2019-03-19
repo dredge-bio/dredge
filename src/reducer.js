@@ -2,10 +2,11 @@
 
 const R = require('ramda')
 
-function view(project, extra) {
+function blankView(source, extra) {
   return Object.assign({
-    project,
-    loading: false,
+    source,
+
+    loading: true,
 
     // comparedTreatments: null,
     pairwiseData: null,
@@ -25,14 +26,41 @@ function view(project, extra) {
   }, extra)
 }
 
+function defaultLocalConfig() {
+  return {
+    baseURL: '',
+    config: {
+      label: '',
+      url: '',
+      readme: '',
+      abundanceLimits: [
+        [0, 100],
+        [-100, 100],
+      ],
+      treatments: './treatments.json',
+      pairwiseName: './pairwise_files/%A_%B.txt',
+      transcriptAliases: './aliases.txt',
+      abundanceMeasures: './abundanceMeasures.txt',
+      diagram: './diagram.svg',
+    },
+  }
+}
+
 function initialState() {
   return {
-    initialized: false,
+    isGloballyConfigured: 'DREDGE_PROJECT_CONFIG_URL' in window,
+
     compatible: null,
+
     log: {},
 
-    projects: null,
-    currentView: null,
+    projects: {
+      global: {
+        loaded: false,
+      },
+      local: Object.assign({ loaded: false }, defaultLocalConfig()),
+    },
+    view: null,
   }
 }
 
@@ -41,10 +69,6 @@ module.exports = function reducer(state=initialState(), action) {
 
   return action.readyState.case({
     Success: resp => action.type.case({
-      Initialize() {
-        return R.assoc('initialized', true, state)
-      },
-
       Log() {
         const { project, resourceName='', resourceURL='', status } = action.type
 
@@ -65,53 +89,66 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
 
-      LoadAvailableProjects() {
-        return state
-      },
-
-      UpdateProject(key, updateFn) {
-        return R.over(R.lensPath(['projects', key]), updateFn, state)
-      },
-
       CheckCompatibility() {
         return R.assoc('compatible', true, state)
       },
 
-      ResetViewedProject() {
-        return R.assoc('currentView', null, state)
+      LoadProjectConfig(source) {
+        const { config } = resp
+
+        return R.over(
+          R.lensPath(['projects', source.key]),
+          R.flip(R.merge)({
+            source,
+            config,
+          }),
+          state
+        )
       },
 
-      LoadRemoteProject(projectKey) {
-        if (R.path(['currentView', 'project', 'id'], state) === projectKey) {
-          return state
-        }
+      UpdateLocalConfig() {
+        const { update } = resp
 
+        return R.over(
+          R.lensPath(['projects', 'local']),
+          update,
+          state
+        )
+      },
+
+      LoadProject(source) {
         const { savedTranscripts } = resp
-            , project = state.projects[projectKey]
 
-        return R.assoc('currentView', view(project, { savedTranscripts }), state)
+        return R.pipe(
+          R.set(R.lensPath(['view', 'savedTranscripts']), savedTranscripts),
+          R.set(R.lensPath(['projects', source.key, 'loaded']), true)
+        )(state)
       },
 
-      GetDefaultProject() {
-        return state
+      UpdateProject(source, updateFn) {
+        return R.over(
+          R.lensPath(['projects', source.key]),
+          updateFn,
+          state
+        )
       },
 
       SetPairwiseComparison(treatmentA, treatmentB) {
         const { pairwiseData } = resp
 
         return R.pipe(
-          R.over(R.lensProp('currentView'), R.pipe(
-            R.assoc('loading', false),
-            R.assocPath(
-              ['project', 'pairwiseComparisonCache', [treatmentA, treatmentB]],
-              pairwiseData
-            ),
+          R.over(
+            R.lensPath(['pairwiseComparisonCache', [treatmentA, treatmentB]]),
+            R.set,
+            pairwiseData),
+          R.over(
+            R.lensProp('view'),
             R.flip(R.merge)({
+              loading: false,
               pairwiseData,
               comparedTreatments: [treatmentA, treatmentB],
               brushedTranscripts: new Set(),
-            })
-          ))
+            }))
         )(state)
       },
 
@@ -133,7 +170,7 @@ module.exports = function reducer(state=initialState(), action) {
         }
 
         return R.over(
-          R.lensProp('currentView'),
+          R.lensProp('view'),
           R.flip(R.merge)(updated),
           state
         )
@@ -141,7 +178,7 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetHoveredTranscript(transcriptName) {
         return R.assocPath(
-          ['currentView', 'hoveredTranscript'],
+          ['view', 'hoveredTranscript'],
           transcriptName,
           state
         )
@@ -150,14 +187,14 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetBrushedTranscripts(transcriptNames) {
         return R.assocPath(
-          ['currentView', 'brushedTranscripts'],
+          ['view', 'brushedTranscripts'],
           new Set(transcriptNames),
           state
         )
       },
 
       SetSavedTranscripts(transcriptNames) {
-        const { currentView: { brushedTranscripts, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
+        const { view: { brushedTranscripts, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
             , nextSavedTranscripts = new Set(transcriptNames)
 
         let nextFocusedTranscript = focusedTranscript
@@ -197,7 +234,7 @@ module.exports = function reducer(state=initialState(), action) {
           nextFocusedTranscript = [...nextSavedTranscripts][0]
         }
 
-        return R.over(R.lensProp('currentView'), R.flip(R.merge)({
+        return R.over(R.lensProp('view'), R.flip(R.merge)({
           savedTranscripts: nextSavedTranscripts,
           focusedTranscript: nextFocusedTranscript,
           hoveredTranscript: nextHoveredTranscript,
@@ -206,7 +243,7 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetFocusedTranscript(transcriptName) {
         return R.assocPath(
-          ['currentView', 'focusedTranscript'],
+          ['view', 'focusedTranscript'],
           transcriptName,
           state
         )
@@ -214,7 +251,7 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetPValueThreshold(threshold) {
         return R.assocPath(
-          ['currentView', 'pValueThreshold'],
+          ['view', 'pValueThreshold'],
           threshold,
           state
         )
@@ -222,7 +259,7 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetHoveredTreatment(treatmentName) {
         return R.assocPath(
-          ['currentView', 'hoveredTreatment'],
+          ['view', 'hoveredTreatment'],
           treatmentName,
           state
         )
@@ -233,25 +270,39 @@ module.exports = function reducer(state=initialState(), action) {
     }),
 
     Pending: () => action.type.case({
+      LoadProject(source) {
+        return Object.assign({}, state, {
+          view: blankView(source),
+        })
+      },
+
       SetPairwiseComparison() {
-        return R.assocPath(['currentView', 'loading'], true, state)
+        return R.assocPath(['view', 'loading'], true, state)
       },
 
       _: R.always(state),
     }),
 
     Failure: err => action.type.case({
+      LoadProject(source) {
+        return R.over(
+          R.lensPath(['projects', source.key]),
+          R.flip(R.merge)({ loaded: true, failed: true }),
+          state
+        )
+      },
+
       SetPairwiseComparison(treatmentA, treatmentB) {
-        return R.pipe(
-          R.over(R.lensProp('currentView'), R.pipe(
-            R.assoc('loading', false),
-            R.flip(R.merge)({
-              pairwiseData: null,
-              comparedTreatments: [treatmentA, treatmentB],
-              brushedTranscripts: new Set(),
-            })
-          ))
-        )(state)
+        return R.over(
+          R.lensProp('view'),
+          R.flip(R.merge)({
+            loading: false,
+            pairwiseData: null,
+            comparedTreatments: [treatmentA, treatmentB],
+            brushedTranscripts: new Set(),
+          }),
+          state
+        )
       },
 
       CheckCompatibility() {

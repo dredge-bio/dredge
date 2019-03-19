@@ -4,12 +4,11 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
-    , { Flex, Box, Button } = require('rebass')
+    , { Flex, Box, Button, Heading } = require('rebass')
     , AriaMenuButton = require('react-aria-menubutton')
     , { Navigable, Route } = require('org-shell')
     , { createGlobalStyle } = require('styled-components')
     , { connect } = require('react-redux')
-    , Log = require('./Log')
     , { version } = require('../../package.json')
 
 const GlobalStyle = createGlobalStyle`
@@ -163,23 +162,27 @@ const Menu = styled(AriaMenuButton.Menu)`
 
 
 const Header = R.pipe(
-  connect(state => ({
-    projects: state.projects,
-    currentView: state.currentView,
-  })),
+  connect(R.pick(['projects', 'view'])),
   Navigable
 )(function Header({
   navigateTo,
-  currentView,
+  view,
   projects,
   onRequestResize,
-  loadingProject,
 }) {
-  const currentProject = R.path(['project', 'id'], currentView)
+  const { source } = (view || {})
 
-  let headerText = R.path(['project', 'metadata', 'label'], currentView)
+  let headerText
 
-  if (!headerText || !!loadingProject) {
+  if (source) {
+    const project = projects[source.key]
+
+    if (project.loaded) {
+      headerText = R.path([source.key, 'config', 'label'], projects)
+    }
+  }
+
+  if (!headerText) {
     headerText = 'DrEdGE: Differential Expression Gene Explorer'
   }
 
@@ -196,7 +199,7 @@ const Header = R.pipe(
           },
         }, [
           headerText,
-          currentProject !== '__LOCAL' ? null : (
+          (!source || source.key !== 'local') ? null : (
             h(Button, {
               ml: 2,
               onClick() {
@@ -208,40 +211,6 @@ const Header = R.pipe(
       ]),
 
       h(Flex, { alignItems: 'center' }, [
-        h(AriaMenuButton.Wrapper, {
-          style: {
-            position: 'relative',
-          },
-          onSelection: project => {
-            navigateTo(new Route('home', { project }))
-          },
-        }, [
-          h(Button, {
-            ml: 2,
-            style: {
-              padding: 0,
-            },
-          }, [
-            h(AriaMenuButton.Button, {
-              style: {
-                fontSize: '16px',
-                padding: '9px 14px',
-                display: 'inline-block',
-              },
-            }, 'Open dataset'),
-          ]),
-
-          h(Menu, {
-            width: '400px',
-          }, [
-            h('ul', Object.entries(projects || {}).map(([ key, val ]) =>
-              h('li', { key }, h(AriaMenuButton.MenuItem, {
-                value: key,
-              }, R.path(['metadata', 'label'], val) || key))
-            )),
-          ]),
-        ]),
-
         h(AriaMenuButton.Wrapper, {
           style: {
             position: 'relative',
@@ -315,11 +284,13 @@ function getWindowDimensions() {
   }
 }
 
-class Application extends React.Component {
+module.exports = class Application extends React.Component {
   constructor() {
     super();
 
-    this.state = getWindowDimensions()
+    this.state = Object.assign({
+      error: false,
+    }, getWindowDimensions())
     this.handleRequestResize = this.handleRequestResize.bind(this)
   }
 
@@ -329,20 +300,18 @@ class Application extends React.Component {
     })
   }
 
+  componentDidCatch(error, info) {
+    this.setState({
+      componentStack: info.componentStack,
+    })
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+
   render() {
-    const { initialized, loadingProject, failedProject, children } = this.props
-
-    let mainEl
-
-    if (!initialized || loadingProject || failedProject) {
-      mainEl = h(Box, { px: 3, py: 2 }, h(Log, {
-        initializing: !initialized,
-        loadingProject,
-        failedProject,
-      }))
-    } else {
-      mainEl = children
-    }
+    const { error, componentStack } = this.state
 
     return [
       h(GlobalStyle, { key: 'style' }),
@@ -354,41 +323,21 @@ class Application extends React.Component {
         },
       }, [
         h(Header, {
-          initialized,
-          loadingProject,
           onRequestResize: this.handleRequestResize,
         }),
-        h('main', [].concat(mainEl)),
+
+        h('main', [].concat(
+          !error
+            ? this.props.children
+            : (
+              h(Box, [
+                h(Heading, { as: 'h1'}, 'Runtime error'),
+                h(Box, { as: 'pre', mt: 2 }, error.stack),
+                !componentStack ? null : h(Box, { as: 'pre' }, '----\n' + componentStack.trim()),
+              ])
+            )
+        )),
       ]),
     ]
   }
 }
-
-module.exports = connect((state, ownProps) => {
-  const { initialized, projects } = state
-
-  let loadingProject = null
-    , failedProject = null
-
-  for (const [ k, v ] of Object.entries(projects || {})) {
-    if (v.loading) {
-      loadingProject = k
-      break;
-    }
-  }
-
-  const setFailedProject = (
-    ('project' in (ownProps.params || {})) &&
-    R.path([ownProps.params.project, 'failed'], projects || {})
-  )
-
-  if (setFailedProject) {
-    failedProject = ownProps.params.project
-  }
-
-  return {
-    initialized,
-    loadingProject,
-    failedProject,
-  }
-})(Application)

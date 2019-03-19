@@ -4,10 +4,11 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , { Flex, Box, Card, Button, Heading } = require('rebass')
+    , { connect } = require('react-redux')
     , styled = require('styled-components').default
-    , debounce = require('debounce')
     , { Navigable, Route } = require('org-shell')
     , { saveAs } = require('file-saver')
+    , Action = require('../actions')
 
 const Container = styled(Box)`
 code {
@@ -174,60 +175,45 @@ function Input(props) {
   )
 }
 
-const DEFAULT_SETTINGS = {
-  baseURL: '',
-  label: '',
-  url: '',
-  readme: '',
-  abundanceLimits: [
-    [0, 100],
-    [-100, 100],
-  ],
-  treatments: './treatments.json',
-  pairwiseName: './pairwise_files/%A_%B.txt',
-  transcriptAliases: './aliases.txt',
-  abundanceMeasures: './abundanceMeasures.txt',
-  diagram: './diagram.svg',
-}
-
-module.exports = Navigable(class NewProject extends React.Component {
+class NewProject extends React.Component {
   constructor() {
     super();
 
+    this.state = {
+      baseURL: '',
+    }
+
     this.setField = this.setField.bind(this)
-
-    let existing = {}
-
-    try {
-      existing = JSON.parse(localStorage.getItem('local-project'))
-    } catch (e) { e; }
-
-    this.state = Object.assign(R.clone(DEFAULT_SETTINGS), existing)
-
-    this.persist = () => localStorage.setItem('local-project', JSON.stringify(this.state))
-    this.debouncedPersist = debounce(this.persist, 250)
   }
 
   setField(fieldName, fn=R.identity) {
-    const lens = R.lensPath([].concat(fieldName))
+    const { dispatch } = this.props
+
+    const lens = R.lensPath(
+      (fieldName === 'baseURL' ? [] : ['config'])
+        .concat(fieldName))
+
     return e => {
-      this.setState(R.set(lens, fn(e.target.value)), this.debouncedPersist)
+      if (fieldName === 'baseURL') {
+        this.setState({ baseURL: e.target.value })
+        dispatch(Action.UpdateLocalConfig(
+          R.set(lens, this.getBaseURL().baseURL)
+        ))
+      } else {
+        dispatch(Action.UpdateLocalConfig(
+          R.set(lens, fn(e.target.value))
+        ))
+      }
     }
   }
 
   getProjectJSON() {
-    const state = R.clone(this.state)
-        , metadata = R.omit(['baseURL'], state)
-
-    return metadata
+    return this.props.config
   }
 
-  render() {
-    const { navigateTo } = this.props
-
-    let isRelativeURL = false
-
+  getBaseURL() {
     let baseURL = this.state.baseURL
+      , isRelativeURL
 
     if (!baseURL.startsWith('http')) {
       isRelativeURL = true
@@ -238,17 +224,26 @@ module.exports = Navigable(class NewProject extends React.Component {
 
     const resolve = path => resolveURL(baseURL, path, baseURL)
 
+    return { isRelativeURL, baseURL, resolve }
+  }
+
+  render() {
+    const { navigateTo, config } = this.props
+        , { resolve, isRelativeURL } = this.getBaseURL()
+
     return (
       h(Container, { p: 3 }, [
         h(Heading, { as: 'h1', fontSize: 5 }, 'New project'),
 
         h(Box, { my: 3 }, [
+          /*
           h(Button, {
             mr: 5,
             onClick: () => {
               this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
             },
           }, 'Reset form'),
+          */
 
           h(Button, {
             mr: 5,
@@ -282,7 +277,7 @@ module.exports = Navigable(class NewProject extends React.Component {
               label: 'Project name',
               required: true,
               onChange: this.setField('label'),
-              value: this.state.label,
+              value: config.label,
             }),
 
             h(Input, {
@@ -293,7 +288,7 @@ module.exports = Navigable(class NewProject extends React.Component {
               ]),
               required: true,
               onChange: this.setField('baseURL'),
-              value: this.state.baseURL,
+              value: config.baseURL,
               showURL: resolve(''),
               isRelativeURL,
             }),
@@ -303,8 +298,8 @@ module.exports = Navigable(class NewProject extends React.Component {
               help: 'The URL that contains information about individual treatments in the dataset. Generating using R scripts as described in the instructions.',
               required: true,
               onChange: this.setField('treatments'),
-              value: this.state.treatments,
-              showURL: this.state.treatments && resolve(this.state.treatments),
+              value: config.treatments,
+              showURL: config.treatments && resolve(config.treatments),
               isRelativeURL,
             }),
 
@@ -320,8 +315,8 @@ module.exports = Navigable(class NewProject extends React.Component {
                 ]),
               ]),
               onChange: this.setField('pairwiseName'),
-              value: this.state.pairwiseName,
-              showURL: this.state.pairwiseName && resolve(this.state.pairwiseName),
+              value: config.pairwiseName,
+              showURL: config.pairwiseName && resolve(config.pairwiseName),
               isRelativeURL,
             }),
 
@@ -336,13 +331,13 @@ module.exports = Navigable(class NewProject extends React.Component {
                 h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
                   h('span.axis-label-type', 'min'),
                   h(LimitInput, {
-                    value: this.state.abundanceLimits[0][0],
+                    value: config.abundanceLimits[0][0],
                     onChange: this.setField(['abundanceLimits', 0, 0], parseFloat),
                   }),
 
                   h('span.axis-label-type', 'max'),
                   h(LimitInput, {
-                    value: this.state.abundanceLimits[0][1],
+                    value: config.abundanceLimits[0][1],
                     onChange: this.setField(['abundanceLimits', 0, 1], parseFloat),
                   }),
                 ]),
@@ -354,13 +349,13 @@ module.exports = Navigable(class NewProject extends React.Component {
                 h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
                   h('span.axis-label-type', 'min'),
                   h(LimitInput, {
-                    value: this.state.abundanceLimits[1][0],
+                    value: config.abundanceLimits[1][0],
                     onChange: this.setField(['abundanceLimits', 1, 0], parseFloat),
                   }),
 
                   h('span.axis-label-type', 'max'),
                   h(LimitInput, {
-                    value: this.state.abundanceLimits[1][1],
+                    value: config.abundanceLimits[1][1],
                     onChange: this.setField(['abundanceLimits', 1, 1], parseFloat),
                   }),
                 ]),
@@ -381,8 +376,8 @@ module.exports = Navigable(class NewProject extends React.Component {
                 ' described in the instructions.',
               ]),
               onChange: this.setField('transcriptAliases'),
-              value: this.state.transcriptAliases,
-              showURL: this.state.transcriptAliases && resolve(this.state.transcriptAliases),
+              value: config.transcriptAliases,
+              showURL: config.transcriptAliases && resolve(config.transcriptAliases),
               isRelativeURL,
             }),
 
@@ -392,8 +387,8 @@ module.exports = Navigable(class NewProject extends React.Component {
                 'The URL of the file containing abundance measures for each transcript by treatement. This is the same file described in the instructions.',
               ]),
               onChange: this.setField('abundanceMeasures'),
-              value: this.state.abundanceMeasures,
-              showURL: this.state.abundanceMeasures && resolve(this.state.abundanceMeasures),
+              value: config.abundanceMeasures,
+              showURL: config.abundanceMeasures && resolve(config.abundanceMeasures),
               isRelativeURL,
             }),
 
@@ -401,8 +396,8 @@ module.exports = Navigable(class NewProject extends React.Component {
               label: 'Diagram URL',
               help: 'The URL of the SVG diagram for this project',
               onChange: this.setField('diagram'),
-              value: this.state.diagram,
-              showURL: this.state.diagram && resolve(this.state.diagram),
+              value: config.diagram,
+              showURL: config.diagram && resolve(config.diagram),
               isRelativeURL,
             }),
           ]),
@@ -591,4 +586,12 @@ t4    154.1   0.4     555.1     6.2`,
       ])
     )
   }
-})
+}
+
+module.exports = R.pipe(
+  Navigable,
+  connect(state => ({
+    config: state.projects.local.config,
+    baseURL: state.projects.local.baseURL,
+  }))
+)(NewProject)

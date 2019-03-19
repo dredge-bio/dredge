@@ -6,6 +6,7 @@ const h = require('react-hyperscript')
     , { Provider } = require('react-redux')
     , { render } = require('react-dom')
     , { ThemeProvider } = require('styled-components')
+    , { ProjectSource } = require('./types')
     , theme = require('./theme')
     , Application = require('./components/Application')
     , Action = require('./actions')
@@ -18,33 +19,17 @@ const resources = {
   },
 
   'help': {
-    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      await dispatch(Action.Initialize)
-    },
     Component: require('./components/Help'),
   },
 
   'home': {
     onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      await dispatch(Action.Initialize)
-
-      if (!params.project) {
-        const resp = await dispatch(Action.GetDefaultProject)
-        const { projectKey } = resp.readyState.response
-
-        redirectTo(new Route('home', { project: projectKey }))
-        return
-      }
-
-      await dispatch(Action.LoadRemoteProject(params.project))
+      dispatch(Action.LoadProject(ProjectSource.Global))
     },
     Component: require('./components/View'),
   },
 
   'new-project': {
-    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      await dispatch(Action.Initialize)
-    },
     Component: require('./components/NewProject'),
   },
 }
@@ -59,7 +44,7 @@ const Main = ORGShell({
   resources,
   onRouteChange(route, { dispatch }) {
     if (route.resourceName !== 'home') {
-      dispatch(Action.ResetViewedProject)
+      // dispatch(Action.ResetViewedProject)
     }
   },
 }, Application)

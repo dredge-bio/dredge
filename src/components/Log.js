@@ -159,7 +159,7 @@ module.exports = connect((state, ownProps) => {
         : true)
     .map(([ baseURL, files ]) => ({
       baseURL,
-      label: R.path(['projects', baseURL, 'metadata', 'label'], state) || baseURL,
+      label: R.path(['projects', baseURL, 'config', 'label'], state) || ' ',
       files: R.filter(d => {
         if (typeof d.url !== 'string') return true
         return !d.url.includes('project.json#')
