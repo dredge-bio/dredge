@@ -5,7 +5,7 @@ const h = require('react-hyperscript')
     , d3 = require('d3')
     , React = require('react')
     , { connect  } = require('react-redux')
-    , { getPlotBins } = require('../../utils')
+    , { getPlotBins, projectForView } = require('../../utils')
     , Action = require('../../actions')
     , onResize = require('../util/Sized')
 
@@ -428,24 +428,31 @@ class Plot extends React.Component {
 }
 
 module.exports = R.pipe(
-  connect(R.applySpec({
-    abundanceLimits: R.path(['currentView', 'project', 'metadata', 'abundanceLimits']),
-    savedTranscripts: R.path(['currentView', 'savedTranscripts']),
-    pairwiseData: R.path(['currentView', 'pairwiseData']),
-    pValueThreshold: R.path(['currentView', 'pValueThreshold']),
-    hoveredTranscript: R.path(['currentView', 'hoveredTranscript']),
-    treatmentsLabel: state => {
-      const view = state.currentView
+  connect(state => {
+    const project = projectForView(state) || {}
 
-      if (!view) return null
+    let treatmentsLabel
 
-      const { project, comparedTreatments } = view
+    {
+      const { view } = state
 
-      return (comparedTreatments || [])
-        .map(t => R.path(['treatments', t, 'label'], project) || t)
-        .join(' vs. ')
-    },
-  })),
+      if (view) {
+        const { comparedTreatments=[] } = view
+        treatmentsLabel = comparedTreatments
+          .map(t => R.path(['treatments', t, 'label'], project) || t)
+          .join(' vs. ')
+      }
+    }
+    return Object.assign({
+      abundanceLimits: R.path(['config', 'abundanceLimits'], project),
+      treatmentsLabel,
+    }, R.pick([
+      'savedTranscripts',
+      'pairwiseData',
+      'pValueThreshold',
+      'hoveredTranscript'
+    ], state.view))
+  }),
   onResize(el => ({
     width: el.clientWidth,
     height: el.clientHeight,

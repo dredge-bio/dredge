@@ -148,6 +148,6 @@ class PValueSelector extends React.Component {
 }
 
 module.exports  = connect(R.pipe(
-  R.prop('currentView'),
+  R.prop('view'),
   R.pick(['comparedTreatments', 'pValueThreshold', 'pairwiseData'])
 ))(PValueSelector)

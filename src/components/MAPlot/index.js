@@ -21,7 +21,7 @@ function PlotContainer({
       },
     }, [
       height === null ? null : h(Plot, {
-        key: view.project.id,
+        key: view.source.key,
         view,
         height,
         width
@@ -31,8 +31,4 @@ function PlotContainer({
   )
 }
 
-module.exports = connect(store => {
-  return {
-    view: store.currentView,
-  }
-})(PlotContainer)
+module.exports = connect(R.pick(['view']))(PlotContainer)

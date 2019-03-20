@@ -22,7 +22,7 @@ module.exports = function _createStore() {
           sortPath,
           brushedTranscripts,
           savedTranscripts,
-        } = (getState().currentView || {})
+        } = (getState().view || {})
 
         const triggerResort = (
           action.readyState &&

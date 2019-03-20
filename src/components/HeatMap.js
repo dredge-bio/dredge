@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
     , Action = require('../actions')
+    , { projectForView } = require('../utils')
 
 const COLOR_SCALE = d3.interpolateOranges
     , SQUARE_WIDTH = 20
@@ -133,14 +134,18 @@ class HeatMap extends React.Component {
   }
 }
 
-module.exports = connect(R.applySpec({
-  comparedTreatments: R.path(['currentView', 'comparedTreatments']),
-  hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
-  grid: R.path(['currentView', 'project', 'grid']),
-  transcript: R.either(
-    R.path(['currentView', 'hoveredTranscript']),
-    R.path(['currentView', 'focusedTranscript'])
-  ),
-  abundancesForTreatmentTranscript: R.path(['currentView', 'project', 'abundancesForTreatmentTranscript']),
-  treatments: R.path(['currentView', 'project', 'treatments']),
-}))(HeatMap)
+module.exports = connect(state => {
+  const project = projectForView(state) || {}
+
+  return R.applySpec({
+    comparedTreatments: R.path(['view', 'comparedTreatments']),
+    hoveredTreatment: R.path(['view', 'hoveredTreatment']),
+    grid: R.path(['project', 'grid']),
+    transcript: R.either(
+      R.path(['view', 'hoveredTranscript']),
+      R.path(['view', 'focusedTranscript'])
+    ),
+    abundancesForTreatmentTranscript: R.path(['project', 'abundancesForTreatmentTranscript']),
+    treatments: R.path(['project', 'treatments']),
+  })({ project, view: state.view })
+})(HeatMap)

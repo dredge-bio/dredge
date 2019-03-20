@@ -7,7 +7,7 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , onResize = require('./util/Sized')
-    , { findParent } = require('../utils')
+    , { findParent, projectForView } = require('../utils')
 
 const TableCell = styled.td`
   padding: 0;
@@ -502,7 +502,8 @@ class Table extends React.Component {
 
 module.exports = R.pipe(
   connect(state => ({
-    view: state.currentView,
+    view: state.view,
+    project: projectForView(state) || {},
   })),
   onResize(el => ({
     width: el.querySelector('.table-scroll').clientWidth,

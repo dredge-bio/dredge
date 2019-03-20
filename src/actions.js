@@ -5,19 +5,26 @@ const R = require('ramda')
     , isURL = require('is-url')
     , { makeTypedAction } = require('org-async-actions')
     , saveAs = require('file-saver')
-    , { LoadingStatus } = require('./types')
+    , { LoadingStatus, ProjectSource } = require('./types')
+    , { projectForView } = require('./utils')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
 }
 
-const Action = module.exports = makeTypedAction({
-  Initialize: {
-    exec: initialize,
-    request: {},
-    response: {},
-  },
+function getGlobalConfigURL() {
+  const configURL = global.DREDGE_PROJECT_CONFIG_URL
 
+  if (!configURL) return null
+
+  return new URL(configURL, window.location.href).href
+}
+
+function getGlobalWatchedGenesKey() {
+  return window.location.pathname + '-watched'
+}
+
+const Action = module.exports = makeTypedAction({
   Log: {
     exec: R.always({}),
     request: {
@@ -43,23 +50,28 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
-  LoadAvailableProjects: {
-    exec: loadAvailableProjects,
-    request: {},
-    response: {},
-  },
-
-  // FIXME: this is dumb
-  ResetViewedProject: {
-    exec: R.always({}),
-    request: {},
-    response: {},
-  },
-
-  LoadRemoteProject: {
-    exec: loadRemoteProject,
+  LoadProjectConfig: {
+    exec: loadProjectConfig,
     request: {
-      projectKey: String,
+      source: ProjectSource,
+    },
+    response: {
+      config: d => typeof d === 'object' || d === null,
+    },
+  },
+
+  UpdateLocalConfig: {
+    exec: R.always({}),
+    request: {
+      update: Function,
+    },
+    response: {},
+  },
+
+  LoadProject: {
+    exec: loadProject,
+    request: {
+      source: ProjectSource,
     },
     response: {
       savedTranscripts: Object,
@@ -69,19 +81,13 @@ const Action = module.exports = makeTypedAction({
   UpdateProject: {
     exec: R.always({}),
     request: {
-      projectKey: String,
+      source: ProjectSource,
       update: Function,
     },
     response: {},
   },
 
-  GetDefaultProject: {
-    exec: getDefaultProject,
-    request: {},
-    response: {
-      projectKey: String,
-    },
-  },
+  // Everything below here works on the "current view"
 
   SetPairwiseComparison: {
     exec: setPairwiseComparison,
@@ -97,15 +103,12 @@ const Action = module.exports = makeTypedAction({
 
   GetDefaultPairwiseComparison: {
     exec: getDefaultPairwiseComparison,
-    request: {
-      projectKey: String,
-    },
+    request: {},
     response: {
       treatmentA: String,
       treatmentB: String,
     },
   },
-
 
   UpdateDisplayedTranscripts: {
     exec: updateDisplayedTranscripts,
@@ -189,7 +192,7 @@ const Action = module.exports = makeTypedAction({
   },
 })
 
-const metadataFields = {
+const configFields = {
   label: {
     label: 'Project label',
     test: val => {
@@ -305,7 +308,7 @@ function notBlank(x) {
   return x
 }
 
-const fileMetadata = {
+const processedConfigFields = {
   transcriptAliases: {
     label: 'Transcript aliases',
     exec: async url => {
@@ -525,24 +528,6 @@ function cleanSVGString(svgString, treatments) {
 
 // Actions ----------------
 
-function initialize() {
-  return async (dispatch, getState) => {
-    if (getState().initialized) return {}
-
-    await dispatch(Action.LoadAvailableProjects)
-
-    return {}
-  }
-}
-
-function getDefaultProject() {
-  return async (dispatch, getState) => {
-    return {
-      projectKey: Object.keys(getState().projects)[0],
-    }
-  }
-}
-
 function checkCompatibility() {
   return () => {
 
@@ -558,9 +543,9 @@ function checkCompatibility() {
   }
 }
 
-function getDefaultPairwiseComparison(projectKey) {
+function getDefaultPairwiseComparison() {
   return async (dispatch, getState) => {
-    const project = getState().projects[projectKey]
+    const project = projectForView(getState())
         , { treatments } = project
         , [ treatmentA, treatmentB ] = Object.keys(treatments)
 
@@ -571,69 +556,42 @@ function getDefaultPairwiseComparison(projectKey) {
   }
 }
 
-function loadRemoteProject(projectKey) {
+function loadProject(source) {
   return async (dispatch, getState) => {
-    if (projectKey === '__LOCAL') {
-      const localProjectData = JSON.parse(localStorage.getItem('local-project'))
-          , metadata = R.omit(['baseURL'], localProjectData)
+    let config, loaded
 
-      localStorage.removeItem(projectKey + '-watched')
-
-      let resolvedBaseURL = localProjectData.baseURL
-      if (!resolvedBaseURL.endsWith('/')) resolvedBaseURL += '/'
-      resolvedBaseURL = new URL(resolvedBaseURL, window.location.href).href
-
-      await dispatch(Action.ResetLog(projectKey))
-
-      await dispatch(Action.UpdateProject(
-        projectKey,
-        R.always({
-          id: projectKey,
-          baseURL: resolvedBaseURL,
-          metadata,
-        })
-      ))
+    const refresh = () => {
+      ({
+        config,
+        loaded,
+      } = R.path(['projects', source.key], getState()))
     }
 
-    const {
-      metadata,
-      baseURL,
-      loaded,
-    } = R.path(['projects', projectKey], getState())
+    refresh()
 
+    if (!config) {
+      await dispatch(Action.LoadProjectConfig(source));
+      refresh()
+    }
 
     if (!loaded) {
-      await dispatch(Action.UpdateProject(
-        projectKey,
-        project => Object.assign({}, project, { loading: true })))
-
-
       const onUpdate = val => dispatch(Action.UpdateProject(
-        projectKey,
+        source,
         project => Object.assign({}, project, val)))
 
       const makeLog = (label, url) => async status => {
         await delay(0)
         return dispatch(Action.Log(
-          projectKey,
+          source.key,
           label,
           url,
           status
         ))
       }
 
-      try {
-        await loadProject(baseURL, metadata, makeLog, onUpdate)
-      } catch (e) {
+      await fetchProject(config, makeLog, onUpdate)
 
-        await dispatch(Action.UpdateProject(
-          projectKey,
-          project => Object.assign({}, project, { loading: false, failed: true })))
-
-        return { savedTranscripts: new Set() }
-      }
-
-      const project = R.path(['projects', projectKey], getState())
+      const project = R.path(['projects', source.key], getState())
 
       const corpus = {}
           , corpusVals = []
@@ -652,7 +610,7 @@ function loadRemoteProject(projectKey) {
           })
 
           i++
-          if (i % 300 === 0) await delay(0)
+          if (i % 5000 === 0) await delay(0)
         }
 
         i = 0
@@ -664,7 +622,7 @@ function loadRemoteProject(projectKey) {
             }
           })
           i++
-          if (i % 300 === 0) await delay(0)
+          if (i % 5000 === 0) await delay(0)
         }
 
       }
@@ -722,10 +680,8 @@ function loadRemoteProject(projectKey) {
       }
 
       await dispatch(Action.UpdateProject(
-        projectKey,
+        source,
         project => Object.assign({}, project, {
-          loaded: true,
-          loading: false,
           pairwiseComparisonCache: {},
           searchTranscripts,
           getCanonicalTranscriptLabel,
@@ -733,7 +689,11 @@ function loadRemoteProject(projectKey) {
         })))
     }
 
-    const savedTranscriptKey = projectKey + '-watched'
+    if (source.key === 'local') {
+      return { savedTranscripts: new Set([]) }
+    }
+
+    const savedTranscriptKey = getGlobalWatchedGenesKey()
 
     const savedTranscripts = new Set(
       JSON.parse(localStorage[savedTranscriptKey] || '[]'))
@@ -742,13 +702,15 @@ function loadRemoteProject(projectKey) {
   }
 }
 
-async function loadProject(baseURL, metadata, makeLog, onUpdate) {
+async function fetchProject(config, makeLog, onUpdate) {
   let failed = false
     , treatments
 
+  const { baseURL } = config
+
   // Load treatments before anything else
   {
-    const url = new URL(metadata.treatments, baseURL).href
+    const url = new URL(config.treatments, baseURL).href
         , log = makeLog('Project treatments', url)
 
     await log(LoadingStatus.Pending(null))
@@ -776,8 +738,8 @@ async function loadProject(baseURL, metadata, makeLog, onUpdate) {
     throw new Error('Could not load project because treatments not available')
   }
 
-  await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
-    let url = metadata[k]
+  await Promise.all(Object.entries(processedConfigFields).map(async ([ k, v ]) => {
+    let url = config[k]
 
     if (!url) {
       makeLog(v.label, null)(LoadingStatus.Missing('No filename specified.'))
@@ -799,111 +761,84 @@ async function loadProject(baseURL, metadata, makeLog, onUpdate) {
   }))
 }
 
-function loadAvailableProjects() {
-  return async (dispatch) => {
-    const makeLog = R.curry((projectKey, label, url, status) => {
+function loadProjectConfig(source) {
+  return async (dispatch, getState) => {
+    const existing = R.path(['projects', source.key, 'config'], getState())
+
+    if (existing) return { config: existing }
+
+    const makeProjectLog = R.curry((label, url, status) => {
       return dispatch(Action.Log(
-        projectKey,
+        source.key,
         label,
         url,
         status
       ))
     })
 
-    let projects
+    // We should only be dealing with the global config at this point, because
+    // the local one is set beforehand. But maybe we want to support loading
+    // arbitrary remote projects at some point (again, lol). In that case, the
+    // global project would not be assumed.
+    const configURL = getGlobalConfigURL()
+
+    if (!configURL) return { config: null }
+
+    const baseURL = new URL('./', configURL).href
+
+    let loadedConfig = {}
 
     {
-      const log = makeLog(null, 'Projects', 'projects.json')
+      const log = makeProjectLog('Project configuration', configURL)
 
       await log(LoadingStatus.Pending(null))
 
       try {
-        const resp = await fetchResource('projects.json', false)
+        const resp = await fetchResource(configURL, false)
 
         try {
-          projects = await resp.json()
-          if (typeof projects !== 'object') throw new Error()
+          loadedConfig = await resp.json()
         } catch (e) {
-          throw new Error('projects.json file is malformed')
+          throw new Error('Project configuration file malformed')
         }
 
-        await log(LoadingStatus.OK(`Found ${projects.length} projects`))
+        await log(LoadingStatus.OK(null))
       } catch (e) {
         await log(LoadingStatus.Failed(e.message))
+
+        return { config: null }
       }
     }
 
-    await Promise.all(Object.entries(projects || {}).map(async ([ projectKey, configURL ]) => {
-      configURL = new URL(configURL, window.location.href).href
+    const config = { baseURL }
 
-      const baseURL = new URL('./', configURL).href
+    await Promise.all(Object.entries(configFields).map(async ([ key, { label, test }]) => {
+      const url = new URL(`project.json#${key}`, baseURL).href
+          , log = makeProjectLog(label, url)
 
-      const makeProjectLog = makeLog(projectKey)
+      await log(LoadingStatus.Pending(null))
 
-      dispatch(Action.UpdateProject(
-        projectKey,
-        R.always({
-          id: projectKey,
-          baseURL,
-        })
-      ))
+      const val = loadedConfig[key]
 
-      let loadedMetadata = {}
-
-      {
-        const log = makeProjectLog('Project metadata', configURL)
-
-        await log(LoadingStatus.Pending(null))
-
-        try {
-          const resp = await fetchResource(configURL, false)
-
-          try {
-            loadedMetadata = await resp.json()
-          } catch (e) {
-            throw new Error('Project metadata malformed')
-          }
-
-          await log(LoadingStatus.OK(null))
-        } catch (e) {
-          await log(LoadingStatus.Failed(e.message))
-          return;
-        }
+      if (!val) {
+        await log(LoadingStatus.Missing('No value specified'))
+        return
       }
 
-      {
-        await Promise.all(Object.entries(metadataFields).map(async ([ key, { label, test }]) => {
-          const url = new URL(`project.json#${key}`, baseURL).href
-              , log = makeProjectLog(label, url)
+      try {
+        test(val);
 
-          await log(LoadingStatus.Pending(null))
+        await log(LoadingStatus.OK(null))
 
-          const val = loadedMetadata[key]
-
-          if (!val) {
-            await log(LoadingStatus.Missing('No value specified'))
-            return
-          }
-
-          try {
-            test(val);
-
-            await log(LoadingStatus.OK(null))
-
-            await dispatch(Action.UpdateProject(
-              projectKey,
-              R.assocPath(['metadata', key], val)
-            ))
-          } catch (e) {
-            await log(LoadingStatus.Failed(e.message))
-          }
-        }))
+        config[key] = val
+      } catch (e) {
+        await log(LoadingStatus.Failed(e.message))
       }
     }))
 
-    await delay(100)
+    await delay(0)
 
-    return {}
+    return { config }
   }
 }
 
@@ -912,7 +847,7 @@ function loadAvailableProjects() {
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
 function setPairwiseComparison(treatmentAKey, treatmentBKey) {
   return async (dispatch, getState) => {
-    const { project } = getState().currentView
+    const project = projectForView(getState())
 
     const cached = project.pairwiseComparisonCache[[treatmentAKey, treatmentBKey]]
 
@@ -936,15 +871,15 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       throw new Error(`No such treatment: ${treatmentBKey}`)
     }
 
-    const urlTemplate = project.metadata.pairwiseName || './pairwise_tests/%A_%B.txt'
+    const urlTemplate = project.config.pairwiseName || './pairwise_tests/%A_%B.txt'
 
     const fileURLA = new URL(
       urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey),
-      project.baseURL).href
+      project.config.baseURL).href
 
     const fileURLB = new URL(
       urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey),
-      project.baseURL).href
+      project.config.baseURL).href
 
     let reverse = false
       , resp
@@ -991,10 +926,10 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
 function updateDisplayedTranscripts(sortPath, order) {
   return (dispatch, getState) => {
-    const view = getState().currentView
+    const { view } = getState()
+        , project = projectForView(getState())
 
     const {
-      project,
       savedTranscripts,
       brushedTranscripts,
       comparedTreatments,
@@ -1068,10 +1003,12 @@ function updateDisplayedTranscripts(sortPath, order) {
 
 function setSavedTranscripts(savedTranscripts) {
   return (dispatch, getState) => {
-    const key = getState().currentView.project.id + '-watched'
-        , savedTranscriptsStr = JSON.stringify([...savedTranscripts])
+    if (getState().isConfigured) {
+      const key = getGlobalWatchedGenesKey()
+          , savedTranscriptsStr = JSON.stringify([...savedTranscripts])
 
-    localStorage.setItem(key, savedTranscriptsStr)
+      localStorage.setItem(key, savedTranscriptsStr)
+    }
 
     return { resort: true }
   }
@@ -1089,7 +1026,7 @@ function importSavedTranscripts(file) {
 
         // TODO: Filter out those things that aren't in `project.transcripts`
 
-        const existingWatchedTranscripts = getState().currentView.savedTranscripts
+        const existingWatchedTranscripts = getState().view.savedTranscripts
 
         await dispatch(Action.SetSavedTranscripts(
           [...importedWatchedTranscripts, ...existingWatchedTranscripts]
@@ -1107,7 +1044,7 @@ function importSavedTranscripts(file) {
 
 function exportSavedTranscripts() {
   return (dispatch, getState) => {
-    const { savedTranscripts } = getState().currentView
+    const { savedTranscripts } = getState().view
 
     const blob = new Blob([ [...savedTranscripts].join('\n') ], { type: 'text/plain' })
 

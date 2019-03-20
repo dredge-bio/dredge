@@ -6,45 +6,38 @@ const h = require('react-hyperscript')
     , { Provider } = require('react-redux')
     , { render } = require('react-dom')
     , { ThemeProvider } = require('styled-components')
+    , { ProjectSource } = require('./types')
     , theme = require('./theme')
     , Application = require('./components/Application')
     , Action = require('./actions')
 
 const resources = {
   '': {
-    onBeforeRoute: async (params, redirectTo) => {
-      redirectTo(new Route('home'))
+    onBeforeRoute: async (params, redirectTo, { getState }) => {
+      if (!getState().isGloballyConfigured) {
+        redirectTo(new Route('configure'))
+      } else {
+        redirectTo(new Route('home'))
+      }
     },
   },
 
   'help': {
-    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      await dispatch(Action.Initialize)
-    },
     Component: require('./components/Help'),
   },
 
   'home': {
-    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      await dispatch(Action.Initialize)
-
-      if (!params.project) {
-        const resp = await dispatch(Action.GetDefaultProject)
-        const { projectKey } = resp.readyState.response
-
-        redirectTo(new Route('home', { project: projectKey }))
-        return
+    onBeforeRoute: async (params, redirectTo, { dispatch, getState }) => {
+      if (!getState().isGloballyConfigured) {
+        redirectTo(new Route('configure'))
+      } else {
+        dispatch(Action.LoadProject(ProjectSource.Global))
       }
-
-      await dispatch(Action.LoadRemoteProject(params.project))
     },
     Component: require('./components/View'),
   },
 
-  'new-project': {
-    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      await dispatch(Action.Initialize)
-    },
+  'configure': {
     Component: require('./components/NewProject'),
   },
 }
@@ -59,7 +52,7 @@ const Main = ORGShell({
   resources,
   onRouteChange(route, { dispatch }) {
     if (route.resourceName !== 'home') {
-      dispatch(Action.ResetViewedProject)
+      // dispatch(Action.ResetViewedProject)
     }
   },
 }, Application)

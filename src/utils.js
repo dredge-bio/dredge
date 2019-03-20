@@ -95,7 +95,12 @@ function getPlotBins(data, xScale, yScale, unit=5) {
   return bins;
 }
 
+function projectForView(state) {
+  return state.projects[state.view.source.key]
+}
+
 module.exports = {
   findParent,
   getPlotBins,
+  projectForView,
 }
