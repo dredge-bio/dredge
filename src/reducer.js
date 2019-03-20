@@ -135,11 +135,11 @@ module.exports = function reducer(state=initialState(), action) {
 
       SetPairwiseComparison(treatmentA, treatmentB) {
         const { pairwiseData } = resp
+            , projectKey = state.view.source.key
 
         return R.pipe(
-          R.over(
-            R.lensPath(['pairwiseComparisonCache', [treatmentA, treatmentB]]),
-            R.set,
+          R.set(
+            R.lensPath(['projects', projectKey, 'pairwiseComparisonCache', [treatmentA, treatmentB]]),
             pairwiseData),
           R.over(
             R.lensProp('view'),

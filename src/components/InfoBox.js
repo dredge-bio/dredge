@@ -8,6 +8,7 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , HeatMap = require('./HeatMap')
     , TreatmentSelector = require('./TreatmentSelector')
+    , { projectForView } = require('../utils')
 
 const InfoBoxContainer = styled.div`
   display: flex;
@@ -196,13 +197,20 @@ class InfoBox extends React.Component {
   }
 }
 
-module.exports = connect(R.applySpec({
-  comparedTreatments: R.path(['currentView', 'comparedTreatments']),
-  hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
-  focusedTranscript: R.path(['currentView', 'focusedTranscript']),
-  hoveredTranscript: R.path(['currentView', 'hoveredTranscript']),
-  treatments: R.path(['currentView', 'project', 'treatments']),
-  abundancesForTreatmentTranscript: R.path(['currentView', 'project', 'abundancesForTreatmentTranscript']),
-  getCanonicalTranscriptLabel: R.path(['currentView', 'project', 'getCanonicalTranscriptLabel']),
-}))(InfoBox)
+module.exports = connect(state => {
+  const project = projectForView(state) || {}
 
+  return Object.assign({},
+    R.pick([
+      'treatments',
+      'abundancesForTreatmentTranscript',
+      'getCanonicalTranscriptLabel',
+    ], project),
+    R.pick([
+      'comparedTreatments',
+      'hoveredTreatment',
+      'focusedTranscript',
+      'hoveredTranscript',
+    ], state.view)
+  )
+})(InfoBox)

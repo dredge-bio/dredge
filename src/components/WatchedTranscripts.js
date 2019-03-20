@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , { Flex, Button } = require('rebass')
     , { connect } = require('react-redux')
     , Action = require('../actions')
+    , { projectForView } = require('../utils')
 
 function union(a, b) {
   return new Set([...a, ...b])
@@ -246,8 +247,10 @@ class WatchedTranscripts extends React.Component {
   }
 }
 
-module.exports = connect(state => ({
-  project: R.path(['currentView', 'project'], state),
-  savedTranscripts: R.path(['currentView', 'savedTranscripts'], state),
-  brushedTranscripts: R.path(['currentView', 'brushedTranscripts'], state),
-}))(WatchedTranscripts)
+module.exports = connect(state => {
+  const project = projectForView(state) || {}
+
+  return Object.assign({
+    project,
+  }, R.pick(['savedTranscripts', 'brushedTranscripts' ], state.view))
+})(WatchedTranscripts)

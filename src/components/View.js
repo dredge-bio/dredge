@@ -116,16 +116,13 @@ class Viewer extends React.Component {
           ]),
         ]),
 
-
         h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
           h(MAPlot)
         ),
 
-
         h(GridArea, { column: '10 / span 1', row: '3 / span 8' },
           h(PValueSelector, { updateOpts }),
         ),
-
 
         h(GridArea, { column: '12 / span 13', row: '1 / span 9' }, [
           h('div', {

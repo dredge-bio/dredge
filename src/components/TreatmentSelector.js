@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
     , Action = require('../actions')
+    , { projectForView } = require('../utils')
 
 const SelectorWrapper = styled.div`
   display: flex;
@@ -263,10 +264,11 @@ class TreatmentSelector extends React.Component {
   }
 }
 
-module.exports = connect(R.applySpec({
-  svg: R.path(['currentView', 'project', 'svg']),
-  treatments: R.path(['currentView', 'project', 'treatments']),
-  loading: R.path(['currentView', 'loading']),
-  hoveredTreatment: R.path(['currentView', 'hoveredTreatment']),
-  abundancesForTreatmentTranscript: R.path(['currentView', 'project', 'abundancesForTreatmentTranscript']),
-}))(TreatmentSelector)
+module.exports = connect(state => {
+  const project = projectForView(state) || {}
+
+  return Object.assign({},
+    R.pick(['svg', 'treatments', 'abundancesForTreatmentTranscript'], project),
+    R.pick(['loading', 'hoveredTreatment'], state.view || {}))
+
+})(TreatmentSelector)

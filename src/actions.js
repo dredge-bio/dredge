@@ -6,6 +6,7 @@ const R = require('ramda')
     , { makeTypedAction } = require('org-async-actions')
     , saveAs = require('file-saver')
     , { LoadingStatus, ProjectSource } = require('./types')
+    , { projectForView } = require('./utils')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
@@ -191,7 +192,7 @@ const Action = module.exports = makeTypedAction({
   },
 })
 
-const metadataFields = {
+const configFields = {
   label: {
     label: 'Project label',
     test: val => {
@@ -307,7 +308,7 @@ function notBlank(x) {
   return x
 }
 
-const fileMetadata = {
+const processedConfigFields = {
   transcriptAliases: {
     label: 'Transcript aliases',
     exec: async url => {
@@ -542,13 +543,9 @@ function checkCompatibility() {
   }
 }
 
-function viewProject(state) {
-  return state.projects[state.view.source.key]
-}
-
 function getDefaultPairwiseComparison() {
   return async (dispatch, getState) => {
-    const project = viewProject(getState())
+    const project = projectForView(getState())
         , { treatments } = project
         , [ treatmentA, treatmentB ] = Object.keys(treatments)
 
@@ -613,7 +610,7 @@ function loadProject(source) {
           })
 
           i++
-          if (i % 300 === 0) await delay(0)
+          if (i % 5000 === 0) await delay(0)
         }
 
         i = 0
@@ -625,7 +622,7 @@ function loadProject(source) {
             }
           })
           i++
-          if (i % 300 === 0) await delay(0)
+          if (i % 5000 === 0) await delay(0)
         }
 
       }
@@ -705,15 +702,15 @@ function loadProject(source) {
   }
 }
 
-async function fetchProject(metadata, makeLog, onUpdate) {
+async function fetchProject(config, makeLog, onUpdate) {
   let failed = false
     , treatments
 
-  const { baseURL } = metadata
+  const { baseURL } = config
 
   // Load treatments before anything else
   {
-    const url = new URL(metadata.treatments, baseURL).href
+    const url = new URL(config.treatments, baseURL).href
         , log = makeLog('Project treatments', url)
 
     await log(LoadingStatus.Pending(null))
@@ -741,8 +738,8 @@ async function fetchProject(metadata, makeLog, onUpdate) {
     throw new Error('Could not load project because treatments not available')
   }
 
-  await Promise.all(Object.entries(fileMetadata).map(async ([ k, v ]) => {
-    let url = metadata[k]
+  await Promise.all(Object.entries(processedConfigFields).map(async ([ k, v ]) => {
+    let url = config[k]
 
     if (!url) {
       makeLog(v.label, null)(LoadingStatus.Missing('No filename specified.'))
@@ -789,10 +786,10 @@ function loadProjectConfig(source) {
 
     const baseURL = new URL('./', configURL).href
 
-    let loadedMetadata = {}
+    let loadedConfig = {}
 
     {
-      const log = makeProjectLog('Project metadata', configURL)
+      const log = makeProjectLog('Project configuration', configURL)
 
       await log(LoadingStatus.Pending(null))
 
@@ -800,9 +797,9 @@ function loadProjectConfig(source) {
         const resp = await fetchResource(configURL, false)
 
         try {
-          loadedMetadata = await resp.json()
+          loadedConfig = await resp.json()
         } catch (e) {
-          throw new Error('Project metadata malformed')
+          throw new Error('Project configuration file malformed')
         }
 
         await log(LoadingStatus.OK(null))
@@ -815,13 +812,13 @@ function loadProjectConfig(source) {
 
     const config = { baseURL }
 
-    await Promise.all(Object.entries(metadataFields).map(async ([ key, { label, test }]) => {
+    await Promise.all(Object.entries(configFields).map(async ([ key, { label, test }]) => {
       const url = new URL(`project.json#${key}`, baseURL).href
           , log = makeProjectLog(label, url)
 
       await log(LoadingStatus.Pending(null))
 
-      const val = loadedMetadata[key]
+      const val = loadedConfig[key]
 
       if (!val) {
         await log(LoadingStatus.Missing('No value specified'))
@@ -850,7 +847,7 @@ function loadProjectConfig(source) {
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
 function setPairwiseComparison(treatmentAKey, treatmentBKey) {
   return async (dispatch, getState) => {
-    const { project } = getState()
+    const project = projectForView(getState())
 
     const cached = project.pairwiseComparisonCache[[treatmentAKey, treatmentBKey]]
 
@@ -874,15 +871,15 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       throw new Error(`No such treatment: ${treatmentBKey}`)
     }
 
-    const urlTemplate = project.metadata.pairwiseName || './pairwise_tests/%A_%B.txt'
+    const urlTemplate = project.config.pairwiseName || './pairwise_tests/%A_%B.txt'
 
     const fileURLA = new URL(
       urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey),
-      project.baseURL).href
+      project.config.baseURL).href
 
     const fileURLB = new URL(
       urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey),
-      project.baseURL).href
+      project.config.baseURL).href
 
     let reverse = false
       , resp
@@ -929,14 +926,15 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
 function updateDisplayedTranscripts(sortPath, order) {
   return (dispatch, getState) => {
-    const { project, viewConfig } = getState()
+    const { view } = getState()
+        , project = projectForView(getState())
 
     const {
       savedTranscripts,
       brushedTranscripts,
       comparedTreatments,
       pairwiseData,
-    } = viewConfig
+    } = view
 
     const { abundancesForTreatmentTranscript } = project
         , [ treatmentA, treatmentB ] = comparedTreatments
@@ -976,8 +974,8 @@ function updateDisplayedTranscripts(sortPath, order) {
       }
     })
 
-    if (!sortPath) sortPath = viewConfig.sortPath
-    if (!order) order = viewConfig.order
+    if (!sortPath) sortPath = view.sortPath
+    if (!order) order = view.order
 
     const getter =
       sortPath.includes('name')
@@ -1028,7 +1026,7 @@ function importSavedTranscripts(file) {
 
         // TODO: Filter out those things that aren't in `project.transcripts`
 
-        const existingWatchedTranscripts = getState().viewConfig.savedTranscripts
+        const existingWatchedTranscripts = getState().view.savedTranscripts
 
         await dispatch(Action.SetSavedTranscripts(
           [...importedWatchedTranscripts, ...existingWatchedTranscripts]
@@ -1046,7 +1044,7 @@ function importSavedTranscripts(file) {
 
 function exportSavedTranscripts() {
   return (dispatch, getState) => {
-    const { savedTranscripts } = getState().viewConfig
+    const { savedTranscripts } = getState().view
 
     const blob = new Blob([ [...savedTranscripts].join('\n') ], { type: 'text/plain' })
 
