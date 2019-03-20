@@ -13,8 +13,12 @@ const h = require('react-hyperscript')
 
 const resources = {
   '': {
-    onBeforeRoute: async (params, redirectTo) => {
-      redirectTo(new Route('home'))
+    onBeforeRoute: async (params, redirectTo, { getState }) => {
+      if (!getState().isGloballyConfigured) {
+        redirectTo(new Route('configure'))
+      } else {
+        redirectTo(new Route('home'))
+      }
     },
   },
 
@@ -23,13 +27,17 @@ const resources = {
   },
 
   'home': {
-    onBeforeRoute: async (params, redirectTo, { dispatch }) => {
-      dispatch(Action.LoadProject(ProjectSource.Global))
+    onBeforeRoute: async (params, redirectTo, { dispatch, getState }) => {
+      if (!getState().isGloballyConfigured) {
+        redirectTo(new Route('configure'))
+      } else {
+        dispatch(Action.LoadProject(ProjectSource.Global))
+      }
     },
     Component: require('./components/View'),
   },
 
-  'new-project': {
+  'configure': {
     Component: require('./components/NewProject'),
   },
 }
