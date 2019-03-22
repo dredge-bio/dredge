@@ -18,8 +18,6 @@ VERSIONED_ZIPFILE = $(VERSIONED_DIRECTORY).zip
 BROWSERIFY_ENTRY = src/index.js
 BROWSERIFY_PREAMBLE = ZIP_FILENAME=$(notdir $(VERSIONED_ZIPFILE))
 
-REMOTE_DIR := /run/user/1001/gvfs/smb-share:server=web.bio.unc.edu,share=dredge
-
 JS_FILES = $(shell find src/ -type f -name *js)
 LIB_FILES = $(shell find lib/ -type f)
 R_FILES = $(shell find r-scripts/ -type f)
@@ -40,18 +38,6 @@ all: node_modules $(MINIFIED_VERSIONED_JS_BUNDLE)
 
 watch: | dist
 	$(BROWSERIFY_PREAMBLE) $(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(BROWSERIFY_ENTRY)
-
-upload: $(VERSIONED_ZIPFILE)
-	rm -f $(REMOTE_DIR)/dredge-*.js \
-	      $(REMOTE_DIR)/dredge-*.zip \
-	      $(addprefix $(REMOTE_DIR)/,$(ZIPPED_FILES))
-	-rmdir $(REMOTE_DIR)/lib
-	-rmdir $(REMOTE_DIR)/r-scripts
-	cp $< $(REMOTE_DIR)
-	-cd $(REMOTE_DIR) && unzip -o $(notdir $(VERSIONED_ZIPFILE))
-	cd $(REMOTE_DIR) && \
-		mv $(notdir $(VERSIONED_DIRECTORY))/* . && \
-		rmdir $(notdir $(VERSIONED_DIRECTORY))
 
 zip: $(VERSIONED_ZIPFILE)
 
@@ -76,7 +62,7 @@ node_modules: package.json
 	npm install
 
 $(VERSIONED_JS_BUNDLE): $(JS_FILES) | dist
-	$(BROWSERIFY_PREAMBLE) NODE_ENV=production $(NPM_BIN)/browserify -d $(BROWSERIFY_ENTRY) > $@
+	$(BROWSERIFY_PREAMBLE) NODE_ENV=production $(NPM_BIN)/browserify -d $(BROWSERIFY_ENTRY) -o $@
 
 $(MINIFIED_VERSIONED_JS_BUNDLE): $(VERSIONED_JS_BUNDLE)
 	$(NPM_BIN)/terser $< -o $@ --compress
