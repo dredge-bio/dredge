@@ -1,6 +1,7 @@
 "use strict";
 
 const h = require('react-hyperscript')
+    , R = require('ramda')
     , createStore = require('./store')
     , { ORGShell, Route } = require('org-shell')
     , { Provider } = require('react-redux')
@@ -13,7 +14,7 @@ const h = require('react-hyperscript')
 
 const resources = {
   '': {
-    onBeforeRoute: async (params, redirectTo, { getState }) => {
+    onBeforeRoute: (params, redirectTo, { getState }) => {
       if (!getState().isGloballyConfigured) {
         redirectTo(new Route('configure'))
       } else {
@@ -23,21 +24,36 @@ const resources = {
   },
 
   'help': {
+    makeTitle: R.always('Help'),
     Component: require('./components/Help'),
   },
 
   'home': {
-    onBeforeRoute: async (params, redirectTo, { dispatch, getState }) => {
+    makeTitle: R.always('Loading project...'),
+    onBeforeRoute: (params, redirectTo, { dispatch, getState }) => {
       if (!getState().isGloballyConfigured) {
         redirectTo(new Route('configure'))
       } else {
         dispatch(Action.LoadProject(ProjectSource.Global))
+          .then(() => {
+            const state = getState()
+                , projectKey = R.path(['view', 'source', 'key'], state)
+
+            if (!projectKey) return
+
+            const { label } = state.projects[projectKey].config
+
+            if (!label) return
+
+            dispatch(Action.SetTitle(label))
+          })
       }
     },
     Component: require('./components/View'),
   },
 
   'configure': {
+    makeTitle: R.always('Configure'),
     Component: require('./components/NewProject'),
   },
 }
@@ -50,10 +66,12 @@ const Main = ORGShell({
     getState: store.getState,
   },
   resources,
-  onRouteChange(route, { dispatch }) {
-    if (route.resourceName !== 'home') {
-      // dispatch(Action.ResetViewedProject)
-    }
+  onRouteChange(route, resource, { dispatch, getState }) {
+    dispatch(Action.SetTitle(
+      resource.makeTitle
+        ? resource.makeTitle(getState())
+        : null
+    ))
   },
 }, Application)
 

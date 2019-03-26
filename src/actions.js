@@ -36,6 +36,14 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
+  SetTitle: {
+    exec: R.always({}),
+    request: {
+      title: d => typeof d === 'string' || d === null,
+    },
+    response: {},
+  },
+
   ResetLog: {
     exec: R.always({}),
     request: {

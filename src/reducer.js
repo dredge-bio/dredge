@@ -79,6 +79,24 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
 
+      SetTitle(title) {
+        let newTitle = ''
+
+        if (title) {
+          newTitle += `${title}`
+        }
+
+        if (newTitle) {
+          newTitle += ' - '
+        }
+
+        newTitle += 'DrEdGE'
+
+        document.title = newTitle
+
+        return state
+      },
+
       ResetLog() {
         const { project } = action.type
 
