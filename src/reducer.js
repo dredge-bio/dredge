@@ -28,11 +28,11 @@ function blankView(source, extra) {
 
 function defaultLocalConfig() {
   return {
-    baseURL: '',
     config: {
+      baseURL: new URL('./', window.location.href).href,
       label: '',
       url: '',
-      readme: '',
+      readme: './README.md',
       abundanceLimits: [
         [0, 100],
         [-100, 100],
@@ -124,9 +124,7 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
 
-      UpdateLocalConfig() {
-        const { update } = resp
-
+      UpdateLocalConfig(update) {
         return R.over(
           R.lensPath(['projects', 'local']),
           update,

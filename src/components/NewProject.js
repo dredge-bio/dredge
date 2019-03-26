@@ -189,13 +189,12 @@ class NewProject extends React.Component {
   setField(fieldName, fn=R.identity) {
     const { dispatch } = this.props
 
-    const lens = R.lensPath(
-      (fieldName === 'baseURL' ? [] : ['config'])
-        .concat(fieldName))
+    const lens = R.lensPath(['config', fieldName])
 
     return e => {
       if (fieldName === 'baseURL') {
         this.setState({ baseURL: e.target.value })
+
         dispatch(Action.UpdateLocalConfig(
           R.set(lens, this.getBaseURL().baseURL)
         ))
@@ -248,7 +247,7 @@ class NewProject extends React.Component {
           h(Button, {
             mr: 5,
             onClick: () => {
-              navigateTo(new Route('home', { project: '__LOCAL' }))
+              navigateTo(new Route('test'))
             },
           }, 'Test'),
 
@@ -288,10 +287,19 @@ class NewProject extends React.Component {
               ]),
               required: true,
               onChange: this.setField('baseURL'),
-              value: config.baseURL,
+              value: this.state.baseURL,
               showURL: resolve(''),
               isRelativeURL,
             }),
+
+            h(Input, {
+              label: 'Project documentation',
+              help: 'A URL to a Markdown file that contains information about this project.',
+              required: false,
+              onChange: this.setField('readme'),
+              value: config.readme,
+            }),
+
 
             h(Input, {
               label: 'Treatment information URL',

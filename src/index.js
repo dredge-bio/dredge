@@ -56,6 +56,15 @@ const resources = {
     Component: require('./components/View'),
   },
 
+  'test': {
+    makeTitle: R.always('Loading project...'),
+    onBeforeRoute: (params, redirectTo, { dispatch }) => {
+      dispatch(Action.LoadProject(ProjectSource.Local))
+    },
+    Component: require('./components/View'),
+  },
+
+
   'about': {
     makeTitle: R.always('Loading project...'),
     onBeforeRoute: loadProject('About'),

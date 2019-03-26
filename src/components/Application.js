@@ -209,7 +209,7 @@ const Header = R.pipe(
             h(Button, {
               ml: 2,
               onClick() {
-                navigateTo(new Route('new-project'))
+                navigateTo(new Route('configure'))
               },
             }, '‹ Return to editing')
           ),
