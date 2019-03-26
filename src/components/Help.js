@@ -2,6 +2,7 @@
 
 const h = require('react-hyperscript')
     , { Box, Heading } = require('rebass')
+    , { Link, Route } = require('org-shell')
 
 function Para(props) {
   return h(Box, Object.assign({
@@ -11,19 +12,21 @@ function Para(props) {
   }, props))
 }
 
+const InternalLink = Link('a')
+
 module.exports = function Help() {
   return (
     h(Box, {
       style: {
-        width: '6in',
+        maxWidth: '800px',
         margin: 'auto',
         lineHeight: '20px',
       },
     }, [
-      h(Heading, { as: 'h2', mt: 2 }, 'About'),
+      h(Heading, { as: 'h2', mt: 2 }, 'About DrEdGE'),
 
       h(Para, `
-        This is an interactive tool for comparing transcript abundance between different treatments in genomic datasets.
+        DrEdGE (Differential Expression Gene Explorer) is an interactive tool for comparing transcript abundance between different treatments in genomic datasets.
       `),
 
       h(Para, `
@@ -37,6 +40,16 @@ module.exports = function Help() {
       h(Para, `
         The watched gene list can be sorted by a number of features (enrichment in on treatment or the other, average abundance, and others), and can also be exported. To view a summary of gene expression in all treatments through all time points, the user can click on any gene name in the table, and retrieve a pictogram of all stages, with cells colored by quantitative expression data.
       `),
+
+      h(Heading, { as: 'h2', mt: 4 }, 'Creating your own project'),
+
+      h(Para, [
+        'To create your own DrEdGE project, follow the instructions on ',
+        h(InternalLink, {
+          route: new Route('configure'),
+        }, 'this page'),
+        '.',
+      ]),
 
       h(Heading, { as: 'h2', mt: 4 }, 'Attribution'),
 
