@@ -1003,7 +1003,7 @@ function updateDisplayedTranscripts(sortPath, order) {
 
 function setSavedTranscripts(savedTranscripts) {
   return (dispatch, getState) => {
-    if (getState().isConfigured) {
+    if(R.path(['view', 'source', 'key'], getState()) === 'global') {
       const key = getGlobalWatchedGenesKey()
           , savedTranscriptsStr = JSON.stringify([...savedTranscripts])
 
