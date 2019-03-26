@@ -29,7 +29,7 @@ function blankView(source, extra) {
 function defaultLocalConfig() {
   return {
     config: {
-      baseURL: new URL('./', window.location.href).href,
+      baseURL: new URL('./data', window.location.href).href,
       label: '',
       url: '',
       readme: './README.md',

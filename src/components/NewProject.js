@@ -120,7 +120,7 @@ function Paragraph(props) {
   }, props))
 }
 
-const projectRoot = process.env.ZIP_FILENAME.replace('.zip', '') + '/my_project'
+const projectRoot = process.env.ZIP_FILENAME.replace('.zip', '') + '/data'
 
 function Input(props) {
   const { showURL, isRelativeURL } = props
@@ -150,16 +150,31 @@ function Input(props) {
         }, innerProps)),
       ]),
 
-      !props.showURL ? null : (
+      (!props.showURL || props.label === 'Configuration file directory') ? null : (
         h(Box, { className: 'resolved-url', my: 2 }, [
-          h('span.resolved-url-label', 'Resolved URL: '),
+          h('span.resolved-url-label', 'Expected location: '),
           h('span.resolved-url-link', [
             !replaceRelative ? null : (
-              h('span.relative-url-base', new URL('./', window.location.href).href)
+              h('span.relative-url-base', './')
             ),
             h('a', { href: showURL, target: '_blank' }, replaceRelative
               ? showURL.replace(new URL('./', window.location.href).href, '')
               : showURL
+            ),
+          ]),
+        ])
+      ),
+
+      props.label !== 'Configuration file directory' ? null : (
+        h(Box, { className: 'resolved-url', my: 2 }, [
+          h('span.resolved-url-label', 'Expected configuration location: '),
+          h('span.resolved-url-link', [
+            !replaceRelative ? null : (
+              h('span.relative-url-base', './')
+            ),
+            h('a', { href: showURL + 'project.json', target: '_blank' }, (replaceRelative
+              ? showURL.replace(new URL('./', window.location.href).href, '')
+              : showURL) + 'project.json'
             ),
           ]),
         ])
@@ -180,7 +195,7 @@ class NewProject extends React.Component {
     super();
 
     this.state = {
-      baseURL: '',
+      baseURL: './data/',
     }
 
     this.setField = this.setField.bind(this)
@@ -207,7 +222,7 @@ class NewProject extends React.Component {
   }
 
   getProjectJSON() {
-    return this.props.config
+    return R.omit(['baseURL'], this.props.config)
   }
 
   getBaseURL() {
@@ -280,10 +295,20 @@ class NewProject extends React.Component {
             }),
 
             h(Input, {
-              label: 'Root URL',
+              label: 'Configuration file directory',
               help: h('div', [
-                h(Box, { as: 'p', mb: 2 }, 'The URL that will be the basis for all further URLs. If this value is not an absolute URL, it will be resolved relative to the page on which DrEdGE is hosted.'),
-                h('p', 'When you save this configuration file, it must be placed in this directory.'),
+                h(Box, { as: 'p', mb: 2 }, [
+                  'The directory where you will save the configuration file you generate from this page, relative to where you will place the ',
+                  h('code', 'index.html'),
+                  ' file when you upload your DrEdGE project. All of the following settings involving URLs will be resolved relative to this directory.',
+                ]),
+
+                h(Box, { as: 'p', mb: 2 }, [
+                  'If you change this URL, it can be relative or absolute, But note that if data will be served from a different host than the DrEdGE page, you will need to set appropriate ',
+                  h('a', { href: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS' }, 'CORS headers'),
+                  ' on that host.',
+                ]),
+
               ]),
               required: true,
               onChange: this.setField('baseURL'),
@@ -294,10 +319,16 @@ class NewProject extends React.Component {
 
             h(Input, {
               label: 'Project documentation',
-              help: 'A URL to a Markdown file that contains information about this project.',
+              help: h(Box, { as: 'p', mb: '2' }, [
+                'A URL to a ',
+                h('a', { href: 'https://commonmark.org/help/' }, 'Markdown'),
+                ' file that provides information about this project.',
+              ]),
               required: false,
               onChange: this.setField('readme'),
               value: config.readme,
+              showURL: config.readme && resolve(config.readme),
+              isRelativeURL,
             }),
 
 
@@ -453,14 +484,14 @@ class NewProject extends React.Component {
 
             h(Paragraph, [
               'Next, make a folder somewhere within your local dredge installation where you will keep project data. For this example, we\'ll assume it\'s called ',
-              h('code', 'my_project'),
+              h('code', 'data'),
               ', and that it is located in the folder ',
               h('code', projectRoot),
-              '. Because we will put all of our project files in this directory, enter the value ',
-              h('code', 'my_project'),
-              ' in the ',
-              h('strong', 'Root URL'),
-              ' field to the left.',
+              '. Because we will put all of our project files in this directory, The ',
+              h('strong', 'Configuration file directory'),
+              ' field to the left has been already filled out with the value ',
+              h('code', './data/'),
+              '. You may change this value if you choose to put your configuration file in a different place.',
             ]),
 
             h(Heading, { as: 'h3', mb: 2, fontSize: 3 }, 'Preparing project dataset'),
@@ -575,19 +606,14 @@ t4    154.1   0.4     555.1     6.2`,
             ]),
 
             h(Paragraph, [
-              'Create a file called "projects.json" inside the base dredge folder: ',
-              h('code', projectRoot + '/projects.json'),
-              '. This will give DrEdGE information about all the projects to load. It should contain a JSON object whose keys are short labels for the project to load, and whose values are paths to the projects\' configuration files. In our case, this file should contain:',
-            ]),
-
-            h(Paragraph, { as: 'pre' }, [
-`{
-  "my_project": "my_project/project.json"
-}`,
+              'Now edit the ',
+              h('code', 'index.html'),
+              ' file and follow the instructions to point your project to the appropriate location of the configuration file, which sould be: ',
+              h('code', projectRoot + 'project.json'),
             ]),
 
             h(Paragraph, [
-              'Restart DrEdGE, and hopefully your project will be available.',
+              'Restart DrEdGE by refreshing your browser window, and hopefully your project will be available.',
             ]),
           ]),
         ]),
