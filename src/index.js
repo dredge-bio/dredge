@@ -12,6 +12,28 @@ const h = require('react-hyperscript')
     , Application = require('./components/Application')
     , Action = require('./actions')
 
+function loadProject(title) {
+  return (params, redirectTo, { dispatch, getState }) => {
+    if (!getState().isGloballyConfigured) {
+      redirectTo(new Route('configure'))
+    } else {
+      dispatch(Action.LoadProject(ProjectSource.Global))
+        .then(() => {
+          const state = getState()
+              , projectKey = R.path(['view', 'source', 'key'], state)
+
+          if (!projectKey) return
+
+          const { label } = state.projects[projectKey].config
+
+          if (!label) return
+
+          dispatch(Action.SetTitle(title ? `${title} - ${label}` : label))
+        })
+    }
+  }
+}
+
 const resources = {
   '': {
     onBeforeRoute: (params, redirectTo, { getState }) => {
@@ -30,26 +52,14 @@ const resources = {
 
   'home': {
     makeTitle: R.always('Loading project...'),
-    onBeforeRoute: (params, redirectTo, { dispatch, getState }) => {
-      if (!getState().isGloballyConfigured) {
-        redirectTo(new Route('configure'))
-      } else {
-        dispatch(Action.LoadProject(ProjectSource.Global))
-          .then(() => {
-            const state = getState()
-                , projectKey = R.path(['view', 'source', 'key'], state)
-
-            if (!projectKey) return
-
-            const { label } = state.projects[projectKey].config
-
-            if (!label) return
-
-            dispatch(Action.SetTitle(label))
-          })
-      }
-    },
+    onBeforeRoute: loadProject(),
     Component: require('./components/View'),
+  },
+
+  'about': {
+    makeTitle: R.always('Loading project...'),
+    onBeforeRoute: loadProject('About'),
+    Component: require('./components/About'),
   },
 
   'configure': {

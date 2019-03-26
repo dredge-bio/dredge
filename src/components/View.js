@@ -15,6 +15,7 @@ const h = require('react-hyperscript')
     , InfoBox = require('./InfoBox')
     , PValueSelector = require('./PValueSelector')
     , Log = require('./Log')
+    , ProjectLoading = require('./ProjectLoading')
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -155,51 +156,12 @@ class Viewer extends React.Component {
   }
 }
 
-const WrappedViewer = R.pipe(
+module.exports = R.pipe(
   Navigable,
   connect((state, ownProps) => {
     const { treatmentA, treatmentB } = ownProps.opts
 
     return { treatmentA, treatmentB }
   }),
+  ProjectLoading(true)
 )(Viewer)
-
-module.exports = connect(R.pick(['view', 'projects']))(props => {
-  const { view: { source }, projects } = props
-
-  if (!source) return null
-
-  const project = projects[source.key]
-
-  // Always prompt to continue if this is a local project
-  const [ mustContinue, setMustContinue ] = React.useState(
-    project.loaded && source.case({
-      Local: R.T,
-      Global: R.F,
-    }))
-
-  const showLog = (
-    mustContinue ||
-    project.failed === true ||
-    project.loaded === false
-  )
-
-  if (showLog) {
-    return (
-      h(Box, { px: 3, py: 2 }, [
-        h(Log, {
-          loadingProject: source.key,
-        }),
-        !(mustContinue && !project.failed) ? null : h(Box, { mt: 4 }, [
-          h(Button, {
-            onClick() {
-              setMustContinue(false)
-            },
-          }, 'Continue'),
-        ]),
-      ])
-    )
-  }
-
-  return h(WrappedViewer, props)
-})

@@ -172,19 +172,25 @@ const Header = R.pipe(
 }) {
   const { source } = (view || {})
 
-  let headerText
+  let projectLabel
+    , hasReadme = false
+    , headerText
 
   if (source) {
     const project = projects[source.key]
 
     if (project.loaded) {
-      headerText = R.path([source.key, 'config', 'label'], projects)
+      projectLabel = R.path([source.key, 'config', 'label'], projects)
+      headerText = projectLabel
+      hasReadme = !!R.path([source.key, 'config', 'readme'], projects)
     }
   }
 
   if (!headerText) {
     headerText = 'DrEdGE: Differential Expression Gene Explorer'
   }
+
+  const hasProjectReadme = view && view.source && projects
 
   return (
     h(HeaderContainer, {
@@ -216,13 +222,21 @@ const Header = R.pipe(
             position: 'relative',
           },
           onSelection: val => {
-            if (val === 'help') {
+            if (val === 'home') {
+              navigateTo(new Route('home'))
+            } else if (val === 'help') {
               navigateTo(new Route('help'))
             } else if (val === 'resize') {
               onRequestResize()
-            } else if (val === 'new-project') {
+            } else if (val === 'about') {
+              navigateTo(new Route('about'))
+            }
+
+            /*
+            else if (val === 'new-project') {
               navigateTo(new Route('new-project'))
             }
+            */
           },
         }, [
           h(Button, {
@@ -242,15 +256,39 @@ const Header = R.pipe(
 
           h(Menu, [
             h('ul', [
+              !projectLabel ? null : h(Box, {
+                is: 'li',
+                style: {
+                  color: '#666',
+                  padding: '.5rem 1rem .5rem 1rem',
+                  fontSize: '14px',
+                },
+              }, projectLabel),
+
               h('li', {}, h(AriaMenuButton.MenuItem, {
-                value: 'help',
-              }, 'Help')),
+                value: 'home',
+              }, projectLabel ? 'View' : 'Home')),
+
+              !hasReadme ? null : h('li', {}, h(AriaMenuButton.MenuItem, {
+                value: 'about',
+              }, 'About')),
+
+              !projectLabel ? null : h(Box, {
+                is: 'li',
+                style: {
+                  color: '#666',
+                  borderBottom: '1px solid #ccc',
+                  fontSize: '14px',
+                },
+              }),
+
               h('li', {}, h(AriaMenuButton.MenuItem, {
                 value: 'resize',
-              }, 'Resize to window')),
+              }, 'Resize application to window')),
+
               h('li', {}, h(AriaMenuButton.MenuItem, {
-                value: 'new-project',
-              }, 'Create new project')),
+                value: 'help',
+              }, 'About DrEdGE')),
 
               h(Box, {
                 is: 'li',

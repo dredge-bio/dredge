@@ -3,6 +3,7 @@
 const R = require('ramda')
     , d3 = require('d3')
     , isURL = require('is-url')
+    , MarkdownIt = require('markdown-it')
     , { makeTypedAction } = require('org-async-actions')
     , saveAs = require('file-saver')
     , { LoadingStatus, ProjectSource } = require('./types')
@@ -348,6 +349,22 @@ const processedConfigFields = {
 
       try {
         return await parseAbundanceFile(resp, treatments)
+      } catch (e) {
+        throw new Error('Error parsing file')
+      }
+    },
+  },
+
+  readme: {
+    label: 'Project documentation',
+    exec: async (url, treatments) => {
+      const resp = await fetchResource(url, false)
+
+      const md = new MarkdownIt()
+
+      try {
+        const markdown = await resp.text()
+        return { readme: md.render(markdown) }
       } catch (e) {
         throw new Error('Error parsing file')
       }
