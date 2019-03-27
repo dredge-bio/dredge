@@ -204,7 +204,7 @@ class NewProject extends React.Component {
   setField(fieldName, fn=R.identity) {
     const { dispatch } = this.props
 
-    const lens = R.lensPath(['config', fieldName])
+    const lens = R.lensPath(['config'].concat(fieldName))
 
     return e => {
       if (fieldName === 'baseURL') {
@@ -222,7 +222,19 @@ class NewProject extends React.Component {
   }
 
   getProjectJSON() {
-    return R.omit(['baseURL'], this.props.config)
+    let ret = R.omit(['baseURL'], this.props.config)
+
+    ret = R.over(
+      R.lensProp('transcriptHyperlink'),
+      R.filter(val => val.label && val.url.includes('%name')),
+      ret
+    )
+
+    if (!ret.transcriptHyperlink.length) {
+      ret = R.omit(['transcriptHyperlink'], ret)
+    }
+
+    return ret
   }
 
   getBaseURL() {
@@ -419,6 +431,56 @@ class NewProject extends React.Component {
               showURL: config.transcriptAliases && resolve(config.transcriptAliases),
               isRelativeURL,
             }),
+
+            h(Field, { mb: 4 }, [
+              h('label', [
+                h('span.label-text', 'Transcript hyperlink template'),
+              ]),
+
+              h(Box, [
+                h('span.axis-label-text', 'Hyperlink label'),
+                h(Box, { mt: 1, mb: 2 }, [
+                  h('input', {
+                    autoCorrect: 'off',
+                    autoCapitalize: 'off',
+                    spellCheck: false,
+                    type: 'text',
+                    value: R.path(['transcriptHyperlink', 0, 'label'], config) || '',
+                    onChange: this.setField(['transcriptHyperlink', 'label']),
+                  }),
+                ]),
+              ]),
+
+              h(Box, [
+                h('span.axis-label-text', 'URL'),
+                h(Box, { mt: 1, mb: 2 }, [
+                  h('input', {
+                    autoCorrect: 'off',
+                    autoCapitalize: 'off',
+                    spellCheck: false,
+                    type: 'text',
+                    value: R.path(['transcriptHyperlink', 0, 'url'], config) || '',
+                    onChange: this.setField(['transcriptHyperlink', 'url']),
+                  }),
+                ]),
+              ]),
+
+              h(Box, { mt: 1, className: 'help-text' }, [
+                h('p', [
+                  'A hyperlink that will point to an external website for more information about a given transcript. The label should be the name of the website, and the URL should be a template to generate a hyperlink. The string ',
+                  h('code', '%name'),
+                  ' in the URL will be replaced with the name of a given transcript. For example, given a URL template with the value ',
+                  h('code', 'http://example.com/biobase/gene/%name'),
+                  ' and a transcript with the name ',
+                  h('code', 'TGE144.2'),
+                  ', the URL to get more information for the transcript would be ',
+                  h('code', 'http://example.com/biobase/gene/TGE144.2'),
+                  '.',
+                ]),
+              ]),
+            ]),
+
+
 
             h(Input, {
               label: 'Gene expression matrix URL',

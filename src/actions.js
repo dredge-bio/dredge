@@ -281,6 +281,32 @@ const configFields = {
     },
   },
 
+  transcriptHyperlink: {
+    label: 'Transcript hyperlink',
+    test: val => {
+      if (val == undefined) return
+
+      const isOK = (
+        Array.isArray(val) &&
+        val.every(x =>
+          typeof x === 'object' &&
+          typeof x.label === 'string' &&
+          typeof x.url === 'string'
+        )
+      )
+
+      if (!isOK) {
+        throw new Error('Value should by an array of { label, url } objects')
+      }
+
+      const hasTemplate = val.every(x => x.url.includes('%name'))
+
+      if (!hasTemplate) {
+        throw new Error('Every object should contain a `url` key containing the string "%name"')
+      }
+    },
+  },
+
   transcriptAliases: {
     label: 'Alternate names for transcripts',
     test: val => {

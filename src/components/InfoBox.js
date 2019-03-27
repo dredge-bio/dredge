@@ -6,6 +6,7 @@ const h = require('react-hyperscript')
     , React = require('react')
     , styled = require('styled-components').default
     , { connect } = require('react-redux')
+    , { Flex, Box } = require('rebass')
     , HeatMap = require('./HeatMap')
     , TreatmentSelector = require('./TreatmentSelector')
     , { projectForView } = require('../utils')
@@ -19,7 +20,7 @@ const InfoBoxContainer = styled.div`
   & > :nth-child(1) {
     padding-top: .5rem;
     display: flex;
-    justify-content: space-between;
+    align-items: center;
   }
 
   & > :nth-child(2) {
@@ -131,11 +132,13 @@ class InfoBox extends React.Component {
       comparedTreatments,
       abundancesForTreatmentTranscript,
       updateOpts,
+      transcriptHyperlink,
     } = this.props
 
     const { hovered } = this.state
 
     const transcript = hoveredTranscript || focusedTranscript || null
+        , transcriptLabel = transcript && getCanonicalTranscriptLabel(transcript)
 
     let colorScale
 
@@ -154,7 +157,22 @@ class InfoBox extends React.Component {
     return (
       h(InfoBoxContainer, [
         h('div', [
-          transcript && h('h3', getCanonicalTranscriptLabel(transcript)),
+          transcript && h('h3', transcriptLabel),
+
+          transcript && transcriptHyperlink && h(Flex, transcriptHyperlink.map(
+            ({ url, label }, i) =>
+              h(Box, {
+                ml: 2,
+                style: {
+                  textDecoration: 'none',
+                },
+                as: 'a',
+                target: '_blank',
+                href: url.replace('%name', transcriptLabel),
+                key: i,
+              }, label)
+          )),
+
           h('div', {
             style: {
               fontSize: 12,
@@ -206,6 +224,9 @@ module.exports = connect(state => {
       'abundancesForTreatmentTranscript',
       'getCanonicalTranscriptLabel',
     ], project),
+    R.pick([
+      'transcriptHyperlink',
+    ], project.config),
     R.pick([
       'comparedTreatments',
       'hoveredTreatment',

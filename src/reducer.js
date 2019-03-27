@@ -31,8 +31,10 @@ function defaultLocalConfig() {
     config: {
       baseURL: new URL('./data', window.location.href).href,
       label: '',
-      url: '',
       readme: './README.md',
+      transcriptHyperlink: [
+        { label: '', url: '' },
+      ],
       abundanceLimits: [
         [0, 100],
         [-100, 100],
