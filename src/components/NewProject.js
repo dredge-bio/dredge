@@ -560,7 +560,17 @@ class NewProject extends React.Component {
 
             h(Paragraph, [
               `
-              Next, you will need to have ready two different files: a project design file, which describes characteristics about the treatments and replicates in the dataset, and a gene expression matrix, which gives measurements of transcript abundance by each replicate.
+              DrEdGE itself does not calculate any statistics itself. Rather, it expects statistical calculations to be pre-calculated ahead of time in tab-separated files. The following give instructions for generating these files with R scripts maintained by the DrEdGE authors that use the
+              `,
+              h('a', { href: 'https://doi.org/doi:10.18129/B9.bioc.edgeR' }, 'edgeR'),
+              `
+              package. If you want to use your own methods for generating statistics, click on "More information" on the fields to the left
+              `
+            ]),
+
+            h(Paragraph, [
+              `
+              To use our R scripts, you will need to have ready two different files: a project design file, which describes characteristics about the treatments and replicates in the dataset, and a gene expression matrix, which gives measurements of transcript abundance by each replicate.
               `,
             ]),
 
@@ -630,48 +640,67 @@ t4    154.1   0.4     555.1     6.2`,
             ]),
 
             h(Paragraph, [
-              `First, open a terminal and change directories to ${projectRoot}. Next, download the R script `,
-              h('a', {
-                href: 'r-scripts/JSON_treatments.R',
-              }, 'JSON_treatments.R'),
-              '. Then run the script using the command:',
+              'First, open a terminal and change directories to ',
+              h('code', projectRoot),
+              '. Then run the R script included in the zip file called ',
+              h('code', 'JSON_treatments.R'),
+              ', using the command:'
             ]),
 
-            h(Paragraph, { as: 'pre', ml: 3 }, [
-              `Rscript JSON_treatments.R -i expression_matrix.tsv`,
+            h(Paragraph, { as: 'pre', ml: 3, my: 3 }, [
+              `Rscript ../r-scripts/JSON_treatments.R -i experiment_design_file.tsv`,
             ]),
 
             h(Paragraph, [
-              'This will generate the file ',
+              'By default, this will generate the file ',
               h('code', `${projectRoot}/treatments.json`),
-              '. Record the value ',
-              h('code', 'treatments.json'),
-              ' on the left in the field for ',
+              ', but you may change the location of the output file with the ',
+              h('code', '-o'),
+              ' command line flag. Record the location of the output file in the field for ',
               h('strong', 'Treatment information URL'),
-              '. (You can change the output of the JSON file using the ',
-              h('code', '-i'),
-              'flag in the script)',
+              '.',
             ]),
 
             h(Paragraph, [
-              'Run the pairwise comparison generation script in much the same way, using the R script ',
-              h('a', {
-                href: 'r-scripts/pairwise_comparisons.R',
-              }, 'pairwise_comparisons.R'),
+              'Run the pairwise comparison generation script in much the same way, using the R script',
+              h('code', 'pairwise_comparisons.R'),
+              ':',
             ]),
+
+            h(Paragraph, { as: 'pre', ml: 3, my: 3 }, [
+              `Rscript ../r-scripts/pairwise_comparisons.R -i expression_matrix.tsv`,
+            ]),
+
+            h(Paragraph, [
+              'This will generate a directory full of pairwise comparisons between different treatments. By default, the folder is ',
+              h('code', 'pairwise_files'),
+              ', but this can be adjusted with the ',
+              h('code', '-o'),
+              ' flag. This value should be recorded in the ',
+              h('strong', 'Treatment information URL'),
+              ' field. The script will also create a file showing the minimum and maximum average transcript abundance. By default, this will be called ',
+              h('code', 'min_max.txt'),
+              ' but can be adjusted with the ',
+              h('code', '-m'),
+              ' flag.',
+            ]),
+
+
 
             h(Heading, { as: 'h3', mb: 2, fontSize: 3 }, 'Saving configuration'),
             h(Paragraph, [
-              'Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, and save the file inside the ',
-              h('code', projectRoot),
-              ' folder. By default, the file is called "project.json"',
+              'Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, navigate to the ',
+              h('code', projectRoot.replace('data', '')),
+              ' folder on your hard drive, and save the configuration file. By default, it will be called ',
+              h('code', 'project.json'),
+              ', but you may change the name if you wish.',
             ]),
 
             h(Paragraph, [
               'Now edit the ',
               h('code', 'index.html'),
               ' file and follow the instructions to point your project to the appropriate location of the configuration file, which sould be: ',
-              h('code', projectRoot + 'project.json'),
+              h('code', projectRoot.replace('data', '') + 'project.json'),
             ]),
 
             h(Paragraph, [
