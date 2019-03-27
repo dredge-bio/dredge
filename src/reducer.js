@@ -48,7 +48,7 @@ function defaultLocalConfig() {
 
 function initialState() {
   return {
-    isGloballyConfigured: 'DREDGE_PROJECT_CONFIG_URL' in window,
+    isGloballyConfigured: !!window.DREDGE_PROJECT_CONFIG_URL,
 
     compatible: null,
 
