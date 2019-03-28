@@ -28,11 +28,11 @@ p {
 
 const Field = styled(Box)`
 &[data-required=true] label span::after {
-  content: "*";
-  font-size: 14px;
-  margin-left: 1px;
-  margin-top: -1px;
-  position: absolute;
+  content: "(required)";
+  font-size: 12px;
+  position: relative;
+  left: 4px;
+  bottom: 2px;
   color: red;
 }
 
@@ -124,6 +124,7 @@ const projectRoot = process.env.ZIP_FILENAME.replace('.zip', '') + '/data'
 
 function Input(props) {
   const { showURL, isRelativeURL } = props
+      , [ isExpanded, setIsExpanded ] = React.useState(false)
 
   const innerProps = R.omit([
     'children',
@@ -135,7 +136,6 @@ function Input(props) {
   ], props)
 
   const replaceRelative = showURL && isRelativeURL && showURL.startsWith(window.location.origin)
-
 
   return (
     h(Field, { mb: 4, ['data-required']: !!props.required }, [
@@ -330,23 +330,31 @@ class NewProject extends React.Component {
             }),
 
             h(Input, {
-              label: 'Project documentation',
-              help: h(Box, { as: 'p', mb: '2' }, [
-                'A URL to a ',
-                h('a', { href: 'https://commonmark.org/help/' }, 'Markdown'),
-                ' file that provides information about this project.',
+              label: 'Gene expression matrix URL',
+              required: true,
+              help: h(Paragraph, [
+                'The URL of the file containing abundance measures for each transcript by treatement. The format of this file is described in the instructions to the right.',
               ]),
-              required: false,
-              onChange: this.setField('readme'),
-              value: config.readme,
-              showURL: config.readme && resolve(config.readme),
+              onChange: this.setField('abundanceMeasures'),
+              value: config.abundanceMeasures,
+              showURL: config.abundanceMeasures && resolve(config.abundanceMeasures),
               isRelativeURL,
             }),
 
 
+
             h(Input, {
               label: 'Treatment information URL',
-              help: 'The URL that contains information about individual treatments in the dataset. Generating using R scripts as described in the instructions.',
+              help: h(Box, [
+                h(Paragraph, 'The URL that contains information about individual treatments in the dataset. Generating using R scripts as described in the instructions. This JSON file can be generated using provided R scripts using the instructions to the right, but if you choose to generate them on your own, the file should be JSON with the following characteristics:'),
+                h(Paragraph, [
+                  'The whole file must be one JSON object whose keys are the unique name of the treatments, and whose values contain an object with two properties: ',
+                  h('code', 'label'),
+                  ' (the human-readable label for the treatment), and ',
+                  h('code', 'replicates'),
+                  ' (an array of strings giving identifiers for the different replicates for the treatment. These identifiers should be identical to those provided in the gene expression matrix).'
+                ]),
+              ]),
               required: true,
               onChange: this.setField('treatments'),
               value: config.treatments,
@@ -356,15 +364,20 @@ class NewProject extends React.Component {
 
             h(Input, {
               label: 'Pairwise comparison URL template',
+              required: true,
               help: h(Box, [
-                h(Box, { as: 'p', mb: 2 }, 'A template to generate the URLs to pairwise comparison data. The characters \'%A\' will be replaced with the name of the first treatment, and \'%B\' the second.'),
-                h('p', [
-                  'For example: If my dataset contained the pairwise comparison for treatments T1 and T2 in the directory ',
+                h(Paragraph, [
+                  'A template to generate the URLs to pairwise comparison data. The characters \'%A\' will be replaced with the name of the first treatment, and \'%B\' the second. For example: If my dataset contained the pairwise comparison for treatments T1 and T2 in the directory ',
                   h('code', 'pairwise_tests/T1-T2.csv'),
                   ' the value in this field would be ',
                   h('code', 'pairwise_tests/%A-%B.csv'),
                 ]),
+
+                h(Paragraph, `
+                DrEdGE expects a pre-generated file for each pairwise comparison of treatments containing statistics about the comparison for each different transcript. Instructions about how to generate this file using edgeR can be found to the right. You may use your own statistical package, but DrEdGE will expect that each comparison file will be a tab-separated value with the first four columns being: transcript name, log₂ Fold Change, log₂ Reads per Million, and p-value. The first row will be discarded asd a header. The name of the transcript should match those found in the gene expression matrix.
+                `)
               ]),
+
               onChange: this.setField('pairwiseName'),
               value: config.pairwiseName,
               showURL: config.pairwiseName && resolve(config.pairwiseName),
@@ -432,6 +445,20 @@ class NewProject extends React.Component {
               isRelativeURL,
             }),
 
+            h(Input, {
+              label: 'Project documentation',
+              help: h(Box, { as: 'p', mb: '2' }, [
+                'A URL to a ',
+                h('a', { href: 'https://commonmark.org/help/' }, 'Markdown'),
+                ' file that provides information about this project.',
+              ]),
+              required: false,
+              onChange: this.setField('readme'),
+              value: config.readme,
+              showURL: config.readme && resolve(config.readme),
+              isRelativeURL,
+            }),
+
             h(Field, { mb: 4 }, [
               h('label', [
                 h('span.label-text', 'Transcript hyperlink template'),
@@ -483,20 +510,24 @@ class NewProject extends React.Component {
 
 
             h(Input, {
-              label: 'Gene expression matrix URL',
-              help: h(Paragraph, [
-                'The URL of the file containing abundance measures for each transcript by treatement. This is the same file described in the instructions.',
-              ]),
-              onChange: this.setField('abundanceMeasures'),
-              value: config.abundanceMeasures,
-              showURL: config.abundanceMeasures && resolve(config.abundanceMeasures),
-              isRelativeURL,
-            }),
-
-            h(Input, {
               label: 'Diagram URL',
-              help: 'The URL of the SVG diagram for this project',
               onChange: this.setField('diagram'),
+              help: h(Box, [
+                h(Paragraph, [
+                  'The URL of the SVG diagram for this project. ',
+                  'This SVG will be a diagram that will allow users to select different treatments to compare and show a "heat map" of transcript abundances among different treatments. To identify treatments in your SVG, you should set the ',
+                  h('code', 'id'),
+                  ' attribute of the SVG shape (e.g. ',
+                  h('code', 'path'),
+                  ', ',
+                  h('code', 'rect'),
+                  ', ',
+                  h('code', 'circle'),
+                  ') that corresponds to a given treatment. The value of the ',
+                  h('code', 'id'),
+                  ' attribute must be the same as the unique treatment identifier given in the treatment information file.',
+                ]),
+              ]),
               value: config.diagram,
               showURL: config.diagram && resolve(config.diagram),
               isRelativeURL,
@@ -564,7 +595,7 @@ class NewProject extends React.Component {
               `,
               h('a', { href: 'https://doi.org/doi:10.18129/B9.bioc.edgeR' }, 'edgeR'),
               `
-              package. If you want to use your own methods for generating statistics, click on "More information" on the fields to the left
+              package. If you want to use your own methods for generating statistics, read the documentation for each field on the left.
               `
             ]),
 
