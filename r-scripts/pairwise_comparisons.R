@@ -8,20 +8,20 @@ library("optparse")
 
 # Define options and usage
 option_list = list(
-    make_option(c("-e", "--expression"), type="character", default=NULL, 
+    make_option(c("-e", "--expression"), type="character", default=NULL,
                 help="path to gene expression matrix input", metavar="character"),
-    make_option(c("-d", "--design"), type="character", default=NULL, 
+    make_option(c("-d", "--design"), type="character", default=NULL,
                 help="path to experimental design data frame input", metavar="character"),
-    make_option(c("-o", "--outDirectory"), type="character", default="pairwise_files", 
+    make_option(c("-o", "--outDirectory"), type="character", default="pairwise_files",
                 help="output directory name", metavar="character"),
-    make_option(c("-m", "--outMinMax"), type="character", default="min_max.txt",  
+    make_option(c("-m", "--outMinMax"), type="character", default="min_max.txt",
                 help="output file specifying min and max values for MA plot axes", metavar="character")
 )
 opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts a gene expression matrix and a design file.\n\tReturns a directory of differential expression statistics for every possible pairwise comparison within the dataset.\n\n\tExample: Rscript pairwise_comparisons.R -e RPKMs_in.txt -d design_in.txt -o pairwise_files_out/ -m minMax_out.txt")
 opt = parse_args(opt_parser)
 
 # Define pairwise comparison generator function
-pairwise_comparisons <- function(expression = opt$expression, design = opt$design, 
+pairwise_comparisons <- function(expression = opt$expression, design = opt$design,
                                  outDirectory = opt$outDirectory, outMinMax = opt$outMinMax){
 
     # Install packages
@@ -36,10 +36,10 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
     # Make design list
     expList = list()
     if(substr(design, nchar(design)-4, nchar(design))%in%c(".json",".JSON")){
-        if(!"rjson" %in% installed.packages()){  
-            install.packages("rjson", repos = "http://cran.us.r-project.org")   
-        }  
-        library("rjson")  
+        if(!"rjson" %in% installed.packages()){
+            install.packages("rjson", repos = "http://cran.us.r-project.org")
+        }
+        library("rjson")
         expList <- fromJSON(paste(readLines(design), collapse=""))
         if(length(expList)!=length(unique(names(expList)))){
             return("Error: Treatment IDs (first order object keys) must be unique.")
@@ -90,7 +90,8 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                 y <- estimateCommonDisp(y)
                 y <- estimateTagwiseDisp(y)
                 et <- exactTest(y)
-                tab <- round(et$table, digits=4)
+                tab <- round(et$table, digits=10)
+                tab[,c("logFC", "logCPM")] <- round([,c("logFC", "logCPM")], digits=1)
             } else {
                 tab <- matrix(0, nrow = nrow(subRPKMs), ncol = 3)
                 colnames(tab) <- c("logFC", "logCPM", "PValue")
@@ -99,12 +100,12 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                     #logCPM
                     tempGeneSum <- sum(subRPKMs[tempRow,])
                     tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
-                    tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=4)
+                    tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=1)
                     #logFC
                     tempTr1Avg <- mean(subRPKMs[tempRow, which(group==treatment1)])
                     tempTr2Avg <- mean(subRPKMs[tempRow, which(group==treatment2)])
                     tempFC <- (tempTr2Avg/tempTr1Avg)
-                    tab[tempRow, "logFC"] <- round(log2(tempFC), digits=4)
+                    tab[tempRow, "logFC"] <- round(log2(tempFC), digits=1)
                     #PValue
                     tab[tempRow, "PValue"] = 1
                 }
@@ -120,7 +121,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
         }
         allTreatments <- allTreatments[allTreatments!=treatment1]
    }
-    
+
     # Add self_self comparisons
     allTreatments <- names(expList)
     for(treatment in allTreatments){
@@ -138,7 +139,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             for(tempRow in 1:dim(subRPKMs)[1]){
                 tempGeneSum <- sum(subRPKMs[tempRow,])
                 tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
-                tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=4)
+                tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=1)
             }
         } else {
             names(subRPKMs) <- rownames(expRPKMs)
@@ -149,7 +150,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             tempMatrixSum <- sum(subRPKMs)
             for(tempRow in 1:length(subRPKMs)){
                 tempCPM <- subRPKMs[tempRow]*(1000000/tempMatrixSum)
-                tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=4)
+                tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=1)
             }
         }
         minMax["logCPM", "min"] <- min(minMax["logCPM", "min"], min(tab[,"logCPM"]))
