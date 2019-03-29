@@ -271,7 +271,7 @@ const Header = R.pipe(
 
               !hasReadme ? null : h('li', {}, h(AriaMenuButton.MenuItem, {
                 value: 'about',
-              }, 'About')),
+              }, 'About dataset')),
 
               !projectLabel ? null : h(Box, {
                 is: 'li',
