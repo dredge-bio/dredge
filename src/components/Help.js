@@ -68,8 +68,7 @@ module.exports = function Help() {
 
         h('br'),
 
-          `
-Tintori, SC, Osborne Nishimura, E, Golden, PT, Lieb, JD, Goldstein, B. 2016. A Transcriptional Lineage of Early C. Elegans Development. (In Preparation).`
+        'Tintori SC, Golden P, Goldstein RP. Differential Expression Gene Explorer (DrEdGE): A tool for generating interactive online data visualizations for exploration of quantitative gene expression datasets [in preparation].'
       ]),
     ])
   )
