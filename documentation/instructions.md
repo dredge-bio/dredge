@@ -15,27 +15,27 @@ Variables which will be replaced:
 -->
 ## Instructions
 
-To add a new project based on your own dataset, first download a local copy of DrEdGE so that you can work will files on your own machine. This zip file contains all of the static files and R scripts needed to generate and serve files based on transcript measurements: [%%ZIP-FILENAME](%%ZIP_FILENAME)
+To add a new project based on your own dataset, first download a local copy of DrEdGE so that you can work will files on your own machine. This zip file contains all of the static files and R scripts needed to generate and serve files based on your data: [%%ZIP-FILENAME](%%ZIP_FILENAME)
 
 ### Setting up DrEdGE
 
-You will need to serve this page via a local Web server on your own machine. If you have Python installed, this can be done by changing to the directory containing the file `index.html` and running `python3 -m http.server` (Python 3) or `python -m SimpleHTTPServer` (Python 2). These commands will serve DrEdGE on your own machine on port 8000. Add a number at the end of the command to change the default port number. Once you have your local application up and running, visit this page there. If you used the default port, this should be located at <http://localhost:8000/?page=configure> or <http://127.0.0.1:8000/?page=configure>.
+You will need to serve this page via a local Web server on your own machine. If you have Python installed, this can be done by changing to the directory containing the file `index.html` and running `python3 -m http.server` (Python 3) or `python -m SimpleHTTPServer` (Python 2). These commands will serve DrEdGE on your own machine on port 8000. Add a number at the end of the command to change the default port number. Once you have your local application up and running, visit the local version of this page. If you used the default port, this will be located at <http://localhost:8000/?page=configure> or <http://127.0.0.1:8000/?page=configure>.
 
-Next, make a folder somewhere within your local dredge installation where you will keep project data. For this example, we'll assume it's called `data`, and that it is located in the folder `projectRoot`. Because we will put all of our project files in this directory, The **Configuration file directory** field to the left has been already filled out with the value `./data/`. You may change this value if you choose to put your configuration file in a different place.
+Next, make a folder somewhere within your local dredge installation where you will keep project data. For this example, we'll assume it's called `data`, and that it is located in the folder `projectRoot`.
 
-DrEdGE itself does not calculate any statistics itself. Rather, it expects statistical calculations to be pre-calculated ahead of time in tab-separated files. The following give instructions for generating these files with R scripts maintained by the DrEdGE authors that use the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) package. If you want to use your own methods for generating statistics, read the documentation for each field on the left.
+DrEdGE does not calculate any statistics itself. Rather, it expects statistical tables, calculated ahead of time, in tab-separated files. The following instructions will guide you through generating these files with R scripts maintained by the DrEdGE authors. The method uses the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) package. If you want to use your own methods for generating statistics, read the documentation for each field on the left.
 
-To use our R scripts, you will need to have ready two different files: a **project design file**, which describes characteristics about the treatments and replicates in the dataset, and a gene expression matrix, which gives measurements of transcript abundance by each replicate.
+To use our R scripts, you will need two files: a **project design file**, which describes characteristics about the treatments and replicates in the dataset, and a **transcript abundance matrix**, which gives normalized measurements of abundance for each transcript in each replicate.
 
-The **project design file** is a tab-separated table with a header row and multiple rows representing each of the replicates in the dataset. The following columns must be present, and they must be labeled exactly as given below:
+The **project design file** is a tab-separated table with a header row, and one row for each replicate in the dataset. The following columns must be present, and they must be labeled exactly as given below:
 
-* **replicate.id**: A unique identifier for a replicate
+* **replicate.id**: A unique identifier for the replicate
 
 * **treatment.id**: An identifier for the treatment that this replicate belongs to. (This will be used to combine different replicates in the same treatment)
 
 * **treatment.name**: The label that will be used to render a human-readable name for the given treatment.
 
-The **gene expression matrix** should be a tab-separated table with rows representing the abundance of a transcript in each replicate in the dataset. The header row should contain columns for every replicate in the dataset, and the first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty. This will look like:
+The **gene expression matrix** should be a tab-separated table of normalized transcript abundance values, with each row representing a unique transcript, and each column representing a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty. This will look like:
 
 ```
       r1      r2      r3        r4
@@ -64,13 +64,13 @@ By default, this will generate the file `%%PROJECT-DATA-DIR/treatments.json`, bu
 Run the pairwise comparison generation script in much the same way, using the R script `pairwise_comparisons.R`:
 
 ```
-Rscript ../r-scripts/pairwise_comparisons.R -i expression_matrix.tsv
+Rscript ../r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d experiment_design_file.tsv
 ```
 
-This will generate a directory full of pairwise comparisons between different treatments. By default, the folder is `pairwise_files`, but this can be adjusted with the `-o` flag. This value should be recorded in the **Treatment information URL** field. The script will also create a file showing the minimum and maximum average transcript abundance. By default, this will be called `min_max.txt` but can be adjusted with the `-m` flag.
+This will generate a directory full of pairwise comparisons between different treatments. By default, the folder is `pairwise_files`, but this can be adjusted with the `-o` flag. This value should be recorded in the **Pairwise comparison URL template** field. The script will also create a file showing the minimum and maximum average transcript abundance. By default, this will be called `min_max.txt` but can be adjusted with the `-m` flag. The values reported in this file can be used to complete the **MA plot limits** fields, with "logCPM" relevant to the x-axis, and "logFC" relevant to the x-axis. We recommend setting the y-axis minimum and maximum to numbers with the same absolute value, to keep logFC=0 centered.
 
-Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, navigate to the `%%PROJECT-DATA-DIR%%` folder on your hard drive, and save the configuration file. By default, it will be called `project.json`, but you may change the name if you wish.
+Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, which will download a configuration file. By default, it will be called `project.json`, but you may change the name if you wish. Save this configuration file to the `%%PROJECT-DATA-DIR%%` folder on your hard drive. 
 
-Now edit the `index.html` file and follow the instructions to point your project to the appropriate location of the configuration file, which sould be: `%%PROJECT-DATA-DIR%%/project.json`.
+Now edit the `index.html` file in the `%%PROJECT-DATA-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which sould be: `%%PROJECT-DATA-DIR%%/project.json`.
 
-Restart DrEdGE by refreshing your browser window, and hopefully your project will be available.
+Restart DrEdGE by refreshing your browser window to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
