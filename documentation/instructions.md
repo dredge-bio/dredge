@@ -15,7 +15,7 @@ Variables which will be replaced:
 -->
 ## Instructions
 
-To add a new project based on your own dataset, first download a local copy of DrEdGE so that you can work will files on your own machine. This zip file contains all of the static files and R scripts needed to generate and serve files based on transcript measurements: [%%ZIP-FILENAME](%%ZIP_FILENAME)
+To add a new project based on your own dataset, first download a local copy of DrEdGE so that you can work will files on your own machine. This zip file contains all of the static files and R scripts needed to generate and serve files based on transcript measurements: [%%ZIP-FILENAME%%](%%ZIP-FILENAME%%)
 
 ### Setting up DrEdGE
 
@@ -47,19 +47,19 @@ t4    154.1   0.4     555.1     6.2`,
 
 Where the abundance of t1 in r1 is 32.2, the abundance of t1 in r2 is 24.3, and so on.
 
-Copy this file to the `%%PROJECT-DATA-DIR` directory, and record it in the **Gene Expression Matrix URL** field to the left. For this example, we will assume this file is called `%%PROJECT-DATA-DIR/expression_matrix.tsv`
+Copy this file to the `%%PROJECT-DATA-DIR%%` directory, and record it in the **Gene Expression Matrix URL** field to the left. For this example, we will assume this file is called `%%PROJECT-DATA-DIR%%/expression_matrix.tsv`
 
 ### Generating DrEdGE data
 
 Once these files are ready, you will be able to generate the files for **treatment information** and **pairwise comparisons** as well as the appropriate **MA Plot limits** for your project.
 
-First, open a terminal and change directories to `%%PROJECT-DATA-DIR`. Then run the R script included in the zip file called `JSON_treatments.R`, using the command:
+First, open a terminal and change directories to `%%PROJECT-DATA-DIR%%`. Then run the R script included in the zip file called `JSON_treatments.R`, using the command:
 
 ```
 Rscript ../r-scripts/JSON_treatments.R -i experiment_design_file.tsv
 ```
 
-By default, this will generate the file `%%PROJECT-DATA-DIR/treatments.json`, but you may change the location of the output file with the `-o` command line flag. Record the location of the output file in the field for **Treatment information URL**
+By default, this will generate the file `%%PROJECT-DATA-DIR%%/treatments.json`, but you may change the location of the output file with the `-o` command line flag. Record the location of the output file in the field for **Treatment information URL**
 
 Run the pairwise comparison generation script in much the same way, using the R script `pairwise_comparisons.R`:
 
