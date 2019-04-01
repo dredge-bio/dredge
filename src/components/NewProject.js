@@ -98,18 +98,8 @@ function LimitInput({ value, onChange }) {
   })
 }
 
-function Paragraph(props) {
-  return h(Box, Object.assign({
-    as: 'p',
-    mb: 2,
-  }, props))
-}
-
-const projectRoot = process.env.ZIP_FILENAME.replace('.zip', '') + '/data'
-
 function Input(props) {
   const { showURL, isRelativeURL } = props
-      , [ isExpanded, setIsExpanded ] = React.useState(false)
 
   const innerProps = R.omit([
     'children',
@@ -167,7 +157,7 @@ function Input(props) {
 
       !props.documentation ? null : (
         h(Documentation, { fieldName: props.documentation })
-      )
+      ),
 
       /*
       !props.help ? null : (
@@ -184,11 +174,6 @@ function Input(props) {
 class NewProject extends React.Component {
   constructor() {
     super();
-
-    this.state = {
-      baseURL: './data/',
-    }
-
     this.setField = this.setField.bind(this)
   }
 
@@ -197,13 +182,16 @@ class NewProject extends React.Component {
 
     const lens = R.lensPath(['config'].concat(fieldName))
 
-    return e => {
+    return async e => {
       if (fieldName === 'baseURL') {
-        this.setState({ baseURL: e.target.value })
+        await dispatch(Action.UpdateLocalConfig(
+          R.set(R.lensPath(['config', '_baseURL']), e.target.value)
+        ))
 
         dispatch(Action.UpdateLocalConfig(
-          R.set(lens, this.getBaseURL().baseURL)
+          R.set(lens, this.getCanonicalBaseURL().baseURL)
         ))
+
       } else {
         dispatch(Action.UpdateLocalConfig(
           R.set(lens, fn(e.target.value))
@@ -213,7 +201,7 @@ class NewProject extends React.Component {
   }
 
   getProjectJSON() {
-    let ret = R.omit(['baseURL'], this.props.config)
+    let ret = R.omit(['baseURL', '_baseURL'], this.props.config)
 
     ret = R.over(
       R.lensProp('transcriptHyperlink'),
@@ -228,8 +216,8 @@ class NewProject extends React.Component {
     return ret
   }
 
-  getBaseURL() {
-    let baseURL = this.state.baseURL
+  getCanonicalBaseURL() {
+    let baseURL = this.props.config._baseURL
       , isRelativeURL
 
     if (!baseURL.startsWith('http')) {
@@ -246,7 +234,7 @@ class NewProject extends React.Component {
 
   render() {
     const { navigateTo, config } = this.props
-        , { resolve, isRelativeURL } = this.getBaseURL()
+        , { resolve, isRelativeURL } = this.getCanonicalBaseURL()
 
     return (
       h(Box, { p: 3 }, [
@@ -302,7 +290,7 @@ class NewProject extends React.Component {
               documentation: 'baseURL',
               required: true,
               onChange: this.setField('baseURL'),
-              value: this.state.baseURL,
+              value: config._baseURL,
               showURL: resolve(''),
               isRelativeURL,
             }),
@@ -457,8 +445,8 @@ class NewProject extends React.Component {
             borderLeft: 1,
             borderColor: '#ccc',
           }, [
-            h(Documentation, { fieldName: 'instructions' })
-          ])
+            h(Documentation, { fieldName: 'instructions' }),
+          ]),
         ]),
       ])
     )
