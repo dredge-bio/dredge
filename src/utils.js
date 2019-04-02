@@ -46,53 +46,69 @@ function getBins(scale, unit) {
   return bins;
 }
 
-function getPlotBins(data, xScale, yScale, unit=5) {
-  const fcSorted = R.sortBy(R.prop('logFC'), data)
-    , fcBins = getBins(yScale, unit)
-    , cpmBins = getBins(xScale, unit)
-    , bins = []
+function binByTranscript(data, field, bins) {
+  const getter = R.prop(field)
+      , sortedData = R.sortBy(getter, data)
+      , binByTranscript = new Map()
 
-  let curFC = 0
+  const leftOut = R.takeWhile(
+    d => getter(d) < bins[0][0],
+    sortedData.slice(0))
 
-  fcBins.forEach(([ fcMin, fcMax, y0, y1 ]) => {
-    let curCPM = 0
-
-    const inFCBin = R.takeWhile(
-      ({ logFC }) => logFC >= fcMin && logFC <= fcMax,
-      fcSorted.slice(curFC)
-    )
-
-    curFC += inFCBin.length;
-    const cpmSorted = R.sortBy(R.prop('logATA'), inFCBin);
-
-    cpmBins.forEach(([ cpmMin, cpmMax, x0, x1 ]) => {
-      const inCPMBin = R.takeWhile(
-        ({ logATA }) => logATA >= cpmMin && logATA <= cpmMax,
-        cpmSorted.slice(curCPM)
-      )
-
-      curCPM += inCPMBin.length;
-
-      if (inCPMBin.length) {
-        bins.push({
-          x0, x1, y0, y1,
-          fcMin,
-          fcMax,
-          cpmMin,
-          cpmMax,
-          transcripts: inCPMBin,
-        })
-      }
-    });
-  });
-
-  const numTranscriptsBinned = bins.reduce((a, b) => a + b.transcripts.length, 0)
-
-  if (data.length !== numTranscriptsBinned) {
-    console.warn(`Warning: ${data.length} transcripts in sample but only ${numTranscriptsBinned} put in bins`)
+  if (leftOut.length) {
+    console.warn(`Warning: ${leftOut.length} transcripts below the minimum ${field} limit`)
   }
 
-  return bins;
+  let idx = leftOut.length
+
+  bins.forEach(([ min, max ], i) => {
+    const inBin = transcript => {
+      const val = getter(transcript)
+      return val >= min && val <= max
+    }
+    const transcriptsInBin = R.takeWhile(inBin, sortedData.slice(idx))
+
+    idx += transcriptsInBin.length;
+
+    transcriptsInBin.forEach(t => {
+      binByTranscript.set(t, i)
+    })
+  })
+
+  const extra = data.length - (binByTranscript.size + leftOut.length)
+
+  if (extra) {
+    console.warn(`Warning: ${extra} transcripts above the maximum ${field} limit`)
+  }
+
+  return binByTranscript
+}
+
+function getPlotBins(data, xScale, yScale, unit=5) {
+  const fcBins = getBins(yScale, unit)
+      , ataBins = getBins(xScale, unit)
+
+  const bins = fcBins.map(([ fcMin, fcMax, y0, y1 ]) =>
+    ataBins.map(([ cpmMin, cpmMax, x0, x1 ]) => ({
+      x0, x1, y0, y1,
+      fcMin, fcMax,
+      cpmMin, cpmMax,
+      transcripts: [],
+    })))
+
+  const fcBinByTranscript = binByTranscript(data, 'logFC', fcBins)
+      , ataBinByTranscript = binByTranscript(data, 'logATA', ataBins)
+
+  data.forEach(d => {
+    const fcBin = fcBinByTranscript.get(d)
+        , ataBin = ataBinByTranscript.get(d)
+
+    if (fcBin !== undefined && ataBin !== undefined) {
+      bins[fcBin][ataBin].transcripts.push(d)
+    }
+  })
+
+  return R.flatten(bins).filter(b => b.transcripts.length)
 }
 
 function projectForView(state) {
