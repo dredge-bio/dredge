@@ -6,7 +6,7 @@ PROJECT_NAME := dredge
 
 NPM_BIN := node_modules/.bin
 
-VERSION := $(shell npm ls --depth=0 --long 2> /dev/null | head -n 1 | cut -d@ -f 2)
+VERSION := $(shell git describe --abbrev=0 | cut -c 2-)
 
 JS_BUNDLE = dist/$(PROJECT_NAME).js
 VERSIONED_JS_BUNDLE = $(JS_BUNDLE:.js=-$(VERSION).js)
