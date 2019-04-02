@@ -41,7 +41,7 @@ function defaultLocalConfig() {
         [-100, 100],
       ],
       treatments: './treatments.json',
-      pairwiseName: './pairwise_files/%A_%B.txt',
+      pairwiseName: './pairwise_files/%A_vs_%B.txt',
       transcriptAliases: './aliases.txt',
       abundanceMeasures: './abundanceMeasures.txt',
       diagram: './diagram.svg',
