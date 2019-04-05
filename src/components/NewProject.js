@@ -3,6 +3,7 @@
 const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
+    , debounce = require('debounce')
     , { Flex, Box, Card, Button, Heading } = require('rebass')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
@@ -172,36 +173,40 @@ function Input(props) {
 }
 
 class NewProject extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.setField = this.setField.bind(this)
+
+    this.state = {
+      config: props.config,
+    }
+
+    this.persistChanges = debounce(this.persistChanges.bind(this), 200)
   }
 
   setField(fieldName, fn=R.identity) {
-    const { dispatch } = this.props
-
     const lens = R.lensPath(['config'].concat(fieldName))
 
-    return async e => {
-      if (fieldName === 'baseURL') {
-        await dispatch(Action.UpdateLocalConfig(
-          R.set(R.lensPath(['config', '_baseURL']), e.target.value)
-        ))
+    return e => {
+      const update = fieldName !== 'baseURL'
+        ? R.set(lens, fn(e.target.value))
+        : R.pipe(
+          R.set(R.lensPath(['config', '_baseURL']), e.target.value),
+          R.set(lens, this.getCanonicalBaseURL().baseURL))
 
-        dispatch(Action.UpdateLocalConfig(
-          R.set(lens, this.getCanonicalBaseURL().baseURL)
-        ))
-
-      } else {
-        dispatch(Action.UpdateLocalConfig(
-          R.set(lens, fn(e.target.value))
-        ))
-      }
+      this.setState(update, this.persistChanges)
     }
   }
 
+  persistChanges() {
+    const { dispatch } = this.props
+        , { config } = this.state
+
+    dispatch(Action.UpdateLocalConfig(R.always(config)))
+  }
+
   getProjectJSON() {
-    let ret = R.omit(['baseURL', '_baseURL'], this.props.config)
+    let ret = R.omit(['baseURL', '_baseURL'], this.state.config)
 
     ret = R.over(
       R.lensProp('transcriptHyperlink'),
@@ -217,7 +222,7 @@ class NewProject extends React.Component {
   }
 
   getCanonicalBaseURL() {
-    let baseURL = this.props.config._baseURL
+    let baseURL = this.state.config._baseURL
       , isRelativeURL
 
     if (!baseURL.startsWith('http')) {
@@ -233,7 +238,8 @@ class NewProject extends React.Component {
   }
 
   render() {
-    const { navigateTo, config } = this.props
+    const { navigateTo } = this.props
+        , { config } = this.state
         , { resolve, isRelativeURL } = this.getCanonicalBaseURL()
 
     return (
