@@ -434,14 +434,21 @@ class NewProject extends React.Component {
               h(Documentation, { fieldName: 'transcriptHyperlink' }),
             ]),
 
-
-
             h(Input, {
               label: 'Diagram URL',
               onChange: this.setField('diagram'),
               documentation: 'diagram',
               value: config.diagram,
               showURL: config.diagram && resolve(config.diagram),
+              isRelativeURL,
+            }),
+
+            h(Input, {
+              label: 'Grid URL',
+              onChange: this.setField('grid'),
+              documentation: 'grid',
+              value: config.grid,
+              showURL: config.grid && resolve(config.grid),
               isRelativeURL,
             }),
           ]),

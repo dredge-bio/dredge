@@ -46,3 +46,8 @@ A hyperlink pointing to an external database website, for more information about
 <!-- diagram -->
 
 The URL of an SVG diagram of treatments this project. This will generate a graphic that allows users to visually select treatments to compare. It will also generate an illustrated heat map of transcript abundance among all treatments in the project. To link objects in the SVG to treatments in your project, set the `id` attribute of the SVG shape (e.g. `rect`, `circle`, `polygon`) to the corresponding treatment identifier.
+
+
+<!-- grid -->
+
+The URL to tab-separated values containing the names of treatment identifiers. This will be used to create a graphic heat map of transcript abundances across treatments. If left blank, a default grid will be generated.

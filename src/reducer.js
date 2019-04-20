@@ -45,6 +45,7 @@ function defaultLocalConfig() {
       transcriptAliases: './aliases.txt',
       abundanceMeasures: './abundanceMeasures.txt',
       diagram: './diagram.svg',
+      grid: './grid.tsv',
     },
   }
 }
