@@ -230,13 +230,9 @@ const Header = R.pipe(
               onRequestResize()
             } else if (val === 'about') {
               navigateTo(new Route('about'))
+            } else if (val === 'dredge-home') {
+              window.location.href = 'http://dredge.bio.unc.edu'
             }
-
-            /*
-            else if (val === 'new-project') {
-              navigateTo(new Route('new-project'))
-            }
-            */
           },
         }, [
           h(Button, {
@@ -289,6 +285,10 @@ const Header = R.pipe(
               h('li', {}, h(AriaMenuButton.MenuItem, {
                 value: 'help',
               }, 'About DrEdGE')),
+
+              h('li', {}, h(AriaMenuButton.MenuItem, {
+                value: 'dredge-home',
+              }, 'DrEdGE project homepage')),
 
               h(Box, {
                 is: 'li',
