@@ -306,7 +306,11 @@ module.exports = function reducer(state=initialState(), action) {
       LoadProject(source) {
         return R.over(
           R.lensPath(['projects', source.key]),
-          R.flip(R.merge)({ loaded: true, failed: true }),
+          R.flip(R.merge)({
+            loaded: true,
+            failed: true,
+            failedReason: err.msg || 'Failed loading project',
+          }),
           state
         )
       },

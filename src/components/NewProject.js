@@ -172,6 +172,22 @@ function Input(props) {
   )
 }
 
+function getCanonicalBaseURL(_baseURL) {
+  let baseURL = _baseURL
+    , isRelativeURL
+
+  if (!baseURL.startsWith('http')) {
+    isRelativeURL = true
+    baseURL = resolveURL(window.location.href, baseURL || './')
+  }
+
+  if (!baseURL.endsWith('/')) baseURL += '/'
+
+  const resolve = path => resolveURL(baseURL, path, baseURL)
+
+  return { isRelativeURL, baseURL, resolve }
+}
+
 class NewProject extends React.Component {
   constructor(props) {
     super(props);
@@ -188,11 +204,13 @@ class NewProject extends React.Component {
     const lens = R.lensPath(['config'].concat(fieldName))
 
     return e => {
+      const val = fn(e.target.value)
+
       const update = fieldName !== 'baseURL'
-        ? R.set(lens, fn(e.target.value))
+        ? R.set(lens, val)
         : R.pipe(
-          R.set(R.lensPath(['config', '_baseURL']), e.target.value),
-          R.set(lens, this.getCanonicalBaseURL().baseURL))
+          R.set(R.lensPath(['config', '_baseURL']), val),
+          R.set(lens, getCanonicalBaseURL(val).baseURL))
 
       this.setState(update, this.persistChanges)
     }
@@ -202,7 +220,7 @@ class NewProject extends React.Component {
     const { dispatch } = this.props
         , { config } = this.state
 
-    dispatch(Action.UpdateLocalConfig(R.always(config)))
+    dispatch(Action.UpdateLocalConfig(R.assoc('config', config)))
   }
 
   getProjectJSON() {
@@ -221,26 +239,10 @@ class NewProject extends React.Component {
     return ret
   }
 
-  getCanonicalBaseURL() {
-    let baseURL = this.state.config._baseURL
-      , isRelativeURL
-
-    if (!baseURL.startsWith('http')) {
-      isRelativeURL = true
-      baseURL = resolveURL(window.location.href, baseURL || './')
-    }
-
-    if (!baseURL.endsWith('/')) baseURL += '/'
-
-    const resolve = path => resolveURL(baseURL, path, baseURL)
-
-    return { isRelativeURL, baseURL, resolve }
-  }
-
   render() {
     const { navigateTo } = this.props
         , { config } = this.state
-        , { resolve, isRelativeURL } = this.getCanonicalBaseURL()
+        , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
 
     return (
       h(Box, { p: 3 }, [

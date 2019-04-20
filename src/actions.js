@@ -625,6 +625,19 @@ function loadProject(source) {
       refresh()
     }
 
+    // Always start the local config from scratch
+    source.case({
+      Local: async () => {
+        await dispatch(Action.UpdateProject(
+          source,
+          R.always({ loaded: false, config })
+        ))
+      },
+      _: () => null
+    })
+
+    refresh()
+
     if (!loaded) {
       const onUpdate = val => dispatch(Action.UpdateProject(
         source,
@@ -643,6 +656,11 @@ function loadProject(source) {
       await fetchProject(config, makeLog, onUpdate)
 
       const project = R.path(['projects', source.key], getState())
+
+      if (!project.transcripts) {
+        const e = new Error()
+        e.msg = 'Cannot load project without a valid abundance matrix';
+      }
 
       const corpus = {}
           , corpusVals = []

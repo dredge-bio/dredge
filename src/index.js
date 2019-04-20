@@ -58,7 +58,14 @@ const resources = {
 
   'test': {
     makeTitle: R.always('Loading project...'),
-    onBeforeRoute: (params, redirectTo, { dispatch }) => {
+    onBeforeRoute: async (params, redirectTo, { dispatch, getState }) => {
+      const { config } = getState().projects.local
+
+      await dispatch(Action.UpdateLocalConfig(
+        R.always({ loaded: false, config })))
+
+      await dispatch(Action.ResetLog('local'))
+
       dispatch(Action.LoadProject(ProjectSource.Local))
     },
     Component: require('./components/View'),
