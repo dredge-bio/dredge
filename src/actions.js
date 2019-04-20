@@ -418,7 +418,15 @@ const processedConfigFields = {
       const resp = await fetchResource(url, false)
 
       try {
-        let grid = d3.csvParseRows(await resp.text())
+        let grid
+
+        const text = await resp.text()
+
+        if (text.includes('\t')) {
+          grid = d3.tsvParseRows(text)
+        } else {
+          grid = d3.csvParseRows(text)
+        }
 
         grid = grid.map(row => row.map(treatment => {
           if (!treatment) return null

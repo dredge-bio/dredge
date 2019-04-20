@@ -50,4 +50,4 @@ The URL of an SVG diagram of treatments this project. This will generate a graph
 
 <!-- grid -->
 
-The URL to tab-separated values containing the names of treatment identifiers. This will be used to create a graphic heat map of transcript abundances across treatments. If left blank, a default grid will be generated.
+A URL to a table of values containing the names of treatment identifiers. If the file contains tabs, it will be parsed as a TSV, otherwise it will be parsed as a CSV. This table will be used to create a graphic heat map of transcript abundances across treatments. If left blank, a default grid will be generated.
