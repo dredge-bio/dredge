@@ -115,8 +115,19 @@ function projectForView(state) {
   return state.projects[state.view.source.key]
 }
 
+const TOO_MANY_ROWS = 8
+
+function getDefaultGrid(treatments) {
+  const numTreatments = treatments.length
+      , numRows = Math.floor(numTreatments / (numTreatments / 5) - .00000000001) + 1
+      , numPerRow = Math.ceil(numTreatments / numRows)
+
+  return R.splitEvery(numPerRow, treatments)
+}
+
 module.exports = {
   findParent,
   getPlotBins,
+  getDefaultGrid,
   projectForView,
 }

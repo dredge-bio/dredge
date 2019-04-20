@@ -7,7 +7,7 @@ const R = require('ramda')
     , { makeTypedAction } = require('org-async-actions')
     , saveAs = require('file-saver')
     , { LoadingStatus, ProjectSource } = require('./types')
-    , { projectForView } = require('./utils')
+    , { projectForView, getDefaultGrid } = require('./utils')
 
 function isIterable(obj) {
   return Symbol.iterator in obj
@@ -676,7 +676,6 @@ function loadProject(source) {
       const log = makeLog('Transcript corpus', null)
 
       {
-
         await log(LoadingStatus.Pending(null))
 
         let i = 0
@@ -701,7 +700,6 @@ function loadProject(source) {
           i++
           if (i % 5000 === 0) await delay(0)
         }
-
       }
 
       const searchTranscripts = (name, limit=20) => {
@@ -742,6 +740,10 @@ function loadProject(source) {
           i++
           if (i % 500 === 0) await delay(0)
         }
+      }
+
+      if (!project.grid) {
+        project.grid = getDefaultGrid(Object.keys(project.treatments))
       }
 
       await log(LoadingStatus.OK(null))
