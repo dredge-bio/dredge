@@ -64,13 +64,13 @@ By default, this will generate the file `%%PROJECT-DATA-DIR%%/treatments.json`, 
 Run the pairwise comparison generation script in much the same way, using the R script `pairwise_comparisons.R`:
 
 ```
-Rscript ../r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d experiment_design_file.tsv
+Rscript ../r-scripts/pairwise_comparisons.R -e expression_matrix.csv -d experiment_design_file.tsv
 ```
 
 This will generate a directory full of pairwise comparisons between different treatments. By default, the folder is `pairwise_files`, but this can be adjusted with the `-o` flag. This value should be recorded in the **Pairwise comparison URL template** field. The script will also create a file showing the minimum and maximum average transcript abundance. By default, this will be called `min_max.txt` but can be adjusted with the `-m` flag. The values reported in this file can be used to complete the **MA plot limits** fields, with "logCPM" relevant to the x-axis, and "logFC" relevant to the x-axis. We recommend setting the y-axis minimum and maximum to numbers with the same absolute value, to keep logFC=0 centered.
 
 Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, which will download a configuration file. By default, it will be called `project.json`, but you may change the name if you wish. Save this configuration file to the `%%PROJECT-DATA-DIR%%` folder on your hard drive. 
 
-Now edit the `index.html` file in the `%%PROJECT-DATA-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which sould be: `%%PROJECT-DATA-DIR%%/project.json`.
+Now edit the `index.html` file in the `%%PROJECT-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which should be: `%%PROJECT-DATA-DIR%%/project.json`.
 
-Restart DrEdGE by refreshing your browser window to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
+Restart DrEdGE by loading the local index page (i.e. <http://localhost:8000/> or <http://127.0.0.1:8000/>) to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
