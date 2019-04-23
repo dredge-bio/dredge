@@ -309,10 +309,14 @@ const Header = R.pipe(
   )
 })
 
+const MIN_HEIGHT = 700
+    , MIN_WIDTH = 1200
+
 const ApplicationContainer = styled.div`
   display: grid;
   background-color: hsla(45, 31%, 93%, 1);
-  grid-template-rows: 64px minmax(600px, 1fr);
+  grid-template-rows: 64px minmax(${MIN_HEIGHT - 64}px, 1fr);
+  grid-template-columns: minmax(${MIN_WIDTH}px, 1fr);
 `
 
 function getWindowDimensions() {
