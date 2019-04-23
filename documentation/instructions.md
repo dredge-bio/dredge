@@ -42,7 +42,7 @@ The **gene expression matrix** should be a tab-separated table of normalized tra
 t1    32.2    24.3    6742.3    0.04
 t2    43.1    44.1    5423.1    9.1
 t3    19.1    100.2   661.9     5.4
-t4    154.1   0.4     555.1     6.2`,
+t4    154.1   0.4     555.1     6.2
 ```
 
 Where the abundance of t1 in r1 is 32.2, the abundance of t1 in r2 is 24.3, and so on.
