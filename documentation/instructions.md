@@ -64,7 +64,7 @@ By default, this will generate the file `%%PROJECT-DATA-DIR%%/treatments.json`, 
 Run the pairwise comparison generation script in much the same way, using the R script `pairwise_comparisons.R`:
 
 ```
-Rscript ../r-scripts/pairwise_comparisons.R -e expression_matrix.csv -d experiment_design_file.tsv
+Rscript ../r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d experiment_design_file.tsv
 ```
 
 This will generate a directory full of pairwise comparisons between different treatments. By default, the folder is `pairwise_files`, but this can be adjusted with the `-o` flag. This value should be recorded in the **Pairwise comparison URL template** field. The script will also create a file showing the minimum and maximum average transcript abundance. By default, this will be called `min_max.txt` but can be adjusted with the `-m` flag. The values reported in this file can be used to complete the **MA plot limits** fields, with "logCPM" relevant to the x-axis, and "logFC" relevant to the x-axis. We recommend setting the y-axis minimum and maximum to numbers with the same absolute value, to keep logFC=0 centered.
