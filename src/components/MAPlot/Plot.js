@@ -97,6 +97,7 @@ class Plot extends React.Component {
 
     if (redrawAxes) {
       this.drawAxes()
+      this.initBrush()
     }
 
     if (didChange(R.lensProp('hoveredTranscript'))) {
