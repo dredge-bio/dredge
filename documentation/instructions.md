@@ -42,7 +42,7 @@ The **gene expression matrix** should be a tab-separated table of normalized tra
 t1    32.2    24.3    6742.3    0.04
 t2    43.1    44.1    5423.1    9.1
 t3    19.1    100.2   661.9     5.4
-t4    154.1   0.4     555.1     6.2`,
+t4    154.1   0.4     555.1     6.2
 ```
 
 Where the abundance of t1 in r1 is 32.2, the abundance of t1 in r2 is 24.3, and so on.
@@ -71,6 +71,6 @@ This will generate a directory full of pairwise comparisons between different tr
 
 Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, which will download a configuration file. By default, it will be called `project.json`, but you may change the name if you wish. Save this configuration file to the `%%PROJECT-DATA-DIR%%` folder on your hard drive. 
 
-Now edit the `index.html` file in the `%%PROJECT-DATA-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which sould be: `%%PROJECT-DATA-DIR%%/project.json`.
+Now edit the `index.html` file in the `%%PROJECT-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which should be: `%%PROJECT-DATA-DIR%%/project.json`.
 
-Restart DrEdGE by refreshing your browser window to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
+Restart DrEdGE by loading the local index page (i.e. <http://localhost:8000/> or <http://127.0.0.1:8000/>) to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
