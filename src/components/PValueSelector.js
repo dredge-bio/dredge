@@ -4,9 +4,9 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , d3 = require('d3')
+    , { Flex, Box } = require('rebass')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
-    , Action = require('../actions')
 
 const PValueSelectorContainer = styled.div`
   display: flex;
@@ -49,7 +49,7 @@ class PValueSelector extends React.Component {
   }
 
   handleChange(e) {
-    const { dispatch, updateOpts } = this.props
+    const { updateOpts } = this.props
 
     const threshold = e.target.value != undefined
       ? parseFloat(e.target.value)
@@ -93,15 +93,32 @@ class PValueSelector extends React.Component {
           'p-value cutoff',
         ]),
 
-        h('div', [
-          h('input', {
-            type: 'number',
-            min: '0',
-            max: '1',
-            step: '.01',
-            value: pValueThreshold,
-            onChange: this.handleChange,
-          }),
+        h(Flex, {
+          alignItems: 'center',
+        }, [
+          h('span', {
+            style: {
+              whiteSpace: 'nowrap',
+            },
+          }, pValueThreshold),
+          h(Box, {
+            as: 'button',
+            ml: 2,
+            onClick: () => {
+              let value
+
+              try {
+                value = prompt('Enter a p-value. (e.g. .0005, 1e-24)', pValueThreshold)
+                value = parseFloat(value)
+                if (isNaN(value)) throw new Error()
+                if (value > 1) throw new Error()
+              } catch (e) {
+                value = 1
+              }
+
+              this.handleChange({ target: { value }})
+            },
+          }, 'change'),
         ]),
 
         h('div.pvalue-histogram', [
