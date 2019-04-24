@@ -69,8 +69,12 @@ function calcColumnWidths(width) {
   ]
 }
 
-function dashesOrFixed(number, places = 2) {
-  return number == null ? '--' : number.toFixed(places)
+function dashesOrFixed(number, places=2) {
+  if (number.toString().startsWith(`0.${'0'.repeat(places)}`)) {
+    return number.toExponential(places - 2)
+  } else {
+    return number == null ? '--' : number.toFixed(places)
+  }
 }
 
 class TranscriptRow extends React.Component {
