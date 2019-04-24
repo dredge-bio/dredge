@@ -9,6 +9,10 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
 
 const PValueSelectorContainer = styled.div`
+  position: absolute;
+  top: 0;
+  bottom:0;
+
   display: flex;
   flex-direction: column;
   height: 100%;

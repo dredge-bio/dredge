@@ -26,6 +26,7 @@ const ViewerContainer = styled.div`
 `
 
 const GridArea = styled.div`
+  position: relative;
   grid-column: ${ props => props.column };
   grid-row: ${ props => props.row };
 `
