@@ -383,7 +383,7 @@ const processedConfigFields = {
 
   readme: {
     label: 'Project documentation',
-    exec: async (url, treatments) => {
+    exec: async url => {
       const resp = await fetchResource(url, false)
 
       const md = new MarkdownIt()
@@ -641,7 +641,7 @@ function loadProject(source) {
           R.always({ loaded: false, config })
         ))
       },
-      _: () => null
+      _: () => null,
     })
 
     refresh()
@@ -1123,11 +1123,38 @@ function importSavedTranscripts(file) {
 
 function exportSavedTranscripts() {
   return (dispatch, getState) => {
-    const { savedTranscripts } = getState().view
+    const {
+      comparedTreatments: [ treatmentA, treatmentB ],
+      displayedTranscripts,
+    } = getState().view
 
-    const blob = new Blob([ [...savedTranscripts].join('\n') ], { type: 'text/plain' })
+    const header = [
+      'Gene name',
+      'pValue',
+      'logATA',
+      'logFC',
+      `${treatmentA} mean abundance`,
+      `${treatmentA} median abundance`,
+      `${treatmentB} mean abundance`,
+      `${treatmentB} median abundance`,
+    ]
 
-    saveAs(blob, 'saved-transcripts.txt')
+    const rows = displayedTranscripts.map(row => ([
+      row.transcript.name,
+      row.transcript.pValue,
+      row.transcript.logATA,
+      row.transcript.logFC,
+      row.treatmentA_AbundanceMean,
+      row.treatmentA_AbundanceMedian,
+      row.treatmentB_AbundanceMean,
+      row.treatmentB_AbundanceMedian,
+    ]))
+
+    const tsv = d3.tsvFormatRows([header, ...rows])
+
+    const blob = new Blob([ tsv ], { type: 'text/tab-separated-values' })
+
+    saveAs(blob, 'saved-transcripts.tsv')
 
     return {}
   }
