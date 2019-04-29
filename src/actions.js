@@ -191,7 +191,10 @@ const Action = module.exports = makeTypedAction({
     request: {
       file: Object,
     },
-    response: {},
+    response: {
+      imported: Array,
+      skipped: Array,
+    },
   },
 
   ExportSavedTranscripts: {
@@ -1101,17 +1104,39 @@ function importSavedTranscripts(file) {
       const text = e.target.result
 
       try {
-        const importedWatchedTranscripts = text.trim().split('\n')
+        const rows = d3.tsvParseRows(text.trim())
 
-        // TODO: Filter out those things that aren't in `project.transcripts`
+        if (R.path([0, 0], rows) === 'Gene name') {
+          rows.shift()
+        }
+
+        const transcriptsInFile = rows.map(R.head)
+            , { getCanonicalTranscriptLabel } = projectForView(getState())
+            , newWatchedTranscripts = []
+            , imported = []
+            , skipped = []
+
+        for (const t of transcriptsInFile) {
+          const canonicalName = getCanonicalTranscriptLabel(t)
+
+          if (canonicalName) {
+            imported.push([t, canonicalName])
+            newWatchedTranscripts.push(canonicalName)
+          } else {
+            skipped.push(t)
+          }
+        }
 
         const existingWatchedTranscripts = getState().view.savedTranscripts
 
         await dispatch(Action.SetSavedTranscripts(
-          [...importedWatchedTranscripts, ...existingWatchedTranscripts]
+          [...newWatchedTranscripts, ...existingWatchedTranscripts]
         ))
 
-        resolve({})
+        resolve({
+          imported,
+          skipped,
+        })
       } catch (e) {
         reject('didn\'t work')
       }

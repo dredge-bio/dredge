@@ -4,7 +4,7 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , styled = require('styled-components').default
-    , { Flex, Button } = require('rebass')
+    , { Flex, Box, Button } = require('rebass')
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , { projectForView } = require('../utils')
@@ -27,6 +27,19 @@ const ButtonContainer = styled.div`
   button:not(:last-of-type) {
     margin-right: 8px;
   }
+`
+
+const StatusContainer = styled.div`
+  position: absolute;
+  z-index: 1;
+
+  top: 0; bottom: 0; left: 0; right: 0;
+
+  padding: 2em;
+
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 `
 
 const SearchContainer = styled.div`
@@ -149,12 +162,83 @@ class WatchedTranscripts extends React.Component {
 
     this.state = {
       showSearch: false,
+      importStatus: null,
     }
+
+    this.handleImport = this.handleImport.bind(this)
+  }
+
+  handleImport() {
+    const { dispatch } = this.props
+        , inputEl = document.createElement('input')
+
+    inputEl.type = 'file'
+    inputEl.onchange = async () => {
+      const { files } = inputEl
+
+      if (files.length) {
+        try {
+          const resp = await dispatch(Action.ImportSavedTranscripts(files[0]))
+              , { imported, skipped } = resp.readyState.response
+
+          const importStatus = (
+            h('div', [
+              h('div', [
+                `Imported ${imported.length} out of ${imported.length + skipped.length} in file.`,
+              ]),
+
+              h(Box, { mt: 3 }, [
+                h('h2', 'Imported'),
+
+                imported.length === 0
+                  ? h('p', 'None')
+                  : h('ul', imported.map(([ name, canonicalName ]) =>
+                      h('li', { key: name }, [
+                        name,
+                        name === canonicalName
+                          ? ''
+                          : ` (as ${canonicalName})`,
+                      ]))),
+              ]),
+
+              h(Box, { mt: 3 }, [
+                h('h2', 'Skipped'),
+
+                skipped.length === 0
+                  ? h('p', 'None')
+                  : h('ul', skipped.map(name =>
+                      h('li', { key: name }, name))),
+              ]),
+
+              h(Box, { mt: 3 }, [
+                h(Button, {
+                  onClick: () => {
+                    this.setState({ importStatus: null })
+                  },
+                }, 'Dismiss'),
+              ]),
+            ])
+          )
+
+          this.setState({ importStatus })
+
+        } catch (e) {
+          alert('Error while importing transcripts. See console for details.')
+          console.error(e)
+        }
+      }
+    }
+
+    inputEl.click()
   }
 
   render() {
     const { dispatch, savedTranscripts, brushedTranscripts, project } = this.props
-        , { showSearch } = this.state
+        , { showSearch, importStatus } = this.state
+
+    if (importStatus) {
+      return h(StatusContainer, {}, importStatus)
+    }
 
     return (
       h('div', {
@@ -219,19 +303,7 @@ class WatchedTranscripts extends React.Component {
           ]),
           h(ButtonContainer, [
             h(Button, {
-              onClick() {
-                const inputEl = document.createElement('input')
-                inputEl.type = 'file'
-                inputEl.onchange = () => {
-                  const { files } = inputEl
-
-                  if (files.length) {
-                    dispatch(Action.ImportSavedTranscripts(files[0]))
-                  }
-                }
-
-                inputEl.click()
-              },
+              onClick: this.handleImport,
             }, 'Import'),
 
             h(Button, {
