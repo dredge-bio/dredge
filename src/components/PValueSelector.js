@@ -7,6 +7,7 @@ const h = require('react-hyperscript')
     , { Flex, Box } = require('rebass')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
+    , { formatNumber } = require('../utils')
 
 const PValueSelectorContainer = styled.div`
   position: absolute;
@@ -55,9 +56,23 @@ class PValueSelector extends React.Component {
   handleChange(e) {
     const { updateOpts } = this.props
 
-    const threshold = e.target.value != undefined
-      ? parseFloat(e.target.value)
-      : parseFloat(e.target.dataset.threshold)
+    let threshold
+
+    if (typeof e === 'number') {
+      threshold = e;
+    } else if (e.target.value != undefined) {
+      threshold = this.logScale.invert(this.ticks.length - parseFloat(e.target.value))
+    } else {
+      threshold = parseFloat(e.target.dataset.threshold)
+    }
+
+    if (threshold < (this.scaleMinimum * 1.5)) {
+      threshold = 0;
+    } else {
+      threshold = parseFloat(formatNumber(threshold))
+    }
+
+    if (isNaN(threshold)) return
 
     updateOpts(opts =>
       threshold === 1
@@ -72,28 +87,47 @@ class PValueSelector extends React.Component {
       pairwiseData,
     } = this.props
 
-    let bins, scale
+    let logScale
 
     const pv = R.prop('pValue')
         , l = R.prop('length')
 
-    // this STARTS at .00
-    if (pairwiseData) {
-      const histogram = d3.histogram()
-        .value(pv)
-        .domain([0, 1])
-        .thresholds(100)
+    if (!pairwiseData) return null
 
-      bins = histogram([...pairwiseData.values()]).map(l)
+    const { minPValue } = pairwiseData
 
-      scale = d3.scaleLinear()
-        .domain([0, d3.max(bins)])
-        .range([0, 100])
-    }
+    const scaleMinimum = (
+      Math.pow(10, Math.floor(Math.log10(minPValue)) - 1))
+
+    logScale = d3.scaleLog()
+      .domain([scaleMinimum, 1])
+
+    const ticks = [0, ...logScale.ticks(100)]
+
+    logScale = logScale.range([ticks.length, 0])
+
+    const histogram = d3.histogram()
+      .value(pv)
+      .domain([0, 1])
+      .thresholds(ticks)
+
+    const bins = histogram([...pairwiseData.values()]).map(l)
+
+    const scale = d3.scaleLinear()
+      .domain([0, d3.max(bins)])
+      .range([0, 100])
+
+    this.ticks = ticks;
+    this.logScale = logScale;
+    this.scaleMinimum = scaleMinimum;
 
     return (
       h(PValueSelectorContainer, [
-        h('div', [
+        h('div', {
+          style: {
+            whiteSpace: 'nowrap',
+          },
+        }, [
           'p-value cutoff',
         ]),
 
@@ -104,7 +138,7 @@ class PValueSelector extends React.Component {
             style: {
               whiteSpace: 'nowrap',
             },
-          }, pValueThreshold),
+          }, formatNumber(pValueThreshold, 3)),
           h(Box, {
             as: 'button',
             ml: 2,
@@ -120,7 +154,7 @@ class PValueSelector extends React.Component {
                 value = 1
               }
 
-              this.handleChange({ target: { value }})
+              this.handleChange(value)
             },
           }, 'change'),
         ]),
@@ -130,7 +164,9 @@ class PValueSelector extends React.Component {
             ref: el => { this.rangeEl = el },
             type: 'range',
             orient: 'vertical',
-            value: pValueThreshold,
+            value: pValueThreshold === 0
+              ? 0
+              : ticks.length - logScale(pValueThreshold),
             style: {
               position: 'absolute',
               width: 18,
@@ -138,8 +174,7 @@ class PValueSelector extends React.Component {
             },
             onChange: this.handleChange,
             min: '0',
-            max: '1',
-            step: '.01',
+            max: '' + ticks.length,
           }),
 
           h('div', {
@@ -151,15 +186,19 @@ class PValueSelector extends React.Component {
             },
           }, bins && bins.reverse().map((ct, i) => h('span', {
               key: `${comparedTreatments}-${i}`,
-              title: (1 - i / 100).toFixed(2),
+              title: i === ticks.length - 1
+                ? 0
+                : formatNumber(logScale.invert(i), 3),
               className: 'histogram-bar',
               onClick: this.handleChange,
-              ['data-threshold']: (1 - i / 100),
+              ['data-threshold']: i === ticks.length - 1
+                ? 0
+                : logScale.invert(i),
               style: {
-                height: '1%',
-                top: `${i}%`,
-                width: `${scale(ct)}%`,
-                opacity: 100 - i <= pValueThreshold * 100 ? 1 : .33,
+                height: `${100 / ticks.length}%`,
+                top: `${i * (100 / ticks.length)}%`,
+                width: ct === 0 ? 0 : `calc(2px + ${.8 * scale(ct)}%)`,
+                opacity: logScale.invert(i) <= pValueThreshold ? 1 : .33,
               },
           }))),
         ]),

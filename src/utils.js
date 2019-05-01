@@ -125,7 +125,23 @@ function getDefaultGrid(treatments) {
   return R.splitEvery(numPerRow, treatments)
 }
 
+function formatNumber(number, places=2) {
+  let num
+
+  if (number === 0) {
+    return '0'
+  } else if (number < Math.pow(10, -places)) {
+    return number.toExponential(places - 2)
+  } else {
+    return number == null ? '--' : number.toFixed(places)
+  }
+
+  return num
+}
+
+
 module.exports = {
+  formatNumber,
   findParent,
   getPlotBins,
   getDefaultGrid,

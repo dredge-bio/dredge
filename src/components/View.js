@@ -47,7 +47,15 @@ class Viewer extends React.Component {
     const { dispatch } = this.props
 
     if (this.props.opts.p !== prevProps.opts.p) {
-      dispatch(Action.SetPValueThreshold(parseFloat(this.props.opts.p) || 1))
+      let threshold = parseFloat(this.props.opts.p)
+
+      if (isNaN(threshold)) {
+        threshold = 1
+      } else if (threshold < 0) {
+        threshold = 0
+      }
+
+      dispatch(Action.SetPValueThreshold(threshold))
     }
   }
 

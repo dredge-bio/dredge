@@ -982,25 +982,34 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
     const text = await resp.text()
 
-    const pairwiseData = text
+    let minPValue = 1
+
+    const pairwiseData = new Map(text
       .trim()
       .split('\n')
       .slice(1) // Skip header
       .map(row => {
-        const [ id, logFC, logATA, pValue ] = row.split('\t')
+        const [ id, logFC, logATA, _pValue ] = row.split('\t')
+            , pValue = parseFloat(_pValue)
+
+        if (pValue !== 0 && !isNaN(pValue) && (pValue < minPValue)) {
+          minPValue = pValue
+        }
 
         const name = project.getCanonicalTranscriptLabel(id)
 
         return [name, {
           name,
+          pValue,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logATA: parseFloat(logATA),
-          pValue: parseFloat(pValue),
         }]
-      })
+      }))
+
+    pairwiseData.minPValue = minPValue
 
     return {
-      pairwiseData: new Map(pairwiseData),
+      pairwiseData,
       resort: true,
     }
   }

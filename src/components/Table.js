@@ -7,7 +7,7 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , Action = require('../actions')
     , onResize = require('./util/Sized')
-    , { findParent, projectForView } = require('../utils')
+    , { findParent, projectForView, formatNumber } = require('../utils')
 
 const TableCell = styled.td`
   padding: 0;
@@ -67,14 +67,6 @@ function calcColumnWidths(width) {
     width - 28 - R.sum(widths),
     ...widths,
   ]
-}
-
-function dashesOrFixed(number, places=2) {
-  if (number.toString().startsWith(`0.${'0'.repeat(places)}`)) {
-    return number.toExponential(places - 2)
-  } else {
-    return number == null ? '--' : number.toFixed(places)
-  }
 }
 
 class TranscriptRow extends React.Component {
@@ -180,19 +172,19 @@ class TranscriptRow extends React.Component {
           h('div.transcript-label', data.transcript.name),
         ]),
 
-        h(TableCell, dashesOrFixed(data.transcript.pValue, 3)),
+        h(TableCell, formatNumber(data.transcript.pValue, 3)),
 
-        h(TableCell, dashesOrFixed(data.transcript.logATA)),
+        h(TableCell, formatNumber(data.transcript.logATA)),
 
-        h(TableCell, dashesOrFixed(data.transcript.logFC)),
+        h(TableCell, formatNumber(data.transcript.logFC)),
 
-        h(TableCell, dashesOrFixed(data.treatmentA_AbundanceMean)),
+        h(TableCell, formatNumber(data.treatmentA_AbundanceMean)),
 
-        h(TableCell, dashesOrFixed(data.treatmentA_AbundanceMedian)),
+        h(TableCell, formatNumber(data.treatmentA_AbundanceMedian)),
 
-        h(TableCell, dashesOrFixed(data.treatmentB_AbundanceMean)),
+        h(TableCell, formatNumber(data.treatmentB_AbundanceMean)),
 
-        h(TableCell, dashesOrFixed(data.treatmentB_AbundanceMedian)),
+        h(TableCell, formatNumber(data.treatmentB_AbundanceMedian)),
       ])
     )
   }
