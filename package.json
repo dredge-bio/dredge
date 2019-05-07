@@ -28,6 +28,7 @@
     "redux": "^4.0.1",
     "styled-components": "^4.1.3",
     "tape": "^4.2.0",
+    "throttleit": "^1.0.0",
     "through2": "^3.0.1",
     "union-type": "github:ptgolden/union-type"
   },

@@ -7,7 +7,9 @@ const h = require('react-hyperscript')
     , { Flex, Box } = require('rebass')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
+    , throttle = require('throttleit')
     , { formatNumber } = require('../utils')
+    , onResize = require('./util/Sized')
 
 const PValueSelectorContainer = styled.div`
   position: absolute;
@@ -28,12 +30,14 @@ const PValueSelectorContainer = styled.div`
     position: relative;
   }
 
-  .pvalue-histogram > div {
+  .histogram {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    align-items: center;
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    top: 0; bottom: 0; left: 0; right: 0;
+    background-color: white;
   }
 
   .pvalue-histogram input {
@@ -41,10 +45,116 @@ const PValueSelectorContainer = styled.div`
   }
 
   .histogram-bar {
-    position: absolute;
     background: maroon;
   }
+
+  .histogram-brush {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    border: 1px solid #ccc;
+    cursor: ns-resize;
+  }
 `
+
+const PValueBrush = onResize(el => ({
+  boundingRect: el.getBoundingClientRect(),
+}))(class PValueBrush extends React.Component {
+  constructor() {
+    super();
+    this.handleMouseMove = throttle(this.handleMouseMove.bind(this), 10)
+    this.setPValue = this.setPValue.bind(this)
+
+    this.state = {
+      clicking: false,
+      hovering: false,
+      hoveredPValue: null,
+    }
+  }
+
+  handleMouseMove(e) {
+    const { scale, boundingRect } = this.props
+
+    let pos = e.pageY - boundingRect.y
+
+    if (pos < 0) pos = 0;
+    if (pos > boundingRect.height) pos = boundingRect.height
+
+    let val = formatNumber(
+      scale.range([boundingRect.height, 0])
+        .invert(pos), 2)
+
+    val = parseFloat(val)
+
+    if (!isNaN(val)) {
+      this.setState({
+        hoveredPValue: val,
+        offsetTop: pos,
+      }, () => {
+        if (this.state.clicking) {
+          this.setPValue()
+        }
+      })
+
+    }
+  }
+
+  setPValue() {
+    const { onPValueChange } = this.props
+
+    onPValueChange(this.state.hoveredPValue)
+  }
+
+  render() {
+    const { offsetTop, hoveredPValue } = this.state
+
+    return (
+      h('div.histogram-brush', {
+        onClick: this.setPValue,
+
+        onMouseDown: () => {
+          this.setState({ clicking: true })
+        },
+
+        onMouseUp: () => {
+          this.setState({ clicking: false })
+        },
+
+        onMouseEnter: () => {
+          this.setState({ hovering: true })
+        },
+        onMouseLeave: () => {
+          this.setState({ hovering: false, hoveredPValue: null, offsetTop: null })
+        },
+        onMouseMove: this.handleMouseMove,
+      }, [
+        offsetTop == null ? null : h('span', {
+          style: {
+            position: 'absolute',
+            left: '100%',
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            whiteSpace: 'nowrap',
+            padding: '6px',
+            zIndex: 1,
+            top: offsetTop,
+            marginTop: '-16px',
+          },
+        }, hoveredPValue),
+
+        offsetTop == null ? null : h('span', {
+          style: {
+            position: 'absolute',
+            top: offsetTop,
+            height: '1px',
+            left: 0,
+            right: 0,
+            backgroundColor: '#666',
+          }
+        })
+      ])
+    )
+  }
+})
 
 class PValueSelector extends React.Component {
   constructor() {
@@ -138,7 +248,7 @@ class PValueSelector extends React.Component {
             style: {
               whiteSpace: 'nowrap',
             },
-          }, formatNumber(pValueThreshold, 3)),
+          }, formatNumber(pValueThreshold)),
           h(Box, {
             as: 'button',
             ml: 2,
@@ -160,6 +270,7 @@ class PValueSelector extends React.Component {
         ]),
 
         h('div.pvalue-histogram', [
+          /*
           h('input', {
             ref: el => { this.rangeEl = el },
             type: 'range',
@@ -176,31 +287,24 @@ class PValueSelector extends React.Component {
             min: '0',
             max: '' + ticks.length,
           }),
+          */
 
-          h('div', {
-            style: {
-              position: 'absolute',
-              height: '100%',
-              left: 18,
-              right: 0,
-            },
-          }, bins && bins.reverse().map((ct, i) => h('span', {
+          h('div.histogram', {}, bins && bins.reverse().map((ct, i) =>
+            h('span.histogram-bar', {
               key: `${comparedTreatments}-${i}`,
-              title: i === ticks.length - 1
-                ? 0
-                : formatNumber(logScale.invert(i), 3),
-              className: 'histogram-bar',
-              onClick: this.handleChange,
-              ['data-threshold']: i === ticks.length - 1
-                ? 0
-                : logScale.invert(i),
               style: {
                 height: `${100 / ticks.length}%`,
                 top: `${i * (100 / ticks.length)}%`,
-                width: ct === 0 ? 0 : `calc(2px + ${.8 * scale(ct)}%)`,
+                width: ct === 0 ? 0 : `${scale(ct)}%`,
+                minWidth: ct === 0 ? 0 : '2px',
                 opacity: logScale.invert(i) <= pValueThreshold ? 1 : .33,
               },
           }))),
+
+          h(PValueBrush, {
+            scale: logScale,
+            onPValueChange: this.handleChange,
+          }),
         ]),
       ])
     )
