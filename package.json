@@ -11,6 +11,7 @@
     ]
   },
   "dependencies": {
+    "blue-tape": "^1.0.0",
     "d3": "^5.5.0",
     "debounce": "^1.2.0",
     "file-saver": "^2.0.1",

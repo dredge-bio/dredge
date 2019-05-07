@@ -22,6 +22,8 @@ JS_FILES = $(shell find src/ -type f -name *js)
 LIB_FILES = $(shell find lib/ -type f)
 R_FILES = $(shell find r-scripts/ -type f)
 
+TEST_FILES := $(shell find test -name '*.js')
+
 ZIPPED_FILES = $(VERSIONED_JS_BUNDLE) \
 	       $(MINIFIED_VERSIONED_JS_BUNDLE) \
 	       $(LIB_FILES) \
@@ -44,11 +46,14 @@ zip: $(VERSIONED_ZIPFILE)
 serve:
 	python3 -m http.server 9999
 
+test:
+	@$(NPM_BIN)/blue-tape $(TEST_FILES)
+
 clean:
 	rm -rf dist
 	rm -rf node_modules
 
-.PHONY: all watch zip serve clean
+.PHONY: all watch zip serve test clean
 
 
 #############
