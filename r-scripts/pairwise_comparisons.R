@@ -90,8 +90,8 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                 y <- estimateCommonDisp(y)
                 y <- estimateTagwiseDisp(y)
                 et <- exactTest(y)
-                tab <- round(et$table, digits=8)
-                tab[,c("logFC", "logCPM")] <- round(tab[,c("logFC", "logCPM")], digits=2)
+                tab <- signif(et$table, digits=2)
+                tab[,c("logFC", "logCPM")] <- signif(tab[,c("logFC", "logCPM")], digits=2)
             } else {
                 tab <- matrix(0, nrow = nrow(subRPKMs), ncol = 3)
                 colnames(tab) <- c("logFC", "logCPM", "PValue")
@@ -100,12 +100,12 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                     #logCPM
                     tempGeneSum <- sum(subRPKMs[tempRow,])
                     tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
-                    tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=2)
+                    tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=2)
                     #logFC
                     tempTr1Avg <- mean(subRPKMs[tempRow, which(group==treatment1)])
                     tempTr2Avg <- mean(subRPKMs[tempRow, which(group==treatment2)])
                     tempFC <- (tempTr2Avg/tempTr1Avg)
-                    tab[tempRow, "logFC"] <- round(log2(tempFC), digits=2)
+                    tab[tempRow, "logFC"] <- signif(log2(tempFC), digits=2)
                     #PValue
                     tab[tempRow, "PValue"] = 1
                 }
@@ -119,7 +119,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             outputName = paste(treatment1, "_vs_", treatment2, ".txt", sep="")
             write.table(tab, paste(outDirectory, "/", outputName, sep = ""), quote = F, col.names = NA, row.names = T, sep = "\t")
         }
-        allTreatments <- allTreatments[allTreatments!=treatment1]
+#        allTreatments <- allTreatments[allTreatments!=treatment1]
    }
 
     # Add self_self comparisons
@@ -139,7 +139,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             for(tempRow in 1:dim(subRPKMs)[1]){
                 tempGeneSum <- sum(subRPKMs[tempRow,])
                 tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
-                tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=2)
+                tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=2)
             }
         } else {
             names(subRPKMs) <- rownames(expRPKMs)
@@ -150,7 +150,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             tempMatrixSum <- sum(subRPKMs)
             for(tempRow in 1:length(subRPKMs)){
                 tempCPM <- subRPKMs[tempRow]*(1000000/tempMatrixSum)
-                tab[tempRow, "logCPM"] <- round(log2(tempCPM), digits=2)
+                tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=2)
             }
         }
         minMax["logCPM", "min"] <- min(minMax["logCPM", "min"], min(tab[,"logCPM"]))
