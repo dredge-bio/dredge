@@ -132,6 +132,8 @@ function formatNumber(number, places=2) {
     return '0'
   } else if (number < Math.pow(10, -places)) {
     return number.toExponential(places - 2)
+  } else if ((number.toString().split('.')[1] || '').length <= places) {
+    return number.toString()
   } else {
     return number.toFixed(places)
   }
