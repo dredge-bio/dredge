@@ -18,7 +18,7 @@
     "is-url": "^1.2.4",
     "markdown-it": "^8.4.2",
     "org-async-actions": "^1.1.0",
-    "org-shell": "^5.1.1",
+    "org-shell": "^6.0.0",
     "ramda": "^0.26.1",
     "react": "^16.8.2",
     "react-aria-menubutton": "^6.1.0",
