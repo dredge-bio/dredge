@@ -194,7 +194,7 @@ const Action = module.exports = makeTypedAction({
   ImportSavedTranscripts: {
     exec: importSavedTranscripts,
     request: {
-      file: Object,
+      text: String,
     },
     response: {
       imported: Array,
@@ -1132,54 +1132,46 @@ function setSavedTranscripts(savedTranscripts) {
   }
 }
 
-function importSavedTranscripts(file) {
-  return (dispatch, getState) => new Promise((resolve, reject) => {
-    const reader = new FileReader()
+function importSavedTranscripts(text) {
+  return async (dispatch, getState) => {
+    try {
+      const rows = d3.tsvParseRows(text.trim())
 
-    reader.onload = async e => {
-      const text = e.target.result
-
-      try {
-        const rows = d3.tsvParseRows(text.trim())
-
-        if (R.path([0, 0], rows) === 'Gene name') {
-          rows.shift()
-        }
-
-        const transcriptsInFile = rows.map(R.head)
-            , { getCanonicalTranscriptLabel } = projectForView(getState())
-            , newWatchedTranscripts = []
-            , imported = []
-            , skipped = []
-
-        for (const t of transcriptsInFile) {
-          const canonicalName = getCanonicalTranscriptLabel(t)
-
-          if (canonicalName) {
-            imported.push([t, canonicalName])
-            newWatchedTranscripts.push(canonicalName)
-          } else {
-            skipped.push(t)
-          }
-        }
-
-        const existingWatchedTranscripts = getState().view.savedTranscripts
-
-        await dispatch(Action.SetSavedTranscripts(
-          [...newWatchedTranscripts, ...existingWatchedTranscripts]
-        ))
-
-        resolve({
-          imported,
-          skipped,
-        })
-      } catch (e) {
-        reject('didn\'t work')
+      if (R.path([0, 0], rows) === 'Gene name') {
+        rows.shift()
       }
-    }
 
-    reader.readAsText(file)
-  })
+      const transcriptsInFile = rows.map(R.head)
+          , { getCanonicalTranscriptLabel } = projectForView(getState())
+          , newWatchedTranscripts = []
+          , imported = []
+          , skipped = []
+
+      for (const t of transcriptsInFile) {
+        const canonicalName = getCanonicalTranscriptLabel(t)
+
+        if (canonicalName) {
+          imported.push([t, canonicalName])
+          newWatchedTranscripts.push(canonicalName)
+        } else {
+          skipped.push(t)
+        }
+      }
+
+      const existingWatchedTranscripts = getState().view.savedTranscripts
+
+      await dispatch(Action.SetSavedTranscripts(
+        [...newWatchedTranscripts, ...existingWatchedTranscripts]
+      ))
+
+      return {
+        imported,
+        skipped,
+      }
+    } catch (e) {
+      throw new Error('didn\'t work')
+    }
+  }
 }
 
 function exportSavedTranscripts() {

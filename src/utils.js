@@ -139,6 +139,22 @@ function formatNumber(number, places=2) {
   }
 }
 
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = e => {
+      resolve(e.target.result)
+    }
+
+    reader.onerror = e => {
+      reject(e)
+    }
+
+    reader.readAsText(file)
+  })
+}
+
 
 module.exports = {
   formatNumber,
@@ -146,4 +162,5 @@ module.exports = {
   getPlotBins,
   getDefaultGrid,
   projectForView,
+  readFile,
 }

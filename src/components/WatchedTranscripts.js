@@ -7,7 +7,8 @@ const h = require('react-hyperscript')
     , { Flex, Box, Button } = require('rebass')
     , { connect } = require('react-redux')
     , Action = require('../actions')
-    , { projectForView } = require('../utils')
+    , { projectForView, readFile } = require('../utils')
+    , FileInput = require('./util/FileInput')
 
 function union(a, b) {
   return new Set([...a, ...b])
@@ -168,68 +169,62 @@ class WatchedTranscripts extends React.Component {
     this.handleImport = this.handleImport.bind(this)
   }
 
-  handleImport() {
+  async handleImport(e) {
     const { dispatch } = this.props
-        , inputEl = document.createElement('input')
+        , { files } = e.target
 
-    inputEl.type = 'file'
-    inputEl.onchange = async () => {
-      const { files } = inputEl
+    if (files.length) {
+      try {
+        const text = await readFile(files[0])
+            , resp = await dispatch(Action.ImportSavedTranscripts(text))
+            , { imported, skipped } = resp.readyState.response
 
-      if (files.length) {
-        try {
-          const resp = await dispatch(Action.ImportSavedTranscripts(files[0]))
-              , { imported, skipped } = resp.readyState.response
-
-          const importStatus = (
+        const importStatus = (
+          h('div', [
             h('div', [
-              h('div', [
-                `Imported ${imported.length} out of ${imported.length + skipped.length} in file.`,
-              ]),
+              `Imported ${imported.length} out of ${imported.length + skipped.length} in file.`,
+            ]),
 
-              h(Box, { mt: 3 }, [
-                h('h2', 'Imported'),
+            h(Box, { mt: 3 }, [
+              h('h2', 'Imported'),
 
-                imported.length === 0
-                  ? h('p', 'None')
-                  : h('ul', imported.map(([ name, canonicalName ]) =>
-                      h('li', { key: name }, [
-                        name,
-                        name === canonicalName
-                          ? ''
-                          : ` (as ${canonicalName})`,
-                      ]))),
-              ]),
+              imported.length === 0
+                ? h('p', 'None')
+                : h('ul', imported.map(([ name, canonicalName ]) =>
+                    h('li', { key: name }, [
+                      name,
+                      name === canonicalName
+                        ? ''
+                        : ` (as ${canonicalName})`,
+                    ]))),
+            ]),
 
-              h(Box, { mt: 3 }, [
-                h('h2', 'Skipped'),
+            h(Box, { mt: 3 }, [
+              h('h2', 'Skipped'),
 
-                skipped.length === 0
-                  ? h('p', 'None')
-                  : h('ul', skipped.map(name =>
-                      h('li', { key: name }, name))),
-              ]),
+              skipped.length === 0
+                ? h('p', 'None')
+                : h('ul', skipped.map(name =>
+                    h('li', { key: name }, name))),
+            ]),
 
-              h(Box, { mt: 3 }, [
-                h(Button, {
-                  onClick: () => {
-                    this.setState({ importStatus: null })
-                  },
-                }, 'Dismiss'),
-              ]),
-            ])
-          )
+            h(Box, { mt: 3 }, [
+              h(Button, {
+                onClick: () => {
+                  this.setState({ importStatus: null })
+                },
+              }, 'Dismiss'),
+            ]),
+          ])
+        )
 
-          this.setState({ importStatus })
+        this.setState({ importStatus })
 
-        } catch (e) {
-          alert('Error while importing transcripts. See console for details.')
-          console.error(e)
-        }
+      } catch (e) {
+        alert('Error while importing transcripts. See console for details.')
+        console.error(e)
       }
     }
-
-    inputEl.click()
   }
 
   render() {
@@ -306,8 +301,8 @@ class WatchedTranscripts extends React.Component {
             }, 'Clear'),
           ]),
           h(ButtonContainer, [
-            h(Button, {
-              onClick: this.handleImport,
+            h(FileInput, {
+              onChange: this.handleImport,
             }, 'Import'),
 
             h(Button, {

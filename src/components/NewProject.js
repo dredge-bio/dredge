@@ -9,8 +9,10 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { Navigable, Route } = require('org-shell')
     , { saveAs } = require('file-saver')
+    , { readFile } = require('../utils')
     , Action = require('../actions')
     , Documentation = require('./Documentation')
+    , FileInput = require('./util/FileInput')
 
 const Field = styled(Box)`
 &[data-required=true] label span::after {
@@ -198,6 +200,7 @@ class NewProject extends React.Component {
     }
 
     this.persistChanges = debounce(this.persistChanges.bind(this), 200)
+    this.handleLoadConfig = this.handleLoadConfig.bind(this)
   }
 
   setField(fieldName, fn=R.identity) {
@@ -239,6 +242,19 @@ class NewProject extends React.Component {
     return ret
   }
 
+  async handleLoadConfig(e) {
+    const { files } = e.target
+
+    if (files.length) {
+      const text = await readFile(files[0])
+          , newConfig = JSON.parse(text)
+
+      this.setState(prev => ({
+        config: Object.assign({}, prev.config, newConfig),
+      }), this.persistChanges)
+    }
+  }
+
   render() {
     const { navigateTo } = this.props
         , { config } = this.state
@@ -266,8 +282,8 @@ class NewProject extends React.Component {
           }, 'Test'),
 
 
-          h(Button, {
-            mr: 2,
+          h(FileInput, {
+            onChange: this.handleLoadConfig,
           }, 'Load'),
 
           h(Button, {
