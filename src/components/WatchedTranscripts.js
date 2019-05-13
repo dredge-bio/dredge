@@ -233,7 +233,7 @@ class WatchedTranscripts extends React.Component {
   }
 
   render() {
-    const { dispatch, savedTranscripts, brushedTranscripts, project } = this.props
+    const { dispatch, displayedTranscripts, savedTranscripts, brushedArea, project } = this.props
         , { showSearch, importStatus } = this.state
 
     if (importStatus) {
@@ -278,19 +278,23 @@ class WatchedTranscripts extends React.Component {
             }, 'Search'),
 
             h(Button, {
-              disabled: brushedTranscripts.size === 0,
+              disabled: brushedArea == null || displayedTranscripts.length === 0,
               onClick() {
+                const names = displayedTranscripts.map(R.path(['transcript', 'name']))
+
                 dispatch(Action.SetSavedTranscripts(
-                  union(savedTranscripts, brushedTranscripts)
+                  union(savedTranscripts, new Set(names))
                 ))
               },
             }, 'Watch selected'),
 
             h(Button, {
-              disabled: brushedTranscripts.size === 0,
+              disabled: brushedArea == null || displayedTranscripts.length === 0,
               onClick() {
+                const names = displayedTranscripts.map(R.path(['transcript', 'name']))
+
                 dispatch(Action.SetSavedTranscripts(
-                  difference(savedTranscripts, brushedTranscripts)
+                  difference(savedTranscripts, new Set(names))
                 ))
               },
             }, 'Unwatch selected'),
@@ -324,5 +328,5 @@ module.exports = connect(state => {
 
   return Object.assign({
     project,
-  }, R.pick(['savedTranscripts', 'brushedTranscripts' ], state.view))
+  }, R.pick(['brushedArea', 'savedTranscripts', 'displayedTranscripts' ], state.view))
 })(WatchedTranscripts)

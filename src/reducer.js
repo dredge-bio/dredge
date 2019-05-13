@@ -18,7 +18,7 @@ function blankView(source, extra) {
     hoveredTreatment: null,
 
     savedTranscripts: new Set(),
-    brushedTranscripts: new Set(),
+    brushedArea: null,
 
     displayedTranscripts: null,
     order: 'asc',
@@ -167,7 +167,6 @@ module.exports = function reducer(state=initialState(), action) {
               loading: false,
               pairwiseData,
               comparedTreatments: [treatmentA, treatmentB],
-              brushedTranscripts: new Set(),
             }))
         )(state)
       },
@@ -205,16 +204,16 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
 
-      SetBrushedTranscripts(transcriptNames) {
+      SetBrushedArea(coords) {
         return R.assocPath(
-          ['view', 'brushedTranscripts'],
-          new Set(transcriptNames),
+          ['view', 'brushedArea'],
+          coords,
           state
         )
       },
 
       SetSavedTranscripts(transcriptNames) {
-        const { view: { brushedTranscripts, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
+        const { view: { brushedArea, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
             , nextSavedTranscripts = new Set(transcriptNames)
 
         let nextFocusedTranscript = focusedTranscript
@@ -228,7 +227,7 @@ module.exports = function reducer(state=initialState(), action) {
         // from the saved transcripts, then move focus to the next one (if it exists)
         const moveFocusedTranscript = (
           focusedTranscript &&
-          !brushedTranscripts.size &&
+          brushedArea != null &&
           savedTranscripts.has(focusedTranscript) &&
           !nextSavedTranscripts.has(focusedTranscript)
         )
@@ -323,7 +322,7 @@ module.exports = function reducer(state=initialState(), action) {
             loading: false,
             pairwiseData: null,
             comparedTreatments: [treatmentA, treatmentB],
-            brushedTranscripts: new Set(),
+            brushedArea: null,
           }),
           state
         )

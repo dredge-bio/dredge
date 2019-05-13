@@ -20,8 +20,9 @@ module.exports = function _createStore() {
           pairwiseData,
           order,
           sortPath,
-          brushedTranscripts,
           savedTranscripts,
+          pValueThreshold,
+          brushedArea,
         } = (getState().view || {})
 
         const triggerResort = (
@@ -39,11 +40,19 @@ module.exports = function _createStore() {
             lastTriggeredSort[0] !== pairwiseData ||
             lastTriggeredSort[1] !== order ||
             lastTriggeredSort[2] !== sortPath ||
-            lastTriggeredSort[3] !== brushedTranscripts ||
-            lastTriggeredSort[4] !== savedTranscripts
+            lastTriggeredSort[3] !== savedTranscripts ||
+            lastTriggeredSort[4] !== pValueThreshold ||
+            lastTriggeredSort[5] !== brushedArea
           ) {
             dispatch(Action.UpdateDisplayedTranscripts(null, null))
-            lastTriggeredSort = [ pairwiseData, order, sortPath, brushedTranscripts, savedTranscripts ]
+            lastTriggeredSort = [
+              pairwiseData,
+              order,
+              sortPath,
+              savedTranscripts,
+              pValueThreshold,
+              brushedArea,
+            ]
           }
         }
 

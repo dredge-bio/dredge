@@ -140,10 +140,14 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
-  SetBrushedTranscripts: {
+  SetBrushedArea: {
     exec: R.always({ resort: true }),
     request: {
-      transcriptNames: isIterable,
+      coords: d => d == null || (
+        Array.isArray(d) &&
+        d.length === 4 &&
+        d.every(n => typeof n === 'number')
+      ),
     },
     response: {
       resort: Boolean,
@@ -178,11 +182,12 @@ const Action = module.exports = makeTypedAction({
   },
 
   SetPValueThreshold: {
-    exec: R.always({}),
+    exec: R.always({ resort: true }),
     request: {
       threshold: Number,
     },
     response: {
+      resort: Boolean,
     },
   },
 
@@ -1015,6 +1020,11 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
   }
 }
 
+function withinBounds(min, max, value) {
+  return value >= min && value <= max
+}
+
+
 function updateDisplayedTranscripts(sortPath, order) {
   return (dispatch, getState) => {
     const { view } = getState()
@@ -1022,17 +1032,34 @@ function updateDisplayedTranscripts(sortPath, order) {
 
     const {
       savedTranscripts,
-      brushedTranscripts,
       comparedTreatments,
       pairwiseData,
+      pValueThreshold,
+      brushedArea,
     } = view
 
     const { abundancesForTreatmentTranscript } = project
         , [ treatmentA, treatmentB ] = comparedTreatments
 
-    const listedTranscripts = brushedTranscripts.size
-      ? brushedTranscripts
-      : savedTranscripts
+    let listedTranscripts = new Set()
+
+    if (pairwiseData && brushedArea) {
+      const [ minLogATA, maxLogFC, maxLogATA, minLogFC ] = brushedArea
+
+      const ok = ({ logFC, logATA, pValue }) => (
+        withinBounds(0, pValueThreshold, pValue) &&
+        withinBounds(minLogATA, maxLogATA, logATA) &&
+        withinBounds(minLogFC, maxLogFC, logFC)
+      )
+
+      pairwiseData.forEach(transcript => {
+        if (ok(transcript)) {
+          listedTranscripts.add(transcript.name)
+        }
+      })
+    } else {
+      listedTranscripts = savedTranscripts
+    }
 
     const unsorted = [...listedTranscripts].map(transcriptName => {
       if (!pairwiseData) {

@@ -11,7 +11,8 @@ function PlotContainer({
   height,
   width,
   view,
-  loading
+  loading,
+  updateOpts,
 }) {
   return (
     h('div', {
@@ -24,7 +25,8 @@ function PlotContainer({
         key: view.source.key,
         view,
         height,
-        width
+        width,
+        updateOpts,
       }),
       h(LoadingIndicator, { loading: view.loading }),
     ])

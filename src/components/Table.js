@@ -334,19 +334,21 @@ class Table extends React.Component {
   }
 
   getDisplayMessage() {
-    const { brushedTranscripts, savedTranscripts } = this.props.view
+    const { displayedTranscripts, brushedArea } = this.props.view
 
     function text(verb, number) {
       return `${number} ${verb} transcript${number > 1 ? 's' : ''}`
     }
 
-    if (brushedTranscripts.size) {
-      return text('selected', brushedTranscripts.size)
-    } else if (savedTranscripts.size) {
-      return text('watched', savedTranscripts.size)
-    } else {
-      return null
+    if (displayedTranscripts) {
+      if (brushedArea) {
+        return text('selected', displayedTranscripts.length)
+      } else {
+        return text('watched', displayedTranscripts.length)
+      }
     }
+
+    return null
   }
 
   addSavedTranscript(transcriptName) {

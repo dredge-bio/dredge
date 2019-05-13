@@ -25,10 +25,6 @@ const TRANSCRIPT_BIN_MULTIPLIERS = {
   4: .8,
 }
 
-function withinBounds([min, max], value) {
-  return value >= min && value <= max
-}
-
 class Plot extends React.Component {
   constructor() {
     super();
@@ -85,14 +81,22 @@ class Plot extends React.Component {
       this.props.height !== prevProps.height
     )
 
+    const setBrush = (
+      didChange(R.lensProp('brushedArea'))
+    )
+
     if (!this.clearBrush) {
       this.initBrush()
     }
 
+    if (setBrush) {
+      this.setBrushCoords(this.props.brushedArea)
+    }
+
+
     if (redrawBins) {
       this.drawBins()
       this.drawSavedTranscripts()
-      this.clearBrush()
     }
 
     if (redrawAxes) {
@@ -110,7 +114,7 @@ class Plot extends React.Component {
   }
 
   initBrush() {
-    const { dispatch } = this.props
+    const { dispatch, updateOpts, view } = this.props
         , { xScale, yScale } = this.state
 
     if (!xScale) return
@@ -121,36 +125,29 @@ class Plot extends React.Component {
     const brush = this.brush = d3.brush()
       .extent([[x0, y1], [x1, y0]])
       .on('end', () => {
+        if (!d3.event.sourceEvent) return
         if (!this.binSelection) return
 
         // Reset each bin to its original fill
         this.binSelection.attr('fill', d => d.color)
 
         if (!d3.event.selection) {
-          dispatch(Action.SetBrushedTranscripts([]))
+          updateOpts(R.omit(['brushed']))
           return
         }
 
         const extent = d3.event.selection
-            , cpmBounds = extent.map(R.head).map(xScale.invert).sort((a, b) => a - b)
-            , fcBounds = extent.map(R.last).map(yScale.invert).sort((a, b) => a - b)
+            , cpmBounds = extent.map(R.head).map(xScale.invert)
+            , fcBounds = extent.map(R.last).map(yScale.invert)
 
-        // Filter based on whether this bin is within the brushed range
-        const brushedBins = this.binSelection
-          .filter(({ cpmMin, cpmMax, fcMin, fcMax }) =>
-            (withinBounds(cpmBounds, cpmMin) || withinBounds(cpmBounds, cpmMax))
-            &&
-            (withinBounds(fcBounds, fcMin) || withinBounds(fcBounds, fcMax))
-          )
+        const coords = [
+          cpmBounds[0],
+          fcBounds[0],
+          cpmBounds[1],
+          fcBounds[1]
+        ].map(n => n.toFixed(3)).map(parseFloat)
 
-        brushedBins.attr('fill', d => d.brushedColor)
-
-        const brushedTranscripts = R.pipe(
-          R.chain(R.prop('transcripts')),
-          R.map(R.prop('name'))
-        )(brushedBins.data())
-
-        dispatch(Action.SetBrushedTranscripts(brushedTranscripts))
+        updateOpts(opts => Object.assign({}, opts, { brushed: coords.join(',') }))
       })
 
     const brushSel = d3.select(this.plotG).select('.brush')
@@ -158,6 +155,19 @@ class Plot extends React.Component {
     brushSel.call(brush)
 
     this.clearBrush = () => brushSel.call(brush.move, null)
+    this.setBrushCoords = coords => {
+      if (coords == null) {
+        this.clearBrush()
+        return
+      }
+
+      const [ x0, y0, x1, y1 ] = coords
+
+      brush.move(brushSel, [
+        [xScale(x0), yScale(y0)],
+        [xScale(x1), yScale(y1)],
+      ])
+    }
   }
 
   drawAxes() {
@@ -448,6 +458,7 @@ module.exports = R.pipe(
       abundanceLimits: R.path(['config', 'abundanceLimits'], project),
       treatmentsLabel,
     }, R.pick([
+      'brushedArea',
       'savedTranscripts',
       'pairwiseData',
       'pValueThreshold',

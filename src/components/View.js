@@ -57,6 +57,20 @@ class Viewer extends React.Component {
 
       dispatch(Action.SetPValueThreshold(threshold))
     }
+
+    if (this.props.opts.brushed !== prevProps.opts.brushed) {
+      if (this.props.opts.brushed == null) {
+        dispatch(Action.SetBrushedArea(null))
+        return
+      }
+
+      try {
+        const coords = decodeURIComponent(this.props.opts.brushed).split(',').map(parseFloat)
+        dispatch(Action.SetBrushedArea(coords))
+      } catch (e) {
+        return;
+      }
+    }
   }
 
   async updateTreatments(prevProps) {
@@ -84,7 +98,7 @@ class Viewer extends React.Component {
   }
 
   render() {
-    const { updateOpts, treatmentA, treatmentB } = this.props
+    const { updateOpts, treatmentA, treatmentB, brushExtent } = this.props
 
     return (
       h(ViewerContainer, [
@@ -127,7 +141,7 @@ class Viewer extends React.Component {
         ]),
 
         h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
-          h(MAPlot)
+          h(MAPlot, { updateOpts, brushExtent })
         ),
 
         h(GridArea, { column: '10 / span 1', row: '3 / span 8' },
@@ -168,9 +182,9 @@ class Viewer extends React.Component {
 module.exports = R.pipe(
   Navigable,
   connect((state, ownProps) => {
-    const { treatmentA, treatmentB } = ownProps.opts
+    const { treatmentA, treatmentB, brushed } = ownProps.opts
 
-    return { treatmentA, treatmentB }
+    return { treatmentA, treatmentB, brushExtent: brushed }
   }),
   ProjectLoading(true)
 )(Viewer)
