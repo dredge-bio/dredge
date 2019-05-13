@@ -22,6 +22,8 @@ A template to generate the URLs to each pairwise comparison data table. The char
 
 DrEdGE expects a pre-generated file for each pairwise comparison of treatments. Instructions for how to generate these files using our edgeR workflow can be found to the right, though you may use a different statistical method if you prefer. DrEdGE will expect that each comparison file is a tab-separated value with four columns in the following order: transcript name, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript names must match those found in the transcript abundance matrix.
 
+If you generate your own statistical tables (rather than using our R script), make sure the signs in front of the logFC values are correct. Some programs (such as DESeq2) define fold change as treatment1/treatment2, resulting in a negative logFC if abundance is greater in treatment 2, while other programs (such as edgeR) use the reciprocal, resulting in a positive logFC. DrEdGE expects the latter convention.
+
 
 <!-- maPlot -->
 
