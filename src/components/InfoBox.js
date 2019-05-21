@@ -133,6 +133,7 @@ class InfoBox extends React.Component {
       abundancesForTreatmentTranscript,
       updateOpts,
       transcriptHyperlink,
+      heatmapMinimumMaximum,
     } = this.props
 
     const { hovered } = this.state
@@ -148,7 +149,12 @@ class InfoBox extends React.Component {
         d3.mean
       ))(Object.keys(treatments))
 
-      const maxAbundance = R.reduce(R.max, 1, abundances)
+      let maxAbundance = R.reduce(R.max, 1, abundances)
+
+      // FIXME: This code is duplicated in ./HeatMap.js
+      if (maxAbundance < heatmapMinimumMaximum) {
+        maxAbundance = heatmapMinimumMaximum
+      }
 
       colorScale = d3.scaleSequential(d3.interpolateOranges)
         .domain([0, maxAbundance])
@@ -225,6 +231,7 @@ module.exports = connect(state => {
       'getCanonicalTranscriptLabel',
     ], project),
     R.pick([
+      'heatmapMinimumMaximum',
       'transcriptHyperlink',
     ], project.config),
     R.pick([

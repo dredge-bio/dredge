@@ -246,8 +246,17 @@ const configFields = {
     },
   },
 
+  heatmapMinimumMaximum: {
+    label: 'Abundance heat map color scale floor',
+    test: val => {
+      if (typeof val !== 'number') {
+        throw new Error('Value should be a number')
+      }
+    },
+  },
+
   abundanceLimits: {
-    label: 'Limits for abundance mesaures',
+    label: 'Limits for abundance measures',
     test: val => {
       const isArrayOfTwo = val => Array.isArray(val) && val.length === 2
 

@@ -40,6 +40,7 @@ function defaultLocalConfig() {
         [0, 100],
         [-100, 100],
       ],
+      heatmapMinimumMaximum: 0,
       treatments: './treatments.json',
       pairwiseName: './pairwise_files/%A_vs_%B.txt',
       transcriptAliases: './aliases.txt',

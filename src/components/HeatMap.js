@@ -58,7 +58,14 @@ class HeatMap extends React.Component {
   }
 
   render() {
-    const { grid, transcript, abundancesForTreatmentTranscript, treatments, hoveredTreatment } = this.props
+    const {
+      grid,
+      transcript,
+      abundancesForTreatmentTranscript,
+      treatments,
+      hoveredTreatment,
+      heatmapMinimumMaximum=0,
+    } = this.props
 
     if (!grid) return null
 
@@ -68,7 +75,11 @@ class HeatMap extends React.Component {
       row.map(treatment =>
         treatment && d3.mean(abundancesForTreatmentTranscript(treatment, transcript))))
 
-    const maxAbundance = R.reduce(R.max, 1, R.flatten(abundances).filter(R.identity))
+    let maxAbundance = R.reduce(R.max, 1, R.flatten(abundances).filter(R.identity))
+
+    if (maxAbundance < heatmapMinimumMaximum) {
+      maxAbundance = heatmapMinimumMaximum
+    }
 
     const colorScale = d3.scaleSequential(COLOR_SCALE)
       .domain([0, maxAbundance])
@@ -141,6 +152,7 @@ module.exports = connect(state => {
     comparedTreatments: R.path(['view', 'comparedTreatments']),
     hoveredTreatment: R.path(['view', 'hoveredTreatment']),
     grid: R.path(['project', 'grid']),
+    heatmapMinimumMaximum: R.path(['project', 'config', 'heatmapMinimumMaximum']),
     transcript: R.either(
       R.path(['view', 'hoveredTranscript']),
       R.path(['view', 'focusedTranscript'])
