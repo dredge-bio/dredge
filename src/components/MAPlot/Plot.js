@@ -512,6 +512,17 @@ class Plot extends React.Component {
         .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
         .attr('fill', d => d.color)
 
+    d3.select('defs').selectAll('*').remove()
+
+    d3.select('defs')
+      .append('clipPath')
+      .attr('id', 'visible-plot')
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', xScale.range()[1])
+      .attr('height', yScale.range()[0])
+
   }
 
   drawSavedTranscripts() {
@@ -686,6 +697,9 @@ class Plot extends React.Component {
           viewBox: `0 0 ${width} ${height}`,
           ref: el => { this.svg = el },
         }, [
+          h('defs', [
+          ]),
+
           h('text', {
             x: padding.l + 8,
             y: padding.t - 30,
@@ -754,13 +768,15 @@ class Plot extends React.Component {
             }),
             h('g.y-axis'),
 
-            h('g.squares'),
+            h('g', { clipPath: 'url(#visible-plot)' }, [
+              h('g.squares'),
 
-            h('g.saved-transcripts'),
+              h('g.saved-transcripts'),
 
-            h('g.interaction'),
+              h('g.interaction'),
 
-            h('g.hovered-marker'),
+              h('g.hovered-marker'),
+            ]),
           ]),
         ]),
       ])
