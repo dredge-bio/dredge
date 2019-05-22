@@ -146,10 +146,29 @@ const Target = ({
 
   ])
 
+const Reset = ({
+  stroke='black',
+  strokeWidth=2,
+  height=16,
+  width=16,
+}) =>
+  h('svg', {
+    width,
+    height,
+    viewBox: '0 0 24 24',
+    stroke,
+    strokeWidth,
+    fill: 'none',
+  }, [
+    h('path', {
+      d: 'M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38',
+    }),
+  ])
 
 const help = {
   zoom: 'Use mouse/touchscreen to zoom and pan',
   select: 'Use mouse/touchscreen to select transcripts on the plot',
+  reset: 'Reset position of the plot',
 }
 
 class Plot extends React.Component {
@@ -195,6 +214,8 @@ class Plot extends React.Component {
         plotWidth,
         xScale: state.transform.rescaleX(xScale),
         yScale: state.transform.rescaleY(yScale),
+        _xScale: xScale,
+        _yScale: yScale,
       }
     }
 
@@ -319,6 +340,10 @@ class Plot extends React.Component {
         })
         // d3.select(this.svg).select('.squares').attr('transform', d3.event.transform)
       })
+
+    this.resetZoom = () => {
+      el.call(zoom.transform, d3.zoomIdentity)
+    }
 
     el.call(zoom)
   }
@@ -560,9 +585,11 @@ class Plot extends React.Component {
       plotWidth,
       dragAction,
       showHelp,
+      _xScale,
+      _yScale,
     } = this.state
 
-    const { treatmentALabel, treatmentBLabel } = this.props
+    const { treatmentALabel, treatmentBLabel, updateOpts } = this.props
 
     if (this.props.width == null) {
       return null
@@ -586,7 +613,7 @@ class Plot extends React.Component {
             position: 'absolute',
             right: padding.r,
             top: 6,
-            width: 100,
+            width: 146,
             height: padding.t - 6,
             background: '#eee',
             border: '1px solid #ccc',
@@ -624,6 +651,31 @@ class Plot extends React.Component {
                 ['data-active']: dragAction === 'zoom',
               }, h(MagnifyingGlass)),
             ]),
+            h(Button, {
+              ml: 1,
+              onMouseEnter: () => {
+                this.setState({ showHelp: 'reset' })
+              },
+              onMouseLeave: () => {
+                this.setState({ showHelp: null })
+              },
+              onClick: () => {
+                if (this.state.transform === d3.zoomIdentity) return
+
+                this.clearBrush()
+                updateOpts(R.omit(['brushed']))
+
+                this.setState({
+                  xScale: _xScale,
+                  yScale: _yScale,
+                  transform: d3.zoomIdentity,
+                }, () => {
+                  if (this.state.dragAction === 'zoom') {
+                    this.resetZoom()
+                  }
+                })
+              },
+            }, h(Reset)),
           ]),
         ]),
         h('svg', {
