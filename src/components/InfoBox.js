@@ -36,6 +36,11 @@ const InfoBoxContainer = styled.div`
 `
 
 function ColorLegend({ transcript, colorScale }) {
+  const gradients = colorScale.ticks(10).map(x => colorScale(x)).join(', ')
+      , ticks = colorScale.nice().domain()
+
+  ticks.splice(1, 0, (ticks[0] + ticks[1]) / 2)
+
   return (
     h('div', {
       style: {
@@ -54,38 +59,40 @@ function ColorLegend({ transcript, colorScale }) {
       h('h4', {
         key: 'title',
         style: {
-          marginBottom: 6,
+          marginBottom: 9,
           fontFamily: 'SourceSansPro',
         },
       }, 'Abundance'),
-    ].concat(colorScale.ticks(4).map((abundance, i) =>
       h('div', {
-        key: `${transcript}-${i}`,
         style: {
-          flexGrow: 1,
           display: 'flex',
-          alignItems: 'center',
-          marginTop: -1,
+          flexGrow: 1,
+          position: 'relative',
         },
       }, [
-        h('span', {
+        h('div', {
           style: {
-            fontFamily: 'SourceSansPro',
-            alignSelf: 'stretch',
-            backgroundColor: colorScale(abundance),
             width: 20,
-            marginRight: 4,
-            border: '1px solid black',
+            background: `linear-gradient(${gradients})`,
+            border: '1px solid #666',
           },
         }),
 
-        h('span', {
+        h('div', {
           style: {
-            fontSize: 12,
+            paddingLeft: 6,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
           },
-        }, abundance),
+        }, ticks.map((val, i) =>
+          h('div', {
+            key: `${i}-${val}`
+          }, d3.format(',')(val))
+        ))
       ])
-    )))
+    ])
   )
 }
 
