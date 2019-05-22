@@ -296,7 +296,8 @@ class Plot extends React.Component {
   }
 
   initInteractionLayer() {
-    const { dragAction } = this.state
+    const { updateOpts } = this.props
+        , { dragAction } = this.state
 
     if (!this.i) {
       this.i = 0
@@ -310,6 +311,7 @@ class Plot extends React.Component {
     } else if (dragAction === 'zoom') {
       this.clearBrush()
       this.initZoom()
+      updateOpts(R.omit(['brushed']))
     }
   }
 
