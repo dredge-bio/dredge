@@ -450,7 +450,8 @@ class Plot extends React.Component {
     }
 
     const bins = getPlotBins(
-      [...pairwiseData.values()].filter(({ pValue }) => pValue <= pValueThreshold),
+      pairwiseData,
+      ({ pValue }) => pValue <= pValueThreshold,
       xScale,
       yScale,
       8)

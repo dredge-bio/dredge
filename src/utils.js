@@ -46,27 +46,21 @@ function getBins(scale, unit) {
   return bins;
 }
 
-function binByTranscript(data, field, bins) {
-  const getter = R.prop(field)
-      , sortedData = R.sortBy(getter, data)
-      , binByTranscript = new Map()
+function binByTranscript(sortedTranscripts, field, bins) {
+  const binByTranscript = new Map()
 
   const leftOut = R.takeWhile(
-    d => getter(d) < bins[0][0],
-    sortedData.slice(0))
-
-  if (leftOut.length) {
-    console.warn(`Warning: ${leftOut.length} transcripts below the minimum ${field} limit`)
-  }
+    d => d[field] < bins[0][0],
+    sortedTranscripts.slice(0))
 
   let idx = leftOut.length
 
   bins.forEach(([ min, max ], i) => {
     const inBin = transcript => {
-      const val = getter(transcript)
+      const val = transcript[field]
       return val >= min && val <= max
     }
-    const transcriptsInBin = R.takeWhile(inBin, sortedData.slice(idx))
+    const transcriptsInBin = R.takeWhile(inBin, sortedTranscripts.slice(idx))
 
     idx += transcriptsInBin.length;
 
@@ -75,16 +69,10 @@ function binByTranscript(data, field, bins) {
     })
   })
 
-  const extra = data.length - (binByTranscript.size + leftOut.length)
-
-  if (extra) {
-    console.warn(`Warning: ${extra} transcripts above the maximum ${field} limit`)
-  }
-
   return binByTranscript
 }
 
-function getPlotBins(data, xScale, yScale, unit=5) {
+function getPlotBins(data, filter, xScale, yScale, unit=5) {
   const fcBins = getBins(yScale, unit)
       , ataBins = getBins(xScale, unit)
 
@@ -96,8 +84,8 @@ function getPlotBins(data, xScale, yScale, unit=5) {
       transcripts: [],
     })))
 
-  const fcBinByTranscript = binByTranscript(data, 'logFC', fcBins)
-      , ataBinByTranscript = binByTranscript(data, 'logATA', ataBins)
+  const fcBinByTranscript = binByTranscript(data.fcSorted.filter(filter), 'logFC', fcBins)
+      , ataBinByTranscript = binByTranscript(data.ataSorted.filter(filter), 'logATA', ataBins)
 
   data.forEach(d => {
     const fcBin = fcBinByTranscript.get(d)

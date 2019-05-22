@@ -1021,6 +1021,8 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
       }))
 
     pairwiseData.minPValue = minPValue
+    pairwiseData.fcSorted = R.sortBy(R.prop('logFC'), [...pairwiseData.values()])
+    pairwiseData.ataSorted = R.sortBy(R.prop('logATA'), [...pairwiseData.values()])
 
     return {
       pairwiseData,
