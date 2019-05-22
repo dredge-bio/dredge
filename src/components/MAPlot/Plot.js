@@ -90,13 +90,13 @@ const MagnifyingGlass = ({
     fill: 'none',
   }, [
     h('circle', {
-      cx: 11,
-      cy: 11,
-      r: 6,
+      cx: 9,
+      cy: 9,
+      r: 8,
     }),
     h('line', {
-      x1: 21,
-      y1: 21,
+      x1: 23,
+      y1: 23,
       x2: 14.65,
       y2: 14.65,
     }),
