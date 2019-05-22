@@ -327,10 +327,6 @@ class Plot extends React.Component {
       .attr('fill', 'blue')
       .attr('opacity', 0)
 
-    // TODO: Do something like this:
-    // - Transform the bins on the initial zoom interaction
-    // - Reset the bins after zoom is finished for N ms (150? 250?)
-    // - Don't reset bins after panning (?).. Eh, that might not work.
     const zoom = d3.zoom()
       .on('zoom', () => {
         const transform = d3.event.transform
@@ -340,7 +336,6 @@ class Plot extends React.Component {
           xScale: transform.rescaleX(xScale),
           yScale: transform.rescaleY(yScale),
         })
-        // d3.select(this.svg).select('.squares').attr('transform', d3.event.transform)
       })
 
     this.resetZoom = () => {
