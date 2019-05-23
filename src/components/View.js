@@ -144,7 +144,7 @@ class Viewer extends React.Component {
           h(MAPlot, { updateOpts, brushExtent })
         ),
 
-        h(GridArea, { column: '10 / span 1', row: '3 / span 8' },
+        h(GridArea, { column: '10 / span 2', row: '3 / span 8' },
           h(PValueSelector, { updateOpts }),
         ),
 

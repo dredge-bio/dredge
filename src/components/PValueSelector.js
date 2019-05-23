@@ -4,21 +4,30 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , d3 = require('d3')
-    , { Flex, Box } = require('rebass')
+    , debounce = require('debounce')
+    , { Flex, Button } = require('rebass')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
-    , throttle = require('throttleit')
     , { formatNumber } = require('../utils')
     , onResize = require('./util/Sized')
+    , { Reset } = require('./Icons')
 
 const PValueSelectorContainer = styled.div`
   position: absolute;
-  top: 0;
-  bottom:0;
+  top: 6px;
+  bottom: 58px;
+  left: 0;
+  right: 20px;
+
 
   display: flex;
   flex-direction: column;
-  height: 100%;
+
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 8px;
+  margin: 0 -4px;
 
   & > :not([class="pvalue-histogram"]) {
     margin-bottom: 1rem;
@@ -30,6 +39,30 @@ const PValueSelectorContainer = styled.div`
     position: relative;
   }
 
+  .p-controller button {
+    padding: 4px 6px;
+  }
+
+  .p-controller > :first-child {
+    flex-grow: 1;
+    border-radius: 4px 0 0 4px;
+    margin-right: -1px;
+    text-align: left;
+    font-weight: 100;
+  }
+  .p-controller > :last-child {
+    border-radius: 0 4px 4px 0;
+    background-color: #f0f0f0;
+  }
+
+  .p-controller > :hover {
+    background-color: #e0e0e0;
+  }
+
+  .p-controller :focus {
+    z-index: 1
+  }
+
   .histogram {
     display: flex;
     flex-direction: column;
@@ -37,7 +70,8 @@ const PValueSelectorContainer = styled.div`
     align-items: center;
     position: absolute;
     top: 0; bottom: 0; left: 0; right: 0;
-    background-color: white;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
   }
 
   .pvalue-histogram input {
@@ -54,80 +88,117 @@ const PValueSelectorContainer = styled.div`
     border: 1px solid #ccc;
     cursor: ns-resize;
   }
+
+  .brush-container .handle,
+  .brush-container .selection {
+    display: none;
+  }
+
+  .brush-container .overlay {
+    cursor: ns-resize;
+  }
+
 `
 
 const PValueBrush = onResize(el => ({
-  boundingRect: el.getBoundingClientRect(),
+  height: el.clientHeight,
+  width: el.clientWidth,
 }))(class PValueBrush extends React.Component {
   constructor() {
     super();
-    this.handleMouseMove = throttle(this.handleMouseMove.bind(this), 10)
-    this.setPValue = this.setPValue.bind(this)
-
     this.state = {
-      clicking: false,
-      hovering: false,
       hoveredPValue: null,
+      hoveredPosition: null,
     }
   }
 
-  handleMouseMove(e) {
-    const { scale, boundingRect } = this.props
+  drawBrush() {
+    const { width, height, scale: _scale, onPValueChange } = this.props
 
-    let pos = e.pageY - boundingRect.y
+    if (width == null) return
 
-    if (pos < 0) pos = 0;
-    if (pos > boundingRect.height) pos = boundingRect.height
+    const scale = _scale.range([height, 0])
 
-    let val = formatNumber(
-      scale.range([boundingRect.height, 0])
-        .invert(pos), 2)
+    d3.select(this.svg).selectAll('*').remove()
 
-    val = parseFloat(val)
-
-    if (!isNaN(val)) {
-      this.setState({
-        hoveredPValue: val,
-        offsetTop: pos,
-      }, () => {
-        if (this.state.clicking) {
-          this.setPValue()
-        }
+    const g = d3.select(this.svg)
+      .append('g')
+      .on('mouseleave', () => {
+        this.setState({ hoveredPValue: null })
+      })
+      .on('mousemove', () => {
+        this.setState({
+          hoveredPValue: scale.invert(d3.event.offsetY),
+          hoveredPosition: d3.event.offsetY,
+        })
       })
 
+    const update = x => {
+      const val = x
+      onPValueChange(scale.invert(val))
     }
+
+    const brush = d3.brushY()
+      .on('start', () => {
+        const { selection } = d3.event
+            , [ val ] = selection
+
+        this.setState({
+          brushStart: val,
+        })
+
+        update(val)
+      })
+      .on('brush', () => {
+        const { selection } = d3.event
+            , { brushStart } = this.state
+
+        let [ val ] = selection.filter(x => x !== brushStart)
+
+        if (val === undefined) {
+          val = brushStart
+        }
+
+        update(val)
+        this.setState({
+          hoveredPValue: scale.invert(val),
+          hoveredPosition: val,
+        })
+      })
+
+    g.call(brush)
+    this.brush = brush
   }
 
-  setPValue() {
-    const { onPValueChange } = this.props
+  componentDidUpdate(prevProps) {
+    if (this.props.height === undefined) return
 
-    onPValueChange(this.state.hoveredPValue)
+    const dimensionsChanged = (
+      prevProps.height !== this.props.height ||
+      prevProps.width !== this.props.width
+    )
+
+    if (!this.brush || dimensionsChanged) {
+      this.drawBrush()
+    }
   }
 
   render() {
-    const { offsetTop, hoveredPValue } = this.state
+    const { height, width } = this.props
+        , { hoveredPValue, hoveredPosition } = this.state
 
     return (
-      h('div.histogram-brush', {
-        onClick: this.setPValue,
+      h('div', [
+        h('svg.brush-container', {
+          style: {
+            position: 'absolute',
+          },
+          width,
+          height,
+          ref: el => this.svg = el,
+        }),
 
-        onMouseDown: () => {
-          this.setState({ clicking: true })
-        },
-
-        onMouseUp: () => {
-          this.setState({ clicking: false })
-        },
-
-        onMouseEnter: () => {
-          this.setState({ hovering: true })
-        },
-        onMouseLeave: () => {
-          this.setState({ hovering: false, hoveredPValue: null, offsetTop: null })
-        },
-        onMouseMove: this.handleMouseMove,
-      }, [
-        offsetTop == null ? null : h('span', {
+        hoveredPValue === null ? null : h('span', {
           style: {
             position: 'absolute',
             left: '100%',
@@ -136,21 +207,10 @@ const PValueBrush = onResize(el => ({
             whiteSpace: 'nowrap',
             padding: '6px',
             zIndex: 1,
-            top: offsetTop,
+            top: hoveredPosition,
             marginTop: '-16px',
           },
-        }, hoveredPValue),
-
-        offsetTop == null ? null : h('span', {
-          style: {
-            position: 'absolute',
-            top: offsetTop,
-            height: '1px',
-            left: 0,
-            right: 0,
-            backgroundColor: '#666',
-          }
-        })
+        }, formatNumber(hoveredPValue)),
       ])
     )
   }
@@ -160,7 +220,7 @@ class PValueSelector extends React.Component {
   constructor() {
     super();
 
-    this.handleChange = this.handleChange.bind(this)
+    this.handleChange = debounce(this.handleChange.bind(this), 5)
   }
 
   handleChange(e) {
@@ -178,6 +238,8 @@ class PValueSelector extends React.Component {
 
     if (threshold < (this.scaleMinimum * 1.5)) {
       threshold = 0;
+    } else if (threshold > 1) {
+      threshold = 1;
     } else {
       threshold = parseFloat(formatNumber(threshold))
     }
@@ -233,25 +295,12 @@ class PValueSelector extends React.Component {
 
     return (
       h(PValueSelectorContainer, [
-        h('div', {
-          style: {
-            whiteSpace: 'nowrap',
-          },
-        }, [
-          'p-value cutoff',
+        h('p', [
+          'P value cutoff',
         ]),
 
-        h(Flex, {
-          alignItems: 'center',
-        }, [
-          h('span', {
-            style: {
-              whiteSpace: 'nowrap',
-            },
-          }, formatNumber(pValueThreshold)),
-          h(Box, {
-            as: 'button',
-            ml: 2,
+        h(Flex, { className: 'p-controller' }, [
+          h(Button, {
             onClick: () => {
               let value
 
@@ -266,29 +315,22 @@ class PValueSelector extends React.Component {
 
               this.handleChange(value)
             },
-          }, 'change'),
+          }, [
+            formatNumber(pValueThreshold),
+          ]),
+          h(Button, {
+            onClick: () => {
+              this.handleChange(1)
+            },
+            style: {
+              display: 'flex',
+            },
+          }, [
+            h(Reset, { height: 12 }),
+          ]),
         ]),
 
         h('div.pvalue-histogram', [
-          /*
-          h('input', {
-            ref: el => { this.rangeEl = el },
-            type: 'range',
-            orient: 'vertical',
-            value: pValueThreshold === 0
-              ? 0
-              : ticks.length - logScale(pValueThreshold),
-            style: {
-              position: 'absolute',
-              width: 18,
-              height: '100%',
-            },
-            onChange: this.handleChange,
-            min: '0',
-            max: '' + ticks.length,
-          }),
-          */
-
           h('div.histogram', {}, bins && bins.reverse().map((ct, i) =>
             h('span.histogram-bar', {
               key: `${comparedTreatments}-${i}`,
