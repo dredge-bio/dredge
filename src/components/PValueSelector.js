@@ -112,6 +112,23 @@ const PValueBrush = onResize(el => ({
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.height === undefined) return
+
+    const dimensionsChanged = (
+      prevProps.height !== this.props.height ||
+      prevProps.width !== this.props.width
+    )
+
+    const treatmentsChanged = (
+      prevProps.comparedTreatments !== this.props.comparedTreatments
+    )
+
+    if (!this.brush || dimensionsChanged || treatmentsChanged) {
+      this.drawBrush()
+    }
+  }
+
   drawBrush() {
     const { width, height, scale: _scale, onPValueChange } = this.props
 
@@ -168,19 +185,6 @@ const PValueBrush = onResize(el => ({
 
     g.call(brush)
     this.brush = brush
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.height === undefined) return
-
-    const dimensionsChanged = (
-      prevProps.height !== this.props.height ||
-      prevProps.width !== this.props.width
-    )
-
-    if (!this.brush || dimensionsChanged) {
-      this.drawBrush()
-    }
   }
 
   render() {
@@ -346,6 +350,7 @@ class PValueSelector extends React.Component {
           h(PValueBrush, {
             scale: logScale,
             onPValueChange: this.handleChange,
+            comparedTreatments,
           }),
         ]),
       ])

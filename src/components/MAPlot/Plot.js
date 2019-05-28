@@ -362,17 +362,12 @@ class Plot extends React.Component {
     this.binSelection = null;
 
     d3.select(this.svg)
-      .select('.squares')
-      .selectAll('rect')
-        .remove()
-
-    d3.select(this.svg)
-      .select('.squares')
-      .selectAll('text')
-        .remove()
+      .select('.squares > g')
+      .remove()
 
     if (pairwiseData === null) {
       d3.select('.squares')
+        .append('g')
         .append('text')
         .attr('x', xScale(d3.mean(xScale.domain())))
         .attr('y', yScale(d3.mean(yScale.domain())))
@@ -411,6 +406,7 @@ class Plot extends React.Component {
 
     this.binSelection = d3.select(this.svg)
       .select('.squares')
+      .append('g')
       .selectAll('rect')
       .data(bins).enter()
         .append('rect')
