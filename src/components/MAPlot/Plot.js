@@ -249,10 +249,6 @@ class Plot extends React.Component {
         })
       })
 
-    this.resetZoom = () => {
-      el.call(zoom.transform, d3.zoomIdentity)
-    }
-
     el.call(zoom)
   }
 
@@ -585,9 +581,7 @@ class Plot extends React.Component {
                   yScale: _yScale,
                   transform: d3.zoomIdentity,
                 }, () => {
-                  if (this.state.dragAction === 'zoom') {
-                    this.resetZoom()
-                  }
+                  this.initInteractionLayer()
                 })
               },
             }, h(Reset)),
