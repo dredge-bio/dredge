@@ -68,7 +68,13 @@ module.exports = function Help() {
 
         h('br'),
 
-        'Tintori SC, Golden P, Goldstein B. Differential Expression Gene Explorer (DrEdGE): A tool for generating interactive online data visualizations for exploration of quantitative gene expression datasets [in preparation].'
+        'Tintori SC, Golden P, Goldstein B. (2019) Differential Expression Gene Explorer (DrEdGE): A tool for generating interactive online data visualizations for statistical exploration of quantitative abundance datasets. ',
+
+        h('i', 'BioRxiv'),
+
+        ' (preprint), 618439.',
+
+        h('a', { href: 'https://doi.org/10/1101/618439' }, 'https://doi.org/10/1101/618439'),
       ]),
     ])
   )
