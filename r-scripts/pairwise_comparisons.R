@@ -1,5 +1,12 @@
 #!/usr/bin/env Rscript
 
+#~#~#~#~#
+#
+#	Script for creating differential expression pairwise comparison data tables from counts or RPKMs
+#	Written by Sophia Tintori - sophia.tintori@gmail.com
+#	Last updated May 14, 2019
+
+
 # Install packages
 if(!"optparse" %in% installed.packages()){
     install.packages("optparse", repos = "http://cran.us.r-project.org")
@@ -9,20 +16,26 @@ library("optparse")
 # Define options and usage
 option_list = list(
     make_option(c("-e", "--expression"), type="character", default=NULL,
-                help="path to transcript abundance table input", metavar="character"),
+                help="Path to transcript abundance table input. \n\t\tExample: ./expression_table.tsv", metavar="char"),
     make_option(c("-d", "--design"), type="character", default=NULL,
-                help="path to experimental design dataframe input", metavar="character"),
+                help="Path to experimental design dataframe input. \n\t\tExample: ./design_table.tsv", metavar="char"),
     make_option(c("-o", "--outDirectory"), type="character", default="pairwise_files",
-                help="name of directory where pairwise comparison tables will be written", metavar="character"),
+                help="Name of directory where pairwise comparison tables will be written. \n\t\tDefault: ./pairwise_files/", metavar="char"),
     make_option(c("-m", "--outMinMax"), type="character", default="min_max.txt",
-                help="output file specifying min and max values for MA plot axes", metavar="character")
+                help="Output file specifying min and max values for MA plot axes. \n\t\tDefault: ./min_max.txt", metavar="char"),
+    make_option(c("-r", "--repeatReplicates"), type="logical", default=FALSE,
+                help="Set to TRUE if you want overlapping replicates to be included in both treatments. \n\t\tDefault: FALSE", metavar="log"),
+    make_option(c("-t", "--noiseThreshold"), type="integer", default=10,
+                help="Abundance threshold below which transcripts should not be considered for statistical analysis. \n\t\tDefault: 10", metavar="integer")
 )
-opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts a gene expression matrix and a design file.\n\tReturns a directory of differential expression statistics for every possible pairwise comparison within the dataset.\n\n\tExample: Rscript pairwise_comparisons.R -e RPKMs_in.txt -d design_in.txt -o pairwise_files_out/ -m minMax_out.txt")
+opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts a gene expression matrix and a design file.\n\tReturns a directory of differential expression statistics for every possible pairwise comparison within the dataset.\n\n\tExample: Rscript pairwise_comparisons.R -e RPKMs_in.txt -d design_in.txt")
 opt = parse_args(opt_parser)
 
 # Define pairwise comparison generator function
 pairwise_comparisons <- function(expression = opt$expression, design = opt$design,
-                                 outDirectory = opt$outDirectory, outMinMax = opt$outMinMax){
+                                 outDirectory = opt$outDirectory, outMinMax = opt$outMinMax,
+                                 repeatReplicates = opt$repeatReplicates,
+                                 lowerThreshold=opt$noiseThreshold){
 
     # Install packages
     if(!"edgeR" %in% installed.packages()){
@@ -31,7 +44,6 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
     }
     library("edgeR")
     expRPKMs <- read.csv(expression, header = T, sep="\t", stringsAsFactors = F, row.names = 1)
-    lowerThreshold = 10
     dir.create(outDirectory, showWarnings = F)
     # Make design list
     expList = list()
@@ -69,7 +81,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
            }
        }
         replicates1 <- expList[[treatment1]]$replicates
-        for(treatment2 in allTreatments[allTreatments!=treatment1]){
+        for(treatment2 in allTreatments){
             for(tempReplicate in expList[[treatment2]]$replicates){
                 if(!tempReplicate %in% colnames(expRPKMs)){
                     return(paste("Error: replicate IDs in design file do not match column names of expression data file: ", tempReplicate, sep=""))
@@ -77,12 +89,69 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             }
             replicates2 <- expList[[treatment2]]$replicates
             print(paste("Comparing ", treatment1, " to ", treatment2, sep = ""))
+            tab = NULL
+            # if there is overlap in replicates between the two treatments:
+            if(length(intersect(replicates1, replicates2))>0){
+                if(identical(sort(replicates1), sort(replicates2))){
+                    # separate pipeline for comparing self to self
+                    replicates <- unique(replicates1, replicates2)
+                    subRPKMs <- expRPKMs[,c(replicates)]
+                    if(length(replicates)>1){   # multiple replicates
+                        subRPKMs <- subRPKMs[which(apply(subRPKMs,1,max)>lowerThreshold),]+1
+                        tab <- matrix(1, nrow = nrow(subRPKMs), ncol = 3)
+                        colnames(tab) <- c("logFC", "logCPM", "PValue")
+                        row.names(tab) <- row.names(subRPKMs)
+                        tab[,"logFC"] <- 0
+                        tempMatrixSum <- sum(subRPKMs)
+                        for(tempRow in 1:dim(subRPKMs)[1]){
+                            tempGeneSum <- sum(subRPKMs[tempRow,])
+                            tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
+                            tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=3)
+                        }
+                    }
+                    else {  # single replicate
+                        names(subRPKMs) <- rownames(expRPKMs)
+                        subRPKMs <- subRPKMs[which(subRPKMs>lowerThreshold)]+1
+                        tab <- matrix(1, nrow = length(subRPKMs), ncol = 3)
+                        colnames(tab) <- c("logFC", "logCPM", "PValue")
+                        tab[,"logFC"] <- 0
+                        tempMatrixSum <- sum(subRPKMs)
+                        for(tempRow in 1:length(subRPKMs)){
+                            tempCPM <- subRPKMs[tempRow]*(1000000/tempMatrixSum)
+                            tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=3)
+                        }
+                    }
+                    outputName = paste(treatment1, "_vs_", treatment2, ".txt", sep="")
+                    write.table(tab, paste(outDirectory, "/", outputName, sep = ""), quote = F, col.names = NA, row.names = T, sep = "\t")
+                    minMax["logCPM", "min"] <- min(minMax["logCPM", "min"], min(tab[,"logCPM"]))
+                    minMax["logCPM", "max"] <- max(minMax["logCPM", "max"], max(tab[,"logCPM"]))
+                    minMax["logFC", "min"] <- min(minMax["logFC", "min"], min(tab[,"logFC"]))
+                    minMax["logFC" ,"max"] <- max(minMax["logFC", "max"], max(tab[,"logFC"]))
+                    next
+                }
+                else {
+                    repeatedReps <- intersect(replicates1, replicates2)
+                    print("WARNING: The following replicates are in both treatments:")
+                    print(repeatedReps)
+                    if(repeatReplicates){
+                        print("They are being included on both sides of the comparison because the -r flag is set to TRUE")
+                    } else {
+                        treatmentLengths <- c(length(setdiff(replicates1, repeatedReps)), length(setdiff(replicates2, repeatedReps)))
+                        thinnedTreatment <- which(treatmentLengths==max(treatmentLengths))
+                        if(thinnedTreatment==1){
+                            replicates1 <- setdiff(replicates1, repeatedReps)
+                        } else if (thinnedTreatment==2){
+                            replicates2 <- setdiff(replicates2, repeatedReps)
+                        }
+                        print(paste("They are being removed (from the ", c(treatment1, treatment2)[thinnedTreatment], " treatment) because the -r flag is set to FALSE", sep=""))
+                    }
+                }
+            }
             subRPKMs <- expRPKMs[,c(replicates1, replicates2)]
             subRPKMs <- subRPKMs[which(apply(subRPKMs,1,max)>lowerThreshold),]
             subRPKMs <- subRPKMs + 1
             group <- factor(c(rep(treatment1, length(replicates1)),
                               rep(treatment2, length(replicates2))), levels = c(treatment1, treatment2))
-            tab <- NULL
             if(dim(subRPKMs)[2]>2){
                 # push through edgeR
                 y <- DGEList(counts=subRPKMs, group=group)
@@ -90,8 +159,8 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                 y <- estimateCommonDisp(y)
                 y <- estimateTagwiseDisp(y)
                 et <- exactTest(y)
-                tab <- signif(et$table, digits=2)
-                tab[,c("logFC", "logCPM")] <- signif(tab[,c("logFC", "logCPM")], digits=2)
+                tab <- signif(et$table, digits=3)
+                tab[,c("logFC", "logCPM")] <- signif(tab[,c("logFC", "logCPM")], digits=3)
             } else {
                 tab <- matrix(0, nrow = nrow(subRPKMs), ncol = 3)
                 colnames(tab) <- c("logFC", "logCPM", "PValue")
@@ -100,18 +169,17 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                     #logCPM
                     tempGeneSum <- sum(subRPKMs[tempRow,])
                     tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
-                    tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=2)
+                    tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=3)
                     #logFC
                     tempTr1Avg <- mean(subRPKMs[tempRow, which(group==treatment1)])
                     tempTr2Avg <- mean(subRPKMs[tempRow, which(group==treatment2)])
                     tempFC <- (tempTr2Avg/tempTr1Avg)
-                    tab[tempRow, "logFC"] <- signif(log2(tempFC), digits=2)
+                    tab[tempRow, "logFC"] <- signif(log2(tempFC), digits=3)
                     #PValue
                     tab[tempRow, "PValue"] = 1
                 }
             }
             row.names(tab) <- row.names(subRPKMs)
-
             minMax["logCPM", "min"] <- min(minMax["logCPM", "min"], min(tab[,"logCPM"]))
             minMax["logCPM", "max"] <- max(minMax["logCPM", "max"], max(tab[,"logCPM"]))
             minMax["logFC", "min"] <- min(minMax["logFC", "min"], min(tab[,"logFC"]))
@@ -119,47 +187,8 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             outputName = paste(treatment1, "_vs_", treatment2, ".txt", sep="")
             write.table(tab, paste(outDirectory, "/", outputName, sep = ""), quote = F, col.names = NA, row.names = T, sep = "\t")
         }
-#        allTreatments <- allTreatments[allTreatments!=treatment1]
+        allTreatments <- allTreatments[allTreatments!=treatment1]
    }
-
-    # Add self_self comparisons
-    allTreatments <- names(expList)
-    for(treatment in allTreatments){
-        tab = NULL
-        replicates <- expList[[treatment]]$replicates
-        print(paste("Comparing ", treatment, " to ", treatment, sep = ""))
-        subRPKMs <- expRPKMs[,c(replicates)]
-        if(length(replicates)>1){
-            subRPKMs <- subRPKMs[which(apply(subRPKMs,1,max)>lowerThreshold),]+1
-            tab <- matrix(1, nrow = nrow(subRPKMs), ncol = 3)
-            colnames(tab) <- c("logFC", "logCPM", "PValue")
-            row.names(tab) <- row.names(subRPKMs)
-            tab[,"logFC"] <- 0
-            tempMatrixSum <- sum(subRPKMs)
-            for(tempRow in 1:dim(subRPKMs)[1]){
-                tempGeneSum <- sum(subRPKMs[tempRow,])
-                tempCPM <- tempGeneSum*(1000000/tempMatrixSum)
-                tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=2)
-            }
-        } else {
-            names(subRPKMs) <- rownames(expRPKMs)
-            subRPKMs <- subRPKMs[which(subRPKMs>lowerThreshold)]+1
-            tab <- matrix(1, nrow = length(subRPKMs), ncol = 3)
-            colnames(tab) <- c("logFC", "logCPM", "PValue")
-            tab[,"logFC"] <- 0
-            tempMatrixSum <- sum(subRPKMs)
-            for(tempRow in 1:length(subRPKMs)){
-                tempCPM <- subRPKMs[tempRow]*(1000000/tempMatrixSum)
-                tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=2)
-            }
-        }
-        minMax["logCPM", "min"] <- min(minMax["logCPM", "min"], min(tab[,"logCPM"]))
-        minMax["logCPM", "max"] <- max(minMax["logCPM", "max"], max(tab[,"logCPM"]))
-        minMax["logFC", "min"] <- min(minMax["logFC", "min"], min(tab[,"logFC"]))
-        minMax["logFC" ,"max"] <- max(minMax["logFC", "max"], max(tab[,"logFC"]))
-        outputName = paste(treatment, "_vs_", treatment, ".txt", sep="")
-        write.table(tab, paste(outDirectory, "/", outputName, sep = ""), quote = F, col.names = NA, row.names = T, sep = "\t")
-    }
 #   Export min_max table
     write.table(x = minMax, file = outMinMax, col.names = NA, quote = F, sep = "\t")
 }
