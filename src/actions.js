@@ -771,7 +771,7 @@ function loadProject(source) {
 
         return treatment.replicates.map(replicateID => {
           const replicateIdx = replicateIndices[replicateID]
-          return project.abundances[transcriptIdx][replicateIdx]
+          return (project.abundances[transcriptIdx] || {})[replicateIdx] || null
         })
       }
 
