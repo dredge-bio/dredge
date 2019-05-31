@@ -490,11 +490,11 @@ class NewProject extends React.Component {
 
               h('iframe', {
                 src: 'https://player.vimeo.com/video/336692169',
-                frameborder: "0",
+                frameBorder: "0",
                 width: '100%',
                 height: '400',
                 allow: 'fullscreen',
-                allowfullscreen: true,
+                allowFullScreen: true,
               }),
             ]),
           ]),

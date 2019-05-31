@@ -43,11 +43,11 @@ module.exports = function Help() {
 
       h('iframe', {
         src: 'https://player.vimeo.com/video/336692274',
-        frameborder: "0",
+        frameBorder: "0",
         width: '100%',
         height: '400',
         allow: 'fullscreen',
-        allowfullscreen: true,
+        allowFullScreen: true,
       }),
 
       h(Heading, { as: 'h2', mt: 4 }, 'Creating your own project'),
