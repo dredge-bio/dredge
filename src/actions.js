@@ -775,6 +775,30 @@ function loadProject(source) {
         })
       }
 
+      const colorScaleForTranscript = R.memoizeWith(R.identity, transcriptName => {
+        const { heatmapMinimumMaximum: minMax=0 } = project.config
+
+        let maxAbundance = 1
+
+        Object.keys(project.treatments).forEach(treatmentID => {
+          const abundance = d3.mean(
+            abundancesForTreatmentTranscript(treatmentID, transcriptName) || [0])
+
+          if (abundance > maxAbundance) {
+            maxAbundance = abundance
+          }
+        })
+
+        if (maxAbundance < minMax) {
+          maxAbundance = minMax
+        }
+
+        return d3.scaleSequential(d3.interpolateOranges)
+          .domain([0, maxAbundance])
+          .nice()
+      })
+
+
       await dispatch(Action.UpdateProject(
         source,
         project => Object.assign({}, project, {
@@ -782,6 +806,7 @@ function loadProject(source) {
           searchTranscripts,
           getCanonicalTranscriptLabel,
           abundancesForTreatmentTranscript,
+          colorScaleForTranscript,
         })))
     }
 

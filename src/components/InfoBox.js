@@ -137,7 +137,7 @@ class InfoBox extends React.Component {
       hoveredTranscript,
       treatments,
       comparedTreatments,
-      abundancesForTreatmentTranscript,
+      colorScaleForTranscript,
       updateOpts,
       transcriptHyperlink,
       heatmapMinimumMaximum,
@@ -150,21 +150,8 @@ class InfoBox extends React.Component {
 
     let colorScale
 
-    if (transcript && abundancesForTreatmentTranscript) {
-      const abundances = R.chain(R.pipe(
-        treatment => abundancesForTreatmentTranscript(treatment, transcript),
-        d3.mean
-      ))(Object.keys(treatments))
-
-      let maxAbundance = R.reduce(R.max, 1, abundances)
-
-      // FIXME: This code is duplicated in ./HeatMap.js
-      if (maxAbundance < heatmapMinimumMaximum) {
-        maxAbundance = heatmapMinimumMaximum
-      }
-
-      colorScale = d3.scaleSequential(d3.interpolateOranges)
-        .domain([0, maxAbundance])
+    if (transcript) {
+      colorScale = colorScaleForTranscript(transcript)
     }
 
     return (
@@ -234,7 +221,7 @@ module.exports = connect(state => {
   return Object.assign({},
     R.pick([
       'treatments',
-      'abundancesForTreatmentTranscript',
+      'colorScaleForTranscript',
       'getCanonicalTranscriptLabel',
     ], project),
     R.pick([

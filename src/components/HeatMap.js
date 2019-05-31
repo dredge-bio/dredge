@@ -9,8 +9,7 @@ const h = require('react-hyperscript')
     , Action = require('../actions')
     , { projectForView } = require('../utils')
 
-const COLOR_SCALE = d3.interpolateOranges
-    , SQUARE_WIDTH = 20
+const SQUARE_WIDTH = 20
 
 const HeatMapContainer = styled.svg`
   max-height: 100%;
@@ -61,10 +60,10 @@ class HeatMap extends React.Component {
     const {
       grid,
       transcript,
+      colorScaleForTranscript,
       abundancesForTreatmentTranscript,
       treatments,
       hoveredTreatment,
-      heatmapMinimumMaximum=0,
     } = this.props
 
     if (!grid) return null
@@ -73,16 +72,10 @@ class HeatMap extends React.Component {
 
     const abundances = grid.map(row =>
       row.map(treatment =>
-        treatment && d3.mean(abundancesForTreatmentTranscript(treatment, transcript))))
+        treatment && d3.mean(
+          abundancesForTreatmentTranscript(treatment, transcript) || [0])))
 
-    let maxAbundance = R.reduce(R.max, 1, R.flatten(abundances).filter(R.identity))
-
-    if (maxAbundance < heatmapMinimumMaximum) {
-      maxAbundance = heatmapMinimumMaximum
-    }
-
-    const colorScale = d3.scaleSequential(COLOR_SCALE)
-      .domain([0, maxAbundance])
+    const colorScale = colorScaleForTranscript(transcript)
 
     const xScale = d3.scaleLinear()
       .domain([0, grid[0].length - 1])
@@ -97,7 +90,7 @@ class HeatMap extends React.Component {
         row.map((treatment, j) => treatment && {
           treatment,
           attrs: {
-            fill: colorScale(abundances[i][j]),
+            fill: colorScale(abundances[i][j] || 0),
             x: xScale(j),
             y: yScale(i),
             height: SQUARE_WIDTH,
@@ -158,6 +151,7 @@ module.exports = connect(state => {
       R.path(['view', 'focusedTranscript'])
     ),
     abundancesForTreatmentTranscript: R.path(['project', 'abundancesForTreatmentTranscript']),
+    colorScaleForTranscript: R.path(['project', 'colorScaleForTranscript']),
     treatments: R.path(['project', 'treatments']),
   })({ project, view: state.view })
 })(HeatMap)

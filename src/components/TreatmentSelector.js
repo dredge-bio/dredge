@@ -156,7 +156,12 @@ class TreatmentSelector extends React.Component {
   }
 
   paintTreatments() {
-    const { transcript, treatments, abundancesForTreatmentTranscript } = this.props
+    const {
+      transcript,
+      treatments,
+      abundancesForTreatmentTranscript,
+      colorScaleForTranscript,
+    } = this.props
 
     const treatmentEls = R.zip(
       Object.keys(treatments),
@@ -176,13 +181,10 @@ class TreatmentSelector extends React.Component {
       d3.mean
     ))(treatmentEls)
 
-    const maxAbundance = R.reduce(R.max, 1, abundances)
-
-    const colorScale = d3.scaleSequential(d3.interpolateOranges)
-      .domain([0, maxAbundance])
+    const colorScale = colorScaleForTranscript(transcript)
 
     treatmentEls.forEach(([, el], i) => {
-      el.style.fill = colorScale(abundances[i])
+      el.style.fill = colorScale(abundances[i] || 0)
     })
   }
 
@@ -268,7 +270,7 @@ module.exports = connect(state => {
   const project = projectForView(state) || {}
 
   return Object.assign({},
-    R.pick(['svg', 'treatments', 'abundancesForTreatmentTranscript'], project),
+    R.pick(['svg', 'treatments', 'abundancesForTreatmentTranscript', 'colorScaleForTranscript'], project),
     R.pick(['loading', 'hoveredTreatment'], state.view || {}))
 
 })(TreatmentSelector)
