@@ -14,6 +14,10 @@ const h = require('react-hyperscript')
     , Documentation = require('./Documentation')
     , FileInput = require('./util/FileInput')
 
+const DocBox = styled(Box)`
+  max-width: 640px;
+`
+
 const Field = styled(Box)`
 &[data-required=true] label span::after {
   content: "(required)";
@@ -262,211 +266,214 @@ class NewProject extends React.Component {
 
     return (
       h(Box, { p: 3 }, [
-        h(Heading, { as: 'h1', fontSize: 5 }, 'New project'),
-
-        h(Box, { my: 3 }, [
-          /*
-          h(Button, {
-            mr: 5,
-            onClick: () => {
-              this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
-            },
-          }, 'Reset form'),
-          */
-
-          h(Button, {
-            mr: 5,
-            onClick: () => {
-              navigateTo(new Route('test'))
-            },
-          }, 'Test'),
-
-
-          h(FileInput, {
-            onChange: this.handleLoadConfig,
-          }, 'Load'),
-
-          h(Button, {
-            mr: 2,
-            onClick: () => {
-              const blob = new Blob(
-                [JSON.stringify(this.getProjectJSON(), true, '  ')],
-                { type: 'application/json;charset=utf-8' })
-
-              saveAs(blob, 'project.json')
-            },
-          }, 'Save'),
-        ]),
+        h(Heading, { as: 'h1', fontSize: 5, mb: 3 }, 'New project'),
 
         h(Flex, [
+
           h(Box, { flex: 1 }, [
-            h(Heading, { as: 'h2', mb: 2 }, 'Configuration'),
+            h(DocBox, [
+              h(Heading, { as: 'h2', mb: 2, fontSize: 4 }, 'Configuration'),
 
-            h(Input, {
-              label: 'Project name',
-              required: true,
-              onChange: this.setField('label'),
-              value: config.label,
-            }),
+              h(Box, { my: 3 }, [
+                /*
+                h(Button, {
+                  mr: 5,
+                  onClick: () => {
+                    this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
+                  },
+                }, 'Reset form'),
+                */
 
-            h(Input, {
-              label: 'Configuration file directory',
-              documentation: 'baseURL',
-              required: true,
-              onChange: this.setField('baseURL'),
-              value: config._baseURL,
-              showURL: resolve(''),
-              isRelativeURL,
-            }),
-
-            h(Input, {
-              label: 'Gene expression matrix URL',
-              required: true,
-              documentation: 'expressionMatrix',
-              onChange: this.setField('abundanceMeasures'),
-              value: config.abundanceMeasures,
-              showURL: config.abundanceMeasures && resolve(config.abundanceMeasures),
-              isRelativeURL,
-            }),
+                h(Button, {
+                  mr: 5,
+                  onClick: () => {
+                    navigateTo(new Route('test'))
+                  },
+                }, 'Test'),
 
 
+                h(FileInput, {
+                  onChange: this.handleLoadConfig,
+                }, 'Load'),
 
-            h(Input, {
-              label: 'Treatment information URL',
-              documentation: 'treatments',
-              required: true,
-              onChange: this.setField('treatments'),
-              value: config.treatments,
-              showURL: config.treatments && resolve(config.treatments),
-              isRelativeURL,
-            }),
+                h(Button, {
+                  mr: 2,
+                  onClick: () => {
+                    const blob = new Blob(
+                      [JSON.stringify(this.getProjectJSON(), true, '  ')],
+                      { type: 'application/json;charset=utf-8' })
 
-            h(Input, {
-              label: 'Pairwise comparison URL template',
-              required: true,
-              documentation: 'pairwiseName',
-              onChange: this.setField('pairwiseName'),
-              value: config.pairwiseName,
-              showURL: config.pairwiseName && resolve(config.pairwiseName),
-              isRelativeURL,
-            }),
-
-            h(Field, { mb: 4 }, [
-              h('label', [
-                h('span.label-text', 'MA plot limits'),
+                    saveAs(blob, 'project.json')
+                  },
+                }, 'Save'),
               ]),
 
-              h(Box, [
-                h('span.axis-label-text', 'X axis'),
-                ' (log₂ Average Transcript Abundance)',
-                h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
-                  h('span.axis-label-type', 'min'),
-                  h(LimitInput, {
-                    value: config.abundanceLimits[0][0],
-                    onChange: this.setField(['abundanceLimits', 0, 0], parseFloat),
-                  }),
+              h(Input, {
+                label: 'Project name',
+                required: true,
+                onChange: this.setField('label'),
+                value: config.label,
+              }),
 
-                  h('span.axis-label-type', 'max'),
-                  h(LimitInput, {
-                    value: config.abundanceLimits[0][1],
-                    onChange: this.setField(['abundanceLimits', 0, 1], parseFloat),
-                  }),
+              h(Input, {
+                label: 'Configuration file directory',
+                documentation: 'baseURL',
+                required: true,
+                onChange: this.setField('baseURL'),
+                value: config._baseURL,
+                showURL: resolve(''),
+                isRelativeURL,
+              }),
+
+              h(Input, {
+                label: 'Gene expression matrix URL',
+                required: true,
+                documentation: 'expressionMatrix',
+                onChange: this.setField('abundanceMeasures'),
+                value: config.abundanceMeasures,
+                showURL: config.abundanceMeasures && resolve(config.abundanceMeasures),
+                isRelativeURL,
+              }),
+
+
+
+              h(Input, {
+                label: 'Treatment information URL',
+                documentation: 'treatments',
+                required: true,
+                onChange: this.setField('treatments'),
+                value: config.treatments,
+                showURL: config.treatments && resolve(config.treatments),
+                isRelativeURL,
+              }),
+
+              h(Input, {
+                label: 'Pairwise comparison URL template',
+                required: true,
+                documentation: 'pairwiseName',
+                onChange: this.setField('pairwiseName'),
+                value: config.pairwiseName,
+                showURL: config.pairwiseName && resolve(config.pairwiseName),
+                isRelativeURL,
+              }),
+
+              h(Field, { mb: 4 }, [
+                h('label', [
+                  h('span.label-text', 'MA plot limits'),
                 ]),
-              ]),
 
-              h(Box, [
-                h('span.axis-label-text', 'Y axis'),
-                ' (log₂ Fold Change)',
-                h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
-                  h('span.axis-label-type', 'min'),
-                  h(LimitInput, {
-                    value: config.abundanceLimits[1][0],
-                    onChange: this.setField(['abundanceLimits', 1, 0], parseFloat),
-                  }),
+                h(Box, [
+                  h('span.axis-label-text', 'X axis'),
+                  ' (log₂ Average Transcript Abundance)',
+                  h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
+                    h('span.axis-label-type', 'min'),
+                    h(LimitInput, {
+                      value: config.abundanceLimits[0][0],
+                      onChange: this.setField(['abundanceLimits', 0, 0], parseFloat),
+                    }),
 
-                  h('span.axis-label-type', 'max'),
-                  h(LimitInput, {
-                    value: config.abundanceLimits[1][1],
-                    onChange: this.setField(['abundanceLimits', 1, 1], parseFloat),
-                  }),
+                    h('span.axis-label-type', 'max'),
+                    h(LimitInput, {
+                      value: config.abundanceLimits[0][1],
+                      onChange: this.setField(['abundanceLimits', 0, 1], parseFloat),
+                    }),
+                  ]),
                 ]),
+
+                h(Box, [
+                  h('span.axis-label-text', 'Y axis'),
+                  ' (log₂ Fold Change)',
+                  h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
+                    h('span.axis-label-type', 'min'),
+                    h(LimitInput, {
+                      value: config.abundanceLimits[1][0],
+                      onChange: this.setField(['abundanceLimits', 1, 0], parseFloat),
+                    }),
+
+                    h('span.axis-label-type', 'max'),
+                    h(LimitInput, {
+                      value: config.abundanceLimits[1][1],
+                      onChange: this.setField(['abundanceLimits', 1, 1], parseFloat),
+                    }),
+                  ]),
+                ]),
+
+                h(Documentation, { fieldName: 'maPlot' }),
               ]),
 
-              h(Documentation, { fieldName: 'maPlot' }),
+              h(Input, {
+                label: 'Transcript aliases URL',
+                documentation: 'transcriptAliases',
+                onChange: this.setField('transcriptAliases'),
+                value: config.transcriptAliases,
+                showURL: config.transcriptAliases && resolve(config.transcriptAliases),
+                isRelativeURL,
+              }),
+
+              h(Input, {
+                label: 'Project documentation',
+                documentation: 'readme',
+                required: false,
+                onChange: this.setField('readme'),
+                value: config.readme,
+                showURL: config.readme && resolve(config.readme),
+                isRelativeURL,
+              }),
+
+              h(Field, { mb: 4 }, [
+                h('label', [
+                  h('span.label-text', 'Transcript hyperlink template'),
+                ]),
+
+                h(Box, [
+                  h('span.axis-label-text', 'Hyperlink label'),
+                  h(Box, { mt: 1, mb: 2 }, [
+                    h('input', {
+                      autoCorrect: 'off',
+                      autoCapitalize: 'off',
+                      spellCheck: false,
+                      type: 'text',
+                      value: R.path(['transcriptHyperlink', 0, 'label'], config) || '',
+                      onChange: this.setField(['transcriptHyperlink', 0, 'label']),
+                    }),
+                  ]),
+                ]),
+
+                h(Box, [
+                  h('span.axis-label-text', 'URL'),
+                  h(Box, { mt: 1, mb: 2 }, [
+                    h('input', {
+                      autoCorrect: 'off',
+                      autoCapitalize: 'off',
+                      spellCheck: false,
+                      type: 'text',
+                      value: R.path(['transcriptHyperlink', 0, 'url'], config) || '',
+                      onChange: this.setField(['transcriptHyperlink', 0, 'url']),
+                    }),
+                  ]),
+                ]),
+
+                h(Documentation, { fieldName: 'transcriptHyperlink' }),
+              ]),
+
+              h(Input, {
+                label: 'Diagram URL',
+                onChange: this.setField('diagram'),
+                documentation: 'diagram',
+                value: config.diagram,
+                showURL: config.diagram && resolve(config.diagram),
+                isRelativeURL,
+              }),
+
+              h(Input, {
+                label: 'Grid URL',
+                onChange: this.setField('grid'),
+                documentation: 'grid',
+                value: config.grid,
+                showURL: config.grid && resolve(config.grid),
+                isRelativeURL,
+              }),
             ]),
-
-            h(Input, {
-              label: 'Transcript aliases URL',
-              documentation: 'transcriptAliases',
-              onChange: this.setField('transcriptAliases'),
-              value: config.transcriptAliases,
-              showURL: config.transcriptAliases && resolve(config.transcriptAliases),
-              isRelativeURL,
-            }),
-
-            h(Input, {
-              label: 'Project documentation',
-              documentation: 'readme',
-              required: false,
-              onChange: this.setField('readme'),
-              value: config.readme,
-              showURL: config.readme && resolve(config.readme),
-              isRelativeURL,
-            }),
-
-            h(Field, { mb: 4 }, [
-              h('label', [
-                h('span.label-text', 'Transcript hyperlink template'),
-              ]),
-
-              h(Box, [
-                h('span.axis-label-text', 'Hyperlink label'),
-                h(Box, { mt: 1, mb: 2 }, [
-                  h('input', {
-                    autoCorrect: 'off',
-                    autoCapitalize: 'off',
-                    spellCheck: false,
-                    type: 'text',
-                    value: R.path(['transcriptHyperlink', 0, 'label'], config) || '',
-                    onChange: this.setField(['transcriptHyperlink', 0, 'label']),
-                  }),
-                ]),
-              ]),
-
-              h(Box, [
-                h('span.axis-label-text', 'URL'),
-                h(Box, { mt: 1, mb: 2 }, [
-                  h('input', {
-                    autoCorrect: 'off',
-                    autoCapitalize: 'off',
-                    spellCheck: false,
-                    type: 'text',
-                    value: R.path(['transcriptHyperlink', 0, 'url'], config) || '',
-                    onChange: this.setField(['transcriptHyperlink', 0, 'url']),
-                  }),
-                ]),
-              ]),
-
-              h(Documentation, { fieldName: 'transcriptHyperlink' }),
-            ]),
-
-            h(Input, {
-              label: 'Diagram URL',
-              onChange: this.setField('diagram'),
-              documentation: 'diagram',
-              value: config.diagram,
-              showURL: config.diagram && resolve(config.diagram),
-              isRelativeURL,
-            }),
-
-            h(Input, {
-              label: 'Grid URL',
-              onChange: this.setField('grid'),
-              documentation: 'grid',
-              value: config.grid,
-              showURL: config.grid && resolve(config.grid),
-              isRelativeURL,
-            }),
           ]),
 
           h(Card, {
@@ -476,7 +483,20 @@ class NewProject extends React.Component {
             borderLeft: 1,
             borderColor: '#ccc',
           }, [
-            h(Documentation, { fieldName: 'instructions' }),
+            h(DocBox, [
+              h(Documentation, { fieldName: 'instructions' }),
+
+              h(Box, { as: 'h3', mb: 1, }, 'Video tutorial'),
+
+              h('iframe', {
+                src: 'https://player.vimeo.com/video/336692169',
+                frameborder: "0",
+                width: '100%',
+                height: '400',
+                allow: 'fullscreen',
+                allowfullscreen: true,
+              }),
+            ]),
           ]),
         ]),
       ])

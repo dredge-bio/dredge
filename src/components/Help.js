@@ -41,6 +41,15 @@ module.exports = function Help() {
         The watched gene list can be sorted by a number of features (enrichment in on treatment or the other, average abundance, and others), and can also be exported. To view a summary of gene expression in all treatments through all time points, the user can click on any gene name in the table, and retrieve a pictogram of all stages, with cells colored by quantitative expression data.
       `),
 
+      h('iframe', {
+        src: 'https://player.vimeo.com/video/336692274',
+        frameborder: "0",
+        width: '100%',
+        height: '400',
+        allow: 'fullscreen',
+        allowfullscreen: true,
+      }),
+
       h(Heading, { as: 'h2', mt: 4 }, 'Creating your own project'),
 
       h(Para, [

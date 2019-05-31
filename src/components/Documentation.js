@@ -26,7 +26,7 @@ code, pre {
 
 pre > code {
   border: unset;
-  white-space: pre;
+  white-space: pre-line;
   padding: unset;
 }
 
