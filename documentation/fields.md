@@ -53,3 +53,8 @@ The URL of an SVG diagram of treatments in this project. This will generate a gr
 <!-- grid -->
 
 The URL to a table of values containing the names of treatment identifiers. If the file contains tabs, it will be parsed as a TSV, otherwise it will be parsed as a CSV. This table will be used to create a graphic heat map of transcript abundances across treatments. If left blank, a default grid will be generated.
+
+
+<!-- heatmapMinimumMaximum -->
+
+The two URLs above create heat maps with a color scale ranging from 0 to the maximum abundance of a treatment across every transcript. This value sets a minimum for the maxium abundance of that color scale.

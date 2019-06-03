@@ -473,6 +473,16 @@ class NewProject extends React.Component {
                 showURL: config.grid && resolve(config.grid),
                 isRelativeURL,
               }),
+
+              h(Input, {
+                type: 'number',
+                min: 0,
+                step: 1,
+                label: 'Minimum heatmap abundance',
+                onChange: this.setField('heatmapMinimumMaximum', parseInt),
+                documentation: 'heatmapMinimumMaximum',
+                value: config.heatmapMinimumMaximum,
+              }),
             ]),
           ]),
 
@@ -486,7 +496,7 @@ class NewProject extends React.Component {
             h(DocBox, [
               h(Documentation, { fieldName: 'instructions' }),
 
-              h(Box, { as: 'h3', mt: 3, mb: 2, }, 'Video tutorial'),
+              h(Box, { as: 'h3', mt: 3, mb: 2 }, 'Video tutorial'),
 
               h('iframe', {
                 src: 'https://player.vimeo.com/video/336692169',
