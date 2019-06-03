@@ -10,6 +10,7 @@ const h = require('react-hyperscript')
     , onResize = require('../util/Sized')
     , { Flex, Button } = require('rebass')
     , { MagnifyingGlass, Target, Reset } = require('../Icons')
+    , Action = require('../../actions')
 
 const PlotWrapper = styled.div`
 .button-group {
@@ -66,6 +67,49 @@ const padding = {
   t: 60,
   b: 60,
 }
+
+const TreatmentLabels = styled.div`
+position: absolute;
+left: ${padding.l - 26}px;
+right: 172px;
+white-space: nowrap;
+padding-bottom: 9px;
+padding-left: 26px;
+
+&:hover {
+  z-index: 2;
+  background-color: hsla(45,31%,93%,1);
+  padding-right: 1em;
+  overflow: unset;
+  right: unset;
+}
+
+> div {
+  font-family: SourceSansPro;
+  font-weight: bold;
+  font-size: 20px;
+
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+> div:hover {
+  width: unset;
+  overflow:  unset;
+  text-overflow:  unset;
+}
+
+> span {
+  position: absolute;
+  left: 0;
+  top: 28px;
+  font-family: SourceSansPro;
+  font-weight: bold;
+  font-size: 16px;
+  color: #888;
+}
+`
 
 const GRID_SQUARE_UNIT = 8
 
@@ -500,7 +544,14 @@ class Plot extends React.Component {
       _yScale,
     } = this.state
 
-    const { treatmentALabel, treatmentBLabel, updateOpts } = this.props
+    const {
+      dispatch,
+      updateOpts,
+      treatmentA,
+      treatmentB,
+      treatmentALabel,
+      treatmentBLabel,
+    } = this.props
 
     if (this.props.width == null) {
       return null
@@ -518,6 +569,28 @@ class Plot extends React.Component {
         showHelp == null ? null : (
           h('p.help-text', help[showHelp])
         ),
+
+        h(TreatmentLabels, {
+        }, [
+          h('div', {
+            onMouseLeave() {
+              dispatch(Action.SetHoveredTreatment(null))
+            },
+            onMouseEnter() {
+              dispatch(Action.SetHoveredTreatment(treatmentA))
+            },
+          }, treatmentALabel),
+          h('span', {
+          }, 'vs.'),
+          h('div', {
+            onMouseLeave() {
+              dispatch(Action.SetHoveredTreatment(null))
+            },
+            onMouseEnter() {
+              dispatch(Action.SetHoveredTreatment(treatmentB))
+            },
+          }, treatmentBLabel),
+        ]),
 
         h('div', {
           style: {
@@ -598,28 +671,6 @@ class Plot extends React.Component {
           h('defs', [
           ]),
 
-          h('text', {
-            x: padding.l + 8,
-            y: padding.t - 30,
-            style: {
-              fontSize: 20,
-              fontWeight: 'bold',
-              textAnchor: 'start',
-              dominantBaseline: 'ideographic',
-            },
-          }, treatmentALabel ),
-
-          h('text', {
-            x: padding.l + 8,
-            y: padding.t - 6,
-            style: {
-              fontSize: 20,
-              fontWeight: 'bold',
-              textAnchor: 'start',
-              dominantBaseline: 'ideographic',
-            },
-          }, treatmentBLabel ),
-
           // X Axis label
           h('text', {
             dx: padding.l,
@@ -688,19 +739,27 @@ module.exports = R.pipe(
 
     let treatmentALabel
       , treatmentBLabel
+      , treatmentA
+      , treatmentB
 
     {
       const { view } = state
 
       if (view) {
-        const { comparedTreatments=[] } = view;
+        const { comparedTreatments=[] } = view
 
-        [ treatmentALabel, treatmentBLabel ] = comparedTreatments
+        ;[ treatmentA, treatmentB ] = comparedTreatments
+
+        ;[ treatmentALabel, treatmentBLabel ] = comparedTreatments
           .map(t => R.path(['treatments', t, 'label'], project) || t)
+
       }
     }
+
     return Object.assign({
       abundanceLimits: R.path(['config', 'abundanceLimits'], project),
+      treatmentA,
+      treatmentB,
       treatmentALabel,
       treatmentBLabel,
     }, R.pick([
