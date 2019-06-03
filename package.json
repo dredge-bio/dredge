@@ -2,7 +2,7 @@
   "name": "sophie-genes",
   "author": "Patrick Golden",
   "license": "AGPL-3.0-or-later",
-  "version": "6.14.0",
+  "version": "6.15.0",
   "private": true,
   "browserify": {
     "transform": [
