@@ -48,6 +48,9 @@ module.exports = function Help() {
         height: '400',
         allow: 'fullscreen',
         allowFullScreen: true,
+        style: {
+          border: '2px solid #333',
+        },
       }),
 
       h(Heading, { as: 'h2', mt: 4 }, 'Creating your own project'),

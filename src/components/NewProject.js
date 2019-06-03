@@ -486,7 +486,7 @@ class NewProject extends React.Component {
             h(DocBox, [
               h(Documentation, { fieldName: 'instructions' }),
 
-              h(Box, { as: 'h3', mb: 1, }, 'Video tutorial'),
+              h(Box, { as: 'h3', mt: 3, mb: 2, }, 'Video tutorial'),
 
               h('iframe', {
                 src: 'https://player.vimeo.com/video/336692169',
@@ -495,6 +495,9 @@ class NewProject extends React.Component {
                 height: '400',
                 allow: 'fullscreen',
                 allowFullScreen: true,
+                style: {
+                  border: '2px solid #333',
+                },
               }),
             ]),
           ]),
