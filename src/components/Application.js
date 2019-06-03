@@ -310,7 +310,7 @@ const Header = R.pipe(
 })
 
 const MIN_HEIGHT = 700
-    , MIN_WIDTH = 1200
+    , MIN_WIDTH = 1280
 
 const ApplicationContainer = styled.div`
   display: grid;
