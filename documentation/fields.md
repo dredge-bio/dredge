@@ -57,4 +57,4 @@ The URL to a table of values containing the names of treatment identifiers. If t
 
 <!-- heatmapMinimumMaximum -->
 
-The two URLs above create heat maps with a color scale ranging from 0 to the maximum abundance of a treatment across every transcript. This value sets a minimum for the maxium abundance of that color scale.
+The two URLs above create heat maps for each transcript, with a color scale ranging from 0 to the maximum abundance of a transcript across all treatments. This value sets a minimum range for that color scale. For example, a value of 50 will ensure that the darkest color on the heatmap is never assigned to less than 50, even if transcript abundance only goes up to 8.
