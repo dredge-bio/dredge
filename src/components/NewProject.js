@@ -4,6 +4,8 @@ const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
     , debounce = require('debounce')
+    , { stringifyTree } = require('stringify-tree')
+    , { version } = require('../../package.json')
     , { Flex, Box, Card, Button, Heading } = require('rebass')
     , { connect } = require('react-redux')
     , styled = require('styled-components').default
@@ -194,6 +196,86 @@ function getCanonicalBaseURL(_baseURL) {
   return { isRelativeURL, baseURL, resolve }
 }
 
+function formatTree(config) {
+  const fakeBase = 'http://example.com'
+      , rootURL = new URL(config._baseURL, fakeBase).href
+      , baseFolder = `dredge-${version}`
+
+  let tree = {
+    [fakeBase]: {
+      [baseFolder]: {
+        lib: {
+          '...': null,
+        },
+        'r-scripts': {
+          '...': null,
+        },
+        [`dredge-${version}.js`]: null,
+        [`dredge-${version}.min.js`]: null,
+        'favicon.ico': null,
+        'index.html': null,
+      },
+    },
+  }
+
+  const addEntry = entry => {
+    const url = new URL(entry, rootURL)
+        , path = [fakeBase, baseFolder, ...url.pathname.slice(1).split('/')]
+
+    tree = R.assocPath(path, null, tree)
+  }
+
+  // addEntry('./')
+  addEntry(config.treatments)
+  addEntry(config.abundanceMeasures)
+
+  if (config.diagram) addEntry(config.diagram)
+  if (config.grid) addEntry(config.grid)
+  if (config.transcriptAliases) addEntry(config.transcriptAliases)
+
+  const pairwiseNameOK = (
+    config.pairwiseName &&
+    config.pairwiseName.includes('%A') &&
+    config.pairwiseName.includes('%B')
+  )
+
+  if (pairwiseNameOK) {
+    addEntry(config.pairwiseName
+      .replace('%A', 'T1')
+      .replace('%B', 'T2'))
+
+    addEntry(config.pairwiseName
+      .replace('%A', 'T2')
+      .replace('%B', 'T3'))
+  }
+
+  tree = tree[fakeBase]
+
+  return stringifyTree(
+    tree,
+    t => Object.keys(t)[0],
+    t => {
+      const val = Object.values(t)[0]
+      if (val) {
+        const entries = Object.entries(val)
+
+        entries.sort(([ k1, v1 ], [ k2, v2 ]) => {
+          if (v1 && !v2) return -1
+          if (!v1 && v2) return 1
+          if (v1 && v2) return 0
+
+          if (k1 > k2) return 1
+          if (k1 < k2) return -1
+
+          return 0
+        })
+
+        return entries.map(([ k, v ]) => ({ [k]: v }))
+      }
+    }
+  )
+}
+
 class NewProject extends React.Component {
   constructor(props) {
     super(props);
@@ -263,6 +345,8 @@ class NewProject extends React.Component {
     const { navigateTo } = this.props
         , { config } = this.state
         , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
+
+    const tree = formatTree(config)
 
     return (
       h(Box, { p: 3 }, [
@@ -494,6 +578,12 @@ class NewProject extends React.Component {
             borderColor: '#ccc',
           }, [
             h(DocBox, [
+              h(Box, { as: 'h2', mt: 3, mb: 2 }, 'Expected project layout'),
+
+              h(Box, { as: 'pre', mt: 3 }, [
+                tree,
+              ]),
+              /*
               h(Documentation, { fieldName: 'instructions' }),
 
               h(Box, { as: 'h3', mt: 3, mb: 2 }, 'Video tutorial'),
@@ -509,6 +599,7 @@ class NewProject extends React.Component {
                   border: '2px solid #333',
                 },
               }),
+              */
             ]),
           ]),
         ]),
