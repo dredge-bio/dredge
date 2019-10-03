@@ -44,6 +44,14 @@ li p {
   margin: ${props => props.theme.space[2]}px 0;
 }
 
+p:first-of-type {
+  margin-top: 0;
+}
+
+p:last-of-type {
+  margin-bottom: 0;
+}
+
 `
 
 module.exports = function Documentation({ fieldName }) {
