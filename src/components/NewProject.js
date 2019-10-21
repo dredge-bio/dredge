@@ -167,7 +167,14 @@ function LimitInput({ value, onChange }) {
 }
 
 function Input(props) {
-  const { showURL, isRelativeURL } = props
+  const {
+    showURL,
+    isRelativeURL,
+    helpField,
+    showHelp,
+    showHelpText,
+    hideHelpText,
+  } = props
 
   const innerProps = R.omit([
     'children',
@@ -181,9 +188,6 @@ function Input(props) {
   ], props)
 
   const replaceRelative = showURL && isRelativeURL && showURL.startsWith(window.location.origin)
-
-  const showHelpText = () => props.onHelpChange(props.documentation)
-      , hideHelpText = () => props.onHelpChange(null)
 
   return [
     h('label', {
@@ -201,29 +205,12 @@ function Input(props) {
       spellCheck: false,
     }, innerProps)),
 
-    h('div.help', {
-      key: 'help',
-    }, !props.documentation ? null : [
-      h('.icon', {
-        tabIndex: 0,
-        onClick: () => {
-          if (props.showHelp === props.documentation) {
-            hideHelpText()
-          } else {
-            showHelpText()
-          }
-        },
-        ['data-field']: props.documentation,
-      }, [
-        h('span.help', '?'),
-      ]),
-
-      (props.showHelp !== props.documentation) ? null : (
-        h('.help-box', [
-          h(Documentation, { fieldName: props.documentation }),
-        ])
-      ),
-    ]),
+    !helpField ? h('div') : h(Help, {
+      helpField,
+      showHelpText,
+      hideHelpText,
+      showHelp,
+    }),
   ]
 }
 
@@ -276,6 +263,37 @@ function getCanonicalBaseURL(_baseURL) {
   const resolve = path => resolveURL(baseURL, path, baseURL)
 
   return { isRelativeURL, baseURL, resolve }
+}
+
+function Help({
+  helpField,
+  showHelp,
+  showHelpText,
+  hideHelpText,
+}) {
+  return (
+    h('div.help', [
+      h('.icon', {
+        tabIndex: 0,
+        onClick: () => {
+          if (showHelp === helpField) {
+            hideHelpText()
+          } else {
+            showHelpText()
+          }
+        },
+        ['data-field']: helpField,
+      }, [
+        h('span.help', '?'),
+      ]),
+
+      (showHelp !== helpField) ? null : (
+        h('.help-box', [
+          h(Documentation, { fieldName: helpField }),
+        ])
+      ),
+    ])
+  )
 }
 
 class NewProject extends React.Component {
@@ -363,8 +381,9 @@ class NewProject extends React.Component {
         , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
 
     const inputFields = field => ({
-      documentation: field,
-      onHelpChange: this.setHelpField,
+      helpField: field,
+      showHelpText: () => this.setHelpField(field),
+      hideHelpText: () => this.setHelpField(null),
       showHelp: this.state.showHelp,
     })
 
@@ -469,12 +488,11 @@ class NewProject extends React.Component {
                   isRelativeURL,
                 })),
 
-                /*
-                h(Field, { mb: 4 }, [
-                  h('label', [
-                    h('span.label-text', 'MA plot limits'),
-                  ]),
+                h('label', [
+                  h('span.label-text', 'MA plot limits'),
+                ]),
 
+                h(Box, [
                   h(Box, [
                     h('span.axis-label-text', 'X axis'),
                     ' (log₂ Average Transcript Abundance)',
@@ -510,14 +528,12 @@ class NewProject extends React.Component {
                       }),
                     ]),
                   ]),
-
-                  h(Documentation, { fieldName: 'maPlot' }),
                 ]),
-                */
+
+                h(Help, Object.assign(inputFields('maPlot'))),
 
                 h(Input, Object.assign(inputFields('transcriptAliases'), {
                   label: 'Transcript aliases URL',
-                  documentation: 'transcriptAliases',
                   onChange: this.setField('transcriptAliases'),
                   value: config.transcriptAliases,
                   showURL: config.transcriptAliases && resolve(config.transcriptAliases),
@@ -533,12 +549,11 @@ class NewProject extends React.Component {
                   isRelativeURL,
                 })),
 
-                /*
-                h(Field, { mb: 4 }, [
-                  h('label', [
-                    h('span.label-text', 'Transcript hyperlink template'),
-                  ]),
+                h('label', [
+                  h('span.label-text', 'Transcript hyperlink template'),
+                ]),
 
+                h(Box, [
                   h(Box, [
                     h('span.axis-label-text', 'Hyperlink label'),
                     h(Box, { mt: 1, mb: 2 }, [
@@ -566,10 +581,9 @@ class NewProject extends React.Component {
                       }),
                     ]),
                   ]),
-
-                  h(Documentation, { fieldName: 'transcriptHyperlink' }),
                 ]),
-                */
+
+                h(Help, Object.assign(inputFields('transcriptHyperlink'))),
 
                 h(Input, {
                   label: 'Diagram URL',
@@ -578,7 +592,7 @@ class NewProject extends React.Component {
                   onHelpChange: this.setHelpField,
                   getPreventHideHelp: () => this.state.preventHideHelp,
                   setPreventHideHelp: () => this.setState({ preventHideHelp: true }),
-                  documentation: 'diagram',
+                  helpField: 'diagram',
                   value: config.diagram,
                   showURL: config.diagram && resolve(config.diagram),
                   isRelativeURL,
