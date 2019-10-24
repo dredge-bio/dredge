@@ -80,7 +80,7 @@ const resources = {
 
   'configure': {
     makeTitle: R.always('Configure'),
-    Component: require('./components/NewProject'),
+    Component: require('./components/ProjectConfigure'),
   },
 }
 

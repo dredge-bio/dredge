@@ -2,7 +2,7 @@
 
 const h = require('react-hyperscript')
     , R = require('ramda')
-    , { version } = require('../../package.json')
+    , { version } = require('../../../package.json')
     , fakeBase = 'http://example.com'
     , baseFolder = `dredge-${version}`
 

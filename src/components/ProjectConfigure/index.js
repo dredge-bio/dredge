@@ -9,10 +9,10 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { Navigable, Route } = require('org-shell')
     , { saveAs } = require('file-saver')
-    , { readFile } = require('../utils')
-    , Action = require('../actions')
+    , { readFile } = require('../../utils')
+    , Action = require('../../actions')
+    , FileInput = require('../util/FileInput')
     , Documentation = require('./Documentation')
-    , FileInput = require('./util/FileInput')
     , ConfigTree = require('./ConfigTree')
 
 const DocBox = styled(Box)`
