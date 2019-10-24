@@ -12,7 +12,7 @@ const h = require('react-hyperscript')
     , { readFile } = require('../../utils')
     , Action = require('../../actions')
     , FileInput = require('../util/FileInput')
-    , Documentation = require('./Documentation')
+    , ConfigField = require('./ConfigField')
     , ConfigTree = require('./ConfigTree')
 
 const DocBox = styled(Box)`
@@ -167,51 +167,15 @@ function LimitInput({ value, onChange }) {
 }
 
 function Input(props) {
-  const {
-    showURL,
-    isRelativeURL,
-    helpField,
-    showHelp,
-    showHelpText,
-    hideHelpText,
-  } = props
-
-  const innerProps = R.omit([
-    'children',
-    'help',
-    'label',
-    'required',
-    'showURL',
-    'isRelativeURL',
-    'onHelpChange',
-    'showHelp',
-  ], props)
-
-  const replaceRelative = showURL && isRelativeURL && showURL.startsWith(window.location.origin)
-
-  return [
-    h('label', {
-      key: 'label',
-      ['data-required']: !!props.required,
-    }, [
-      h('span.label-text', props.label),
-    ]),
-
+  return (
     h('input', Object.assign({
       key: 'input',
       type: 'text',
       autoCorrect: 'off',
       autoCapitalize: 'off',
       spellCheck: false,
-    }, innerProps)),
-
-    !helpField ? h('div') : h(Help, {
-      helpField,
-      showHelpText,
-      hideHelpText,
-      showHelp,
-    }),
-  ]
+    }, props))
+  )
 }
 
 /*
@@ -263,37 +227,6 @@ function getCanonicalBaseURL(_baseURL) {
   const resolve = path => resolveURL(baseURL, path, baseURL)
 
   return { isRelativeURL, baseURL, resolve }
-}
-
-function Help({
-  helpField,
-  showHelp,
-  showHelpText,
-  hideHelpText,
-}) {
-  return (
-    h('div.help', [
-      h('.icon', {
-        tabIndex: 0,
-        onClick: () => {
-          if (showHelp === helpField) {
-            hideHelpText()
-          } else {
-            showHelpText()
-          }
-        },
-        ['data-field']: helpField,
-      }, [
-        h('span.help', '?'),
-      ]),
-
-      (showHelp !== helpField) ? null : (
-        h('.help-box', [
-          h(Documentation, { fieldName: helpField }),
-        ])
-      ),
-    ])
-  )
 }
 
 class NewProject extends React.Component {
@@ -380,12 +313,14 @@ class NewProject extends React.Component {
         , { config } = this.state
         , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
 
+/*
     const inputFields = field => ({
       helpField: field,
       showHelpText: () => this.setHelpField(field),
       hideHelpText: () => this.setHelpField(null),
       showHelp: this.state.showHelp,
     })
+    */
 
     return (
       h(Box, { p: 3 }, [
@@ -442,57 +377,65 @@ class NewProject extends React.Component {
                   }
                 },
               }, [
-                h(Input, {
+                h(ConfigField, {
+                  fieldName: 'label',
                   label: 'Project name',
                   required: true,
-                  onChange: this.setField('label'),
-                  showHelp: this.state.showHelp,
-                  value: config.label,
-                }),
-
-                h(Input, Object.assign(inputFields('baseURL'), {
-                  label: 'Configuration file directory',
-                  required: true,
-                  onChange: this.setField('baseURL'),
-                  value: config._baseURL,
-                  showURL: resolve(''),
-                  isRelativeURL,
-                })),
-
-                h(Input, Object.assign(inputFields('expressionMatrix'), {
-                  label: 'Gene expression matrix URL',
-                  required: true,
-                  onChange: this.setField('abundanceMeasures'),
-                  value: config.abundanceMeasures,
-                  showURL: config.abundanceMeasures && resolve(config.abundanceMeasures),
-                  isRelativeURL,
-                })),
-
-
-
-                h(Input, Object.assign(inputFields('treatments'), {
-                  label: 'Treatment information URL',
-                  required: true,
-                  onChange: this.setField('treatments'),
-                  value: config.treatments,
-                  showURL: config.treatments && resolve(config.treatments),
-                  isRelativeURL,
-                })),
-
-                h(Input, Object.assign(inputFields('pairwiseName'), {
-                  label: 'Pairwise comparison URL template',
-                  required: true,
-                  onChange: this.setField('pairwiseName'),
-                  value: config.pairwiseName,
-                  showURL: config.pairwiseName && resolve(config.pairwiseName),
-                  isRelativeURL,
-                })),
-
-                h('label', [
-                  h('span.label-text', 'MA plot limits'),
+                }, [
+                  h(Input, {
+                    onChange: this.setField('label'),
+                    value: config.label,
+                  }),
                 ]),
 
-                h(Box, [
+                h(ConfigField, {
+                  fieldName: 'baseURL',
+                  label: 'Configuration file directory',
+                  required: true,
+                }, [
+                  h(Input, {
+                    onChange: this.setField('baseURL'),
+                    value: config._baseURL,
+                  }),
+                ]),
+
+                h(ConfigField, {
+                  fieldName: 'expressionMatrix',
+                  label: 'Gene expression matrix URL',
+                  required: true,
+                }, [
+                  h(Input, {
+                    onChange: this.setField('abundanceMeasures'),
+                    value: config.abundanceMeasures,
+                  }),
+                ]),
+
+                h(ConfigField, {
+                  fieldName: 'treatments',
+                  label: 'Treatment information URL',
+                  required: true,
+                }, [
+                  h(Input, {
+                    onChange: this.setField('treatments'),
+                    value: config.treatments,
+                  }),
+                ]),
+
+                h(ConfigField, {
+                  fieldName: 'pairwiseName',
+                  label: 'Pairwise comparison URL template',
+                  required: true,
+                }, [
+                  h(Input, {
+                    onChange: this.setField('pairwiseName'),
+                    value: config.pairwiseName,
+                  }),
+                ]),
+
+                h(ConfigField, {
+                  fieldName: 'maPlot',
+                  label: 'MA plot limits',
+                }, [
                   h(Box, [
                     h('span.axis-label-text', 'X axis'),
                     ' (log₂ Average Transcript Abundance)',
@@ -530,30 +473,30 @@ class NewProject extends React.Component {
                   ]),
                 ]),
 
-                h(Help, Object.assign(inputFields('maPlot'))),
-
-                h(Input, Object.assign(inputFields('transcriptAliases'), {
+                h(ConfigField, {
+                  fieldName: 'transcriptAliases',
                   label: 'Transcript aliases URL',
-                  onChange: this.setField('transcriptAliases'),
-                  value: config.transcriptAliases,
-                  showURL: config.transcriptAliases && resolve(config.transcriptAliases),
-                  isRelativeURL,
-                })),
-
-                h(Input, Object.assign(inputFields('readme'), {
-                  label: 'Project documentation',
-                  required: false,
-                  onChange: this.setField('readme'),
-                  value: config.readme,
-                  showURL: config.readme && resolve(config.readme),
-                  isRelativeURL,
-                })),
-
-                h('label', [
-                  h('span.label-text', 'Transcript hyperlink template'),
+                }, [
+                  h(Input, {
+                    onChange: this.setField('transcriptAliases'),
+                    value: config.transcriptAliases,
+                  }),
                 ]),
 
-                h(Box, [
+                h(ConfigField, {
+                  fieldName: 'readme',
+                  label: 'Project documentation',
+                }, [
+                  h(Input, {
+                    onChange: this.setField('readme'),
+                    value: config.readme,
+                  }),
+                ]),
+
+                h(ConfigField, {
+                  fieldName: 'transcriptHyperlink',
+                  label: 'Transcript hyperlink template',
+                }, [
                   h(Box, [
                     h('span.axis-label-text', 'Hyperlink label'),
                     h(Box, { mt: 1, mb: 2 }, [
@@ -583,37 +526,38 @@ class NewProject extends React.Component {
                   ]),
                 ]),
 
-                h(Help, Object.assign(inputFields('transcriptHyperlink'))),
-
-                h(Input, {
+                h(ConfigField, {
+                  fieldName: 'diagram',
                   label: 'Diagram URL',
-                  onChange: this.setField('diagram'),
-                  showHelp: this.state.showHelp,
-                  onHelpChange: this.setHelpField,
-                  getPreventHideHelp: () => this.state.preventHideHelp,
-                  setPreventHideHelp: () => this.setState({ preventHideHelp: true }),
-                  helpField: 'diagram',
-                  value: config.diagram,
-                  showURL: config.diagram && resolve(config.diagram),
-                  isRelativeURL,
-                }),
+                }, [
+                  h(Input, {
+                    onChange: this.setField('diagram'),
+                    value: config.diagram,
+                  }),
+                ]),
 
-                h(Input, Object.assign(inputFields('grid'), {
+                h(ConfigField, {
+                  fieldName: 'grid',
                   label: 'Grid URL',
-                  onChange: this.setField('grid'),
-                  value: config.grid,
-                  showURL: config.grid && resolve(config.grid),
-                  isRelativeURL,
-                })),
+                }, [
+                  h(Input, {
+                    onChange: this.setField('grid'),
+                    value: config.grid,
+                  }),
+                ]),
 
-                h(Input, Object.assign(inputFields('heatmapMinimumMaximum'), {
-                  type: 'number',
-                  min: 0,
-                  step: 1,
+                h(ConfigField, {
+                  fieldName: 'heatmapMinimumMaximum',
                   label: 'Minimum heatmap abundance',
-                  onChange: this.setField('heatmapMinimumMaximum', parseInt),
-                  value: config.heatmapMinimumMaximum,
-                })),
+                }, [
+                  h(Input, {
+                    type: 'number',
+                    min: 0,
+                    step: 1,
+                    onChange: this.setField('heatmapMinimumMaximum'),
+                    value: config.heatmapMinimumMaximum,
+                  }),
+                ]),
               ]),
             ]),
           ]),
