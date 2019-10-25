@@ -23,10 +23,10 @@ const ConfigContainer = styled.div`
 
 const FieldsWrapper = styled(Box)`
 display: grid;
-grid-template-columns: auto auto auto;
+grid-template-columns: auto 384px auto;
 align-items: center;
 
-grid-row-gap: 1rem;
+grid-row-gap: .7rem;
 
 > label {
   justify-self: right;
@@ -110,6 +110,7 @@ grid-row-gap: 1rem;
 
 .axis-label-text {
   font-weight: bold;
+  width: 50px;
 }
 
 .axis-label-type {
@@ -123,7 +124,7 @@ input {
 }
 
 input[type="text"] {
-  width: 384px;
+  width: 100%;
 }
 
 .resolved-url {
@@ -236,6 +237,10 @@ class NewProject extends React.Component {
         showHelp: fieldName,
         preventHideHelp: false,
       })
+    }, () => {
+      setTimeout(() => {
+        this.setState({ showHelp: null })
+      }, 0)
     })
   }
 
@@ -278,66 +283,76 @@ class NewProject extends React.Component {
   render() {
     const { navigateTo } = this.props
         , { config, showHelp } = this.state
+        , { setField, setHelpField } = this
         , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
-
-/*
-    const inputFields = field => ({
-      helpField: field,
-      showHelpText: () => this.setHelpField(field),
-      hideHelpText: () => this.setHelpField(null),
-      showHelp: this.state.showHelp,
-    })
-    */
 
     return (
       h(Box, { p: 3 }, [
-        h(Heading, { as: 'h1', fontSize: 5, mb: 3 }, 'New project'),
-
-        h(Box, {
-          my: 3,
-          p: 3,
-          bg: '#ddd',
-          style: {
-            border: '1px solid #999',
-          },
-        }, [
-          /*
-          h(Button, {
-            mr: 5,
-            onClick: () => {
-              this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
-            },
-          }, 'Reset form'),
-          */
-
-          h(Button, {
-            mx: 4,
-            onClick: () => {
-              navigateTo(new Route('test'))
-            },
-          }, 'Test'),
-
-
-          h(FileInput, {
-            mx: 4,
-            onChange: this.handleLoadConfig,
-          }, 'Load'),
-
-          h(Button, {
-            mx: 4,
-            onClick: () => {
-              const blob = new Blob(
-                [JSON.stringify(this.getProjectJSON(), true, '  ')],
-                { type: 'application/json;charset=utf-8' })
-
-              saveAs(blob, 'project.json')
-            },
-          }, 'Save'),
-        ]),
 
         h(ConfigContainer, [
           h(Box, [
-            h(Heading, { as: 'h2', mb: 2, fontSize: 4 }, 'Configuration'),
+            h(Flex, {
+              alignItems: 'center',
+              mb: 4,
+            }, [
+              h(Heading, {
+                as: 'h1',
+                fontSize: 5,
+                mr: 3,
+              }, 'Project configuration'),
+
+              h(Box, {
+                //bg: '#ddd',
+                style: {
+                  // border: '1px solid #999',
+                },
+              }, [
+                /*
+                h(Button, {
+                  mr: 5,
+                  onClick: () => {
+                    this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
+                  },
+                }, 'Reset form'),
+                */
+
+                h(Button, {
+                  mx: 3,
+                  style: {
+                    padding: '10px 20px',
+                    fontSize: 16,
+                  },
+                  onClick: () => {
+                    navigateTo(new Route('test'))
+                  },
+                }, 'Test'),
+
+
+                h(FileInput, {
+                  mx: 3,
+                  style: {
+                    padding: '10px 20px',
+                    fontSize: 16,
+                  },
+                  onChange: this.handleLoadConfig,
+                }, 'Load'),
+
+                h(Button, {
+                  mx: 3,
+                  style: {
+                    padding: '10px 20px',
+                    fontSize: 16,
+                  },
+                  onClick: () => {
+                    const blob = new Blob(
+                      [JSON.stringify(this.getProjectJSON(), true, '  ')],
+                      { type: 'application/json;charset=utf-8' })
+
+                    saveAs(blob, 'project.json')
+                  },
+                }, 'Save'),
+              ]),
+            ]),
 
             h(FieldsWrapper, {
               onKeyDown: e => {
@@ -352,62 +367,57 @@ class NewProject extends React.Component {
             }, [
               h(ConfigField, {
                 fieldName: 'label',
-                label: 'Project name',
-                required: true,
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('label'),
+                  onChange: setField('label'),
                   value: config.label,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'baseURL',
-                label: 'Configuration file directory',
-                required: true,
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('baseURL'),
+                  onChange: setField('baseURL'),
                   value: config._baseURL,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'expressionMatrix',
-                label: 'Gene expression matrix URL',
-                required: true,
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('abundanceMeasures'),
+                  onChange: setField('abundanceMeasures'),
                   value: config.abundanceMeasures,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'treatments',
-                label: 'Treatment information URL',
-                required: true,
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('treatments'),
+                  onChange: setField('treatments'),
                   value: config.treatments,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'pairwiseName',
-                label: 'Pairwise comparison URL template',
-                required: true,
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('pairwiseName'),
+                  onChange: setField('pairwiseName'),
                   value: config.pairwiseName,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'maPlot',
-                label: 'MA plot limits',
+                setHelpField,
               }, [
                 h(Box, [
                   h('span.axis-label-text', 'X axis'),
@@ -416,13 +426,13 @@ class NewProject extends React.Component {
                     h('span.axis-label-type', 'min'),
                     h(LimitInput, {
                       value: config.abundanceLimits[0][0],
-                      onChange: this.setField(['abundanceLimits', 0, 0], parseFloat),
+                      onChange: setField(['abundanceLimits', 0, 0], parseFloat),
                     }),
 
                     h('span.axis-label-type', 'max'),
                     h(LimitInput, {
                       value: config.abundanceLimits[0][1],
-                      onChange: this.setField(['abundanceLimits', 0, 1], parseFloat),
+                      onChange: setField(['abundanceLimits', 0, 1], parseFloat),
                     }),
                   ]),
                 ]),
@@ -434,13 +444,13 @@ class NewProject extends React.Component {
                     h('span.axis-label-type', 'min'),
                     h(LimitInput, {
                       value: config.abundanceLimits[1][0],
-                      onChange: this.setField(['abundanceLimits', 1, 0], parseFloat),
+                      onChange: setField(['abundanceLimits', 1, 0], parseFloat),
                     }),
 
                     h('span.axis-label-type', 'max'),
                     h(LimitInput, {
                       value: config.abundanceLimits[1][1],
-                      onChange: this.setField(['abundanceLimits', 1, 1], parseFloat),
+                      onChange: setField(['abundanceLimits', 1, 1], parseFloat),
                     }),
                   ]),
                 ]),
@@ -448,52 +458,52 @@ class NewProject extends React.Component {
 
               h(ConfigField, {
                 fieldName: 'transcriptAliases',
-                label: 'Transcript aliases URL',
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('transcriptAliases'),
+                  onChange: setField('transcriptAliases'),
                   value: config.transcriptAliases,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'readme',
-                label: 'Project documentation',
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('readme'),
+                  onChange: setField('readme'),
                   value: config.readme,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'transcriptHyperlink',
-                label: 'Transcript hyperlink template',
+                setHelpField,
               }, [
-                h(Box, [
-                  h('span.axis-label-text', 'Hyperlink label'),
-                  h(Box, { mt: 1, mb: 2 }, [
+                h(Flex, { alignItems: 'center', mb: 2 }, [
+                  h('span.axis-label-text .label-text', 'Label'),
+                  h(Box, { flex: 1 }, [
                     h('input', {
                       autoCorrect: 'off',
                       autoCapitalize: 'off',
                       spellCheck: false,
                       type: 'text',
                       value: R.path(['transcriptHyperlink', 0, 'label'], config) || '',
-                      onChange: this.setField(['transcriptHyperlink', 0, 'label']),
+                      onChange: setField(['transcriptHyperlink', 0, 'label']),
                     }),
                   ]),
                 ]),
 
-                h(Box, [
-                  h('span.axis-label-text', 'URL'),
-                  h(Box, { mt: 1, mb: 2 }, [
+                h(Flex, { alignItems: 'center' }, [
+                  h('span.axis-label-text .label-text', 'URL'),
+                  h(Box, { flex: 1 }, [
                     h('input', {
                       autoCorrect: 'off',
                       autoCapitalize: 'off',
                       spellCheck: false,
                       type: 'text',
                       value: R.path(['transcriptHyperlink', 0, 'url'], config) || '',
-                      onChange: this.setField(['transcriptHyperlink', 0, 'url']),
+                      onChange: setField(['transcriptHyperlink', 0, 'url']),
                     }),
                   ]),
                 ]),
@@ -501,33 +511,33 @@ class NewProject extends React.Component {
 
               h(ConfigField, {
                 fieldName: 'diagram',
-                label: 'Diagram URL',
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('diagram'),
+                  onChange: setField('diagram'),
                   value: config.diagram,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'grid',
-                label: 'Grid URL',
+                setHelpField,
               }, [
                 h(Input, {
-                  onChange: this.setField('grid'),
+                  onChange: setField('grid'),
                   value: config.grid,
                 }),
               ]),
 
               h(ConfigField, {
                 fieldName: 'heatmapMinimumMaximum',
-                label: 'Minimum heatmap abundance',
+                setHelpField,
               }, [
                 h(Input, {
                   type: 'number',
                   min: 0,
                   step: 1,
-                  onChange: this.setField('heatmapMinimumMaximum'),
+                  onChange: setField('heatmapMinimumMaximum'),
                   value: config.heatmapMinimumMaximum,
                 }),
               ]),

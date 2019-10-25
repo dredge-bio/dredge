@@ -13,11 +13,9 @@ Variables which will be replaced:
 %%PROJECT-DATA-DIR%% - The directory in which the project configuration files will live
 
 -->
-## Instructions
-
 To add a new project based on your own dataset, first download a local copy of DrEdGE so that you can work will files on your own machine. This zip file contains all of the static files and R scripts needed to generate and serve files based on your data: [%%ZIP-FILENAME%%](%%ZIP-FILENAME%%)
 
-### Setting up DrEdGE
+## Setting up DrEdGE
 
 You will need to serve this page via a local Web server on your own machine. If you have Python installed, this can be done by changing to the directory containing the file `index.html` and running `python3 -m http.server` (Python 3) or `python -m SimpleHTTPServer` (Python 2). These commands will serve DrEdGE on your own machine on port 8000. Add a number at the end of the command to change the default port number. Once you have your local application up and running, visit the local version of this page. If you used the default port, this will be located at <http://localhost:8000/?page=configure> or <http://127.0.0.1:8000/?page=configure>.
 
@@ -49,7 +47,7 @@ Where the abundance of t1 in r1 is 32.2, the abundance of t1 in r2 is 24.3, and 
 
 Copy this file to the `%%PROJECT-DATA-DIR%%` directory, and record it in the **Gene Expression Matrix URL** field to the left. For this example, we will assume this file is called `%%PROJECT-DATA-DIR%%/expression_matrix.tsv`
 
-### Generating DrEdGE data
+## Generating DrEdGE data
 
 Once these files are ready, you will be able to generate the files for **treatment information** and **pairwise comparisons** as well as the appropriate **MA Plot limits** for your project.
 

@@ -5,6 +5,7 @@ const h = require('react-hyperscript')
     , { Flex, Box } = require('rebass')
     , styled = require('styled-components').default
     , ConfigTree = require('./ConfigTree')
+    , Instructions = require('./Instructions')
     , Documentation = require('./Documentation')
 
 const Tab = styled(Box)`
@@ -39,8 +40,21 @@ module.exports = class HelpPage extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.showHelp !== prevProps.showHelp) {
+      this.setState({
+        selectedTab: 'fields',
+      }, () => {
+        this.setState({
+          showHelp: this.props.showHelp,
+        })
+      })
+    }
+  }
+
   render() {
-    const { selectedTab } = this.state
+    const { selectedTab, showHelp } = this.state
+        , { config } = this.props
 
     return (
       h(Box, {
@@ -53,13 +67,16 @@ module.exports = class HelpPage extends React.Component {
             height: '100%',
             display: 'grid',
             gridTemplateRows: 'auto 1fr',
-          }
+          },
         }, [
           h(Flex, [
             h(Tab, {
               as: 'a',
               href: '#',
-              onClick: () => this.setState({ selectedTab: 'instructions' }),
+              onClick: e => {
+                e.preventDefault()
+                this.setState({ selectedTab: 'instructions' })
+              },
               style: selectedTab !== 'instructions' ? null : {
                 borderBottom: '1px solid white',
               },
@@ -70,12 +87,30 @@ module.exports = class HelpPage extends React.Component {
             h(Tab, {
               as: 'a',
               href: '#',
-              onClick: () => this.setState({ selectedTab: 'layout' }),
+              onClick: e => {
+                e.preventDefault()
+                this.setState({ selectedTab: 'fields' })
+              },
+              style: selectedTab !== 'fields' ? null : {
+                borderBottom: '1px solid white',
+              },
+            }, [
+              h('h2', 'Fields'),
+            ]),
+
+
+            h(Tab, {
+              as: 'a',
+              href: '#',
+              onClick: e => {
+                e.preventDefault()
+                this.setState({ selectedTab: 'layout' })
+              },
               style: selectedTab !== 'layout' ? null : {
                 borderBottom: '1px solid white',
               },
             }, [
-              h('h2', 'Expected file layout'),
+              h('h2', 'Expected layout'),
             ]),
           ]),
 
@@ -88,7 +123,7 @@ module.exports = class HelpPage extends React.Component {
             },
           }, [
             h(Box, {
-              p: 2,
+              py: 4,
               px: 5,
               bg: 'white',
               mt: '-1px',
@@ -102,6 +137,10 @@ module.exports = class HelpPage extends React.Component {
                 overflowY: 'scroll',
               },
             }, [
+              selectedTab !== 'fields' ? null : (
+                h(Instructions, { showHelp })
+              ),
+
               selectedTab !== 'instructions' ? null : (
                 h(Documentation, { fieldName: 'instructions' })
               ),
@@ -133,7 +172,7 @@ module.exports = class HelpPage extends React.Component {
               },
             }),
             */
-          ])
+          ]),
         ]),
       ])
     )
