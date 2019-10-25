@@ -2,13 +2,15 @@
 
 const h = require('react-hyperscript')
     , Documentation = require('./Documentation')
+    , fields = require('./fields')
 
 module.exports = function ConfigField({
   fieldName,
-  label,
-  required=false,
   children,
+  setHelpField,
 }) {
+  const { required, label } = fields[fieldName]
+
   return [
     h('label', {
       key: `${fieldName}-label`,
@@ -24,6 +26,7 @@ module.exports = function ConfigField({
     h(Help, {
       key: `${fieldName}-help`,
       helpField: fieldName,
+      setHelpField,
     }),
   ]
 }
@@ -31,19 +34,14 @@ module.exports = function ConfigField({
 function Help({
   helpField,
   showHelp,
-  showHelpText,
-  hideHelpText,
+  setHelpField,
 }) {
   return (
     h('div.help', [
       h('.icon', {
         tabIndex: 0,
         onClick: () => {
-          if (showHelp === helpField) {
-            hideHelpText()
-          } else {
-            showHelpText()
-          }
+          setHelpField(helpField)
         },
         ['data-field']: helpField,
       }, [

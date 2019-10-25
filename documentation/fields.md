@@ -1,3 +1,7 @@
+<!-- label -->
+
+The name of your project. This will appear in the top bar of the application.
+
 <!-- baseURL -->
 
 The directory where you will save the configuration file generated from this page, relative to the `index.html` file for your DrEdGE project. All of the following settings involving URLs will be resolved relative to this directory.
