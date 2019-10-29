@@ -18,7 +18,12 @@ const h = require('react-hyperscript')
 const ConfigContainer = styled.div`
   display: grid;
   grid-template-columns: auto 1fr;
+  grid-template-rows: calc(100vh - 64px);
   position: relative;
+
+  > div {
+    overflow-y: scroll;
+  }
 `
 
 const FieldsWrapper = styled(Box)`
@@ -287,269 +292,275 @@ class NewProject extends React.Component {
         , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
 
     return (
-      h(Box, { p: 3 }, [
+      h(ConfigContainer, [
+        h(Box, {
+          py: 3,
+          px: 4,
+          style: {
+            overflowY: 'auto',
+          },
+        }, [
+          h(Flex, {
+            alignItems: 'center',
+            mb: 4,
+          }, [
+            h(Heading, {
+              as: 'h1',
+              fontSize: 5,
+              mr: 3,
+            }, 'Project configuration'),
 
-        h(ConfigContainer, [
-          h(Box, [
-            h(Flex, {
-              alignItems: 'center',
-              mb: 4,
-            }, [
-              h(Heading, {
-                as: 'h1',
-                fontSize: 5,
-                mr: 3,
-              }, 'Project configuration'),
-
-              h(Box, {
-                //bg: '#ddd',
-                style: {
-                  // border: '1px solid #999',
-                },
-              }, [
-                /*
-                h(Button, {
-                  mr: 5,
-                  onClick: () => {
-                    this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
-                  },
-                }, 'Reset form'),
-                */
-
-                h(Button, {
-                  mx: 3,
-                  style: {
-                    padding: '10px 20px',
-                    fontSize: 16,
-                  },
-                  onClick: () => {
-                    navigateTo(new Route('test'))
-                  },
-                }, 'Test'),
-
-
-                h(FileInput, {
-                  mx: 3,
-                  style: {
-                    padding: '10px 20px',
-                    fontSize: 16,
-                  },
-                  onChange: this.handleLoadConfig,
-                }, 'Load'),
-
-                h(Button, {
-                  mx: 3,
-                  style: {
-                    padding: '10px 20px',
-                    fontSize: 16,
-                  },
-                  onClick: () => {
-                    const blob = new Blob(
-                      [JSON.stringify(this.getProjectJSON(), true, '  ')],
-                      { type: 'application/json;charset=utf-8' })
-
-                    saveAs(blob, 'project.json')
-                  },
-                }, 'Save'),
-              ]),
-            ]),
-
-            h(FieldsWrapper, {
-              onKeyDown: e => {
-                if (e.key === 'Enter') {
-                  const { field } = e.target.dataset
-
-                  if (field) {
-                    this.setHelpField(field)
-                  }
-                }
+            h(Box, {
+              //bg: '#ddd',
+              style: {
+                // border: '1px solid #999',
               },
             }, [
-              h(ConfigField, {
-                fieldName: 'label',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('label'),
-                  value: config.label,
-                }),
-              ]),
+              /*
+              h(Button, {
+                mr: 5,
+                onClick: () => {
+                  this.setState(R.always(R.clone(DEFAULT_SETTINGS)), this.persist)
+                },
+              }, 'Reset form'),
+              */
 
-              h(ConfigField, {
-                fieldName: 'baseURL',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('baseURL'),
-                  value: config._baseURL,
-                }),
-              ]),
+              h(Button, {
+                mx: 3,
+                style: {
+                  padding: '10px 20px',
+                  fontSize: 16,
+                },
+                onClick: () => {
+                  navigateTo(new Route('test'))
+                },
+              }, 'Test'),
 
-              h(ConfigField, {
-                fieldName: 'expressionMatrix',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('abundanceMeasures'),
-                  value: config.abundanceMeasures,
-                }),
-              ]),
 
-              h(ConfigField, {
-                fieldName: 'treatments',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('treatments'),
-                  value: config.treatments,
-                }),
-              ]),
+              h(FileInput, {
+                mx: 3,
+                style: {
+                  padding: '10px 20px',
+                  fontSize: 16,
+                },
+                onChange: this.handleLoadConfig,
+              }, 'Load'),
 
-              h(ConfigField, {
-                fieldName: 'pairwiseName',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('pairwiseName'),
-                  value: config.pairwiseName,
-                }),
-              ]),
+              h(Button, {
+                mx: 3,
+                style: {
+                  padding: '10px 20px',
+                  fontSize: 16,
+                },
+                onClick: () => {
+                  const blob = new Blob(
+                    [JSON.stringify(this.getProjectJSON(), true, '  ')],
+                    { type: 'application/json;charset=utf-8' })
 
-              h(ConfigField, {
-                fieldName: 'maPlot',
-                setHelpField,
-              }, [
-                h(Box, [
-                  h('span.axis-label-text', 'X axis'),
-                  ' (log₂ Average Transcript Abundance)',
-                  h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
-                    h('span.axis-label-type', 'min'),
-                    h(LimitInput, {
-                      value: config.abundanceLimits[0][0],
-                      onChange: setField(['abundanceLimits', 0, 0], parseFloat),
-                    }),
-
-                    h('span.axis-label-type', 'max'),
-                    h(LimitInput, {
-                      value: config.abundanceLimits[0][1],
-                      onChange: setField(['abundanceLimits', 0, 1], parseFloat),
-                    }),
-                  ]),
-                ]),
-
-                h(Box, [
-                  h('span.axis-label-text', 'Y axis'),
-                  ' (log₂ Fold Change)',
-                  h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
-                    h('span.axis-label-type', 'min'),
-                    h(LimitInput, {
-                      value: config.abundanceLimits[1][0],
-                      onChange: setField(['abundanceLimits', 1, 0], parseFloat),
-                    }),
-
-                    h('span.axis-label-type', 'max'),
-                    h(LimitInput, {
-                      value: config.abundanceLimits[1][1],
-                      onChange: setField(['abundanceLimits', 1, 1], parseFloat),
-                    }),
-                  ]),
-                ]),
-              ]),
-
-              h(ConfigField, {
-                fieldName: 'transcriptAliases',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('transcriptAliases'),
-                  value: config.transcriptAliases,
-                }),
-              ]),
-
-              h(ConfigField, {
-                fieldName: 'readme',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('readme'),
-                  value: config.readme,
-                }),
-              ]),
-
-              h(ConfigField, {
-                fieldName: 'transcriptHyperlink',
-                setHelpField,
-              }, [
-                h(Flex, { alignItems: 'center', mb: 2 }, [
-                  h('span.axis-label-text .label-text', 'Label'),
-                  h(Box, { flex: 1 }, [
-                    h('input', {
-                      autoCorrect: 'off',
-                      autoCapitalize: 'off',
-                      spellCheck: false,
-                      type: 'text',
-                      value: R.path(['transcriptHyperlink', 0, 'label'], config) || '',
-                      onChange: setField(['transcriptHyperlink', 0, 'label']),
-                    }),
-                  ]),
-                ]),
-
-                h(Flex, { alignItems: 'center' }, [
-                  h('span.axis-label-text .label-text', 'URL'),
-                  h(Box, { flex: 1 }, [
-                    h('input', {
-                      autoCorrect: 'off',
-                      autoCapitalize: 'off',
-                      spellCheck: false,
-                      type: 'text',
-                      value: R.path(['transcriptHyperlink', 0, 'url'], config) || '',
-                      onChange: setField(['transcriptHyperlink', 0, 'url']),
-                    }),
-                  ]),
-                ]),
-              ]),
-
-              h(ConfigField, {
-                fieldName: 'diagram',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('diagram'),
-                  value: config.diagram,
-                }),
-              ]),
-
-              h(ConfigField, {
-                fieldName: 'grid',
-                setHelpField,
-              }, [
-                h(Input, {
-                  onChange: setField('grid'),
-                  value: config.grid,
-                }),
-              ]),
-
-              h(ConfigField, {
-                fieldName: 'heatmapMinimumMaximum',
-                setHelpField,
-              }, [
-                h(Input, {
-                  type: 'number',
-                  min: 0,
-                  step: 1,
-                  onChange: setField('heatmapMinimumMaximum'),
-                  value: config.heatmapMinimumMaximum,
-                }),
-              ]),
+                  saveAs(blob, 'project.json')
+                },
+              }, 'Save'),
             ]),
           ]),
 
+          h(FieldsWrapper, {
+            onKeyDown: e => {
+              if (e.key === 'Enter') {
+                const { field } = e.target.dataset
+
+                if (field) {
+                  this.setHelpField(field)
+                }
+              }
+            },
+          }, [
+            h(ConfigField, {
+              fieldName: 'label',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('label'),
+                value: config.label,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'baseURL',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('baseURL'),
+                value: config._baseURL,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'expressionMatrix',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('abundanceMeasures'),
+                value: config.abundanceMeasures,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'treatments',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('treatments'),
+                value: config.treatments,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'pairwiseName',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('pairwiseName'),
+                value: config.pairwiseName,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'maPlot',
+              setHelpField,
+            }, [
+              h(Box, [
+                h('span.axis-label-text', 'X axis'),
+                ' (log₂ Average Transcript Abundance)',
+                h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
+                  h('span.axis-label-type', 'min'),
+                  h(LimitInput, {
+                    value: config.abundanceLimits[0][0],
+                    onChange: setField(['abundanceLimits', 0, 0], parseFloat),
+                  }),
+
+                  h('span.axis-label-type', 'max'),
+                  h(LimitInput, {
+                    value: config.abundanceLimits[0][1],
+                    onChange: setField(['abundanceLimits', 0, 1], parseFloat),
+                  }),
+                ]),
+              ]),
+
+              h(Box, [
+                h('span.axis-label-text', 'Y axis'),
+                ' (log₂ Fold Change)',
+                h(Flex, { alignItems: 'center', mt: 1, mb: 2 }, [
+                  h('span.axis-label-type', 'min'),
+                  h(LimitInput, {
+                    value: config.abundanceLimits[1][0],
+                    onChange: setField(['abundanceLimits', 1, 0], parseFloat),
+                  }),
+
+                  h('span.axis-label-type', 'max'),
+                  h(LimitInput, {
+                    value: config.abundanceLimits[1][1],
+                    onChange: setField(['abundanceLimits', 1, 1], parseFloat),
+                  }),
+                ]),
+              ]),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'transcriptAliases',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('transcriptAliases'),
+                value: config.transcriptAliases,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'readme',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('readme'),
+                value: config.readme,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'transcriptHyperlink',
+              setHelpField,
+            }, [
+              h(Flex, { alignItems: 'center', mb: 2 }, [
+                h('span.axis-label-text .label-text', 'Label'),
+                h(Box, { flex: 1 }, [
+                  h('input', {
+                    autoCorrect: 'off',
+                    autoCapitalize: 'off',
+                    spellCheck: false,
+                    type: 'text',
+                    value: R.path(['transcriptHyperlink', 0, 'label'], config) || '',
+                    onChange: setField(['transcriptHyperlink', 0, 'label']),
+                  }),
+                ]),
+              ]),
+
+              h(Flex, { alignItems: 'center' }, [
+                h('span.axis-label-text .label-text', 'URL'),
+                h(Box, { flex: 1 }, [
+                  h('input', {
+                    autoCorrect: 'off',
+                    autoCapitalize: 'off',
+                    spellCheck: false,
+                    type: 'text',
+                    value: R.path(['transcriptHyperlink', 0, 'url'], config) || '',
+                    onChange: setField(['transcriptHyperlink', 0, 'url']),
+                  }),
+                ]),
+              ]),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'diagram',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('diagram'),
+                value: config.diagram,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'grid',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('grid'),
+                value: config.grid,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'heatmapMinimumMaximum',
+              setHelpField,
+            }, [
+              h(Input, {
+                type: 'number',
+                min: 0,
+                step: 1,
+                onChange: setField('heatmapMinimumMaximum'),
+                value: config.heatmapMinimumMaximum,
+              }),
+            ]),
+          ]),
+        ]),
+
+        h(Box, {
+        }, [
           h(Help, {
             config,
             showHelp,
           }),
-
         ]),
+
       ])
     )
   }
