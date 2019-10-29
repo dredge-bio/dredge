@@ -21,6 +21,8 @@ const ViewerContainer = styled.div`
   display: grid;
   height: 100%;
 
+  padding: .66rem;
+
   grid-template-columns: repeat(24, 1fr);
   grid-template-rows: repeat(12, 1fr);
 `
