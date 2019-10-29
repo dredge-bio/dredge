@@ -54,6 +54,7 @@ const resources = {
     makeTitle: R.always('Loading project...'),
     onBeforeRoute: loadProject(),
     Component: require('./components/View'),
+    absoluteDimensions: true,
   },
 
   'test': {

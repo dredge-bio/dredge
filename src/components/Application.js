@@ -25,10 +25,6 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0;
 }
 
-main {
-  padding: .66rem;
-}
-
 * {
   box-sizing: border-box;
   margin-top: 0;
@@ -164,12 +160,12 @@ const Menu = styled(AriaMenuButton.Menu)`
 const Header = R.pipe(
   connect(R.pick(['projects', 'view'])),
   Navigable
-)(function Header({
+)(({
   navigateTo,
   view,
   projects,
   onRequestResize,
-}) {
+}) => {
   const { source } = (view || {})
 
   let projectLabel
@@ -315,8 +311,16 @@ const MIN_HEIGHT = 700
 const ApplicationContainer = styled.div`
   display: grid;
   background-color: hsla(45, 31%, 93%, 1);
-  grid-template-rows: 64px minmax(${MIN_HEIGHT - 64}px, 1fr);
-  grid-template-columns: minmax(${MIN_WIDTH}px, 1fr);
+  ${props =>
+    props.absoluteDimensions
+      ? `
+        grid-template-rows: 64px minmax(${MIN_HEIGHT - 64}px, 1fr);
+        grid-template-columns: minmax(${MIN_WIDTH}px, 1fr);
+        `
+      : `
+        grid-template-rows: 64px 1fr;
+        `
+  }
 `
 
 function getWindowDimensions() {
@@ -354,12 +358,19 @@ module.exports = class Application extends React.Component {
 
   render() {
     const { error, componentStack } = this.state
+        , { activeResource } = this.props
+
+    const absoluteDimensions = !!(
+      activeResource &&
+      !!activeResource.absoluteDimensions
+    )
 
     return [
       h(GlobalStyle, { key: 'style' }),
       h(ApplicationContainer, {
         key: 'container',
-        style: {
+        absoluteDimensions,
+        style: !absoluteDimensions ? null : {
           height: this.state.height,
           width: this.state.width,
         },
