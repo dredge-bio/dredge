@@ -85,20 +85,26 @@ const resources = {
 
 const store = createStore()
 
-const Main = ORGShell({
-  extraArgs: {
-    dispatch: store.dispatch,
-    getState: store.getState,
-  },
-  resources,
-  onRouteChange(route, resource, { dispatch, getState }) {
-    dispatch(Action.SetTitle(
-      resource.makeTitle
-        ? resource.makeTitle(getState())
-        : null
-    ))
-  },
-}, Application)
+let Main
+
+if (window.location.protocol.startsWith('http')) {
+  Main = ORGShell({
+    extraArgs: {
+      dispatch: store.dispatch,
+      getState: store.getState,
+    },
+    resources,
+    onRouteChange(route, resource, { dispatch, getState }) {
+      dispatch(Action.SetTitle(
+        resource.makeTitle
+          ? resource.makeTitle(getState())
+          : null
+      ))
+    },
+  }, Application)
+} else {
+  Main = Application
+}
 
 render(
   h(Provider, { store },
