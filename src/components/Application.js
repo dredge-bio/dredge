@@ -157,6 +157,24 @@ const Menu = styled(AriaMenuButton.Menu)`
   }
 `
 
+const LocalFileContainer = styled(Box)`
+p, ul {
+  margin-bottom: 1.3rem;
+}
+
+h1, li {
+  margin-bottom: 1rem;
+}
+
+code {
+  font-family: monospace;
+  font-size: 16px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 4px;
+}
+`
+
 
 
 const Header = R.pipe(
@@ -167,6 +185,7 @@ const Header = R.pipe(
   view,
   projects,
   onRequestResize,
+  isLocalFile,
 }) => {
   const { source } = (view || {})
 
@@ -214,7 +233,7 @@ const Header = R.pipe(
         ]),
       ]),
 
-      h(Flex, { alignItems: 'center' }, [
+      isLocalFile ? null : h(Flex, { alignItems: 'center' }, [
         h(AriaMenuButton.Wrapper, {
           style: {
             position: 'relative',
@@ -361,11 +380,71 @@ module.exports = class Application extends React.Component {
   render() {
     const { error, componentStack } = this.state
         , { activeResource } = this.props
+        , isLocalFile = window.location.protocol === 'file:'
 
     const absoluteDimensions = !!(
       activeResource &&
       !!activeResource.absoluteDimensions
     )
+
+    let children
+
+    if (isLocalFile) {
+      children = (
+        h(LocalFileContainer, {
+          p: 4,
+          style: {
+            maxWidth: 720,
+          },
+        }, [
+          h(Heading, { as: 'h1' }, [
+            'Setup',
+          ]),
+
+          h('p', [
+            `
+            You have loaded DrEdGE without using a Web server. While DrEdGE is designed to work
+            with all local files, it must be served from a Web server to function.
+            To run one on your local machine using Python, run one of the following commands
+            in the directory where you extracted DrEdGE:
+            `,
+          ]),
+
+          h('ul', [
+            h('li', [
+              h('b', 'Python 3: '),
+              h('code', 'python3 -m http.server 8006'),
+            ]),
+            h('li', [
+              h('b', 'Python 2: '),
+              h('code', 'python -m SimpleHTTPServer 8006'),
+            ]),
+          ]),
+
+          h('p', [
+            'Then open the page ',
+            h('a', { href: 'http://127.0.0.1:8006' }, 'http://127.0.0.1:8006'),
+            '.',
+          ]),
+        ])
+      )
+    } else if (error) {
+      children = (
+        h(Box, [
+          h(Heading, { as: 'h1'}, 'Runtime error'),
+          h(Box, { as: 'pre', mt: 2 }, error.stack),
+          !componentStack ? null : h(Box, { as: 'pre' }, '----\n' + componentStack.trim()),
+        ])
+      )
+    } else if (!activeResource) {
+      children = (
+        h(Box, { p: 3 }, [
+          h(Log, { source: ProjectSource.Global }),
+        ])
+      )
+    } else {
+      children = this.props.children
+    }
 
     return [
       h(GlobalStyle, { key: 'style' }),
@@ -378,26 +457,11 @@ module.exports = class Application extends React.Component {
         },
       }, [
         h(Header, {
+          isLocalFile,
           onRequestResize: this.handleRequestResize,
         }),
 
-        h('main', [].concat(
-          !error
-            ? activeResource
-              ? this.props.children
-              : (
-                  h(Box, { p: 3 }, [
-                    h(Log, { source: ProjectSource.Global }),
-                  ])
-                )
-            : (
-              h(Box, [
-                h(Heading, { as: 'h1'}, 'Runtime error'),
-                h(Box, { as: 'pre', mt: 2 }, error.stack),
-                !componentStack ? null : h(Box, { as: 'pre' }, '----\n' + componentStack.trim()),
-              ])
-            )
-        )),
+        h('main', {}, children),
       ]),
     ]
   }
