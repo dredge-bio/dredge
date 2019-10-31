@@ -7,7 +7,7 @@ const h = require('react-hyperscript')
     , baseFolder = `dredge-${version}`
 
 function formatTree(config) {
-  const rootURL = new URL(config._baseURL + '/', fakeBase).href
+  const rootURL = new URL('/', fakeBase).href
 
   const tree = [
     {

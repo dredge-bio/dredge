@@ -29,8 +29,6 @@ function blankView(source, extra) {
 function defaultLocalConfig() {
   return {
     config: {
-      _baseURL: './data/',
-      baseURL: new URL('./data', window.location.href).href,
       label: '',
       readme: './README.md',
       transcriptHyperlink: [
@@ -53,10 +51,6 @@ function defaultLocalConfig() {
 
 function initialState() {
   return {
-    isGloballyConfigured: !!window.DREDGE_PROJECT_CONFIG_URL,
-
-    compatible: null,
-
     log: {},
 
     projects: {
@@ -110,10 +104,6 @@ module.exports = function reducer(state=initialState(), action) {
           {},
           state
         )
-      },
-
-      CheckCompatibility() {
-        return R.assoc('compatible', true, state)
       },
 
       LoadProjectConfig(source) {
@@ -329,9 +319,6 @@ module.exports = function reducer(state=initialState(), action) {
         )
       },
 
-      CheckCompatibility() {
-        return R.set('compatible', false, state)
-      },
       _: () => {
         // eslint-disable-next-line no-console
         console.error(err)

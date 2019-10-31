@@ -6,6 +6,8 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , { Flex, Box, Button, Heading } = require('rebass')
     , AriaMenuButton = require('react-aria-menubutton')
+    , Log = require('./Log')
+    , { ProjectSource } = require('../types')
     , { Navigable, Route } = require('org-shell')
     , { createGlobalStyle } = require('styled-components')
     , { connect } = require('react-redux')
@@ -381,7 +383,13 @@ module.exports = class Application extends React.Component {
 
         h('main', [].concat(
           !error
-            ? this.props.children
+            ? activeResource
+              ? this.props.children
+              : (
+                  h(Box, { p: 3 }, [
+                    h(Log, { source: ProjectSource.Global }),
+                  ])
+                )
             : (
               h(Box, [
                 h(Heading, { as: 'h1'}, 'Runtime error'),

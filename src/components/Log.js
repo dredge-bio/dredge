@@ -65,9 +65,9 @@ function Log({ infoLog, initializing, failedProject, loadingProject, logsByProje
     h('div', [
       h('h2', label),
 
-      logsByProject.map(({ baseURL, label, files, metadata }) =>
+      logsByProject.map(({ key, label, files, metadata }) =>
         h(LogProject, {
-          key: baseURL,
+          key,
         }, [
           h('h3', {
             key: 'project-label',
@@ -157,9 +157,8 @@ module.exports = connect((state, ownProps) => {
       showProject
         ? key === showProject
         : true)
-    .map(([ baseURL, files ]) => ({
-      baseURL,
-      label: R.path(['projects', baseURL, 'config', 'label'], state) || ' ',
+    .map(([ key, files ]) => ({
+      label: R.path(['projects', key, 'config', 'label'], state) || ' ',
       files: R.filter(d => {
         if (typeof d.url !== 'string') return true
         return !d.url.includes('project.json#')

@@ -7,12 +7,6 @@ module.exports = {
     required: true,
   },
 
-  baseURL: {
-    name: 'baseURL',
-    label: 'Configuration file directory',
-    required: true,
-  },
-
   expressionMatrix: {
     name: 'expressionMatrix',
     label: 'Gene expression matrix URL',
