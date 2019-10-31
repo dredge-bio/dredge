@@ -13,14 +13,6 @@ function isIterable(obj) {
   return Symbol.iterator in obj
 }
 
-function getGlobalConfigURL() {
-  const configURL = global.DREDGE_PROJECT_CONFIG_URL
-
-  if (!configURL) return null
-
-  return new URL(configURL, window.location.href).href
-}
-
 function getGlobalWatchedGenesKey() {
   return window.location.pathname + '-watched'
 }
@@ -50,12 +42,6 @@ const Action = module.exports = makeTypedAction({
     request: {
       project: d => typeof d === 'string' || d === null,
     },
-    response: {},
-  },
-
-  CheckCompatibility: {
-    exec: checkCompatibility,
-    request: {},
     response: {},
   },
 
@@ -604,21 +590,6 @@ function cleanSVGString(svgString, treatments) {
 
 // Actions ----------------
 
-function checkCompatibility() {
-  return () => {
-
-    if (!window.indexedDB) {
-      throw new Error('Browser does not support IndexedDB standard. Cannot run application.')
-    }
-
-    if (!window.Blob) {
-      throw new Error('Browser does not support Blob standard. Cannot run application.')
-    }
-
-    return {}
-  }
-}
-
 function getDefaultPairwiseComparison() {
   return async (dispatch, getState) => {
     const project = projectForView(getState())
@@ -827,11 +798,9 @@ async function fetchProject(config, makeLog, onUpdate) {
   let failed = false
     , treatments
 
-  const { baseURL } = config
-
   // Load treatments before anything else
   {
-    const url = new URL(config.treatments, baseURL).href
+    const url = new URL(config.treatments, window.location).href
         , log = makeLog('Project treatments', url)
 
     await log(LoadingStatus.Pending(null))
@@ -867,7 +836,7 @@ async function fetchProject(config, makeLog, onUpdate) {
       return;
     }
 
-    url = new URL(url, baseURL).href
+    url = new URL(url, window.location).href
     const log = makeLog(v.label, url)
 
     await log(LoadingStatus.Pending(null))
@@ -901,11 +870,7 @@ function loadProjectConfig(source) {
     // the local one is set beforehand. But maybe we want to support loading
     // arbitrary remote projects at some point (again, lol). In that case, the
     // global project would not be assumed.
-    const configURL = getGlobalConfigURL()
-
-    if (!configURL) return { config: null }
-
-    const baseURL = new URL('./', configURL).href
+    const configURL = new URL('./project.json', window.location).href
 
     let loadedConfig = {}
 
@@ -925,16 +890,24 @@ function loadProjectConfig(source) {
 
         await log(LoadingStatus.OK(null))
       } catch (e) {
-        await log(LoadingStatus.Failed(e.message))
+        let { message } = e
+
+        if (message === 'File not found') {
+          message = 'No configuration file present. Redirecting to configuration page...'
+        }
+
+        await log(LoadingStatus.Failed(message))
+
+        await delay(2000)
 
         return { config: null }
       }
     }
 
-    const config = { baseURL }
+    const config = {}
 
     await Promise.all(Object.entries(configFields).map(async ([ key, { label, test }]) => {
-      const url = new URL(`project.json#${key}`, baseURL).href
+      const url = new URL(`project.json#${key}`, window.location).href
           , log = makeProjectLog(label, url)
 
       await log(LoadingStatus.Pending(null))
@@ -996,11 +969,13 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
     const fileURLA = new URL(
       urlTemplate.replace('%A', treatmentAKey).replace('%B', treatmentBKey),
-      project.config.baseURL).href
+      window.location
+    ).href
 
     const fileURLB = new URL(
       urlTemplate.replace('%A', treatmentBKey).replace('%B', treatmentAKey),
-      project.config.baseURL).href
+      window.location
+    ).href
 
     let reverse = false
       , resp

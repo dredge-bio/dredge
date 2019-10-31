@@ -186,22 +186,6 @@ function Input(props) {
   )
 }
 
-function getCanonicalBaseURL(_baseURL) {
-  let baseURL = _baseURL
-    , isRelativeURL
-
-  if (!baseURL.startsWith('http')) {
-    isRelativeURL = true
-    baseURL = resolveURL(window.location.href, baseURL || './')
-  }
-
-  if (!baseURL.endsWith('/')) baseURL += '/'
-
-  const resolve = path => resolveURL(baseURL, path, baseURL)
-
-  return { isRelativeURL, baseURL, resolve }
-}
-
 class NewProject extends React.Component {
   constructor(props) {
     super(props);
@@ -223,12 +207,7 @@ class NewProject extends React.Component {
 
     return e => {
       const val = fn(e.target.value)
-
-      const update = fieldName !== 'baseURL'
-        ? R.set(lens, val)
-        : R.pipe(
-          R.set(R.lensPath(['config', '_baseURL']), val),
-          R.set(lens, getCanonicalBaseURL(val).baseURL))
+          , update = R.set(lens, val)
 
       this.setState(update, this.persistChanges)
     }
@@ -257,7 +236,7 @@ class NewProject extends React.Component {
   }
 
   getProjectJSON() {
-    let ret = R.omit(['baseURL', '_baseURL'], this.state.config)
+    let ret = JSON.parse(JSON.stringify(this.state.config))
 
     ret = R.over(
       R.lensProp('transcriptHyperlink'),
@@ -289,7 +268,6 @@ class NewProject extends React.Component {
     const { navigateTo } = this.props
         , { config, showHelp } = this.state
         , { setField, setHelpField } = this
-        , { resolve, isRelativeURL } = getCanonicalBaseURL(config._baseURL)
 
     return (
       h(ConfigContainer, [
@@ -381,16 +359,6 @@ class NewProject extends React.Component {
               h(Input, {
                 onChange: setField('label'),
                 value: config.label,
-              }),
-            ]),
-
-            h(ConfigField, {
-              fieldName: 'baseURL',
-              setHelpField,
-            }, [
-              h(Input, {
-                onChange: setField('baseURL'),
-                value: config._baseURL,
               }),
             ]),
 
@@ -570,6 +538,5 @@ module.exports = R.pipe(
   Navigable,
   connect(state => ({
     config: state.projects.local.config,
-    baseURL: state.projects.local.baseURL,
   }))
 )(NewProject)
