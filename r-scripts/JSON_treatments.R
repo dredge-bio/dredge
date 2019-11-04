@@ -13,7 +13,7 @@ option_list = list(
     make_option(c("-o", "--outJSON"), type="character", default="treatments.json",  
                 help="name of JSON output file", metavar="character")
 )
-opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts an experiment design table and converts it to a JSON file.\n\tInput file must include \"treament.id\", \"treatment.name\", and \"replicate.id\" columns.\n\n\tExample: Rscript JSON_treatments.R -i design_in.txt -o design_out.JSON\n")
+opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts an experiment design table and converts it to a JSON file.\n\tInput file must include \"treament.id\", \"treatment.name\", and \"replicate.id\" columns.\n\n\tExample: Rscript JSON_treatments.R -i design_in.tsv -o design_out.json\n")
 opt = parse_args(opt_parser)
 
 # Define converstion function

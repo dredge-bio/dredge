@@ -28,7 +28,7 @@ option_list = list(
     make_option(c("-t", "--noiseThreshold"), type="integer", default=10,
                 help="Abundance threshold below which transcripts should not be considered for statistical analysis. \n\t\tDefault: 10", metavar="integer")
 )
-opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts a gene expression matrix and a design file.\n\tReturns a directory of differential expression statistics for every possible pairwise comparison within the dataset.\n\n\tExample: Rscript pairwise_comparisons.R -e RPKMs_in.txt -d design_in.txt")
+opt_parser = OptionParser(option_list=option_list, usage = "\n\tAccepts a gene expression matrix and a design file.\n\tReturns a directory of differential expression statistics for every possible pairwise comparison within the dataset.\n\n\tExample: Rscript pairwise_comparisons.R -e RPKMs_in.tsv -d design_in.tsv")
 opt = parse_args(opt_parser)
 
 # Define pairwise comparison generator function
@@ -121,7 +121,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                             tab[tempRow, "logCPM"] <- signif(log2(tempCPM), digits=3)
                         }
                     }
-                    outputName = paste(treatment1, "_vs_", treatment2, ".txt", sep="")
+                    outputName = paste(treatment1, "_vs_", treatment2, ".tsv", sep="")
                     write.table(tab, paste(outDirectory, "/", outputName, sep = ""), quote = F, col.names = NA, row.names = T, sep = "\t")
                     minMax["logCPM", "min"] <- min(minMax["logCPM", "min"], min(tab[,"logCPM"]))
                     minMax["logCPM", "max"] <- max(minMax["logCPM", "max"], max(tab[,"logCPM"]))
@@ -184,7 +184,7 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             minMax["logCPM", "max"] <- max(minMax["logCPM", "max"], max(tab[,"logCPM"]))
             minMax["logFC", "min"] <- min(minMax["logFC", "min"], min(tab[,"logFC"]))
             minMax["logFC" ,"max"] <- max(minMax["logFC", "max"], max(tab[,"logFC"]))
-            outputName = paste(treatment1, "_vs_", treatment2, ".txt", sep="")
+            outputName = paste(treatment1, "_vs_", treatment2, ".tsv", sep="")
             write.table(tab, paste(outDirectory, "/", outputName, sep = ""), quote = F, col.names = NA, row.names = T, sep = "\t")
         }
         allTreatments <- allTreatments[allTreatments!=treatment1]

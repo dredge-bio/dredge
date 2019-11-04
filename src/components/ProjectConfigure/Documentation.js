@@ -12,10 +12,19 @@ const fields = R.pipe(
   R.fromPairs
 )(fieldHelp)
 
+const thisURL = new URL('./', window.location.href).href
+
 fields.instructions = instructions
+  .replace(/%%THIS-URL%%/g, `<a href="${thisURL}">${thisURL}</a>`)
+  .replace(/Example: (http.*)<\/p>/g, `
+  <span class="example">
+    <a target="_blank" href="$1">$1</a>
+  </span>
+  </p>
+  `)
 
 const DocumentationWrapper = styled('div')`
-code, pre {
+code, pre, .example {
   font-family: monospace;
   background-color: #f0f0f0;
   border: 1px solid #ccc;
@@ -30,26 +39,53 @@ pre > code {
   padding: unset;
 }
 
-pre {
+h1 {
+  border-bottom: 1px solid #333;
+  padding-bottom: 2px;
+}
+
+h1:not(:first-of-type) {
+  margin-top: ${props => props.theme.space[5]}px;
+}
+
+h2 {
+  margin-top: ${props => props.theme.space[4]}px;
+}
+
+pre, .example {
   padding: .75rem 1rem;
 }
 
+.example {
+  position: relative;
+  font-family: sansserif;
+  display: block;
+  background-color: hsl(205,35%,90%);
+  padding-top: 25px;
+}
+
+.example::after {
+  color: #333;
+  position: absolute;
+  left: 1rem;
+  top: 4px;
+  font-family: "SourceSansPro";
+  font-weight: bold;
+  content: "Example";
+}
+
+.example a {
+  color: blue;
+}
+
 ul, p {
-  line-height: 19px;
+  line-height: 22px;
   margin: ${props => props.theme.space[3]}px 0;
 }
 
 li p {
   margin: 0;
   margin: ${props => props.theme.space[2]}px 0;
-}
-
-p:first-of-type {
-  margin-top: 0;
-}
-
-p:last-of-type {
-  margin-bottom: 0;
 }
 
 `

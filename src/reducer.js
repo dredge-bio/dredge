@@ -30,7 +30,7 @@ function defaultLocalConfig() {
   return {
     config: {
       label: '',
-      readme: './README.md',
+      readme: './about.md',
       transcriptHyperlink: [
         { label: '', url: '' },
       ],
@@ -40,9 +40,9 @@ function defaultLocalConfig() {
       ],
       heatmapMinimumMaximum: 0,
       treatments: './treatments.json',
-      pairwiseName: './pairwise_files/%A_vs_%B.txt',
-      transcriptAliases: './aliases.txt',
-      abundanceMeasures: './abundanceMeasures.txt',
+      pairwiseName: './pairwise_files/%A_vs_%B.tsv',
+      transcriptAliases: './aliases.tsv',
+      abundanceMeasures: './expression_matrix.tsv',
       diagram: './diagram.svg',
       grid: './grid.tsv',
     },

@@ -13,26 +13,83 @@ Variables which will be replaced:
 %%PROJECT-DATA-DIR%% - The directory in which the project configuration files will live
 
 -->
-To add a new project based on your own dataset, first download a local copy of DrEdGE so that you can work will files on your own machine. This zip file contains all of the static files and R scripts needed to generate and serve files based on your data: [%%ZIP-FILENAME%%](%%ZIP-FILENAME%%)
 
-## Setting up DrEdGE
+# Instructions
 
-You will need to serve this page via a local Web server on your own machine. If you have Python installed, this can be done by changing to the directory containing the file `index.html` and running `python3 -m http.server` (Python 3) or `python -m SimpleHTTPServer` (Python 2). These commands will serve DrEdGE on your own machine on port 8000. Add a number at the end of the command to change the default port number. Once you have your local application up and running, visit the local version of this page. If you used the default port, this will be located at <http://localhost:8000/?page=configure> or <http://127.0.0.1:8000/?page=configure>.
+DrEdGE is an application for visualizing RNAseq data in a Web browser. It runs exclusively using static files stored on a file system, with no requirement of a database or server to run and store statistical analyses. This means that DrEdGE is easy to run and deploy, but it also means that you must create all the files needed for your project ahead of time. This guide will take you through the steps to create those files and configure DrEdGE to work with your own dataset.
 
-Next, make a folder somewhere within your local dredge installation where you will keep project data. For this example, we'll assume it's called `data`, located at `%%PROJECT-DATA-DIR%%`.
+We will follow along with a fully configured example located at <https://github.com/dredge-bio/example-dataset>. You can see how the example application looks at <https://dredge-bio.github.io/example-dataset/>. The example is a [subset of a dataset](https://www.ncbi.nlm.nih.gov/pubmed/27554860) of the transcriptional lineage of the <i>C. elegans</I> embryo, created by Sophia Tintori.
 
-DrEdGE does not calculate any statistics itself. Rather, it expects statistical tables, calculated ahead of time, in tab-separated files. The following instructions will guide you through generating these files with R scripts maintained by the DrEdGE authors. The method uses the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) package. If you want to use your own methods for generating statistics, read the documentation for each field on the left.
+## Downloading
 
-To use our R scripts, you will need two files: a **project design file**, which describes characteristics about the treatments and replicates in the dataset, and a **transcript abundance matrix**, which gives normalized measurements of abundance for each transcript in each replicate.
+All of the JavaScript, HTML, and fonts required to run DrEdGE can be found in this zip archive: [%%ZIP-FILENAME%%](%%ZIP-FILENAME%%). To begin, download this zip file and extract it somewhere on your computer. Open the `index.html` file inside, and follow the instructions to set up a local Web server. Continue to configure DrEdGE on that local server.
 
-The **project design file** is a tab-separated table with a header row, and one row for each replicate in the dataset. The following columns must be present, and they must be labeled exactly as given below:
+## Overview
 
-* **replicate.id**: A unique identifier for the replicate
+The form on the left will generate a configuration file, named `project.json`, that will tell DrEdGE where to find your project's files, and how to configure the DrEdGE interface. As you fill out the form, you can press the **Test** button to check if the configuration is working properly. Once you have gotten a good configuration, press the **Save** button, and save the `project.json` file to the directory where you extracted DrEdGE. (You can also load an existing `project.json` file into the form by using the **Load** button). Once you have saved the `project.json` file, you can access your DrEdGE application at %%THIS-URL%%.
 
-* **treatment.id**: An identifier for the treatment that this replicate belongs to. (This will be used to combine different replicates in the same treatment)
 
-* **treatment.name**: The label that will be used to render a human-readable name for the given treatment.
+# Basic configuration
 
+You will need two files to start: a project design file that describes the treatments used in your dataset, and a transcript abundance table that has information about RNAseq measurements for each treatment replicate. We provide R scripts to generate DrEdGE configuration files based on these. They are located in the folder `%%PROJECT-DIR%%/r-scripts`.
+
+## Project design file
+
+The project design file should be a tab-separated table where each row represents a replicate in your dataset. The table can have any number of columns, but it the following three must be present:
+
+  1. **replicate.id**: A unique codename given for the replicate
+
+  2. **treatment.id**: A unique codename given to the treatment corresponding to the replicate
+
+  3. **treatment.name**: A human-readable label given to the treatment defined with **treatment.id**. This is the text that will be shown around the DrEdGE interface to refer to treatments.
+
+Example: https://github.com/dredge-bio/example-dataset/blob/master/project_design_file.tsv
+
+
+In the example dataset, notice we have 3 different treatments, each of which have two replicates.
+
+Save this file to the DrEdGE folder (for example, `%%PROJECT-DIR%%/project_design_file.tsv`), and then run the following R command in that folder:
+
+```
+Rscript ./r-scripts/JSON_treatments.R -i project_design_file.tsv
+```
+
+This will generate the file `treatments.json`, which is a JSON file that tells DrEdGE about the different treatments and replicates in your project. The **treatment information file** field on the left should point to this file. If you keep the default file name, you will not need to change anything.
+
+Example: https://github.com/dredge-bio/example-dataset/blob/master/treatments.json
+
+
+## Transcript abundance matrix
+
+Next, we will configure the transcript abundance matrix and pairwise comparisons. You must provide a **gene expression matrix** file, a tab-separated table of normalized transcript abundance values. Each row in the table represents a unique transcript, and each column represents a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty.
+
+Example: https://github.com/dredge-bio/example-dataset/blob/master/expression_matrix.tsv
+
+Save this file to the DrEdGE directory and enter the filename into the **Expression matrix file** field on the left. Now we will run an R script to create pairwise comparisons between each treatment using the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) package:
+
+```
+Rscript ./r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d project_design_file.tsv
+```
+
+This will create a directory, by default named `pairwise_files`, which contains pairwise comparisons for each treatment in your dataset. The **Pairwise comparison file template** field on the left configures how DrEdGE will find comparison files.  The characters \'%A\' and \'%B\' will be replaced by pairs of treatment identifiers. For example: If treatments T1 and T2 are compared in a table called `T1_vs_T2.tsv`, in the directory `pairwise_tests/`, the value in this field should be `pairwise_tests/%A_vs_%B.tsv`. If you used the defaults from the R script, you will not need to change this value.
+
+Example: https://github.com/dredge-bio/example-dataset/blob/master/pairwise_files/AB_vs_P1.tsv
+
+ If you want to use your own methods for generating statistics, generate pairwise pairwise comparisons for each treatment using the codename in your project design file. Each file must be tab-separated table with four columns in the following order: transcript codename, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript names must match those found in the transcript abundance matrix.
+
+## MA Plot limits
+
+The `pairwise_comparisons.R` script will also generate another file, `min_max.txt`, which contains information about the minimum and maximum values of log₂ Fold Change and log₂ Reads per Million across all of the generated pairwise comparisons. Enter these values into the **MA plot limits** field.
+
+# Testing
+
+At this point, you should test your configuration. Press the **Test** button above the form. If all goes well, you should be presented with a DrEdGE interface that allows you to browse your dataset. At this point, you have a fully functional DrEdGE interface. The rest of the guide provides instructions for adding more visual representations (e.g. a diagram representing the treatments in your dataset).
+
+
+# Configuring visualizations
+
+
+<!--
 The **gene expression matrix** should be a tab-separated table of normalized transcript abundance values, with each row representing a unique transcript, and each column representing a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty. This will look like:
 
 ```
@@ -72,3 +129,4 @@ Once you have filled out the configuration on the left, press the "Test" button 
 Now edit the `index.html` file in the `%%PROJECT-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which should be: `%%PROJECT-DATA-DIR%%/project.json`.
 
 Restart DrEdGE by loading the local index page (i.e. <http://localhost:8000/> or <http://127.0.0.1:8000/>) to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
+-->

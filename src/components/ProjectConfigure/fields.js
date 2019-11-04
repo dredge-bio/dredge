@@ -9,19 +9,19 @@ module.exports = {
 
   expressionMatrix: {
     name: 'expressionMatrix',
-    label: 'Gene expression matrix URL',
+    label: 'Expression matrix file',
     required: true,
   },
 
   treatments: {
     name: 'treatments',
-    label: 'Treatment information URL',
+    label: 'Treatment information file',
     required: true,
   },
 
   pairwiseName: {
     name: 'pairwiseName',
-    label: 'Pairwise comparison URL template',
+    label: 'Pairwise comparison file template',
     required: true,
   },
 
@@ -32,12 +32,12 @@ module.exports = {
 
   transcriptAliases: {
     name: 'transcriptAliases',
-    label: 'Transcript aliases URL',
+    label: 'Transcript aliases file',
   },
 
   readme: {
     name: 'readme',
-    label: 'Project documentation',
+    label: 'Project documentation file',
   },
 
   transcriptHyperlink: {
@@ -47,12 +47,12 @@ module.exports = {
 
   diagram: {
     name: 'diagram',
-    label: 'Diagram URL',
+    label: 'Diagram file',
   },
 
   grid: {
     name: 'grid',
-    label: 'Grid URL',
+    label: 'Grid file',
   },
 
   heatmapMinimumMaximum: {
