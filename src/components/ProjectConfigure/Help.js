@@ -43,17 +43,11 @@ module.exports = class HelpPage extends React.Component {
             height: '100%',
           },
         }, [
-            h(Heading, {
-              as: 'h1',
-              fontSize: 5,
-              mb: 3,
-            }, 'Instructions'),
-
             h(Documentation, { fieldName: 'instructions' }),
 
-            h(Instructions, { showHelp }),
+            // h(Instructions, { showHelp }),
 
-            h(ConfigTree, { config }),
+            // h(ConfigTree, { config }),
         ]),
       ])
     )

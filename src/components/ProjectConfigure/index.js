@@ -363,22 +363,22 @@ class NewProject extends React.Component {
             ]),
 
             h(ConfigField, {
-              fieldName: 'expressionMatrix',
-              setHelpField,
-            }, [
-              h(Input, {
-                onChange: setField('abundanceMeasures'),
-                value: config.abundanceMeasures,
-              }),
-            ]),
-
-            h(ConfigField, {
               fieldName: 'treatments',
               setHelpField,
             }, [
               h(Input, {
                 onChange: setField('treatments'),
                 value: config.treatments,
+              }),
+            ]),
+
+            h(ConfigField, {
+              fieldName: 'expressionMatrix',
+              setHelpField,
+            }, [
+              h(Input, {
+                onChange: setField('abundanceMeasures'),
+                value: config.abundanceMeasures,
               }),
             ]),
 
