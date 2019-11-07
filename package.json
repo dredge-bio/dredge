@@ -17,6 +17,7 @@
     "file-saver": "^2.0.1",
     "is-url": "^1.2.4",
     "markdown-it": "^8.4.2",
+    "markdown-it-attrs": "^3.0.1",
     "org-async-actions": "^1.1.0",
     "org-shell": "^6.0.0",
     "ramda": "^0.26.1",

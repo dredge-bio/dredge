@@ -12,38 +12,53 @@ module.exports = class HelpPage extends React.Component {
   constructor() {
     super();
 
-    this.state = {
-      showHelp: null,
-    }
+    this.containerRef = React.createRef()
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.showHelp !== prevProps.showHelp) {
-      this.setState({
-        showHelp: this.props.showHelp,
-      })
+    if (this.props.showHelp && (this.props.showHelp !== prevProps.showHelp)) {
+      const { showHelp } = this.props
+
+      const el = this.containerRef.current
+        .querySelector(`[data-field*="${showHelp}"]`)
+
+      if (!el) return
+
+      el.scrollIntoView()
+
+      el.style.transition = 'background-color 0s'
+      el.style.backgroundColor = 'hsl(205,35%,75%)'
+
+      setTimeout(() => {
+        el.style.transition = 'background-color .5s ease .5s'
+        el.style.backgroundColor = 'transparent'
+      }, 0)
     }
   }
 
   render() {
     return (
-      h(Box, {
-        py: 3,
-        px: 4,
+      h('div', {
+        ref: this.containerRef,
       }, [
         h(Box, {
-          style: {
-            minWidth: 420,
-            maxWidth: 720,
-            margin: '0 auto',
-            height: '100%',
-          },
+          py: 3,
+          px: 4,
         }, [
-            h(Documentation, { fieldName: 'instructions' }),
+          h(Box, {
+            style: {
+              minWidth: 420,
+              maxWidth: 720,
+              margin: '0 auto',
+              height: '100%',
+            },
+          }, [
+              h(Documentation, { fieldName: 'instructions' }),
 
-            // h(Instructions, { showHelp }),
+              // h(Instructions, { showHelp }),
 
-            // h(ConfigTree, { config }),
+              // h(ConfigTree, { config }),
+          ]),
         ]),
       ])
     )

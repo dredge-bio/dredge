@@ -33,7 +33,7 @@ The form on the left will generate a configuration file, named `project.json`, t
 
 You will need two files to start: a project design file that describes the treatments used in your dataset, and a transcript abundance table that has information about RNAseq measurements for each treatment replicate. We provide R scripts to generate DrEdGE configuration files based on these. They are located in the folder `%%PROJECT-DIR%%/r-scripts`.
 
-## Project design file
+## Project design file { data-field=treatments }
 
 The project design file should be a tab-separated table where each row represents a replicate in your dataset. The table can have any number of columns, but it the following three must be present:
 
@@ -59,7 +59,7 @@ This will generate the file `treatments.json`, which is a JSON file that tells D
 Example: https://github.com/dredge-bio/example-dataset/blob/master/treatments.json
 
 
-## Transcript abundance matrix
+## Transcript abundance matrix { data-field="expressionMatrix pairwiseName" }
 
 Next, we will configure the transcript abundance matrix and pairwise comparisons. You must provide a **gene expression matrix** file, a tab-separated table of normalized transcript abundance values. Each row in the table represents a unique transcript, and each column represents a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty.
 
@@ -77,7 +77,7 @@ Example: https://github.com/dredge-bio/example-dataset/blob/master/pairwise_file
 
  If you want to use your own methods for generating statistics, generate pairwise pairwise comparisons for each treatment using the codename in your project design file. Each file must be tab-separated table with four columns in the following order: transcript codename, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript names must match those found in the transcript abundance matrix.
 
-## MA Plot limits
+## MA Plot limits { data-field="maPlot" }
 
 The `pairwise_comparisons.R` script will also generate another file, `min_max.txt`, which contains information about the minimum and maximum values of log₂ Fold Change and log₂ Reads per Million across all of the generated pairwise comparisons. Enter these values into the **%%field-maPlot%%** field.
 
@@ -90,7 +90,7 @@ At this point, you should test your configuration. Press the **Test** button abo
 
 In your DrEdGE application, you can configure two different visualizations that provide a clickable heatmap of transcript abundance among treatments in your dataset. The first, and most simple, is a **grid** in which a matrix of squares represent treatments. The second is an **SVG diagram** in which different shapes represent treatments.
 
-## Grid
+## Grid { data-field="grid" }
 
 To create a grid, create a table in Excel or a similar program, and fill in cells with treatment codenames in whatever manner you choose. Export this file to your DrEdGE directory as a CSV or TSV, and enter its filename in the **%%field-grid%%** field on the left.
 
@@ -98,7 +98,7 @@ Example: https://github.com/dredge-bio/example-dataset/blob/master/grid.csv
 
 If you do not provide a grid, one will be automatically created for your dataset. In the default grid, treatments are simply laid out in a rectangular pattern.
 
-## Diagram
+## Diagram { data-field="diagram" }
 
 You can create a custom diagram to illustrate the treatments in your dataset using a program that can export SVG, such as [Inkscape](https://inkscape.org/) or Adobe Illustrator. Creating SVGs is outside the scope of this guide, but the following will provide instructions for exporting SVG images that will work with DrEdGE.
 
@@ -115,7 +115,7 @@ Inkscape uses SVG as its native format. To declare that a shape corresponds to a
 Adobe Illustrator has many options for [exporting SVG images](https://css-tricks.com/illustrator-to-svg/). To make DrEdGE recognize which shapes correspond to which of your treatments, take the following steps. First, in the "Layers" panel, rename each shape corresponding to a treatment with that treatment's codename. (Note: You must give the treatment codename to the **shape**, like a rectangle or circle or path, **not** the layer itself). Next, go to **File > Export > Export as** in the Illustrator menu, and save your SVG to the DrEdGE directory. In the "SVG Options" menu that pops up, set the "Object IDs" option to "Layer names". This will assign `id` attributes to the shapes in your SVG fields based on the names you assigned to them in the layer panel. Enter the name of the SVG file you saved into the **%%field-diagram%%** field on the left.
 
 
-## Configuring the heatmap
+## Configuring the heatmap { data-field=heatmapMinimumMaximum }
 
 Both the grid and the diagram will appear as a heatmap visualization when browsing your DrEdGE application. Parts of the visualization corresponding to different treatments will be colored differently corresponding to the relative abundance of different transcripts. By default, the scale of the heatmap will vary across every transcript, ranging from 0 to the maximum abundance of a transcript across every treatment. However, that color scale may be deceiving for transcripts whose values are all effectively 0. The **%%field-heatmapMinimumMaximum%%** field on the left configures a minimum value that should be used as the maximum of the heatmap color scale. Set it to a value higher than 0 to remain above some noise threshold.
 

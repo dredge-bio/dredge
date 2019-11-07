@@ -8,6 +8,8 @@ const REGEX = /require\('([\w_]+.md)'\)/g
 
 const md = new MarkdownIt({ html: true })
 
+md.use(require('markdown-it-attrs'))
+
 const version = require('./package.json').version
 
 const replacements = [
