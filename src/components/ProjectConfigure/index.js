@@ -20,9 +20,14 @@ const ConfigContainer = styled.div`
   grid-template-columns: auto 1fr;
   grid-template-rows: calc(100vh - 64px);
   position: relative;
+  overflow-x: hidden;
 
   > div {
     overflow-y: scroll;
+  }
+
+  > div:nth-child(2) {
+    background-color: #fcfcfc;
   }
 `
 
@@ -30,6 +35,10 @@ const FieldsWrapper = styled(Box)`
 display: grid;
 grid-template-columns: auto 384px auto;
 align-items: center;
+
+@media (max-width: 1220px) {
+  grid-template-columns: auto 200px auto;
+}
 
 grid-row-gap: .7rem;
 
@@ -278,19 +287,22 @@ class NewProject extends React.Component {
             overflowY: 'auto',
           },
         }, [
-          h(Flex, {
+          h(Box, {
             alignItems: 'center',
-            mb: 4,
           }, [
             h(Heading, {
               as: 'h1',
               fontSize: 5,
               mr: 3,
+              mb: 3,
             }, 'Project configuration'),
 
             h(Box, {
               //bg: '#ddd',
+              mb: 3,
+              pb: 3,
               style: {
+                borderBottom: '1px solid #ccc',
                 // border: '1px solid #999',
               },
             }, [
@@ -304,7 +316,7 @@ class NewProject extends React.Component {
               */
 
               h(Button, {
-                mx: 3,
+                mr: 2,
                 style: {
                   padding: '10px 20px',
                   fontSize: 16,
@@ -316,7 +328,7 @@ class NewProject extends React.Component {
 
 
               h(FileInput, {
-                mx: 3,
+                mx: 2,
                 style: {
                   padding: '10px 20px',
                   fontSize: 16,
@@ -325,7 +337,7 @@ class NewProject extends React.Component {
               }, 'Load'),
 
               h(Button, {
-                mx: 3,
+                mx: 2,
                 style: {
                   padding: '10px 20px',
                   fontSize: 16,

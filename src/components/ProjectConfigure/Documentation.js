@@ -64,6 +64,9 @@ pre, .example {
   display: block;
   background-color: hsl(205,35%,90%);
   padding-top: 25px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .example::after {

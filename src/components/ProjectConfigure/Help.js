@@ -26,14 +26,10 @@ module.exports = class HelpPage extends React.Component {
   }
 
   render() {
-    const { showHelp } = this.state
-        , { config } = this.props
-
     return (
       h(Box, {
         py: 3,
         px: 4,
-        bg: '#fcfcfc',
       }, [
         h(Box, {
           style: {
