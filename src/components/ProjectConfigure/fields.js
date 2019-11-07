@@ -15,7 +15,7 @@ module.exports = {
 
   treatments: {
     name: 'treatments',
-    label: 'Treatment information file',
+    label: 'Treatments description file',
     required: true,
   },
 
