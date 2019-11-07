@@ -44,7 +44,7 @@ function defaultLocalConfig() {
       transcriptAliases: './aliases.tsv',
       abundanceMeasures: './expression_matrix.tsv',
       diagram: './diagram.svg',
-      grid: './grid.tsv',
+      grid: './grid.csv',
     },
   }
 }
