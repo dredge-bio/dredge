@@ -88,6 +88,44 @@ At this point, you should test your configuration. Press the **Test** button abo
 
 # Configuring visualizations
 
+In your DrEdGE application, you can configure two different visualizations that provide a clickable heatmap of transcript abundance among treatments in your dataset. The first, and most simple, is a **grid** in which a matrix of squares represent treatments. The second is an **SVG diagram** in which different shapes represent treatments.
+
+## Grid
+
+To create a grid, create a table in Excel or a similar program, and fill in cells with treatment codenames in whatever manner you choose. Export this file to your DrEdGE directory as a CSV or TSV, and enter its filename in the **%%field-grid%%** field on the left.
+
+Example: https://github.com/dredge-bio/example-dataset/blob/master/grid.csv
+
+If you do not provide a grid, one will be automatically created for your dataset. In the default grid, treatments are simply laid out in a rectangular pattern.
+
+## Diagram
+
+You can create a custom diagram to illustrate the treatments in your dataset using a program that can export SVG, such as [Inkscape](https://inkscape.org/) or Adobe Illustrator. Creating SVGs is outside the scope of this guide, but the following will provide instructions for exporting SVG images that will work with DrEdGE.
+
+Because of the layout of a DrEdGE application, your diagram will fit best if its size is roughly 6x1 (e.g. 720x120px). DrEdGE links objects in your SVG to treatments by looking at the `id` attribute of shapes (e.g. `rect`, `circle`, `polygon`). Shapes corresponding to treatment codenames will be filled with shades of the heatmap and become clickable to select treatments on the MA plot. However, note that in order for ID attributes to match treatment codenames, *your treatment codenames must only use the characters a-z, A-Z, 0-9, ., and -*.
+
+Example: https://github.com/dredge-bio/example-dataset/blob/master/icons.svg?short_path=a9750c6
+
+### Inkscape
+
+Inkscape uses SVG as its native format. To declare that a shape corresponds to a treatment, right click on a shape, select "Object properties", and enter the treatment codename in the ID field. Save your SVG to the DrEdGE directory, and enter its filename into the **%%field-diagram%%** field on the left.
+
+### Illustrator
+
+Adobe Illustrator has many options for [exporting SVG images](https://css-tricks.com/illustrator-to-svg/). To make DrEdGE recognize which shapes correspond to which of your treatments, take the following steps. First, in the "Layers" panel, rename each shape corresponding to a treatment with that treatment's codename. (Note: You must give the treatment codename to the **shape**, like a rectangle or circle or path, **not** the layer itself). Next, go to **File > Export > Export as** in the Illustrator menu, and save your SVG to the DrEdGE directory. In the "SVG Options" menu that pops up, set the "Object IDs" option to "Layer names". This will assign `id` attributes to the shapes in your SVG fields based on the names you assigned to them in the layer panel. Enter the name of the SVG file you saved into the **%%field-diagram%%** field on the left.
+
+
+## Configuring the heatmap
+
+Both the grid and the diagram will appear as a heatmap visualization when browsing your DrEdGE application. Parts of the visualization corresponding to different treatments will be colored differently corresponding to the relative abundance of different transcripts. By default, the scale of the heatmap will vary across every transcript, ranging from 0 to the maximum abundance of a transcript across every treatment. However, that color scale may be deceiving for transcripts whose values are all effectively 0. The **%%field-heatmapMinimumMaximum%%** field on the left configures a minimum value that should be used as the maximum of the heatmap color scale. Set it to a value higher than 0 to remain above some noise threshold.
+
+
+# Additional options
+
+Several other options will adjust the way DrEdGE presents your project.
+
+## Project documentation
+
 
 <!--
 The **gene expression matrix** should be a tab-separated table of normalized transcript abundance values, with each row representing a unique transcript, and each column representing a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty. This will look like:
