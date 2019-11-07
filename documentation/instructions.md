@@ -48,13 +48,13 @@ Example: https://github.com/dredge-bio/example-dataset/blob/master/project_desig
 
 In the example dataset, notice we have 3 different treatments, each of which have two replicates.
 
-Save this file to the DrEdGE folder (for example, `%%PROJECT-DIR%%/project_design_file.tsv`), and then run the following R command in that folder:
+Save this file to the DrEdGE directory (for example, `%%PROJECT-DIR%%/project_design_file.tsv`), and then run the following R command in that folder:
 
 ```
 Rscript ./r-scripts/JSON_treatments.R -i project_design_file.tsv
 ```
 
-This will generate the file `treatments.json`, which is a JSON file that tells DrEdGE about the different treatments and replicates in your project. The **treatment information file** field on the left should point to this file. If you keep the default file name, you will not need to change anything.
+This will generate the file `treatments.json`, which is a JSON file that tells DrEdGE about the different treatments and replicates in your project. The **%%field-treatments%%** field on the left should point to this file. If you keep the default file name, you will not need to change anything.
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/treatments.json
 
@@ -65,13 +65,13 @@ Next, we will configure the transcript abundance matrix and pairwise comparisons
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/expression_matrix.tsv
 
-Save this file to the DrEdGE directory and enter the filename into the **Expression matrix file** field on the left. Now we will run an R script to create pairwise comparisons between each treatment using the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) package:
+Save this file to the DrEdGE directory and enter the filename into the **%%field-expressionMatrix%%** field on the left. Now we will run an R script to create pairwise comparisons between each treatment using the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) package:
 
 ```
 Rscript ./r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d project_design_file.tsv
 ```
 
-This will create a directory, by default named `pairwise_files`, which contains pairwise comparisons for each treatment in your dataset. The **Pairwise comparison file template** field on the left configures how DrEdGE will find comparison files.  The characters \'%A\' and \'%B\' will be replaced by pairs of treatment identifiers. For example: If treatments T1 and T2 are compared in a table called `T1_vs_T2.tsv`, in the directory `pairwise_tests/`, the value in this field should be `pairwise_tests/%A_vs_%B.tsv`. If you used the defaults from the R script, you will not need to change this value.
+This will create a directory, by default named `pairwise_files`, which contains pairwise comparisons for each treatment in your dataset. The **%%field-pairwiseName%%** field on the left configures how DrEdGE will find comparison files.  The characters \'%A\' and \'%B\' will be replaced by pairs of treatment identifiers. For example: If treatments T1 and T2 are compared in a table called `T1_vs_T2.tsv`, in the directory `pairwise_tests/`, the value in this field should be `pairwise_tests/%A_vs_%B.tsv`. If you used the defaults from the R script, you will not need to change this value.
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/pairwise_files/AB_vs_P1.tsv
 
@@ -79,7 +79,7 @@ Example: https://github.com/dredge-bio/example-dataset/blob/master/pairwise_file
 
 ## MA Plot limits
 
-The `pairwise_comparisons.R` script will also generate another file, `min_max.txt`, which contains information about the minimum and maximum values of log₂ Fold Change and log₂ Reads per Million across all of the generated pairwise comparisons. Enter these values into the **MA plot limits** field.
+The `pairwise_comparisons.R` script will also generate another file, `min_max.txt`, which contains information about the minimum and maximum values of log₂ Fold Change and log₂ Reads per Million across all of the generated pairwise comparisons. Enter these values into the **%%field-maPlot%%** field.
 
 # Testing
 

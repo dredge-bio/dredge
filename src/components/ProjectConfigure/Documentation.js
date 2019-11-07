@@ -5,6 +5,7 @@ const h = require('react-hyperscript')
     , styled = require('styled-components').default
     , instructions = require('instructions.md')
     , fieldHelp = require('fields.md')
+    , fieldDocs = require('./fields')
 
 const fields = R.pipe(
   s => s.split(/<!-- ([^ ]+) -->/).slice(1),
@@ -16,6 +17,7 @@ const thisURL = new URL('./', window.location.href).href
 
 fields.instructions = instructions
   .replace(/%%THIS-URL%%/g, `<a href="${thisURL}">${thisURL}</a>`)
+  .replace(/%%field-(\w+)%%/g, (match, fieldName) => fieldDocs[fieldName].label)
   .replace(/Example: (http.*)<\/p>/g, `
   <span class="example">
     <a target="_blank" href="$1">$1</a>
