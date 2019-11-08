@@ -2,7 +2,8 @@
 
 const h = require('react-hyperscript')
     , { Box, Heading } = require('rebass')
-    , { Link, Route } = require('org-shell')
+    , { Route } = require('org-shell')
+    , Link = require('./Link.js')
 
 function Para(props) {
   return h(Box, Object.assign({
@@ -11,8 +12,6 @@ function Para(props) {
     mt: 2,
   }, props))
 }
-
-const InternalLink = Link('a')
 
 module.exports = function Help() {
   return (
@@ -57,7 +56,7 @@ module.exports = function Help() {
 
       h(Para, [
         'To create your own DrEdGE project, follow the instructions on ',
-        h(InternalLink, {
+        h(Link, {
           route: new Route('configure'),
         }, 'this page'),
         '.',

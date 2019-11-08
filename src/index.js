@@ -16,9 +16,7 @@ function loadProject(title) {
   return async (params, redirectTo, { dispatch, getState }) => {
     await dispatch(Action.LoadProjectConfig(ProjectSource.Global))
 
-    if (!getState().projects.global.config) {
-      redirectTo(new Route('configure'))
-    } else {
+    if (getState().projects.global.config) {
       dispatch(Action.LoadProject(ProjectSource.Global))
         .then(() => {
           const state = getState()

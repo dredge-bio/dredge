@@ -6,14 +6,34 @@ const h = require('react-hyperscript')
     , { connect } = require('react-redux')
     , { Box, Button } = require('rebass')
     , Log = require('./Log')
+    , { ProjectSource } = require('../types')
+    , { Route } = require('org-shell')
+    , Link = require('./Link')
+
+function Code({ children }) {
+  return h('code', {
+    style: {
+      fontFamily: 'monospace',
+      backgroundColor: '#f0f0f0',
+      border: '1px solid #ccc',
+      padding: '2px 6px',
+    },
+  }, children)
+}
 
 
 module.exports = function makeProjectLoading(promptLocal=false) {
   return Component => {
     const ProjectLoading = props => {
-      const { view: { source }, projects } = props
+      const { view, projects } = props
 
-      if (!source) return h(Box, {}, null)
+      let source
+
+      if (view) {
+        source = view.source
+      } else {
+        source = ProjectSource.Global
+      }
 
       const project = projects[source.key]
 
@@ -30,12 +50,43 @@ module.exports = function makeProjectLoading(promptLocal=false) {
         project.loaded === false
       )
 
+      const failedGlobal = project.config === null && source.case({
+        Global: R.T,
+        _: R.F,
+      })
+
       if (showLog) {
         return (
           h(Box, { px: 3, py: 2 }, [
             h(Log, {
               loadingProject: source.key,
             }),
+
+            !failedGlobal ? null : (
+              h(Box, {
+                ml: 2,
+                mt: 4,
+                style: {
+                  maxWidth: 720,
+                  lineHeight: '22px',
+                },
+              }, [
+                'Could not find a DrEdGE configuration file. If you have not yet created one, continue to the ',
+                h(Link, {
+                  style: {
+                    color: 'blue',
+                    fontWeight: 'bold',
+                  },
+                  route: new Route('configure'),
+                }, 'configuration page'),
+                '. If you have already created a configuration file, make sure that it is named ',
+                h(Code, 'project.json'),
+                ' and that it is located in the DrEdGE directory alongside the ',
+                h(Code, 'index.html'),
+                ' file.',
+              ])
+            ),
+
             !(mustContinue && !project.failed) ? null : h(Box, { mt: 4 }, [
               h(Button, {
                 onClick() {

@@ -893,12 +893,10 @@ function loadProjectConfig(source) {
         let { message } = e
 
         if (message === 'File not found') {
-          message = 'No configuration file present. Redirecting to configuration page...'
+          message = 'No configuration file present.'
         }
 
         await log(LoadingStatus.Failed(message))
-
-        await delay(2000)
 
         return { config: null }
       }
