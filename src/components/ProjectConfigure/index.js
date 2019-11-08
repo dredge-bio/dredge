@@ -141,6 +141,11 @@ input[type="text"] {
   width: 100%;
 }
 
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+   opacity: 1;
+}
+
 .resolved-url {
   font-size: 14px;
 }
@@ -170,7 +175,7 @@ function resolveURL(base, path) {
 }
 
 const LimitInputContainer = styled(Box)`
-  width: 64px;
+  width: 72px;
   margin-right: 8px;
 `
 
@@ -522,7 +527,29 @@ class NewProject extends React.Component {
               fieldName: 'heatmapMinimumMaximum',
               setHelpField,
             }, [
+              h(Box, {
+                as: 'span',
+                style: {
+                  background: '#f0f0f0',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px 0 0 4px',
+                  padding: '8px',
+                  paddingRight: '6px',
+                  fontSize: '14px',
+                  marginRight: '-2px',
+                  borderRight: 'none',
+                },
+              }, [
+                '0 ‒',
+              ]),
               h(Input, {
+                style: {
+                  fontSize: '14px',
+                  borderRadius: '0 4px 4px 0',
+                  borderLeft: 'none',
+                  paddingLeft: '3px',
+                  width: '96px',
+                },
                 type: 'number',
                 min: 0,
                 step: 1,

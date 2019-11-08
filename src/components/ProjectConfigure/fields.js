@@ -57,6 +57,6 @@ module.exports = {
 
   heatmapMinimumMaximum: {
     name: 'heatmapMinimumMaximum',
-    label: 'Minimum heatmap abundance',
+    label: 'Minimum heatmap abundance range',
   },
 }
