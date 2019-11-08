@@ -20,10 +20,6 @@ DrEdGE is an application for visualizing RNAseq data in a Web browser. It runs e
 
 We will follow along with a fully configured example located at <https://github.com/dredge-bio/example-dataset>. You can see how the example application looks at <https://dredge-bio.github.io/example-dataset/>. The example is a [subset of a dataset](https://www.ncbi.nlm.nih.gov/pubmed/27554860) of the transcriptional lineage of the <i>C. elegans</I> embryo, created by Sophia Tintori.
 
-## Downloading
-
-All of the JavaScript, HTML, and fonts required to run DrEdGE can be found in this zip archive: [%%ZIP-FILENAME%%](%%ZIP-FILENAME%%). To begin, download this zip file and extract it somewhere on your computer. Open the `index.html` file inside, and follow the instructions to set up a local Web server. Continue to configure DrEdGE on that local server.
-
 ## Overview
 
 The form on the left will generate a configuration file, named `project.json`, that will tell DrEdGE where to find your project's files, and how to configure the DrEdGE interface. As you fill out the form, you can press the **Test** button to check if the configuration is working properly. Once you have gotten a good configuration, press the **Save** button, and save the `project.json` file to the directory where you extracted DrEdGE. (You can also load an existing `project.json` file into the form by using the **Load** button). Once you have saved the `project.json` file, you can access your DrEdGE application at %%THIS-URL%%.
