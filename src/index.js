@@ -66,6 +66,7 @@ const resources = {
       dispatch(Action.LoadProject(ProjectSource.Local))
     },
     Component: require('./components/View'),
+    absoluteDimensions: true,
   },
 
 
