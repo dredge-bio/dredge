@@ -41,7 +41,7 @@ function defaultLocalConfig() {
       heatmapMinimumMaximum: 0,
       treatments: './treatments.json',
       pairwiseName: './pairwise_files/%A_vs_%B.tsv',
-      transcriptAliases: './aliases.tsv',
+      transcriptAliases: './transcript_aliases.tsv',
       abundanceMeasures: './expression_matrix.tsv',
       diagram: './diagram.svg',
       grid: './grid.csv',
