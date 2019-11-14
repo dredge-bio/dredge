@@ -18,7 +18,7 @@ Variables which will be replaced:
 
 DrEdGE is an application for visualizing RNAseq data in a Web browser. It runs exclusively using static files stored on a file system, with no requirement of a database or server to run and store statistical analyses. This means that DrEdGE is easy to run and deploy, but it also means that you must create all the files needed for your project ahead of time. This guide will take you through the steps to create those files and configure DrEdGE to work with your own dataset.
 
-We will follow along with a fully configured example located at <https://github.com/dredge-bio/example-dataset>. You can see how the example application looks at <https://dredge-bio.github.io/example-dataset/>. The example is a [subset of a dataset](https://www.ncbi.nlm.nih.gov/pubmed/27554860) of the transcriptional lineage of the <i>C. elegans</I> embryo, created by Sophia Tintori.
+We will follow along with a fully configured example located at <https://github.com/dredge-bio/example-dataset>. You can see how the example application looks at <https://dredge-bio.github.io/example-dataset/>. The example is a [subset of a dataset](https://www.ncbi.nlm.nih.gov/pubmed/27554860) of the transcriptional lineage of the <i>C. elegans</I> embryo, created by Sophia Tintori <i>et al.</i>
 
 ## Overview
 
@@ -57,7 +57,7 @@ Example: https://github.com/dredge-bio/example-dataset/blob/master/treatments.js
 
 ## Transcript abundance matrix { data-field="expressionMatrix pairwiseName" }
 
-Next, we will configure the transcript abundance matrix and pairwise comparisons. You must provide a **gene expression matrix** file, a tab-separated table of normalized transcript abundance values. Each row in the table represents a unique transcript, and each column represents a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty.
+Next, we will configure the transcript abundance matrix and pairwise comparisons. You must provide a **transcript abundance matrix** file, a tab-separated table of normalized transcript abundance values. Each row in the table represents a unique transcript, and each column represents a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty.
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/expression_matrix.tsv
 
@@ -120,47 +120,29 @@ Both the grid and the diagram will appear as a heatmap visualization when browsi
 
 Several other options will adjust the way DrEdGE presents your project.
 
-## Project documentation
+## Project name { data-field=label }
+
+Enter the name of your project in the **%%field-label%%** field. This will appear in the top bar of your configured application.
 
 
-<!--
-The **gene expression matrix** should be a tab-separated table of normalized transcript abundance values, with each row representing a unique transcript, and each column representing a replicate. The header row should contain replicate ID that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty. This will look like:
+## Alternate transcript names { data-field=transcriptAliases }
 
-```
-      r1      r2      r3        r4
-t1    32.2    24.3    6742.3    0.04
-t2    43.1    44.1    5423.1    9.1
-t3    19.1    100.2   661.9     5.4
-t4    154.1   0.4     555.1     6.2
-```
+It is common for a transcript to have several different names. To tell DrEdGE the different names of the transcripts in your project, create a TSV or CSV file in which the first column of a row has the codename of the transcript used in the first column of the **%%field-expressionMatrix%%**, and remaining columns contain alternate names or codes for that transcript. Enter the name of this file in the **%%field-transcriptAliases%%** field.
 
-Where the abundance of t1 in r1 is 32.2, the abundance of t1 in r2 is 24.3, and so on.
+Example: https://github.com/dredge-bio/example-dataset/blob/master/transcript_aliases.tsv
 
-Copy this file to the `%%PROJECT-DATA-DIR%%` directory, and record it in the **Gene Expression Matrix URL** field to the left. For this example, we will assume this file is called `%%PROJECT-DATA-DIR%%/expression_matrix.tsv`
 
-## Generating DrEdGE data
+## Project documentation { data-field=readme }
 
-Once these files are ready, you will be able to generate the files for **treatment information** and **pairwise comparisons** as well as the appropriate **MA Plot limits** for your project.
+You can provide documentation about your project using the [Markdown](https://commonmark.org/help/) file format. Enter the name of the file you create in the **%%field-readme%%** field.
 
-First, open a terminal and change directories to `%%PROJECT-DATA-DIR%%`. Then run the R script included in the zip file called `JSON_treatments.R`, using the command:
+Example: https://github.com/dredge-bio/example-dataset/blob/master/about.md
 
-```
-Rscript ../r-scripts/JSON_treatments.R -i experiment_design_file.tsv
-```
+## Transcript hyperlink { data-field=transcriptHyperlink }
 
-By default, this will generate the file `%%PROJECT-DATA-DIR%%/treatments.json`, but you may change the location of the output file with the `-o` command line flag. Record the location of the output file in the field for **Treatment information URL**
+DrEdGE allows viewing different transcripts by clicking on them in the table next to the MA plot. You can link to an external knowledge base for different transcripts using the **%%field-transcriptHyperlink%%** field.  The **Label** should be the name of the database, and the **URL** should be the template to generate a hyperlink based on a transcript codename. The string `%name` in the URL will be replaced with the name of a given transcript. For example, given a URL template with the value `http://example.com/biobase/gene/search/%name` and a transcript with the name `act-1`, the URL to get more information about the transcript would be `http://example.com/biobase/gene/search/act-1`.
 
-Run the pairwise comparison generation script in much the same way, using the R script `pairwise_comparisons.R`:
 
-```
-Rscript ../r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d experiment_design_file.tsv
-```
+# Deploying DrEdGE on the Web
 
-This will generate a directory full of pairwise comparisons between different treatments. By default, the folder is `pairwise_files`, but this can be adjusted with the `-o` flag. This value should be recorded in the **Pairwise comparison URL template** field. The script will also create a file showing the minimum and maximum average transcript abundance. By default, this will be called `min_max.txt` but can be adjusted with the `-m` flag. The values reported in this file can be used to complete the **MA plot limits** fields, with "logCPM" relevant to the x-axis, and "logFC" relevant to the x-axis. We recommend setting the y-axis minimum and maximum to numbers with the same absolute value, to keep logFC=0 centered.
-
-Once you have filled out the configuration on the left, press the "Test" button to see if your configuration loads appropriately. If you are satisfied, press the "Save" button, which will download a configuration file. By default, it will be called `project.json`, but you may change the name if you wish. Save this configuration file to the `%%PROJECT-DATA-DIR%%` folder on your hard drive. 
-
-Now edit the `index.html` file in the `%%PROJECT-DIR%%` folder, following the instructions to point your project to the appropriate location of the configuration file, which should be: `%%PROJECT-DATA-DIR%%/project.json`.
-
-Restart DrEdGE by loading the local index page (i.e. <http://localhost:8000/> or <http://127.0.0.1:8000/>) to see your project. If you wish to host your project on the Web, you may now upload the entire DrEdGE folder to your server.
--->
+Once you have configured your DrEdGE application to your liking, **Save** your configuration and place the `project.json` file inside the DrEdGE directory. To serve DrEdGE on the Web, upload this directory to a Web server that supports serving static files. Since there is no database to manage and no dynamic content to generate, you are finished! Your DrEdGE application will be available without any further maintenance for as long as you keep the files online.
