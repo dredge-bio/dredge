@@ -72,7 +72,7 @@ Save this file to the DrEdGE directory and enter the filename into the **%%field
 ## Differential expression data { data-field="pairwiseName" }
 
 DrEdGE required pre-calculated differential expression tables for every possible pairwise set of treatments. You can generate these tables using any method you prefer, or you can run the R script provided in the DrEdGE package, which uses the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) statistical package:
-
+i
 ```
 Rscript ./r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d treatments.JSON
 ```
@@ -81,7 +81,7 @@ This will create a directory, by default named `pairwise_files`, which contains 
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/pairwise_files/AB_vs_P1.tsv
 
- If you want to use your own methods for generating statistics, generate pairwise pairwise comparisons for each treatment using the treatment IDs in your project design file. Each file must be tab-separated table with four columns in the following order: transcript ID, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript names must match those found in the transcript abundance matrix.
+If you want to use your own methods for generating statistics, generate pairwise pairwise comparisons for each treatment using the treatment IDs in your project design file. Each file must be tab-separated table with four columns in the following order: transcript ID, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript IDs must match those found in the transcript abundance matrix.
 
 ## MA Plot limits { data-field="maPlot" }
 
@@ -131,7 +131,7 @@ Several other options will adjust the way DrEdGE presents your project.
 
 ## Alternate transcript names { data-field=transcriptAliases }
 
-Each transcript can be referred to by many identifiers, any of which a user might use to search your DrEdGE page. To tell DrEdGE the different names for each transcript in your project, create a TSV or CSV file with one row for each transcript. Each row must start with the transcript name used in **%%field-expressionMatrix%%**, followed by alternate names or codes for that transcript. Enter the name of this file in the **%%field-transcriptAliases%%** field.
+Each transcript can be referred to by many identifiers, any of which a user might use to search your DrEdGE page. To tell DrEdGE the different names for each transcript in your project, create a TSV or CSV file with one row for each transcript. Each row must start with a transcript ID used in **%%field-expressionMatrix%%**, followed by alternate names or codes for that transcript. Enter the name of this file in the **%%field-transcriptAliases%%** field.
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/transcript_aliases.tsv
 
@@ -144,7 +144,7 @@ Example: https://github.com/dredge-bio/example-dataset/blob/master/about.md
 
 ## Transcript hyperlink { data-field=transcriptHyperlink }
 
-Transcripts can be linked to an external knowledge base using the **%%field-transcriptHyperlink%%** field.  The **Label** should be the name of the database, and the **URL** should be the template to generate a hyperlink based on a transcript name. The string `%name` in the URL will be replaced with the name of a given transcript. For example, given a URL template with the value `http://example.com/biobase/gene/search/%name` and a transcript with the name `act-1`, the URL to get more information about the transcript would be `http://example.com/biobase/gene/search/act-1`.
+Transcripts can be linked to an external knowledge base using the **%%field-transcriptHyperlink%%** field.  The **Label** should be the name of the database, and the **URL** should be the template to generate a hyperlink based on a transcript ID. The string `%name` in the URL will be replaced with the name of a given transcript. For example, given a URL template with the value `http://example.com/biobase/gene/search/%name` and a transcript with the name `act-1`, the URL to get more information about the transcript would be `http://example.com/biobase/gene/search/act-1`.
 
 
 # Deploying DrEdGE on the Web
