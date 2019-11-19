@@ -16,7 +16,7 @@ Variables which will be replaced:
 
 # Instructions
 
-DrEdGE is an application for visualizing quantitative gene expression data in a Web browser. It runs exclusively using static files stored on a file system, with no requirement of a database or server to run and store statistical analyses. This means that DrEdGE is easy to run and deploy, but it also means that you must create all the files needed for your project ahead of time. This guide will take you through the steps to create those files and configure DrEdGE to work with your own dataset.
+DrEdGE (Differential Expression Gene Explorer) is an application for visualizing quantitative gene expression data in a Web browser. It runs exclusively using static files stored on a file system, with no requirement of a database or server to run and store statistical analyses. This means that DrEdGE is easy to run and deploy, but it also means that you must create all the files needed for your project ahead of time. This guide will take you through the steps to create those files and configure DrEdGE to work with your own dataset.
 
 We will follow along with a fully configured example located at <https://github.com/dredge-bio/example-dataset>. You can see how the example application looks at <https://dredge-bio.github.io/example-dataset/>. The example is a subset of <i>C. elegans</i> embryonic transcriptomes from [Tintori <i>et al.</i>, 2016](https://www.ncbi.nlm.nih.gov/pubmed/27554860).
 
