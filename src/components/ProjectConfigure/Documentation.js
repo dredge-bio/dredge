@@ -1,17 +1,11 @@
 "use strict"
 
 const h = require('react-hyperscript')
-    , R = require('ramda')
     , styled = require('styled-components').default
     , instructions = require('instructions.md')
-    , fieldHelp = require('fields.md')
     , fieldDocs = require('./fields')
 
-const fields = R.pipe(
-  s => s.split(/<!-- ([^ ]+) -->/).slice(1),
-  R.splitEvery(2),
-  R.fromPairs
-)(fieldHelp)
+const fields = {}
 
 const thisURL = new URL('./', window.location.href).href
 
