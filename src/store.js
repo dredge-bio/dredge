@@ -23,6 +23,8 @@ module.exports = function _createStore() {
           savedTranscripts,
           pValueThreshold,
           brushedArea,
+          selectedBinTranscripts,
+          hoveredBinTranscripts,
         } = (getState().view || {})
 
         const triggerResort = (
@@ -42,7 +44,9 @@ module.exports = function _createStore() {
             lastTriggeredSort[2] !== sortPath ||
             lastTriggeredSort[3] !== savedTranscripts ||
             lastTriggeredSort[4] !== pValueThreshold ||
-            lastTriggeredSort[5] !== brushedArea
+            lastTriggeredSort[5] !== brushedArea ||
+            lastTriggeredSort[6] !== selectedBinTranscripts ||
+            lastTriggeredSort[7] !== hoveredBinTranscripts
           ) {
             dispatch(Action.UpdateDisplayedTranscripts(null, null))
             lastTriggeredSort = [
@@ -52,6 +56,8 @@ module.exports = function _createStore() {
               savedTranscripts,
               pValueThreshold,
               brushedArea,
+              selectedBinTranscripts,
+              hoveredBinTranscripts
             ]
           }
         }

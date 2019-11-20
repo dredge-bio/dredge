@@ -9,12 +9,16 @@ const h = require('react-hyperscript')
     , { getPlotBins, projectForView } = require('../../utils')
     , onResize = require('../util/Sized')
     , { Flex, Button } = require('rebass')
-    , { MagnifyingGlass, Target, Reset } = require('../Icons')
+    , { Pointer, MagnifyingGlass, Target, Reset } = require('../Icons')
     , Action = require('../../actions')
 
 const PlotWrapper = styled.div`
 .button-group {
   display: flex;
+}
+
+.button-group button {
+  border-radius: 0;
 }
 
 .button-group button:last-of-type {
@@ -35,6 +39,12 @@ const PlotWrapper = styled.div`
 
 [data-active]:focus {
   z-index: 1;
+}
+
+.bin-selected,
+.bin-hovered {
+  stroke: red;
+  stroke-width: 3px;
 }
 
 [data-active="true"]::after {
@@ -71,7 +81,7 @@ const padding = {
 const TreatmentLabels = styled.div`
 position: absolute;
 left: ${padding.l - 26}px;
-right: 172px;
+right: 214px;
 white-space: nowrap;
 padding-bottom: 9px;
 padding-left: 26px;
@@ -122,7 +132,8 @@ const TRANSCRIPT_BIN_MULTIPLIERS = {
 
 const help = {
   zoom: 'Use mouse/touchscreen to zoom and pan',
-  select: 'Use mouse/touchscreen to select transcripts on the plot',
+  select: 'Use mouse to select squares on the plot',
+  drag: 'Use mouse/touchscreen to select an area on the plot',
   reset: 'Reset position of the plot',
 }
 
@@ -133,7 +144,7 @@ class Plot extends React.Component {
     this.state = {
       xScale: null,
       yScale: null,
-      dragAction: 'select',
+      dragAction: 'drag',
       showHelp: null,
       transform: d3.zoomIdentity,
     }
@@ -219,7 +230,7 @@ class Plot extends React.Component {
     )
 
     const mustSetBrush = (
-      this.state.dragAction === 'select' &&
+      this.state.dragAction === 'drag' &&
       propChanged(R.lensProp('brushedArea'))
     )
 
@@ -232,6 +243,7 @@ class Plot extends React.Component {
     }
 
     if (redrawBins) {
+      this.resetSelectedBin()
       this.drawBins()
       this.drawSavedTranscripts()
     }
@@ -251,7 +263,7 @@ class Plot extends React.Component {
   }
 
   initInteractionLayer() {
-    const { updateOpts } = this.props
+    const { updateOpts, dispatch } = this.props
         , { dragAction } = this.state
 
     if (!this.i) {
@@ -261,11 +273,18 @@ class Plot extends React.Component {
     d3.select('.interaction')
       .selectAll('*').remove()
 
-    if (dragAction === 'select') {
+    dispatch(Action.SetHoveredBinTranscripts(null))
+    dispatch(Action.SetSelectedBinTranscripts(null))
+
+    if (dragAction === 'drag') {
       this.initBrush()
     } else if (dragAction === 'zoom') {
       this.clearBrush()
       this.initZoom()
+      updateOpts(R.omit(['brushed']))
+    } else if (dragAction === 'select') {
+      this.clearBrush()
+      this.initSelect()
       updateOpts(R.omit(['brushed']))
     }
   }
@@ -357,6 +376,59 @@ class Plot extends React.Component {
     }
   }
 
+  initSelect() {
+    const { dispatch } = this.props
+        , bins = this.bins
+
+    const that = this
+
+    this.binSelection = d3.select(this.svg)
+      .select('.interaction')
+      .append('g')
+      .selectAll('rect')
+      .data(bins).enter()
+        .append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y1)
+        .attr('width', GRID_SQUARE_UNIT)
+        .attr('height', GRID_SQUARE_UNIT)
+        .attr('fill', 'transparent')
+        .on('mouseenter', function (d) {
+          dispatch(Action.SetHoveredBinTranscripts(new Set(d.transcripts.map(t => t.name))))
+          if (d.transcripts.length) {
+            this.setAttribute('stroke', 'red')
+          }
+        })
+        .on('mouseleave', function () {
+          dispatch(Action.SetHoveredBinTranscripts(null))
+          this.removeAttribute('stroke')
+        })
+        .on('click', function (d) {
+          if (this.classList.contains('bin-selected')) {
+            this.classList.remove('bin-selected')
+            dispatch(Action.SetSelectedBinTranscripts(null))
+          } else if (!d.transcripts.length) {
+            that.resetSelectedBin()
+          } else {
+            [...this.parentNode.querySelectorAll('.bin-selected')].forEach(el => {
+              el.classList.remove('bin-selected')
+            })
+            this.classList.add('bin-selected')
+            dispatch(Action.SetSelectedBinTranscripts(new Set(d.transcripts.map(t => t.name))))
+          }
+        })
+  }
+
+  resetSelectedBin() {
+    const { dispatch } = this.props
+
+    dispatch(Action.SetSelectedBinTranscripts(null))
+
+    ;[...this.svg.querySelectorAll('.bin-selected')].forEach(el => {
+      el.classList.remove('bin-selected')
+    })
+  }
+
   drawAxes() {
     const { xScale, yScale } = this.state
 
@@ -424,6 +496,8 @@ class Plot extends React.Component {
       yScale,
       8)
 
+    this.bins = bins
+
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
       .domain([-300,150])
 
@@ -431,6 +505,7 @@ class Plot extends React.Component {
       .domain([-500,150])
 
     bins.forEach(bin => {
+      if (!bin.transcripts.length) return
       bin.multiplier = TRANSCRIPT_BIN_MULTIPLIERS[bin.transcripts.length] || 1
       if (bin.transcripts.length < 5) {
         bin.color = colorScale(5)
@@ -448,7 +523,7 @@ class Plot extends React.Component {
       .select('.squares')
       .append('g')
       .selectAll('rect')
-      .data(bins).enter()
+      .data(bins.filter(b => b.transcripts.length)).enter()
         .append('rect')
         .attr('x', d => d.x0 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
         .attr('y', d => d.y1 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
@@ -597,7 +672,7 @@ class Plot extends React.Component {
             position: 'absolute',
             right: padding.r,
             top: 6,
-            width: 146,
+            width: 188,
             height: padding.t - 6,
             background: '#eee',
             border: '1px solid #ccc',
@@ -621,6 +696,18 @@ class Plot extends React.Component {
                   this.setState({ showHelp: null })
                 },
                 ['data-active']: dragAction === 'select',
+              }, h(Pointer)),
+              h(Button, {
+                onClick: () => {
+                  this.setState({ dragAction: 'drag' })
+                },
+                onMouseEnter: () => {
+                  this.setState({ showHelp: 'drag' })
+                },
+                onMouseLeave: () => {
+                  this.setState({ showHelp: null })
+                },
+                ['data-active']: dragAction === 'drag',
               }, h(Target)),
               h(Button, {
                 onClick: () => {

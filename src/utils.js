@@ -96,7 +96,7 @@ function getPlotBins(data, filter, xScale, yScale, unit=5) {
     }
   })
 
-  return R.flatten(bins).filter(b => b.transcripts.length)
+  return R.flatten(bins)
 }
 
 function projectForView(state) {

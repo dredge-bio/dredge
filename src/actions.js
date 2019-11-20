@@ -126,6 +126,26 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
+  SetHoveredBinTranscripts: {
+    exec: R.always({ resort: true }),
+    request: {
+      transcripts: x => x === null || x.constructor === Set,
+    },
+    response: {
+      resort: Boolean,
+    },
+  },
+
+  SetSelectedBinTranscripts: {
+    exec: R.always({ resort: true }),
+    request: {
+      transcripts: x => x === null || x.constructor === Set,
+    },
+    response: {
+      resort: Boolean,
+    },
+  },
+
   SetBrushedArea: {
     exec: R.always({ resort: true }),
     request: {
@@ -1045,6 +1065,8 @@ function updateDisplayedTranscripts(sortPath, order) {
       pairwiseData,
       pValueThreshold,
       brushedArea,
+      hoveredBinTranscripts,
+      selectedBinTranscripts,
     } = view
 
     const { abundancesForTreatmentTranscript } = project
@@ -1066,6 +1088,10 @@ function updateDisplayedTranscripts(sortPath, order) {
           listedTranscripts.add(transcript.name)
         }
       })
+    } else if (selectedBinTranscripts) {
+      listedTranscripts = selectedBinTranscripts
+    } else if (hoveredBinTranscripts) {
+      listedTranscripts = hoveredBinTranscripts
     } else {
       listedTranscripts = savedTranscripts
     }

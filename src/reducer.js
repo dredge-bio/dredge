@@ -19,6 +19,8 @@ function blankView(source, extra) {
 
     savedTranscripts: new Set(),
     brushedArea: null,
+    hoveredBinTranscripts: null,
+    selectedBinTranscripts: null,
 
     displayedTranscripts: null,
     order: 'asc',
@@ -182,6 +184,22 @@ module.exports = function reducer(state=initialState(), action) {
         return R.over(
           R.lensProp('view'),
           R.flip(R.merge)(updated),
+          state
+        )
+      },
+
+      SetHoveredBinTranscripts(transcripts) {
+        return R.assocPath(
+          ['view', 'hoveredBinTranscripts'],
+          transcripts,
+          state
+        )
+      },
+
+      SetSelectedBinTranscripts(transcripts) {
+        return R.assocPath(
+          ['view', 'selectedBinTranscripts'],
+          transcripts,
           state
         )
       },
