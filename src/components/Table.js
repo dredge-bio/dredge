@@ -334,14 +334,19 @@ class Table extends React.Component {
   }
 
   getDisplayMessage() {
-    const { displayedTranscripts, brushedArea } = this.props.view
+    const {
+      displayedTranscripts,
+      brushedArea,
+      hoveredBinTranscripts,
+      selectedBinTranscripts,
+    } = this.props.view
 
     function text(verb, number) {
       return `${number} ${verb} transcript${number > 1 ? 's' : ''}`
     }
 
     if (displayedTranscripts) {
-      if (brushedArea) {
+      if (brushedArea || hoveredBinTranscripts || selectedBinTranscripts) {
         return text('selected', displayedTranscripts.length)
       } else {
         return text('watched', displayedTranscripts.length)

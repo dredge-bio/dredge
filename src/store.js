@@ -6,6 +6,7 @@ const R = require('ramda')
     , reducer = require('./reducer')
     , Action = require('./actions')
 
+
 module.exports = function _createStore() {
   let lastTriggeredSort = []
 
@@ -27,7 +28,7 @@ module.exports = function _createStore() {
           hoveredBinTranscripts,
         } = (getState().view || {})
 
-        const triggerResort = (
+        const checkResort = (
           action.readyState &&
           action.readyState.case({
             Success: R.T,
@@ -37,28 +38,33 @@ module.exports = function _createStore() {
           pairwiseData
         )
 
-        if (triggerResort) {
-          if (
-            lastTriggeredSort[0] !== pairwiseData ||
-            lastTriggeredSort[1] !== order ||
-            lastTriggeredSort[2] !== sortPath ||
-            lastTriggeredSort[3] !== savedTranscripts ||
-            lastTriggeredSort[4] !== pValueThreshold ||
-            lastTriggeredSort[5] !== brushedArea ||
-            lastTriggeredSort[6] !== selectedBinTranscripts ||
-            lastTriggeredSort[7] !== hoveredBinTranscripts
-          ) {
-            dispatch(Action.UpdateDisplayedTranscripts(null, null))
-            lastTriggeredSort = [
-              pairwiseData,
-              order,
-              sortPath,
-              savedTranscripts,
-              pValueThreshold,
-              brushedArea,
-              selectedBinTranscripts,
-              hoveredBinTranscripts
-            ]
+        if (checkResort) {
+          const triggerResort = (
+            lastTriggeredSort.pairwiseData !== pairwiseData ||
+            lastTriggeredSort.order !== order ||
+            lastTriggeredSort.sortPath !== sortPath ||
+            lastTriggeredSort.savedTranscripts !== savedTranscripts ||
+            lastTriggeredSort.pValueThreshold !== pValueThreshold ||
+            lastTriggeredSort.brushedArea !== brushedArea ||
+            lastTriggeredSort.selectedBinTranscripts !== selectedBinTranscripts ||
+            (
+              selectedBinTranscripts === null &&
+              lastTriggeredSort.hoveredBinTranscripts !== hoveredBinTranscripts
+            )
+          )
+
+          if (!triggerResort) return
+
+          dispatch(Action.UpdateDisplayedTranscripts(null, null))
+          lastTriggeredSort = {
+            pairwiseData,
+            order,
+            sortPath,
+            savedTranscripts,
+            pValueThreshold,
+            brushedArea,
+            selectedBinTranscripts,
+            hoveredBinTranscripts,
           }
         }
 

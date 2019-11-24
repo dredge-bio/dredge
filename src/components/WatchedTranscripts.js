@@ -228,12 +228,31 @@ class WatchedTranscripts extends React.Component {
   }
 
   render() {
-    const { dispatch, displayedTranscripts, savedTranscripts, brushedArea, project } = this.props
-        , { showSearch, importStatus } = this.state
+    const {
+      dispatch,
+      displayedTranscripts,
+      savedTranscripts,
+      brushedArea,
+      project,
+      hoveredBinTranscripts,
+      selectedBinTranscripts,
+    } = this.props
+
+    const {
+      showSearch,
+      importStatus,
+    } = this.state
 
     if (importStatus) {
       return h(StatusContainer, {}, importStatus)
     }
+
+    const showSaveButton = (
+      brushedArea !== null ||
+      hoveredBinTranscripts !== null ||
+      selectedBinTranscripts !== null
+    )
+
 
     return (
       h('div', {
@@ -273,7 +292,7 @@ class WatchedTranscripts extends React.Component {
             }, 'Search'),
 
             h(Button, {
-              disabled: brushedArea == null || displayedTranscripts.length === 0,
+              disabled: !showSaveButton || displayedTranscripts.length === 0,
               onClick() {
                 const names = displayedTranscripts.map(R.path(['transcript', 'name']))
 
@@ -284,7 +303,7 @@ class WatchedTranscripts extends React.Component {
             }, 'Watch selected'),
 
             h(Button, {
-              disabled: brushedArea == null || displayedTranscripts.length === 0,
+              disabled: !showSaveButton || displayedTranscripts.length === 0,
               onClick() {
                 const names = displayedTranscripts.map(R.path(['transcript', 'name']))
 
@@ -323,5 +342,11 @@ module.exports = connect(state => {
 
   return Object.assign({
     project,
-  }, R.pick(['brushedArea', 'savedTranscripts', 'displayedTranscripts' ], state.view))
+  }, R.pick([
+    'brushedArea',
+    'savedTranscripts',
+    'displayedTranscripts',
+    'hoveredBinTranscripts',
+    'selectedBinTranscripts',
+  ], state.view))
 })(WatchedTranscripts)
