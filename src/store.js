@@ -17,8 +17,23 @@ module.exports = function _createStore() {
       ({ dispatch, getState }) => next => action => {
         const res = next(action)
 
+        const updateSort = (
+          action.readyState &&
+          action.readyState.case({
+            Success: R.T,
+            _: R.F,
+          }) &&
+          action.type._name === 'SetPairwiseComparison'
+        )
+
+        if (updateSort) {
+          dispatch(Action.UpdateSortForTreatments(null, null))
+          return res
+        }
+
         const {
-          pairwiseData,
+          // pairwiseData,
+          sortedTranscripts,
           order,
           sortPath,
           savedTranscripts,
@@ -35,12 +50,14 @@ module.exports = function _createStore() {
             _: R.F,
           }) &&
           action.readyState.response.resort &&
-          pairwiseData
+          // pairwiseData &&
+          sortedTranscripts
         )
 
         if (checkResort) {
           const triggerResort = (
-            lastTriggeredSort.pairwiseData !== pairwiseData ||
+            // lastTriggeredSort.pairwiseData !== pairwiseData ||
+            lastTriggeredSort.sortedTranscripts !== sortedTranscripts ||
             lastTriggeredSort.order !== order ||
             lastTriggeredSort.sortPath !== sortPath ||
             lastTriggeredSort.savedTranscripts !== savedTranscripts ||
@@ -57,7 +74,8 @@ module.exports = function _createStore() {
 
           dispatch(Action.UpdateDisplayedTranscripts(null, null))
           lastTriggeredSort = {
-            pairwiseData,
+            // pairwiseData,
+            sortedTranscripts,
             order,
             sortPath,
             savedTranscripts,

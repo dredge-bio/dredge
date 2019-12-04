@@ -10,6 +10,7 @@ function blankView(source, extra) {
 
     // comparedTreatments: null,
     pairwiseData: null,
+    sortedTranscripts: null,
 
     pValueThreshold: 1,
 
@@ -24,7 +25,7 @@ function blankView(source, extra) {
 
     displayedTranscripts: null,
     order: 'asc',
-    sortPath: ['transcript', 'label'],
+    sortPath: ['name'],
   }, extra)
 }
 
@@ -162,6 +163,24 @@ module.exports = function reducer(state=initialState(), action) {
               comparedTreatments: [treatmentA, treatmentB],
             }))
         )(state)
+      },
+
+      UpdateSortForTreatments(newSortPath, newOrder) {
+        const { sortPath, order } = state.view
+            , { sortedTranscripts } = resp
+
+        return R.pipe(
+          R.set(
+            R.lensPath(['view', 'sortPath']),
+            newSortPath || sortPath),
+          R.set(
+            R.lensPath(['view', 'order']),
+            newOrder || order),
+          R.set(
+            R.lensPath(['view', 'sortedTranscripts']),
+            sortedTranscripts)
+        )(state)
+
       },
 
       GetDefaultPairwiseComparison() {

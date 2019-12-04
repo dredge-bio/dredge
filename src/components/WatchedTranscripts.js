@@ -294,7 +294,7 @@ class WatchedTranscripts extends React.Component {
             h(Button, {
               disabled: !showSaveButton || displayedTranscripts.length === 0,
               onClick() {
-                const names = displayedTranscripts.map(R.path(['transcript', 'name']))
+                const names = displayedTranscripts.map(R.path(['name']))
 
                 dispatch(Action.SetSavedTranscripts(
                   union(savedTranscripts, new Set(names))
@@ -305,7 +305,7 @@ class WatchedTranscripts extends React.Component {
             h(Button, {
               disabled: !showSaveButton || displayedTranscripts.length === 0,
               onClick() {
-                const names = displayedTranscripts.map(R.path(['transcript', 'name']))
+                const names = displayedTranscripts.map(R.path(['name']))
 
                 dispatch(Action.SetSavedTranscripts(
                   difference(savedTranscripts, new Set(names))

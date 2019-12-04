@@ -41,10 +41,10 @@ const HEADER_HEIGHT = 84;
 
 const FIELDS = [
   { sortPath: '', label: '' },
-  { sortPath: ['transcript', 'name'], label: 'Transcript' },
-  { sortPath: ['transcript', 'pValue'], label: 'P-Value' },
-  { sortPath: ['transcript', 'logATA'], label: 'logATA' },
-  { sortPath: ['transcript', 'logFC'], label: 'logFC' },
+  { sortPath: ['name'], label: 'Transcript' },
+  { sortPath: ['pValue'], label: 'P-Value' },
+  { sortPath: ['logATA'], label: 'logATA' },
+  { sortPath: ['logFC'], label: 'logFC' },
   { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean' },
   { sortPath: ['treatmentA_AbundanceMedian'], label: 'Median' },
   { sortPath: ['treatmentB_AbundanceMean'], label: 'Mean' },
@@ -292,7 +292,7 @@ class Table extends React.Component {
         e.preventDefault()
 
         const selectedIdx = R.findIndex(
-          d => R.pathEq(['view', 'focusedTranscript'], d.transcript.name, this.props),
+          d => R.pathEq(['view', 'focusedTranscript'], d.name, this.props),
           displayedTranscripts
         )
 
@@ -303,13 +303,13 @@ class Table extends React.Component {
         if (e.code === "ArrowDown") {
           if (selectedIdx + 1 === displayedTranscripts.length) return
 
-          nextSelection = displayedTranscripts[selectedIdx + 1].transcript.name
+          nextSelection = displayedTranscripts[selectedIdx + 1].name
         }
 
         if (e.code === "ArrowUp") {
           if (selectedIdx - 1 === -1) return
 
-          nextSelection = displayedTranscripts[selectedIdx - 1].transcript.name
+          nextSelection = displayedTranscripts[selectedIdx - 1].name
         }
 
         dispatch(Action.SetFocusedTranscript(nextSelection))
@@ -453,7 +453,7 @@ class Table extends React.Component {
               left: R.sum(columnWidths.slice(0, i + 1)),
               clickable: true,
               onClick: () => {
-                dispatch(Action.UpdateDisplayedTranscripts(
+                dispatch(Action.UpdateSortForTreatments(
                   sortPath,
                   (R.equals(view.sortPath, sortPath) && order === 'asc')
                     ? 'desc'

@@ -116,6 +116,18 @@ const Action = module.exports = makeTypedAction({
     },
   },
 
+  UpdateSortForTreatments: {
+    exec: updateSortForTreatments,
+    request: {
+      sortPath: d => d == null || Array.isArray(d),
+      order: d => d == null || d === 'asc' || d === 'desc',
+    },
+    response: {
+      resort: Boolean,
+      sortedTranscripts: Object,
+    },
+  },
+
   SetSavedTranscripts: {
     exec: setSavedTranscripts,
     request: {
@@ -1030,8 +1042,22 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
 
         const name = project.getCanonicalTranscriptLabel(id)
 
+        const [
+          treatmentA_AbundanceMean,
+          treatmentA_AbundanceMedian,
+          treatmentB_AbundanceMean,
+          treatmentB_AbundanceMedian,
+        ] = R.chain(
+          abundances => [d3.mean(abundances), d3.median(abundances)],
+          [project.abundancesForTreatmentTranscript(treatmentAKey, name), project.abundancesForTreatmentTranscript(treatmentBKey, name)]
+        )
+
         return [name, {
           name,
+          treatmentA_AbundanceMean,
+          treatmentA_AbundanceMedian,
+          treatmentB_AbundanceMean,
+          treatmentB_AbundanceMedian,
           pValue,
           logFC: (reverse ? -1 : 1 ) * parseFloat(logFC),
           logATA: parseFloat(logATA),
@@ -1053,24 +1079,58 @@ function withinBounds(min, max, value) {
   return value >= min && value <= max
 }
 
+function updateSortForTreatments(sortPath, order) {
+  return (dispatch, getState) => {
+    const { view } = getState()
+        , { pairwiseData } = view
 
-function updateDisplayedTranscripts(sortPath, order) {
+    if (!sortPath) sortPath = view.sortPath
+    if (!order) order = view.order
+
+    const getter =
+      sortPath.includes('name')
+        ? t => t.name.toLowerCase()
+        : R.path(sortPath)
+
+    const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
+
+    const sortedTranscripts = R.sort(
+      (a, b) => {
+        a = getter(a)
+        b = getter(b)
+
+        if (a === undefined) return 1
+        if (b === undefined) return -1
+
+        return comparator(a, b)
+      },
+      [...pairwiseData.values()]
+    )
+
+    return {
+      sortedTranscripts,
+      resort: true,
+    }
+  }
+}
+
+
+function updateDisplayedTranscripts() {
   return (dispatch, getState) => {
     const { view } = getState()
         , project = projectForView(getState())
 
     const {
+      sortedTranscripts,
       savedTranscripts,
-      comparedTreatments,
       pairwiseData,
       pValueThreshold,
       brushedArea,
       hoveredBinTranscripts,
       selectedBinTranscripts,
+      sortPath,
+      order,
     } = view
-
-    const { abundancesForTreatmentTranscript } = project
-        , [ treatmentA, treatmentB ] = comparedTreatments
 
     let listedTranscripts = new Set()
 
@@ -1096,59 +1156,41 @@ function updateDisplayedTranscripts(sortPath, order) {
       listedTranscripts = savedTranscripts
     }
 
-    const unsorted = [...listedTranscripts].map(transcriptName => {
-      if (!pairwiseData) {
-        return {
-          transcript: { name: transcriptName },
-          saved: savedTranscripts.has(transcriptName),
-        }
-      }
+    const listedTranscriptsSet = new Set(listedTranscripts)
 
-      const transcript = pairwiseData.get(transcriptName) || {
-        name: project.getCanonicalTranscriptLabel(transcriptName),
-      }
-
-      const [
-        treatmentA_AbundanceMean,
-        treatmentA_AbundanceMedian,
-        treatmentB_AbundanceMean,
-        treatmentB_AbundanceMedian,
-      ] = R.chain(
-        abundances => [d3.mean(abundances), d3.median(abundances)],
-        [abundancesForTreatmentTranscript(treatmentA, transcriptName), abundancesForTreatmentTranscript(treatmentB, transcriptName)]
-      )
-
-      return {
-        transcript,
-        treatmentA_AbundanceMean,
-        treatmentA_AbundanceMedian,
-        treatmentB_AbundanceMean,
-        treatmentB_AbundanceMedian,
-      }
-    })
-
-    if (!sortPath) sortPath = view.sortPath
-    if (!order) order = view.order
-
-    const getter =
-      sortPath.includes('name')
-        ? R.pipe(R.path(sortPath), R.toLower)
-        : R.path(sortPath)
+    const displayedTranscripts = sortedTranscripts
+      .filter(({ name }) => listedTranscriptsSet.has(name))
 
     const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
 
-    const displayedTranscripts = R.sort(
-      (a, b) => {
-        a = getter(a)
-        b = getter(b)
+    const alphaSort = R.sort((a, b) => comparator(a.name, b.name))
 
-        if (a === undefined) return 1
-        if (b === undefined) return -1
+    let extraTranscripts = [...listedTranscripts]
+      .filter(name => !pairwiseData.has(name))
+      .map(name => ({
+        name: project.getCanonicalTranscriptLabel(name),
+      }))
 
-        return comparator(a, b)
-      },
-      unsorted
-    )
+    extraTranscripts = R.sort(alphaSort, extraTranscripts)
+
+    // Must add to list
+    extraTranscripts.forEach(notPresentTranscript => {
+      if (sortPath[0] !== 'name') {
+        displayedTranscripts.push(notPresentTranscript)
+      } else {
+        let i = 0
+
+        for (const transcript of displayedTranscripts) {
+          if (comparator(notPresentTranscript.name, transcript.name) === 1) {
+            i++
+          } else {
+            break;
+          }
+        }
+
+        displayedTranscripts.splice(i, 0, notPresentTranscript)
+      }
+    })
 
     return { displayedTranscripts }
   }
@@ -1228,10 +1270,10 @@ function exportSavedTranscripts() {
     ]
 
     const rows = displayedTranscripts.map(row => ([
-      row.transcript.name,
-      row.transcript.pValue,
-      row.transcript.logATA,
-      row.transcript.logFC,
+      row.name,
+      row.pValue,
+      row.logATA,
+      row.logFC,
       row.treatmentA_AbundanceMean,
       row.treatmentA_AbundanceMedian,
       row.treatmentB_AbundanceMean,
