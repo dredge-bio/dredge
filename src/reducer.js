@@ -35,7 +35,10 @@ function defaultLocalConfig() {
       label: '',
       readme: './about.md',
       transcriptHyperlink: [
-        { label: '', url: '' },
+        {
+          label: 'NCBI',
+          url: 'https://www.ncbi.nlm.nih.gov/gene/?term=%name',
+        },
       ],
       abundanceLimits: [
         [0, 100],
