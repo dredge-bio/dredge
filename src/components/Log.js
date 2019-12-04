@@ -158,6 +158,7 @@ module.exports = connect((state, ownProps) => {
         ? key === showProject
         : true)
     .map(([ key, files ]) => ({
+      key,
       label: R.path(['projects', key, 'config', 'label'], state) || ' ',
       files: R.filter(d => {
         if (typeof d.url !== 'string') return true
