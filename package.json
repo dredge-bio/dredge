@@ -26,6 +26,7 @@
     "react-dom": "^16.8.2",
     "react-hyperscript": "^3.2.0",
     "react-redux": "^6.0.0",
+    "react-window": "^1.8.2",
     "rebass": "^3.0.1",
     "redux": "^4.0.1",
     "stringify-tree": "^1.0.2",

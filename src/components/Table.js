@@ -8,12 +8,19 @@ const h = require('react-hyperscript')
     , Action = require('../actions')
     , onResize = require('./util/Sized')
     , { findParent, projectForView, formatNumber } = require('../utils')
+    , { FixedSizeList: List } = require('react-window')
 
-const TableCell = styled.td`
+const TableRow = styled.div`
+  position: relative;
+`
+
+const TableCell = styled.div`
   padding: 0;
+  position: absolute;
+  left: ${props => R.sum(props.columnWidths.slice(0, props.columnNumber))}px;
+  width: ${props => props.columnWidths[props.columnNumber]}px;
 
   & .transcript-label {
-    width: ${props => props.cellWidth - 4}px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -78,80 +85,95 @@ class TranscriptRow extends React.Component {
     this.handleClick = this.handleClick.bind(this)
   }
 
+  get datum() {
+    const { index } = this.props
+
+    return this.props.data.displayedTranscripts[index]
+  }
+
   shouldComponentUpdate(nextProps) {
     let update = false
 
-    for (const k in nextProps) {
+    for (const k in nextProps.data) {
       if (k === 'focusedTranscript') {
-        const transcriptID = this.props.data.transcript.name
+        const transcriptID = this.datum.name
 
         update = (
-          (nextProps[k] === transcriptID && this.props[k] !== transcriptID) ||
-          (nextProps[k] !== transcriptID && this.props[k] === transcriptID)
+          (nextProps.data[k] === transcriptID && this.props.data[k] !== transcriptID) ||
+          (nextProps.data[k] !== transcriptID && this.props.data[k] === transcriptID)
         )
       } else if (k === 'pValueThreshold') {
-        const pValueMeasure = this.props.data.transcript.pValue
+        const pValueMeasure = this.datum.pValue
 
         update = (
-          (pValueMeasure < nextProps[k] && pValueMeasure >= this.props[k]) ||
-          (pValueMeasure >= nextProps[k] && pValueMeasure < this.props[k])
+          (pValueMeasure < nextProps.data[k] && pValueMeasure >= this.props.data[k]) ||
+          (pValueMeasure >= nextProps.data[k] && pValueMeasure < this.props.data[k])
         )
-      } else if (nextProps[k] !== this.props[k]) {
+      } else if (nextProps.data[k] !== this.props.data[k]) {
         update = true
       }
 
       if (update) break;
     }
+
     return update
   }
 
   handleMouseEnter(e) {
-    const { setHoveredTranscript } = this.props
+    const { setHoveredTranscript } = this.props.data
 
-    setHoveredTranscript(findParent('tr', e.target).dataset.transcriptName)
+    setHoveredTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
   }
 
   handleMouseLeave() {
-    const { setHoveredTranscript } = this.props
+    const { setHoveredTranscript } = this.props.data
 
     setHoveredTranscript(null)
   }
 
   handleClick(e) {
-    const { setFocusedTranscript } = this.props
+    const { setFocusedTranscript } = this.props.data
 
     if (e.target.nodeName.toLowerCase() === 'a') return
 
-    setFocusedTranscript(findParent('tr', e.target).dataset.transcriptName)
+    setFocusedTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
   }
 
   render() {
     const {
-      data,
-      saved,
-      addSavedTranscript,
-      removeSavedTranscript,
-      columnWidths,
-      focusedTranscript,
-      pValueThreshold,
+      style,
+      data: {
+        focusedTranscript,
+        columnWidths,
+        pValueThreshold,
+        savedTranscripts,
+        addSavedTranscript,
+        removeSavedTranscript,
+      },
     } = this.props
 
-    const { pValue } = data.transcript
+    const { datum } = this
+        , { pValue } = datum
+        , saved = savedTranscripts.has(datum.name)
 
     return (
-      h('tr', {
-        ['data-transcript-name']: data.transcript.name,
+      h(TableRow, {
+        className: 'transcript-row',
+        ['data-transcript-name']: datum.name,
         onMouseEnter: this.handleMouseEnter,
         onMouseLeave: this.handleMouseLeave,
         onClick: this.handleClick,
-        style: Object.assign({},
-          focusedTranscript !== data.transcript.name
+        style: Object.assign({}, style,
+          focusedTranscript !== datum.name
             ? null : { backgroundColor: '#e6e6e6' },
-          (data.transcript.pValue === undefined || pValue > pValueThreshold)
+          (datum.pValue === undefined || pValue > pValueThreshold)
             ? { color: '#aaa' } : null
         ),
       }, [
-        h(TableCell, [
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 0,
+        }, [
           h(SaveMarker, {
             href: '',
             saved,
@@ -159,32 +181,56 @@ class TranscriptRow extends React.Component {
               e.preventDefault()
 
               if (saved) {
-                removeSavedTranscript(data.transcript.name)
+                removeSavedTranscript(datum.name)
               } else {
-                addSavedTranscript(data.transcript.name)
+                addSavedTranscript(datum.name)
               }
 
             },
           }, saved ? '×' : '<'),
         ]),
 
-        h(TableCell, { cellWidth: columnWidths[1] }, [
-          h('div.transcript-label', data.transcript.name),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 1,
+        }, [
+          h('div.transcript-label', datum.name),
         ]),
 
-        h(TableCell, formatNumber(data.transcript.pValue, 3)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 2,
+        }, formatNumber(datum.pValue, 3)),
 
-        h(TableCell, formatNumber(data.transcript.logATA)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 3,
+        }, formatNumber(datum.logATA)),
 
-        h(TableCell, formatNumber(data.transcript.logFC)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 4,
+        }, formatNumber(datum.logFC)),
 
-        h(TableCell, formatNumber(data.treatmentA_AbundanceMean)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 5,
+        }, formatNumber(datum.treatmentA_AbundanceMean)),
 
-        h(TableCell, formatNumber(data.treatmentA_AbundanceMedian)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 6,
+        }, formatNumber(datum.treatmentA_AbundanceMedian)),
 
-        h(TableCell, formatNumber(data.treatmentB_AbundanceMean)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 7,
+        }, formatNumber(datum.treatmentB_AbundanceMean)),
 
-        h(TableCell, formatNumber(data.treatmentB_AbundanceMedian)),
+        h(TableCell, {
+          columnWidths,
+          columnNumber: 8,
+        }, formatNumber(datum.treatmentB_AbundanceMedian)),
       ])
     )
   }
@@ -476,27 +522,29 @@ class Table extends React.Component {
           )),
         ]),
 
-        h(TableBodyWrapper, { className: 'table-scroll' }, ready && [
-          h('table', [
-            h('colgroup', columnWidths.map((width, i) =>
-              h('col', { key: i, width }),
-            )),
-
-            displayedTranscripts && h('tbody', displayedTranscripts.map(data =>
-              h(TranscriptRow, {
-                key: `${data.transcript.name}-${treatmentA}-${treatmentB}`,
-                data,
-                saved: savedTranscripts.has(data.transcript.name),
-                setHoveredTranscript: this.setHoveredTranscript,
-                addSavedTranscript: this.addSavedTranscript,
-                removeSavedTranscript: this.removeSavedTranscript,
-                setFocusedTranscript: this.setFocusedTranscript,
-                pValueThreshold,
-                columnWidths,
-                focusedTranscript,
-              })
-            )),
-          ]),
+        h(TableBodyWrapper, {
+          className: 'table-scroll',
+          tableWidthSet: ready,
+        }, ready && [
+          displayedTranscripts && h(List, {
+            overscanCount: 50,
+            height,
+            itemCount: displayedTranscripts.length,
+            focusedTranscript,
+            itemData: {
+              displayedTranscripts,
+              savedTranscripts,
+              setHoveredTranscript: this.setHoveredTranscript,
+              addSavedTranscript: this.addSavedTranscript,
+              removeSavedTranscript: this.removeSavedTranscript,
+              setFocusedTranscript: this.setFocusedTranscript,
+              pValueThreshold,
+              columnWidths,
+              focusedTranscript,
+            },
+            itemSize: 24,
+            width: widthWithScrollbar,
+          }, TranscriptRow),
         ]),
       ])
     )
@@ -509,6 +557,7 @@ module.exports = R.pipe(
     project: projectForView(state) || {},
   })),
   onResize(el => ({
+    height: el.querySelector('.table-scroll').clientHeight,
     width: el.querySelector('.table-scroll').clientWidth,
   }))
 )(Table)
