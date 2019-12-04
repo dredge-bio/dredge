@@ -38,10 +38,6 @@ pre {
   font-family: monospace;
 }
 
-@font-face {
-  font-family: SourceSansPro;
-  src: url("lib/SourceSansPro-Regular.otf") format("opentype");
-}
 `
 
 // Adapted from https://www.heropatterns.com/
