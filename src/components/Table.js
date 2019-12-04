@@ -272,10 +272,10 @@ const TableHeaderRow = styled.div`
 const TableBodyWrapper = styled.div`
   width: 100%;
   height: calc(100% - ${HEADER_HEIGHT}px);
-  overflow-y: scroll;
   background-color: white;
+  overflow-y: ${props => props.tableWidthSet ? 'unset' : 'scroll'};
 
-  & tr:hover {
+  & .transcript-row:hover {
     background-color: #e6e6e6;
   }
 
@@ -433,7 +433,7 @@ class Table extends React.Component {
   }
 
   render() {
-    const { width, view, dispatch } = this.props
+    const { width, widthWithScrollbar, height, view, dispatch } = this.props
         , { columnWidths } = this.state
 
     const {
@@ -559,5 +559,6 @@ module.exports = R.pipe(
   onResize(el => ({
     height: el.querySelector('.table-scroll').clientHeight,
     width: el.querySelector('.table-scroll').clientWidth,
-  }))
+    widthWithScrollbar: el.querySelector('.table-scroll').innerWidth,
+  })),
 )(Table)
