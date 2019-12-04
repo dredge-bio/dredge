@@ -176,7 +176,7 @@ class InfoBox extends React.Component {
           h('div', {
             style: {
               fontSize: 12,
-              color: '#666',
+              color: '#333',
               position: 'absolute',
               right: '33%',
               bottom: '-.33em',
