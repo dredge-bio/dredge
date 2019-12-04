@@ -5,6 +5,7 @@ const h = require('react-hyperscript')
     , d3 = require('d3')
     , React = require('react')
     , { connect  } = require('react-redux')
+    , throttle = require('throttleit')
     , styled = require('styled-components').default
     , { getPlotBins, projectForView } = require('../../utils')
     , onResize = require('../util/Sized')
@@ -319,6 +320,20 @@ class Plot extends React.Component {
     const [ x0, x1 ] = xScale.domain().map(xScale)
     const [ y0, y1 ] = yScale.domain().map(yScale)
 
+    const setBrush = throttle(extent => {
+      const cpmBounds = extent.map(R.head).map(xScale.invert)
+          , fcBounds = extent.map(R.last).map(yScale.invert)
+
+      const coords = [
+        cpmBounds[0],
+        fcBounds[0],
+        cpmBounds[1],
+        fcBounds[1],
+      ].map(n => n.toFixed(3)).map(parseFloat)
+
+      this.props.dispatch(Action.SetBrushedArea(coords))
+    }, 250)
+
     const brush = this.brush = d3.brush()
       .extent([[x0, y1], [x1, y0]])
       .on('brush', () => {
@@ -326,17 +341,8 @@ class Plot extends React.Component {
         if (!d3.event.selection) return
 
         const extent = d3.event.selection
-            , cpmBounds = extent.map(R.head).map(xScale.invert)
-            , fcBounds = extent.map(R.last).map(yScale.invert)
 
-        const coords = [
-          cpmBounds[0],
-          fcBounds[0],
-          cpmBounds[1],
-          fcBounds[1],
-        ].map(n => n.toFixed(3)).map(parseFloat)
-
-        this.props.dispatch(Action.SetBrushedArea(coords))
+        setBrush(extent)
       })
       .on('start', () => {
         this.binSelection
@@ -374,6 +380,8 @@ class Plot extends React.Component {
           cpmBounds[1],
           fcBounds[1],
         ].map(n => n.toFixed(3)).map(parseFloat)
+
+        setBrush(extent)
 
         updateOpts(opts => Object.assign({}, opts, { brushed: coords.join(',') }))
       })
