@@ -1172,7 +1172,7 @@ function updateDisplayedTranscripts() {
 
     const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
 
-    const alphaSort = R.sort((a, b) => comparator(a.name, b.name))
+    const alphaSort = R.sort((a, b) => comparator(a.name.toLowerCase(), b.name.toLowerCase()))
 
     let extraTranscripts = [...listedTranscripts]
       .filter(name => !pairwiseData.has(name))
