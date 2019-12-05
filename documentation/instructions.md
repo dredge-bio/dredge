@@ -63,7 +63,7 @@ This will generate the file `treatments.json`, which the **%%field-treatments%%*
 
 ## Gene expression matrix { data-field="expressionMatrix" }
 
-Next, we will configure the transcript abundance matrix and pairwise comparison tables. You must provide a **transcript abundance matrix** file, a tab-separated table of transcript abundance values (counts or normalized reads). Each row in the table represents a unique transcript, and each column represents a replicate. The header row should contain replicate IDs that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty.
+Next, we will configure the transcript abundance matrix and pairwise comparison tables. You must provide a **transcript abundance matrix** file, a tab-separated table of transcript abundance values (i.e. RPKM or counts, though counts must be normalized to counts per million within each replicate). Each row in the table represents a unique transcript, and each column represents a replicate. The header row should contain replicate IDs that match those in the **project design file**. The first column should be a list of every transcript in the dataset. The top-leftmost cell of the table should be empty.
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/expression_matrix.tsv
 
