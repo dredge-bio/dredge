@@ -1,6 +1,6 @@
 # DrEdGE (Differential Expression Gene Explorer)
 
-DrEdGE is a browser-based application for visualizing quantitative gene expression data. For more information, and for instructions on setting up your own DrEdGE project, see the [project homepage](https://dredge.bio.unc.edu/)
+DrEdGE is a browser-based application for visualizing quantitative gene expression data. For more information, and for instructions on setting up your own DrEdGE project, see the [project homepage](http://dredge.bio.unc.edu/)
 
 # Building
 
