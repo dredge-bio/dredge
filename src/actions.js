@@ -1156,10 +1156,19 @@ function updateDisplayedTranscripts() {
       listedTranscripts = savedTranscripts
     }
 
-    const listedTranscriptsSet = new Set(listedTranscripts)
+    let displayedTranscripts = []
 
-    const displayedTranscripts = sortedTranscripts
-      .filter(({ name }) => listedTranscriptsSet.has(name))
+    // Make sparse array of transcripts based on their position
+    ;[...listedTranscripts].forEach(name => {
+      const idx = sortedTranscripts[name]
+
+      if (idx != null) {
+        displayedTranscripts[idx] = pairwiseData.get(name)
+      }
+    })
+
+    // ...and then make it unsparse
+    displayedTranscripts = Object.values(displayedTranscripts)
 
     const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
 

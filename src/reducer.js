@@ -172,6 +172,12 @@ module.exports = function reducer(state=initialState(), action) {
         const { sortPath, order } = state.view
             , { sortedTranscripts } = resp
 
+        const transcriptsByIndex = {}
+
+        sortedTranscripts.forEach(({ name }, i) => {
+          transcriptsByIndex[name] = i
+        })
+
         return R.pipe(
           R.set(
             R.lensPath(['view', 'sortPath']),
@@ -181,7 +187,7 @@ module.exports = function reducer(state=initialState(), action) {
             newOrder || order),
           R.set(
             R.lensPath(['view', 'sortedTranscripts']),
-            sortedTranscripts)
+            transcriptsByIndex)
         )(state)
 
       },
