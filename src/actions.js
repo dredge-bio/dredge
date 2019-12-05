@@ -1190,7 +1190,7 @@ function updateDisplayedTranscripts() {
         let i = 0
 
         for (const transcript of displayedTranscripts) {
-          if (comparator(notPresentTranscript.name, transcript.name) === 1) {
+          if (comparator(notPresentTranscript.name.toLowerCase(), transcript.name.toLowerCase()) === 1) {
             i++
           } else {
             break;
