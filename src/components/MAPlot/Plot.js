@@ -332,7 +332,7 @@ class Plot extends React.Component {
       ].map(n => n.toFixed(3)).map(parseFloat)
 
       this.props.dispatch(Action.SetBrushedArea(coords))
-    }, 250)
+    }, 120)
 
     const brush = this.brush = d3.brush()
       .extent([[x0, y1], [x1, y0]])

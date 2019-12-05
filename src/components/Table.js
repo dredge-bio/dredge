@@ -10,39 +10,69 @@ const h = require('react-hyperscript')
     , { findParent, projectForView, formatNumber } = require('../utils')
     , { FixedSizeList: List } = require('react-window')
 
-const TableRow = styled.div`
+const TableWrapper = styled.div`
   position: relative;
-`
+  height: 100%;
+  border: 1px solid #ccc;
 
-const TableCell = styled.div`
-  padding: 0;
-  position: absolute;
-  left: ${props => R.sum(props.columnWidths.slice(0, props.columnNumber))}px;
-  width: ${props => props.columnWidths[props.columnNumber]}px;
+  & table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    background-color: white;
+  }
 
-  & .transcript-label {
+  & * {
+    font-family: SourceSansPro;
+    font-size: 14px;
+  }
+
+  & th {
+    text-align: left;
+  }
+
+  .transcript-row: {
+    position: relative;
+  }
+
+  .transcript-label {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-`
 
-const SaveMarker = styled.a`
-  display: inline-block;
-  width: calc(100% - 4px);
-  text-align: center;
-  color: ${props => props.saved ? 'orangered' : 'blue'};
-  line-height: 1.66em
-  font-weight: bold;
+  .transcript-save-marker {
+    display: inline-block;
+    width: calc(100% - 4px);
+    text-align: center;
+    line-height: 1.66em
+    font-weight: bold;
 
-  text-decoration: none;
+    text-decoration: none;
+  }
 
-  &:hover {
+  .transcript-save-mraker:hover {
     background-color: #f0f0f0;
     border: 2px solid currentcolor;
     border-radius: 4px;
     line-height: calc(1.66em - 4px);
   }
 `
+
+
+function TableCell({ columnWidths, columnNumber, children }) {
+  const left = R.sum(columnWidths.slice(0, columnNumber))
+      , width = columnWidths[columnNumber]
+
+  return (
+    h('div', {
+      style: {
+        padding: 0,
+        position: 'absolute',
+        left,
+        width,
+      },
+    }, children)
+  )
+}
 
 const HEADER_HEIGHT = 84;
 
@@ -157,7 +187,7 @@ class TranscriptRow extends React.Component {
         , saved = savedTranscripts.has(datum.name)
 
     return (
-      h(TableRow, {
+      h('div', {
         className: 'transcript-row',
         ['data-transcript-name']: datum.name,
         onMouseEnter: this.handleMouseEnter,
@@ -174,9 +204,12 @@ class TranscriptRow extends React.Component {
           columnWidths,
           columnNumber: 0,
         }, [
-          h(SaveMarker, {
+          h('a', {
+            className: 'transcript-save-marker',
             href: '',
-            saved,
+            style: {
+              color: saved ? 'orangered' : 'blue',
+            },
             onClick(e) {
               e.preventDefault()
 
@@ -235,27 +268,6 @@ class TranscriptRow extends React.Component {
     )
   }
 }
-
-const TableWrapper = styled.div`
-  position: relative;
-  height: 100%;
-  border: 1px solid #ccc;
-
-  & table {
-    table-layout: fixed;
-    border-collapse: collapse;
-    background-color: white;
-  }
-
-  & * {
-    font-family: SourceSansPro;
-    font-size: 14px;
-  }
-
-  & th {
-    text-align: left;
-  }
-`
 
 const TableHeaderWrapper = styled.div`
   height: ${HEADER_HEIGHT}px;
@@ -527,7 +539,7 @@ class Table extends React.Component {
           tableWidthSet: ready,
         }, ready && [
           displayedTranscripts && h(List, {
-            overscanCount: 50,
+            overscanCount: 10,
             height,
             itemCount: displayedTranscripts.length,
             focusedTranscript,
