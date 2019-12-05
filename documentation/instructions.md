@@ -20,7 +20,7 @@ DrEdGE (Differential Expression Gene Explorer) is an application for visualizing
 
 We will follow along with a fully configured example located at <https://github.com/dredge-bio/example-dataset>. You can see how the example application looks at <https://dredge-bio.github.io/example-dataset/>. The example is a subset of <i>C. elegans</i> embryonic transcriptomes from [Tintori <i>et al.</i>, 2016](https://www.ncbi.nlm.nih.gov/pubmed/27554860).
 
-A video tutorial of the configuration process described below is available at https://vimeo.com/336692169.
+A video tutorial of the configuration process described below is available at <https://vimeo.com/336692169>.
 
 ## Overview
 
