@@ -180,6 +180,9 @@ module.exports = function reducer(state=initialState(), action) {
 
         return R.pipe(
           R.set(
+            R.lensPath(['view', 'loading']),
+            false),
+          R.set(
             R.lensPath(['view', 'sortPath']),
             newSortPath || sortPath),
           R.set(

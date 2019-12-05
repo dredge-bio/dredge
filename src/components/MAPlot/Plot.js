@@ -506,13 +506,15 @@ class Plot extends React.Component {
 
   drawBins() {
     const { xScale, yScale } = this.state
-        , { pairwiseData, pValueThreshold } = this.props
+        , { loading, pairwiseData, pValueThreshold } = this.props
 
     this.binSelection = null;
 
     d3.select(this.svg)
       .select('.squares > g')
       .remove()
+
+    if (loading) return;
 
     if (pairwiseData === null) {
       d3.select('.squares')
@@ -875,6 +877,7 @@ module.exports = R.pipe(
       treatmentALabel,
       treatmentBLabel,
     }, R.pick([
+      'loading',
       'brushedArea',
       'savedTranscripts',
       'pairwiseData',
