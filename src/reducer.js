@@ -49,7 +49,7 @@ function defaultLocalConfig() {
       pairwiseName: './pairwise_files/%A_vs_%B.tsv',
       transcriptAliases: './transcript_aliases.tsv',
       abundanceMeasures: './expression_matrix.tsv',
-      diagram: './icons.svg',
+      diagram: './diagram.svg',
       grid: './grid.csv',
     },
   }
