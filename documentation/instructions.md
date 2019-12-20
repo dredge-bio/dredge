@@ -72,7 +72,6 @@ Save this file to the DrEdGE directory and enter the filename into the **%%field
 ## Differential expression data { data-field="pairwiseName" }
 
 DrEdGE required pre-calculated differential expression tables for every possible pairwise set of treatments. You can generate these tables using any method you prefer, or you can run the R script provided in the DrEdGE package, which uses the [edgeR](https://doi.org/doi:10.18129/B9.bioc.edgeR) statistical package:
-i
 ```
 Rscript ./r-scripts/pairwise_comparisons.R -e expression_matrix.tsv -d treatments.JSON
 ```
@@ -81,7 +80,7 @@ This will create a directory, by default named `pairwise_files`, which contains 
 
 Example: https://github.com/dredge-bio/example-dataset/blob/master/pairwise_files/AB_vs_P1.tsv
 
-If you want to use your own methods for generating statistics, generate pairwise pairwise comparisons for each treatment using the treatment IDs in your project design file. Each file must be tab-separated table with four columns in the following order: transcript ID, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript IDs must match those found in the transcript abundance matrix.
+If you want to use your own methods for generating statistics, generate pairwise comparisons for each treatment using the treatment IDs in your project design file. Each file must be tab-separated table with four columns in the following order: transcript ID, log₂ Fold Change, log₂ Reads per Million (or similarly normalized abundance values), and p-value. The first row will be discarded as a header. The transcript IDs must match those found in the transcript abundance matrix.
 
 ## MA Plot limits { data-field="maPlot" }
 
@@ -109,7 +108,7 @@ You can create a custom diagram to illustrate the treatments in your dataset usi
 
 Because of the layout of a DrEdGE application, your diagram will fit best if its size is roughly 6x1 (e.g. 720x120px). DrEdGE links objects in your SVG to treatments by looking at the `id` attribute of shapes (e.g. `rect`, `circle`, `polygon`, `path`). Shapes corresponding to treatment IDs will be filled with shades of the heatmap and become clickable to select treatments on the MA plot. However, note that in order for ID attributes to match treatment codenames, *your treatment IDs must only use the characters a-z, A-Z, 0-9, ., and -*.
 
-Example: https://github.com/dredge-bio/example-dataset/blob/master/icons.svg?short_path=a9750c6
+Example: https://github.com/dredge-bio/example-dataset/blob/master/diagram.svg?short_path=a9750c6
 
 ### Inkscape
 

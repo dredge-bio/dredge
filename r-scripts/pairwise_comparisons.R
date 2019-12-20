@@ -38,11 +38,11 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                                  lowerThreshold=opt$noiseThreshold){
 
     # Install packages
-    if(!"edgeR" %in% installed.packages()){
-        source("https://www.bioconductor.org/biocLite.R")
-        biocLite('edgeR', ask = FALSE)
-    }
+    if (requireNamespace("BiocManager"))
+        install.packages("BiocManager")
+    BiocManager::install("edgeR")
     library("edgeR")
+
     expRPKMs <- read.csv(expression, header = T, sep="\t", stringsAsFactors = F, row.names = 1)
     dir.create(outDirectory, showWarnings = F)
     # Make design list
