@@ -30,8 +30,13 @@ const InfoBoxContainer = styled.div`
 
     padding: .66rem 0;
 
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: ${props => props.showSVG
+      ? 'auto auto 1fr'
+      : 'auto 1fr'
+    }
+
+    align-items: stretch;
   }
 `
 
@@ -132,6 +137,7 @@ class InfoBox extends React.Component {
 
   render() {
     const {
+      svg,
       getCanonicalTranscriptLabel,
       focusedTranscript,
       hoveredTranscript,
@@ -147,6 +153,7 @@ class InfoBox extends React.Component {
 
     const transcript = hoveredTranscript || focusedTranscript || null
         , transcriptLabel = transcript && getCanonicalTranscriptLabel(transcript)
+        , showSVG = !!svg
 
     let colorScale
 
@@ -155,7 +162,9 @@ class InfoBox extends React.Component {
     }
 
     return (
-      h(InfoBoxContainer, [
+      h(InfoBoxContainer, {
+        showSVG,
+      }, [
         h('div', [
           transcript && h('h3', transcriptLabel),
 
@@ -193,9 +202,8 @@ class InfoBox extends React.Component {
 
           h(HeatMap, { updateOpts }),
 
-          h('div', {
+          !showSVG ? null : h('div', {
             style: {
-              alignSelf: 'stretch',
               position: 'relative',
               marginLeft: '2rem',
               flexGrow: 1,
@@ -223,6 +231,7 @@ module.exports = connect(state => {
       'treatments',
       'colorScaleForTranscript',
       'getCanonicalTranscriptLabel',
+      'svg',
     ], project),
     R.pick([
       'heatmapMinimumMaximum',

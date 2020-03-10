@@ -13,7 +13,7 @@ const SQUARE_WIDTH = 20
 
 const HeatMapContainer = styled.svg`
   max-height: 100%;
-  width: 100%;
+  margin: auto;
 
   .heatmap-square {
     stroke: black;
