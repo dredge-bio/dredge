@@ -774,7 +774,14 @@ function loadProject(source) {
 
         return treatment.replicates.map(replicateID => {
           const replicateIdx = replicateIndices[replicateID]
-          return (project.abundances[transcriptIdx] || {})[replicateIdx] || null
+
+          const abundance = (project.abundances[transcriptIdx] || {})[replicateIdx]
+
+          // TODO: The abundance would be undefined if it doesn't exist in the
+          // matrix for this treatment. What is the proper thing to do here?
+          // It's probably not to return null. Should it throw an error,
+          // indicating bad data?
+          return abundance != undefined ? abundance : null
         })
       }
 
