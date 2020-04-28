@@ -22,6 +22,8 @@ We will follow along with a fully configured example located at <https://github.
 
 A video tutorial of the configuration process described below is available at <https://vimeo.com/336692169>.
 
+NOTE: We recommend that you go through the configuration process in a "private" or "incognito" tab. This will prevent your browser from caching files that it requests. If you do not do this, you will not see changes you make to your project's files if you edit them during configuration.
+
 ## Overview
 
 The form on the left will generate a configuration file, named `project.json`, that will tell DrEdGE where to find your project's files, and how to configure the DrEdGE interface. As you fill out the form, you can press the **Test** button to check if the configuration is working properly. Once you are happy with your configuration, press the **Save** button, and save the `project.json` file inside the extracted DrEdGE directory. (You can also load an existing `project.json` file into the form by using the **Load** button). Once you have saved the `project.json` file, you can access your DrEdGE application at %%THIS-URL%%.

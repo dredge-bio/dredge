@@ -18,9 +18,14 @@ fields.instructions = instructions
   </span>
   </p>
   `)
+  .replace(/<p>NOTE: (.*)<\/p>/g, `
+  <p class="note">
+    $1
+  </p>
+  `)
 
 const DocumentationWrapper = styled('div')`
-code, pre, .example {
+code, pre, .example, .note {
   font-family: monospace;
   background-color: #f0f0f0;
   border: 1px solid #ccc;
@@ -48,13 +53,13 @@ h2 {
   margin-top: ${props => props.theme.space[4]}px;
 }
 
-pre, .example {
+pre, .example, .note {
   padding: .75rem 1rem;
 }
 
 .example {
   position: relative;
-  font-family: sansserif;
+  font-family: sans-serif;
   display: block;
   background-color: hsl(205,35%,90%);
   padding-top: 25px;
@@ -71,6 +76,25 @@ pre, .example {
   font-family: "SourceSansPro";
   font-weight: bold;
   content: "Example";
+}
+
+.note {
+  white-space: unset;
+  position: relative;
+  font-family: sans-serif;
+  display: block;
+  background-color: #FCF8E3;
+  padding-top: 25px;
+}
+
+.note::after {
+  color: #333;
+  position: absolute;
+  left: 1rem;
+  top: 4px;
+  font-family: "SourceSansPro";
+  font-weight: bold;
+  content: "Note";
 }
 
 .example a {
