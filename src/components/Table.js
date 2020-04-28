@@ -445,7 +445,7 @@ class Table extends React.Component {
   }
 
   render() {
-    const { width, widthWithScrollbar, height, view, dispatch } = this.props
+    const { width, widthWithScrollbar, height, view, dispatch, project } = this.props
         , { columnWidths } = this.state
 
     const {
@@ -457,7 +457,12 @@ class Table extends React.Component {
       pValueThreshold,
     } = view
 
-    const [ treatmentA, treatmentB ] = comparedTreatments || [ null, null ]
+    let treatmentALabel, treatmentBLabel
+
+    if (comparedTreatments) {
+      ;[ treatmentALabel, treatmentBLabel ] = comparedTreatments
+          .map(t => R.path(['treatments', t, 'label'], project) || t)
+    }
 
     const ready = width == null ? null : true
 
@@ -498,11 +503,11 @@ class Table extends React.Component {
 
             ready && h(TableHeaderCell, {
               left: R.sum(columnWidths.slice(0, -4)),
-            }, treatmentA),
+            }, treatmentALabel),
 
             ready && h(TableHeaderCell, {
               left: R.sum(columnWidths.slice(0, -2)),
-            }, treatmentB),
+            }, treatmentBLabel),
           ]),
 
           h(TableHeaderRow, FIELDS.slice(1).map(({ label, sortPath }, i) =>
