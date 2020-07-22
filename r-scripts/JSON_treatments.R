@@ -19,10 +19,10 @@ opt = parse_args(opt_parser)
 # Define converstion function
 convertDesignToJSON <- function(design = opt$inDesign, outJSON = opt$outJSON){
 
-    if(!"rjson" %in% installed.packages()){  
-        install.packages("rjson", repos = "http://cran.us.r-project.org")   
-    }  
-    library("rjson")  
+    if(!"jsonlite" %in% installed.packages()){
+        install.packages("jsonlite")
+    }
+    library("jsonlite")
     
     expDesign <- read.csv(design, header = T, sep = "\t", stringsAsFactors = F)
     
@@ -39,7 +39,9 @@ convertDesignToJSON <- function(design = opt$inDesign, outJSON = opt$outJSON){
             "replicates" = list(treatmentReplicates)
         ))
     }
-    write(toJSON(expList, indent = T), file = outJSON)
+
+    expJSON = toJSON(expList, pretty = T)
+    write(expJSON, file = outJSON)
 }
 
 # Convert

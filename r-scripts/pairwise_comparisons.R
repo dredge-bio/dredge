@@ -37,12 +37,23 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
                                  repeatReplicates = opt$repeatReplicates,
                                  lowerThreshold=opt$noiseThreshold){
 
+
+    # Check data
+    check.col.names <- read.table(expression, sep = "\n", stringsAsFactors = F, header = F)[1,]
+    check.col.names <- strsplit(check.col.names, "\t")[[1]]
+    for(i in check.col.names){
+        if(substr(i,1,1)%in%c(0:9) || grepl("-", i)){
+            return(paste("Error: Problem with replicate.id '", i, "'. Replicate.ids cannot start with a digit or contain the character '-'. Please edit your gene expression matrix and project design file accordingly.", sep = ""))
+        }
+    }
+
     # Install packages
-    if (requireNamespace("BiocManager"))
+    if (!requireNamespace("BiocManager"))
         install.packages("BiocManager")
     BiocManager::install("edgeR")
     library("edgeR")
 
+    # Load data
     expRPKMs <- read.csv(expression, header = T, sep="\t", stringsAsFactors = F, row.names = 1)
     dir.create(outDirectory, showWarnings = F)
     # Make design list
@@ -71,6 +82,8 @@ pairwise_comparisons <- function(expression = opt$expression, design = opt$desig
             ))
         }
     }
+	print(expList)
+	print(colnames(expRPKMs))
     minMax <- matrix(c(0,0,0,0), nrow = 2, dimnames = list(c("logCPM", "logFC"), c("min", "max")))
 
     allTreatments <- names(expList)
