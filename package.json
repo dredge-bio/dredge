@@ -6,6 +6,7 @@
   "private": true,
   "dependencies": {
     "blue-tape": "^1.0.0",
+    "buffer": "^6.0.3",
     "d3": "^5.5.0",
     "debounce": "^1.2.0",
     "file-saver": "^2.0.1",
@@ -14,6 +15,7 @@
     "markdown-it-attrs": "^3.0.1",
     "org-async-actions": "^1.1.0",
     "org-shell": "^6.0.0",
+    "punycode": "^2.1.1",
     "ramda": "^0.26.1",
     "react": "^16.8.2",
     "react-aria-menubutton": "^6.1.0",
