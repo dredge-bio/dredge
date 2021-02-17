@@ -42,13 +42,12 @@ VERSION_ZIPFILES := $(patsubst v%,dist/dredge-%.zip,$(VERSION_TAGS))
 
 all: node_modules $(VERSIONED_JS_BUNDLE) $(MINIFIED_VERSIONED_JS_BUNDLE)
 
-watch: | dist
-	$(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(JS_ENTRY)
-
 zip: $(VERSIONED_ZIPFILE)
 
-serve:
-	python3 -m http.server 9999
+serve: node_modules | dist
+	./build --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
+
+watch: serve
 
 test:
 	@$(NPM_BIN)/blue-tape $(TEST_FILES)
