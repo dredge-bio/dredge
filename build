@@ -1,0 +1,28 @@
+#! /usr/bin/env node
+
+"use strict";
+
+const { ArgumentParser } = require('argparse')
+    , { build } = require('esbuild')
+    , docsPlugin = require('./docs-plugin')
+
+const parser = new ArgumentParser({
+  description: 'DrEdGE build script',
+})
+
+parser.add_argument('-o', '--output-file', { help: 'File to output', required: true })
+parser.add_argument('input_file', { help: 'Entry point' })
+parser.add_argument('--production', { help: 'Build for production', action: 'store_true' })
+parser.add_argument('--compress', { help: 'Compress output', action: 'store_true' })
+
+const args = parser.parse_args()
+
+build({
+  entryPoints: [args.input_file],
+  bundle: true,
+  outfile: args.output_file,
+  define: {
+    'process.env.NODE_ENV': args.production ? '"production"' : '""',
+  },
+  plugins: [docsPlugin],
+})
