@@ -15,8 +15,7 @@ MINIFIED_VERSIONED_JS_BUNDLE = $(VERSIONED_JS_BUNDLE:.js=.min.js)
 VERSIONED_DIRECTORY = dist/$(PROJECT_NAME)-$(VERSION)
 VERSIONED_ZIPFILE = $(VERSIONED_DIRECTORY).zip
 
-BROWSERIFY_ENTRY = src/index.js
-BROWSERIFY_PREAMBLE = ZIP_FILENAME=$(notdir $(VERSIONED_ZIPFILE))
+JS_ENTRY = src/index.js
 
 JS_FILES = $(shell find src/ -type f -name *js)
 LIB_FILES = $(shell find lib/ -type f)
@@ -41,10 +40,10 @@ VERSION_ZIPFILES := $(patsubst v%,dist/dredge-%.zip,$(VERSION_TAGS))
 #  Phony targets  #
 ###################
 
-all: node_modules $(MINIFIED_VERSIONED_JS_BUNDLE)
+all: node_modules $(VERSIONED_JS_BUNDLE) $(MINIFIED_VERSIONED_JS_BUNDLE)
 
 watch: | dist
-	$(BROWSERIFY_PREAMBLE) $(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(BROWSERIFY_ENTRY)
+	$(NPM_BIN)/watchify -v -d -o $(JS_BUNDLE) $(JS_ENTRY)
 
 zip: $(VERSIONED_ZIPFILE)
 
@@ -74,13 +73,13 @@ dist:
 	mkdir -p $@
 
 node_modules: package.json
-	npm install
+	npm ci
 
 $(VERSIONED_JS_BUNDLE): node_modules $(JS_FILES) | dist
-	$(BROWSERIFY_PREAMBLE) NODE_ENV=production $(NPM_BIN)/browserify -d $(BROWSERIFY_ENTRY) -o $@
+	./build --production -o $@ $(JS_ENTRY)
 
-$(MINIFIED_VERSIONED_JS_BUNDLE): $(VERSIONED_JS_BUNDLE)
-	$(NPM_BIN)/terser $< -o $@ --compress
+$(MINIFIED_VERSIONED_JS_BUNDLE): node_modules $(JS_FILES) | dist
+	./build --production --compress -o $@ $(JS_ENTRY)
 
 $(VERSIONED_ZIPFILE): node_modules $(ZIPPED_FILES) | dist
 	@rm -f $@
