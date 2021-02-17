@@ -37,8 +37,10 @@
     "union-type": "github:ptgolden/union-type"
   },
   "devDependencies": {
+    "argparse": "^2.0.1",
     "browserify": "^16.2.3",
     "envify": "^3.4.1",
+    "esbuild": "^0.8.46",
     "terser": "^3.11.0",
     "tsify": "^5.0.2",
     "typescript": "^4.1.5",
