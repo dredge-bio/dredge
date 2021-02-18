@@ -9,6 +9,7 @@
     "buffer": "^6.0.3",
     "d3": "^5.5.0",
     "debounce": "^1.2.0",
+    "eslint": "^7.20.0",
     "file-saver": "^2.0.1",
     "is-url": "^1.2.4",
     "markdown-it": "^8.4.2",
@@ -33,6 +34,11 @@
     "union-type": "github:ptgolden/union-type"
   },
   "devDependencies": {
+    "@types/d3": "^6.3.0",
+    "@types/node": "^14.14.28",
+    "@types/ramda": "^0.27.38",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
     "argparse": "^2.0.1",
     "esbuild": "^0.8.46",
     "typescript": "^4.1.5"
