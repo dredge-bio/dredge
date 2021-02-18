@@ -1,26 +1,56 @@
 "use strict";
 
-const R = require('ramda')
-    , d3 = require('d3')
+import * as R from 'ramda'
+import * as d3 from 'd3'
+import {
+  DifferentialExpression,
+  PairwiseComparison,
+  ProjectTreatment
+} from './ts_types'
 
-function findParent(selector, el) {
-  let curEl = el
 
-  do {
-    if (curEl.matches(selector)) {
-      break
-    }
-  } while ((curEl = curEl.parentNode))
+// FIXME: Generally, should rename `transcripts` to `difExs`, or something
+// like that.
 
-  return curEl
+export interface Bin {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  fcMin: number;
+  fcMax: number;
+  cpmMin: number;
+  cpmMax: number;
+  transcripts: Array<DifferentialExpression>;
 }
 
-function getBins(scale, unit) {
+type BinDimension = [
+  number,
+  number,
+  number,
+  number
+]
+
+export function findParent(selector: string, el: HTMLElement) {
+  return el.closest(selector)
+}
+
+// Given a scale and a unit, return a 2-dimensional array
+function getBins(
+  scale: d3.ScaleLinear<number, number>,
+  unit: number
+
+) {
   const [ min, max ] = d3.extent(scale.range())
-      , reversed = scale.range()[0] !== min
+
+  if (min === undefined || max === undefined) {
+    throw new Error()
+  }
+
+  const reversed = scale.range()[0] !== min
       , numBins = Math.floor((max - min) / unit)
 
-  let bins
+  let bins: Array<BinDimension>
 
   bins = [...Array(numBins)].map((_, i) => {
     let rMin = min + i * unit
@@ -33,6 +63,8 @@ function getBins(scale, unit) {
     return [
       scale.invert(rMin),
       scale.invert(rMax),
+
+      // Min and max coordinates
       Math.ceil(rMin),
       Math.ceil(rMax),
     ]
@@ -40,14 +72,25 @@ function getBins(scale, unit) {
 
   bins = reversed ? bins.reverse() : bins;
 
-  bins[0][0] = d3.min(scale.domain());
-  bins[bins.length - 1][1] = d3.max(scale.domain());
+  const [ binMin, binMax ] = d3.extent(scale.domain())
+
+  if (binMin === undefined || binMax === undefined) {
+    throw new Error()
+  }
+
+  // Cap off bins
+  bins[0][0] = binMin;
+  bins[bins.length - 1][1] = binMax;
 
   return bins;
 }
 
-function binByTranscript(sortedTranscripts, field, bins) {
-  const binByTranscript = new Map()
+function binIndexByTranscript(
+  sortedTranscripts: Array<DifferentialExpression>,
+  field: 'logFC' | 'logATA',
+  bins: Array<BinDimension>
+) {
+  const binByTranscript: Map<DifferentialExpression, number> = new Map()
 
   const leftOut = R.takeWhile(
     d => d[field] < bins[0][0],
@@ -56,10 +99,11 @@ function binByTranscript(sortedTranscripts, field, bins) {
   let idx = leftOut.length
 
   bins.forEach(([ min, max ], i) => {
-    const inBin = transcript => {
+    const inBin = (transcript: DifferentialExpression) => {
       const val = transcript[field]
       return val >= min && val <= max
     }
+
     const transcriptsInBin = R.takeWhile(inBin, sortedTranscripts.slice(idx))
 
     idx += transcriptsInBin.length;
@@ -72,11 +116,17 @@ function binByTranscript(sortedTranscripts, field, bins) {
   return binByTranscript
 }
 
-function getPlotBins(data, filter, xScale, yScale, unit=5) {
+export function getPlotBins(
+  data: PairwiseComparison,
+  filter: (de: DifferentialExpression) => boolean,
+  xScale: d3.ScaleLinear<number, number>,
+  yScale: d3.ScaleLinear<number, number>,
+  unit=5
+) {
   const fcBins = getBins(yScale, unit)
       , ataBins = getBins(xScale, unit)
 
-  const bins = fcBins.map(([ fcMin, fcMax, y0, y1 ]) =>
+  const bins: Bin[][] = fcBins.map(([ fcMin, fcMax, y0, y1 ]) =>
     ataBins.map(([ cpmMin, cpmMax, x0, x1 ]) => ({
       x0, x1, y0, y1,
       fcMin, fcMax,
@@ -84,8 +134,8 @@ function getPlotBins(data, filter, xScale, yScale, unit=5) {
       transcripts: [],
     })))
 
-  const fcBinByTranscript = binByTranscript(data.fcSorted.filter(filter), 'logFC', fcBins)
-      , ataBinByTranscript = binByTranscript(data.ataSorted.filter(filter), 'logATA', ataBins)
+  const fcBinByTranscript = binIndexByTranscript(data.fcSorted.filter(filter), 'logFC', fcBins)
+      , ataBinByTranscript = binIndexByTranscript(data.ataSorted.filter(filter), 'logATA', ataBins)
 
   data.forEach(d => {
     const fcBin = fcBinByTranscript.get(d)
@@ -99,13 +149,12 @@ function getPlotBins(data, filter, xScale, yScale, unit=5) {
   return R.flatten(bins)
 }
 
-function projectForView(state) {
+// FIXME: Implement type
+export function projectForView(state: any) {
   return state.projects[state.view.source.key]
 }
 
-const TOO_MANY_ROWS = 8
-
-function getDefaultGrid(treatments) {
+export function getDefaultGrid(treatments: Array<ProjectTreatment>) {
   const numTreatments = treatments.length
       , numRows = Math.floor(numTreatments / (numTreatments / 5) - .00000000001) + 1
       , numPerRow = Math.ceil(numTreatments / numRows)
@@ -113,7 +162,7 @@ function getDefaultGrid(treatments) {
   return R.splitEvery(numPerRow, treatments)
 }
 
-function formatNumber(number, places=2) {
+export function formatNumber(number: number, places=2) {
   if (number == null) {
     return '--'
   } else if (number === 0) {
@@ -127,11 +176,16 @@ function formatNumber(number, places=2) {
   }
 }
 
-function readFile(file) {
+export function readFile(file: File) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
     reader.onload = e => {
+      if (e.target === null) {
+        reject()
+        return;
+      }
+
       resolve(e.target.result)
     }
 
@@ -141,14 +195,4 @@ function readFile(file) {
 
     reader.readAsText(file)
   })
-}
-
-
-module.exports = {
-  formatNumber,
-  findParent,
-  getPlotBins,
-  getDefaultGrid,
-  projectForView,
-  readFile,
 }
