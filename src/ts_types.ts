@@ -22,16 +22,21 @@ export interface ProjectTreatment {
   replicates: Array<ReplicateLabel>;
 }
 
+// FIXME: it might happen that there is *just* a name, in the case where a
+// transcript is not present in a pairwise comparison (e.g. maybe someone
+// added a transcript from the search bar, or maybe a certain transcript has
+// zeroes on some treatments versus others
 export interface DifferentialExpression {
   // FIXME: rename this to transcriptName
   name: TranscriptName;
+
   treatmentA_AbundanceMean: number | null;
   treatmentA_AbundanceMedian: number | null;
   treatmentB_AbundanceMean: number | null;
   treatmentB_AbundanceMedian: number | null;
-  pValue: number;
-  logFC: number;
-  logATA: number;
+  pValue: number | null;
+  logFC: number | null;
+  logATA: number | null;
 }
 
 export interface PairwiseComparison extends Map<string, DifferentialExpression> {
@@ -56,11 +61,23 @@ export interface Project {
   ) => Array<number> | null,
 }
 
+export type SortPath =
+  'name' |
+  'pValue' |
+  'logATA' |
+  'logFC' |
+  'treatmentA_AbundanceMean' |
+  'treatmentA_AbundanceMedian' |
+  'treatmentB_AbundanceMean' |
+  'treatmentB_AbundanceMedian'
+
+export type SortOrder = 'asc' | 'desc'
+
 export interface ViewState {
   source: ProjectSource;
   loading: boolean;
   pairwiseData: PairwiseComparison | null;
-  sortedTranscripts: Array<DifferentialExpression> | null;
+  sortedTranscripts: Array<DifferentialExpression>;
   pValueThreshold: number;
 
   focusedTranscript: TranscriptName | null;
@@ -68,6 +85,8 @@ export interface ViewState {
   hoveredTreatment: TreatmentName | null;
 
   savedTranscripts: Set<TranscriptName>;
+
+  comparedTreatments: [TreatmentName, TreatmentName] | null;
 
   brushedArea: [
     // minLogATA
@@ -88,9 +107,9 @@ export interface ViewState {
 
   displayedTranscripts: Array<DifferentialExpression> | null;
 
-  order: 'asc' | 'desc';
+  order: SortOrder;
 
-  sortPath: Array<string>;
+  sortPath: SortPath;
 }
 
 export interface DredgeConfig {
