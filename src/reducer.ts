@@ -1,9 +1,18 @@
 "use strict";
 
-const R = require('ramda')
+import * as R from 'ramda';
 
-function blankView(source, extra) {
-  return Object.assign({
+import {
+  ProjectSource,
+  ViewState,
+  DredgeConfig,
+  DredgeState
+} from './ts_types'
+
+
+
+function blankView(source: ProjectSource): ViewState {
+  return {
     source,
 
     loading: true,
@@ -26,36 +35,34 @@ function blankView(source, extra) {
     displayedTranscripts: null,
     order: 'asc',
     sortPath: ['name'],
-  }, extra)
-}
-
-function defaultLocalConfig() {
-  return {
-    config: {
-      label: '',
-      readme: './about.md',
-      transcriptHyperlink: [
-        {
-          label: 'NCBI',
-          url: 'https://www.ncbi.nlm.nih.gov/gene/?term=%name',
-        },
-      ],
-      abundanceLimits: [
-        [0, 100],
-        [-100, 100],
-      ],
-      heatmapMinimumMaximum: 0,
-      treatments: './treatments.json',
-      pairwiseName: './pairwise_files/%A_vs_%B.tsv',
-      transcriptAliases: './transcript_aliases.tsv',
-      abundanceMeasures: './expression_matrix.tsv',
-      diagram: './diagram.svg',
-      grid: './grid.csv',
-    },
   }
 }
 
-function initialState() {
+function defaultLocalConfig(): DredgeConfig {
+  return {
+    label: '',
+    readme: './about.md',
+    transcriptHyperlink: [
+      {
+        label: 'NCBI',
+        url: 'https://www.ncbi.nlm.nih.gov/gene/?term=%name',
+      },
+    ],
+    abundanceLimits: [
+      [0, 100],
+      [-100, 100],
+    ],
+    heatmapMinimumMaximum: 0,
+    treatments: './treatments.json',
+    pairwiseName: './pairwise_files/%A_vs_%B.tsv',
+    transcriptAliases: './transcript_aliases.tsv',
+    abundanceMeasures: './expression_matrix.tsv',
+    diagram: './diagram.svg',
+    grid: './grid.csv',
+  }
+}
+
+function initialState(): DredgeState {
   return {
     log: {},
 
@@ -63,13 +70,16 @@ function initialState() {
       global: {
         loaded: false,
       },
-      local: Object.assign({ loaded: false }, defaultLocalConfig()),
+      local: {
+        loaded: false,
+        config: defaultLocalConfig(),
+      },
     },
     view: null,
   }
 }
 
-module.exports = function reducer(state=initialState(), action) {
+export default function reducer(state=initialState(), action) {
   if (!action.readyState) return state
 
   return action.readyState.case({
@@ -253,6 +263,8 @@ module.exports = function reducer(state=initialState(), action) {
       },
 
       SetSavedTranscripts(transcriptNames) {
+        if (state.view === null) return state
+
         const { view: { brushedArea, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
             , nextSavedTranscripts = new Set(transcriptNames)
 
@@ -275,22 +287,22 @@ module.exports = function reducer(state=initialState(), action) {
         if (moveFocusedTranscript && nextSavedTranscripts.size === 0) {
           nextFocusedTranscript = null
         } else if (moveFocusedTranscript) {
-          const savedTranscriptsArr = [...savedTranscripts]
+          const savedTranscriptsArr = Array.from(savedTranscripts)
               , idx = savedTranscriptsArr.indexOf(focusedTranscript)
               , inNextSaved = transcript => nextSavedTranscripts.has(transcript)
 
           // First search for the next one from the list of previous transcripts
           // that's in the next one
-          nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(idx))
+          nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(idx)) || null
 
           // If there's nothing available, then go backwards
           if (!nextFocusedTranscript) {
-            nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(0, idx).reverse())
+            nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(0, idx).reverse()) || null
           }
 
           // If there's nothing found, then focus on the first of the new saved
           // transcripts
-          nextFocusedTranscript = [...nextSavedTranscripts][0]
+          nextFocusedTranscript = Array.from(nextSavedTranscripts)[0]
         }
 
         return R.over(R.lensProp('view'), R.flip(R.merge)({
