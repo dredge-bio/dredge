@@ -1,5 +1,8 @@
 "use strict";
 
+import { Action } from 'redux'
+import { ThunkDispatch } from 'redux-thunk'
+
 export type ReplicateLabel = string;
 export type TranscriptName = string;
 export type TreatmentName = string;
@@ -49,11 +52,19 @@ export interface Project {
   treatments: {
     [index: string]: ProjectTreatment
   };
+
   pairwiseComparisonCache: {
     [index: string]: PairwiseComparison | null
   };
 
+  config: DredgeConfig;
+
+  svg: string | null
+
   getCanonicalTranscriptLabel: (label: string) => TranscriptName;
+
+  // FIXME
+  colorScaleForTranscript: (transcriptName: TranscriptName) => any;
 
   abundancesForTreatmentTranscript: (
     treatmentID: TreatmentName,
@@ -142,3 +153,5 @@ export interface DredgeState {
 
   view: ViewState | null;
 }
+
+export type DredgeDispatch = ThunkDispatch<DredgeState, null, Action>
