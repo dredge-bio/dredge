@@ -19,6 +19,38 @@ import {
 
 import { projectForView } from './utils'
 
+export type ActionType =
+  'LOG' |
+  'SET_TITLE' |
+  'RESET_LOG' |
+  'LOAD_PROJECT_CONFIG' |
+  'SET_PAIRWISE_COMPARISON' |
+  'GET_DEFAULT_PAIRWISE_COMPARISON' |
+  'UPDATE_DISPLAYED_TRANSCRIPT' |
+  'UPDATE_SORT_FOR_TREATMENTS' |
+  'SET_SAVED_TRANSCRIPTS' |
+  'SET_HOVERED_BIN_TRANSCRIPTS' |
+  'SET_SELECTED_BIN_TRANSCRIPTS' |
+  'SET_BRUSHED_AREA' |
+  'SET_HOVERED_TRANSCRIPT' |
+  'SET_HOVERED_TREATMENT' |
+  'SET_FOCUSED_TRANSCRIPT' |
+  'SET_PVALUE_THRESHHOLD' |
+  'IMPORT_SAVED_TRANSCRIPTS' |
+  'EXPORT_SAVED_TRANSCRIPTS'
+
+
+/*
+Want to say:
+
+const resp = await dispatch('SET_BRUSHED_AREA', {
+  coords: [12, 34, 56, 78],
+})
+
+// resp is of type SetBrushedAreaResponse
+*/
+
+
 export type AppThunk<ReturnType = void> = ThunkAction<
   Promise<ReturnType>,
   DredgeState,
