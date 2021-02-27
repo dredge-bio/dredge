@@ -107,7 +107,7 @@ export function setPairwiseComparison(
 
     let minPValue = 1
 
-    const pairwiseMap = new Map(text
+    const pairwiseMap: Map<TranscriptName, DifferentialExpression> = new Map(text
       .trim()
       .split('\n')
       .slice(1) // Skip header
@@ -147,8 +147,8 @@ export function setPairwiseComparison(
 
     const pairwiseData: PairwiseComparison = Object.assign(pairwiseMap, {
       minPValue,
-      fcSorted: R.sortBy(R.prop('logFC'), Array.from(pairwiseMap.values())),
-      ataSorted: R.sortBy(R.prop('logATA'), Array.from(pairwiseMap.values())),
+      fcSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
+      ataSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
     })
 
     return {
