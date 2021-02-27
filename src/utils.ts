@@ -7,12 +7,8 @@ import {
   DifferentialExpression,
   PairwiseComparison,
   ProjectTreatment,
-  Project
-} from './ts_types'
-
-import {
   DredgeState
-} from './reducer'
+} from './ts_types'
 
 
 // FIXME: Generally, should rename `transcripts` to `difExs`, or something
