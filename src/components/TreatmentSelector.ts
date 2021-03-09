@@ -1,13 +1,34 @@
 "use strict";
 
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , d3 = require('d3')
-    , React = require('react')
-    , styled = require('styled-components').default
-    , { connect } = require('react-redux')
-    , Action = require('../actions')
-    , { projectForView } = require('../utils')
+import * as h from 'react-hyperscript'
+import * as R from 'ramda'
+import * as d3 from 'd3'
+import * as React from 'react'
+import styled from 'styled-components'
+import { connect, ConnectedProps } from 'react-redux'
+
+import { setHoveredTreatment } from '../actions'
+
+import { projectForView } from '../utils'
+import { DredgeState, DredgeDispatch, ProjectTreatment, TreatmentName, TranscriptName } from '../ts_types'
+
+const connector = connect(mapStateToProps)
+
+type TooltipPosition = 'bottom' | 'top'
+
+type Props = ConnectedProps<typeof connector> & {
+  useSelectBackup: boolean;
+  selectedTreatment: TreatmentName | null;
+  onSelectTreatment: (treatment: TreatmentName, bottom: boolean) => void;
+  loading: boolean;
+  tooltipPos: TooltipPosition;
+  transcript?: TranscriptName;
+  paintHovered: boolean;
+}
+
+type State = {
+  _hoveredTreatment: TreatmentName | null;
+}
 
 const SelectorWrapper = styled.div`
   display: flex;
@@ -49,7 +70,11 @@ const SelectorWrapper = styled.div`
   }
 `
 
-const Tooltip = styled.div`
+interface TooltipProps {
+  readonly pos: TooltipPosition;
+}
+
+const Tooltip = styled.div<TooltipProps>`
   position: absolute;
   z-index: 1;
 
@@ -72,13 +97,17 @@ const Tooltip = styled.div`
   }
 `
 
-class TreatmentSelector extends React.Component {
-  constructor() {
-    super()
+class TreatmentSelector extends React.Component<Props, State> {
+  public svgEl: null | HTMLDivElement
+
+  constructor(props: Props) {
+    super(props)
 
     this.state = {
       _hoveredTreatment: null,
     }
+
+    this.svgEl = null;
 
     this.handleSVGClick = this.handleSVGClick.bind(this)
     this.handleTreatmentEnter = this.handleTreatmentEnter.bind(this)
@@ -89,13 +118,13 @@ class TreatmentSelector extends React.Component {
   componentDidMount() {
     const { svg } = this.props
 
-    if (!svg) return null
+    if (!svg || !this.svgEl) return null
 
     this.svgEl.innerHTML = svg;
     this.svgEl.addEventListener('click', this.handleSVGClick)
 
-    ;[...this.svgEl.querySelectorAll('[data-treatment]')].forEach(el => {
-      el.addEventListener('mouseenter', this.handleTreatmentEnter)
+    Array.from(this.svgEl.querySelectorAll('[data-treatment]')).forEach(el => {
+      (el as HTMLDivElement).addEventListener('mouseenter', this.handleTreatmentEnter)
       el.addEventListener('mouseleave', this.handleTreatmentLeave)
     })
 
@@ -106,7 +135,7 @@ class TreatmentSelector extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     const { svg } = this.props
 
     if (!svg) return null
@@ -127,7 +156,9 @@ class TreatmentSelector extends React.Component {
   updateSelectedTreatment() {
     const { selectedTreatment } = this.props
 
-    ;[...this.svgEl.querySelectorAll('.treatment-selected')].forEach(el => {
+    if (this.svgEl === null) return
+
+    Array.from(this.svgEl.querySelectorAll('.treatment-selected')).forEach(el => {
       el.classList.remove('treatment-selected')
     })
 
@@ -138,21 +169,21 @@ class TreatmentSelector extends React.Component {
     }
   }
 
-  handleSVGClick(e) {
+  handleSVGClick(e: MouseEvent) {
     const { onSelectTreatment } = this.props
-        , clickedTreatment = R.path(['target', 'dataset', 'treatment'], e)
+        , clickedTreatment = (e.target as HTMLDivElement).dataset.treatment || null
 
     if (clickedTreatment) {
       onSelectTreatment(clickedTreatment, e.shiftKey)
     }
   }
 
-  handleTreatmentEnter(e) {
+  handleTreatmentEnter(e: MouseEvent) {
     const { dispatch } = this.props
-        , _hoveredTreatment = R.path(['target', 'dataset', 'treatment'], e)
+        , _hoveredTreatment = (e.target as HTMLDivElement).dataset.treatment || null
 
     this.setState({ _hoveredTreatment })
-    dispatch(Action.SetHoveredTreatment(_hoveredTreatment))
+    dispatch(setHoveredTreatment(_hoveredTreatment))
   }
 
   paintTreatments() {
@@ -165,37 +196,44 @@ class TreatmentSelector extends React.Component {
 
     const treatmentEls = R.zip(
       Object.keys(treatments),
-      Object.keys(treatments).map(
-        treatment =>
-          this.svgEl.querySelector(`[data-treatment="${treatment}"]`)))
+      Object.keys(treatments).map((treatment: TreatmentName): Element | null => {
+        if (!this.svgEl) return null
+
+        return this.svgEl.querySelector(`[data-treatment="${treatment}"]`)
+      }))
 
     treatmentEls.forEach(([, el]) => {
-      el.style.fill = '';
+      if (el === null) return
+      (el as HTMLDivElement).style.fill = '';
     })
 
     if (!transcript) return
 
-    const abundances = R.chain(R.pipe(
-      R.head,
-      treatment => abundancesForTreatmentTranscript(treatment, transcript),
-      d3.mean
-    ))(treatmentEls)
-
     const colorScale = colorScaleForTranscript(transcript)
 
-    treatmentEls.forEach(([, el], i) => {
-      el.style.fill = colorScale(abundances[i] || 0)
+    treatmentEls.forEach(([ treatment, treatmentEl ]) => {
+      const abundances = abundancesForTreatmentTranscript(treatment, transcript)
+
+      let abundanceMean: number
+
+      if (abundances === null) {
+        abundanceMean = 0
+      } else {
+        abundanceMean = d3.mean(abundances) || 0
+      }
+
+      (treatmentEl as HTMLDivElement).style.fill = colorScale(abundanceMean)
     })
   }
 
   paintHoveredTreatment() {
     const { hoveredTreatment } = this.props
 
-    ;[...this.svgEl.querySelectorAll('[data-treatment]')].forEach(el => {
+    if (!hoveredTreatment || !this.svgEl) return
+
+    Array.from(this.svgEl.querySelectorAll('[data-treatment]')).forEach(el => {
       el.classList.remove('active')
     })
-
-    if (!hoveredTreatment) return
 
     const el = this.svgEl.querySelector(`[data-treatment="${hoveredTreatment}"]`)
 
@@ -208,7 +246,7 @@ class TreatmentSelector extends React.Component {
     const { dispatch } = this.props
 
     this.setState({ _hoveredTreatment: null })
-    dispatch(Action.SetHoveredTreatment(null))
+    dispatch(setHoveredTreatment(null))
   }
 
 
@@ -236,7 +274,7 @@ class TreatmentSelector extends React.Component {
       h(SelectorWrapper, [
         svg == null ? null :h('div.svg-wrapper', [
           h('div', {
-            ref: el => { this.svgEl = el },
+            ref: (el: HTMLDivElement) => { this.svgEl = el },
           }),
 
           tooltipPos && _hoveredTreatment && h(Tooltip, {
@@ -249,9 +287,9 @@ class TreatmentSelector extends React.Component {
         !(svg == null && useSelectBackup) ? null : h('select', {
           value: selectedTreatment || '',
           disabled: initialLoad,
-          onChange: e => {
-            onSelectTreatment(e.target.value)
-          },
+          onChange: (e: React.ChangeEvent<HTMLSelectElement>) => {
+            onSelectTreatment(e.target.value, false)
+                                                    },
         }, (!selectedTreatment ? [h('option', {
           key: '_blank',
           value: '',
@@ -259,18 +297,33 @@ class TreatmentSelector extends React.Component {
           h('option', {
             key: treatment.key,
             value: treatment.key,
-          }, treatment.label),
+          }, treatment.label)
         ))),
       ])
     )
   }
 }
 
-module.exports = connect(state => {
-  const project = projectForView(state) || {}
+function mapStateToProps(state: DredgeState) {
+  const project = projectForView(state)
 
-  return Object.assign({},
-    R.pick(['svg', 'treatments', 'abundancesForTreatmentTranscript', 'colorScaleForTranscript'], project),
-    R.pick(['loading', 'hoveredTreatment'], state.view || {}))
+  const {
+    svg,
+    treatments,
+    abundancesForTreatmentTranscript,
+    colorScaleForTranscript,
+  } = project
 
-})(TreatmentSelector)
+  const { loading=true, hoveredTreatment=null } = state.view || {}
+
+  return {
+    svg,
+    treatments,
+    abundancesForTreatmentTranscript,
+    colorScaleForTranscript,
+    loading,
+    hoveredTreatment,
+  }
+}
+
+export default connector(TreatmentSelector)
