@@ -381,6 +381,17 @@ export function setSavedTranscripts(
   }
 }
 
+export function setHoveredTreatment(
+  treatment: TreatmentName | null
+): AppThunk<void> {
+  return async (dispatch) => {
+    dispatch({
+      type: 'SET_HOVERED_TREATMENT',
+      treatment,
+    })
+  }
+}
+
 type ImportedTranscript = [
   /* name: */string,
   /* canonicalName: */string
