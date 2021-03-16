@@ -49,6 +49,9 @@ export interface PairwiseComparison extends Map<string, DifferentialExpression> 
 }
 
 export interface Project {
+  loaded: boolean;
+  failed: boolean;
+
   treatments: {
     [index: string]: ProjectTreatment
   };
@@ -59,12 +62,14 @@ export interface Project {
 
   config: DredgeConfig;
 
-  svg: string | null
+  svg: string | null;
+  readme: string | null;
 
   getCanonicalTranscriptLabel: (label: string) => TranscriptName;
 
   // FIXME
   colorScaleForTranscript: (transcriptName: TranscriptName) => any;
+
 
   abundancesForTreatmentTranscript: (
     treatmentID: TreatmentName,
@@ -141,6 +146,26 @@ export interface DredgeConfig {
   abundanceMeasures: URLString;
   diagram: URLString;
   grid: URLString;
+}
+
+type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
+
+export interface LogEntry {
+  key: string,
+  label: string,
+  files: Array<{
+    url: string,
+    label: string,
+    status: LogStatus,
+  }>;
+  metadata: Array<{
+    field: string,
+    label: string,
+    status: LogStatus,
+  }>
+}
+
+export interface ProjectLog {
 }
 
 export interface DredgeState {

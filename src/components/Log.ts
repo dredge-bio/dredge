@@ -1,30 +1,54 @@
 "use strict";
 
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , { connect } = require('react-redux')
-    , styled = require('styled-components').default
-    , LoadingIcon = require('./LoadingIcon')
+import * as h from 'react-hyperscript'
+import * as R from 'ramda'
+import { connect } from 'react-redux'
+import styled from 'styled-components'
+import LoadingIcon from './LoadingIcon'
+
+import {
+  DredgeState
+} from '../ts_types'
 
 const IconWrapper = styled.span`
   svg {
   }
 `
 
-function Status({ status, indent }) {
-  const content = status.case({
-    Pending: () => h(IconWrapper, {}, h(LoadingIcon)),
-    Failed: () => '✖',
-    Missing: () => '--',
-    OK: () => '✔',
-  })
+type ProjectConfigStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
+
+interface StatusProps {
+  status: ProjectConfigStatus;
+  indent: boolean;
+}
+
+function Status(props: StatusProps) {
+  const { status, indent } = props
+
+  let indicator: string | React.ReactElement
+
+  switch (status) {
+    case 'Pending':
+      indicator = h(IconWrapper, {} , h(LoadingIcon))
+      break;
+
+    case 'Failed':
+      indicator = '✖';
+      break;
+    case 'Missing':
+      indicator = '--';
+      break;
+    case 'OK':
+      indicator = '✔';
+      break;
+  }
 
   return h('span', {
     style: {
       whiteSpace: 'nowrap',
       marginLeft: indent ? '24px' : 0,
     },
-  }, content)
+  }, indicator)
 }
 
 const LogProject = styled.div`
@@ -50,6 +74,9 @@ const LogProject = styled.div`
   }
 `
 
+interface LogProps {
+}
+
 function Log({ infoLog, initializing, failedProject, loadingProject, logsByProject }) {
   let label = 'Log'
 
@@ -65,6 +92,7 @@ function Log({ infoLog, initializing, failedProject, loadingProject, logsByProje
     h('div', [
       h('h2', label),
 
+      /*
       logsByProject.map(({ key, label, files, metadata }) =>
         h(LogProject, {
           key,
@@ -141,11 +169,12 @@ function Log({ infoLog, initializing, failedProject, loadingProject, logsByProje
           ]),
         ])
       ),
+      */
     ])
   )
 }
 
-module.exports = connect((state, ownProps) => {
+const X = connect((state: DredgeState, ownProps) => {
   const projectLogs = R.omit([''], state.log) || {}
       , infoLog = (state.log[''] || {})
       , { loadingProject, failedProject } = ownProps
@@ -178,3 +207,5 @@ module.exports = connect((state, ownProps) => {
     logsByProject,
   }
 })(Log)
+
+export default X
