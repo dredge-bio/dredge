@@ -84,6 +84,7 @@ const Action = module.exports = makeTypedAction({
 
   // Everything below here works on the "current view"
 
+  /*
   SetPairwiseComparison: {
     exec: setPairwiseComparison,
     request: {
@@ -225,6 +226,7 @@ const Action = module.exports = makeTypedAction({
     request: {},
     response: {},
   },
+  */
 })
 
 const configFields = {
