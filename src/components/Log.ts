@@ -1,6 +1,6 @@
 "use strict";
 
-import * as h from 'react-hyperscript'
+import h from 'react-hyperscript'
 import * as R from 'ramda'
 import { connect } from 'react-redux'
 import styled from 'styled-components'
