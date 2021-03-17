@@ -1,18 +1,25 @@
 "use strict";
 
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , createStore = require('./store')
-    , { ORGShell, Route } = require('org-shell')
-    , { Provider } = require('react-redux')
-    , { render } = require('react-dom')
-    , { ThemeProvider } = require('styled-components')
-    , { ProjectSource } = require('./types')
-    , theme = require('./theme')
-    , Application = require('./components/Application')
-    , Action = require('./actions')
+import * as h from 'react-hyperscript'
+import * as R from 'ramda'
+import { ORGShell, Route } from 'org-shell'
+import { Provider } from 'react-redux'
+import { render } from 'react-dom'
+import { ThemeProvider } from 'styled-components'
 
-function loadProject(title) {
+import createStore from './store'
+import theme from './theme'
+import Application from './components/Application'
+
+import {
+  ProjectSource,
+  DredgeState,
+  Resource
+} from './ts_types'
+
+function loadProject(title: string) {
+  return () => null
+  /*
   return async (params, redirectTo, { dispatch, getState }) => {
     await dispatch(Action.LoadProjectConfig(ProjectSource.Global))
 
@@ -32,29 +39,37 @@ function loadProject(title) {
         })
     }
   }
+  */
 }
 
-const resources = {
+
+const resources: Record<string, Resource> = {
   '': {
+    name: 'root',
     onBeforeRoute: (params, redirectTo) => {
       redirectTo(new Route('home'))
     },
+    Component: () => null,
   },
 
   'help': {
+    name: 'help',
     makeTitle: R.always('Help'),
     Component: require('./components/Help'),
   },
 
   'home': {
+    name: 'home',
     makeTitle: R.always('Loading project...'),
-    onBeforeRoute: loadProject(),
+    // onBeforeRoute: loadProject(),
     Component: require('./components/View'),
     absoluteDimensions: true,
   },
 
   'test': {
+    name: 'test',
     makeTitle: R.always('Loading project...'),
+    /*
     onBeforeRoute: async (params, redirectTo, { dispatch, getState }) => {
       const { config } = getState().projects.local
 
@@ -65,18 +80,21 @@ const resources = {
 
       dispatch(Action.LoadProject(ProjectSource.Local))
     },
+    */
     Component: require('./components/View'),
     absoluteDimensions: true,
   },
 
 
   'about': {
+    name: 'about',
     makeTitle: R.always('Loading project...'),
     onBeforeRoute: loadProject('About'),
     Component: require('./components/About'),
   },
 
   'configure': {
+    name: 'configure',
     makeTitle: R.always('Configure'),
     Component: require('./components/ProjectConfigure'),
   },
@@ -94,11 +112,13 @@ if (window.location.protocol.startsWith('http')) {
     },
     resources,
     onRouteChange(route, resource, { dispatch, getState }) {
+      /*
       dispatch(Action.SetTitle(
         resource.makeTitle
           ? resource.makeTitle(getState())
           : null
       ))
+      */
     },
   }, Application)
 } else {

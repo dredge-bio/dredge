@@ -2,6 +2,7 @@
 
 import { Action } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
+import { ORGShellResource } from 'org-shell'
 
 export type ReplicateLabel = string;
 export type TranscriptName = string;
@@ -15,6 +16,11 @@ interface LocalProjectSource {
 
 interface GlobalProjectSource {
   key: 'global'
+}
+
+export interface Resource extends ORGShellResource {
+  makeTitle?: (state: DredgeState) => string;
+  absoluteDimensions?: boolean;
 }
 
 export type ProjectSource = LocalProjectSource | GlobalProjectSource;

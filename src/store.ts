@@ -1,17 +1,18 @@
 "use strict";
 
-const R = require('ramda')
-    , { typedAsyncActionMiddleware } = require('org-async-actions')
-    , { applyMiddleware, createStore } = require('redux')
-    , reducer = require('./reducer')
-    , Action = require('./actions')
+import * as R from 'ramda'
+import { applyMiddleware, createStore } from 'redux'
+import reducer from './reducer'
+// import Action from './actions'
 
 
-module.exports = function _createStore() {
+
+export default function _createStore() {
   let lastTriggeredSort = []
 
   return createStore(
     reducer,
+    /*
     applyMiddleware(
       typedAsyncActionMiddleware(),
       ({ dispatch, getState }) => next => action => {
@@ -89,5 +90,6 @@ module.exports = function _createStore() {
         return res
       }
     )
+    */
   )
 }

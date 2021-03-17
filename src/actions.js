@@ -622,6 +622,7 @@ function cleanSVGString(svgString, treatments) {
 
 // Actions ----------------
 
+/** DONE
 function getDefaultPairwiseComparison() {
   return async (dispatch, getState) => {
     const project = projectForView(getState())
@@ -634,6 +635,7 @@ function getDefaultPairwiseComparison() {
     }
   }
 }
+*/
 
 function loadProject(source) {
   return async (dispatch, getState) => {
@@ -848,6 +850,7 @@ async function fetchProject(config, makeLog, onUpdate) {
       const resp = await fetchResource(url, false)
 
       try {
+        // FIXME: check treatments for correctness
         treatments = await resp.json()
 
         await onUpdate({ treatments })
@@ -974,6 +977,7 @@ function loadProjectConfig(source) {
 }
 
 
+/** DONE
 // Load the table produced by the edgeR function `exactTest`:
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
 function setPairwiseComparison(treatmentAKey, treatmentBKey) {
@@ -1081,11 +1085,15 @@ function setPairwiseComparison(treatmentAKey, treatmentBKey) {
     }
   }
 }
+*/
 
+/** DONE
 function withinBounds(min, max, value) {
   return value >= min && value <= max
 }
+*/
 
+/** DONE
 function updateSortForTreatments(sortPath, order) {
   return (dispatch, getState) => {
     const { view } = getState()
@@ -1120,8 +1128,10 @@ function updateSortForTreatments(sortPath, order) {
     }
   }
 }
+*/
 
 
+/** DONE
 function updateDisplayedTranscripts() {
   return (dispatch, getState) => {
     const { view } = getState()
@@ -1211,7 +1221,9 @@ function updateDisplayedTranscripts() {
     return { displayedTranscripts }
   }
 }
+*/
 
+/** DONE
 function setSavedTranscripts(savedTranscripts) {
   return (dispatch, getState) => {
     if(R.path(['view', 'source', 'key'], getState()) === 'global') {
@@ -1224,7 +1236,9 @@ function setSavedTranscripts(savedTranscripts) {
     return { resort: true }
   }
 }
+*/
 
+/** DONE
 function importSavedTranscripts(text) {
   return async (dispatch, getState) => {
     try {
@@ -1266,7 +1280,9 @@ function importSavedTranscripts(text) {
     }
   }
 }
+*/
 
+/** DONE
 function exportSavedTranscripts() {
   return (dispatch, getState) => {
     const {
@@ -1305,3 +1321,4 @@ function exportSavedTranscripts() {
     return {}
   }
 }
+*/
