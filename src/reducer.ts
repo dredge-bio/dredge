@@ -20,9 +20,9 @@ function blankView(source: ProjectSource): ViewState {
 
     loading: true,
 
-    // comparedTreatments: null,
+    comparedTreatments: null,
     pairwiseData: null,
-    sortedTranscripts: null,
+    sortedTranscripts: [],
 
     pValueThreshold: 1,
 
@@ -37,7 +37,7 @@ function blankView(source: ProjectSource): ViewState {
 
     displayedTranscripts: null,
     order: 'asc',
-    sortPath: ['name'],
+    sortPath: 'name',
   }
 }
 
