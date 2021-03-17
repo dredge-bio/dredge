@@ -477,7 +477,9 @@ export default class Application extends React.Component<any, ApplicationState> 
     } else if (!activeResource) {
       children = (
         h(Box, { p: 3 }, [
-          h(Log, { source: ProjectSource.Global }),
+          h(Log, {
+            source: { key: 'global' }
+          }),
         ])
       )
     } else {
