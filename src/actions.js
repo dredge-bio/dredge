@@ -18,29 +18,10 @@ function getGlobalWatchedGenesKey() {
 }
 
 const Action = module.exports = makeTypedAction({
-  Log: {
-    exec: R.always({}),
-    request: {
-      project: d => typeof d === 'string' || d === null,
-      resourceName: d => typeof d === 'string' || d === null,
-      resourceURL: d => typeof d === 'string' || d === null,
-      status: LoadingStatus,
-    },
-    response: {},
-  },
-
   SetTitle: {
     exec: R.always({}),
     request: {
       title: d => typeof d === 'string' || d === null,
-    },
-    response: {},
-  },
-
-  ResetLog: {
-    exec: R.always({}),
-    request: {
-      project: d => typeof d === 'string' || d === null,
     },
     response: {},
   },

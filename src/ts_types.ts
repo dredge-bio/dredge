@@ -4,9 +4,15 @@ import { Action } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
 import { ORGShellResource } from 'org-shell'
 
+export type ThunkConfig = {
+  state: DredgeState
+}
+
 export type ReplicateLabel = string;
 export type TranscriptName = string;
 export type TreatmentName = string;
+
+
 
 type URLString = string;
 
@@ -154,7 +160,7 @@ export interface DredgeConfig {
   grid: URLString;
 }
 
-type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
+export type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
 
 export interface LogEntry {
   key: string,

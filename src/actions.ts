@@ -15,14 +15,11 @@ import {
   SortPath,
   SortOrder,
   DredgeState,
+  ThunkConfig,
 } from './ts_types'
 
 
 import { projectForView } from './utils'
-
-type ThunkConfig = {
-  state: DredgeState
-}
 
 function delay(time: number): Promise<void> {
   if (time === 0 && window.setTimeout) {

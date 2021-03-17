@@ -255,16 +255,6 @@ export default function reducer(state=initialState(), action: any) {
 
   return action.readyState.case({
     Success: resp => action.type.case({
-      Log() {
-        const { project, resourceName='', resourceURL='', status } = action.type
-
-        return R.set(
-          R.lensPath(['log', project || '', resourceURL || resourceName]),
-          { status, url: resourceURL, label: resourceName },
-          state
-        )
-      },
-
       SetTitle(title) {
         let newTitle = ''
 
@@ -281,16 +271,6 @@ export default function reducer(state=initialState(), action: any) {
         document.title = newTitle
 
         return state
-      },
-
-      ResetLog() {
-        const { project } = action.type
-
-        return R.set(
-          R.lensPath(['log', project || '']),
-          {},
-          state
-        )
       },
 
       LoadProjectConfig(source) {
