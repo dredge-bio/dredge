@@ -1,17 +1,24 @@
 "use strict";
 
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , React = require('react')
-    , styled = require('styled-components').default
-    , { Flex, Box, Button, Heading } = require('rebass')
-    , AriaMenuButton = require('react-aria-menubutton')
-    , Log = require('./Log')
-    , { ProjectSource } = require('../types')
-    , { Navigable, Route } = require('org-shell')
-    , { createGlobalStyle } = require('styled-components')
-    , { connect } = require('react-redux')
-    , { version } = require('../../package.json')
+import * as h from 'react-hyperscript'
+import * as R from 'ramda'
+import * as React from 'react'
+import styled, { createGlobalStyle } from 'styled-components'
+import { Flex, Box, Button, Heading } from 'rebass'
+import * as AriaMenuButton from 'react-aria-menubutton'
+import { Navigable, Route, useNavigation, useResource } from 'org-shell'
+import { connect, useSelector } from 'react-redux'
+import * as projectJson from '../../package.json'
+
+import Log from './Log'
+
+import {
+  DredgeState,
+  ProjectSource,
+  Resource
+} from '../ts_types'
+
+const { version } = projectJson
 
 const GlobalStyle = createGlobalStyle`
 html, body, #application {
@@ -171,31 +178,35 @@ code {
 }
 `
 
+interface HeaderProps {
+  onRequestResize: () => void;
+  isLocalFile: boolean;
+}
 
+function selector(state: DredgeState) {
+  return {
+    view: state.view,
+    projects: state.projects,
+  }
+}
 
-const Header = R.pipe(
-  connect(R.pick(['projects', 'view'])),
-  Navigable
-)(({
-  navigateTo,
-  view,
-  projects,
-  onRequestResize,
-  isLocalFile,
-}) => {
-  const { source } = (view || {})
+/*
+function Header(props: HeaderProps){ 
+  const { onRequestResize, isLocalFile } = props
+      , { view, projects } = useSelector(selector)
+      , navigateTo = useNavigation()
 
-  let projectLabel
+  let projectLabel = ''
     , hasReadme = false
-    , headerText
+    , headerText = ''
 
-  if (source) {
-    const project = projects[source.key]
+  if (view) {
+    const project = projects[view.source.key]
 
-    if (project.loaded) {
-      projectLabel = R.path([source.key, 'config', 'label'], projects)
+    if (project && project.loaded) {
+      projectLabel = project.config.label
       headerText = projectLabel
-      hasReadme = !!R.path([source.key, 'config', 'readme'], projects)
+      hasReadme = !!project.config.readme
     }
   }
 
@@ -203,6 +214,7 @@ const Header = R.pipe(
     headerText = 'DrEdGE: Differential Expression Gene Explorer'
   }
 
+  // FIXME: is this a typo?
   const hasProjectReadme = view && view.source && projects
 
   return (
@@ -218,7 +230,7 @@ const Header = R.pipe(
           },
         }, [
           headerText,
-          (!source || source.key !== 'local') ? null : (
+          (!view || view.source.key !== 'local') ? null : (
             h(Button, {
               ml: 2,
               onClick() {
@@ -321,24 +333,43 @@ const Header = R.pipe(
     ])
   )
 })
+*/
 
 const MIN_HEIGHT = 700
     , MIN_WIDTH = 1280
 
-const ApplicationContainer = styled.div`
-  display: grid;
-  background-color: hsla(45, 31%, 93%, 1);
-  ${props =>
-    props.absoluteDimensions
-      ? `
-        grid-template-rows: 64px minmax(${MIN_HEIGHT - 64}px, 1fr);
-        grid-template-columns: minmax(${MIN_WIDTH}px, 1fr);
-        `
-      : `
-        grid-template-rows: 64px 1fr;
-        `
+interface ApplicationContainerExtraProps {
+  absoluteDimensions?: boolean;
+}
+
+function ApplicationContainer(props: any) {
+  const { resource } = useResource()
+
+  const absoluteDimensions = !!(
+    resource &&
+    !!(resource as Resource).absoluteDimensions
+  )
+
+  // FIXME: probably the wrong typing here
+  const style: Partial<CSSStyleDeclaration> = {
+    display: 'grid',
+    backgroundColor: 'hsla(45, 31%, 93%, 1)',
   }
-`
+
+  if (absoluteDimensions) {
+    style.gridTemplateRows = `64px minmax(${MIN_HEIGHT - 64}px, 1fr)`;
+    style.gridTemplateColumns = `minmax(${MIN_WIDTH}px, 1fr)`;
+  } else {
+    style.gridTemplateRows = `64px 1fr`;
+  }
+
+  return (
+    h('div', {
+      ...props,
+      style
+    })
+  )
+}
 
 function getWindowDimensions() {
   return {
@@ -347,29 +378,47 @@ function getWindowDimensions() {
   }
 }
 
-module.exports = class Application extends React.Component {
-  constructor() {
-    super();
+interface ApplicationState {
+  width: number;
+  height: number;
+  error: Error | null;
+  componentStack: string | null;
+}
 
-    this.state = Object.assign({
-      error: false,
-    }, getWindowDimensions())
+export default class Application extends React.Component<any, ApplicationState> {
+  constructor(props: any) {
+    super(props);
+
+    const { width, height } = getWindowDimensions()
+
+    this.state = {
+      width,
+      height,
+      error: null,
+      componentStack: null,
+    }
+
     this.handleRequestResize = this.handleRequestResize.bind(this)
   }
 
   handleRequestResize() {
-    this.setState(getWindowDimensions(), () => {
+    this.setState(prevState => {
+      return {
+        ...prevState,
+        ...getWindowDimensions(),
+      }
+    }, () => {
       window.dispatchEvent(new Event('application-resize'))
     })
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.setState({
       componentStack: info.componentStack,
     })
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error) {
     return { error }
   }
 
@@ -378,12 +427,7 @@ module.exports = class Application extends React.Component {
         , { activeResource } = this.props
         , isLocalFile = window.location.protocol === 'file:'
 
-    const absoluteDimensions = !!(
-      activeResource &&
-      !!activeResource.absoluteDimensions
-    )
-
-    let children
+    let children: React.ReactNode
 
     if (isLocalFile) {
       children = (
@@ -443,21 +487,23 @@ module.exports = class Application extends React.Component {
     }
 
     return [
-      h(GlobalStyle, { key: 'style' }),
       h(ApplicationContainer, {
         key: 'container',
-        absoluteDimensions,
+        /*
         style: !absoluteDimensions ? null : {
           height: this.state.height,
           width: this.state.width,
         },
+        */
       }, [
+        h(GlobalStyle),
+
         h(Header, {
           isLocalFile,
           onRequestResize: this.handleRequestResize,
         }),
 
-        h('main', {}, children),
+        React.createElement('main', {}, children),
       ]),
     ]
   }

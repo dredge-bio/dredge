@@ -1,6 +1,6 @@
 "use strict";
 
-module.exports = {
+const theme = {
   space: [
     0, 4, 8, 16, 32, 64, 128, 256
   ],
@@ -22,3 +22,5 @@ module.exports = {
     },
   },
 }
+
+export default theme
