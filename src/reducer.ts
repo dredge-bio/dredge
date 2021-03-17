@@ -6,10 +6,13 @@ import {
   ProjectSource,
   ViewState,
   DredgeConfig,
-  DredgeState
+  DredgeState,
+  TranscriptName
 } from './ts_types'
 
+import { createReducer } from '@reduxjs/toolkit'
 
+import * as actions from './actions'
 
 function blankView(source: ProjectSource): ViewState {
   return {
@@ -79,7 +82,175 @@ function initialState(): DredgeState {
   }
 }
 
-export default function reducer(state=initialState(), action) {
+const reducer = createReducer(initialState(), builder => {
+  builder
+    .addCase(actions.setPairwiseComparison.fulfilled, (state, action) => {
+      const { pairwiseData } = action.payload
+          , { treatmentAKey, treatmentBKey } = action.meta.arg
+          , pairwiseKey = [treatmentAKey, treatmentBKey].toString()
+          , projectKey = state.view!.source.key
+
+      state.projects[projectKey]!.pairwiseComparisonCache[pairwiseKey] = pairwiseData
+      state.view = {
+        ...state.view!,
+        loading: false,
+        pairwiseData,
+        comparedTreatments: [treatmentAKey, treatmentBKey]
+      }
+    })
+    .addCase(actions.updateSortForTreatments.fulfilled, (state, action) => {
+      if (!state.view) return
+
+      const { sortPath: newSortPath, order: newOrder } = action.meta.arg
+          , { sortedTranscripts } = action.payload
+          , { sortPath, order } = state.view
+
+      state.view = {
+        ...state.view,
+        loading: false,
+        sortPath: newSortPath || sortPath,
+        order: newOrder || order,
+        sortedTranscripts,
+      }
+    })
+    .addCase(actions.updateDisplayedTranscripts.fulfilled, (state, action) => {
+      if (!state.view) return
+
+      const { sortPath, order } = action.meta.arg
+          , { displayedTranscripts } = action.payload
+
+      state.view.displayedTranscripts = displayedTranscripts
+
+      if (sortPath) {
+        state.view.sortPath = sortPath
+      }
+
+      if (order) {
+        state.view.order = order
+      }
+    })
+    .addCase(actions.setSavedTranscripts.fulfilled, (state, action) => {
+      if (!state.view) return
+
+      const { transcriptNames } = action.meta.arg
+          , { view: { brushedArea, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
+            , nextSavedTranscripts = new Set(transcriptNames)
+
+        let nextFocusedTranscript = focusedTranscript
+          , nextHoveredTranscript = hoveredTranscript
+
+        if (hoveredTranscript && !nextSavedTranscripts.has(hoveredTranscript)) {
+          nextHoveredTranscript = null
+        }
+
+        // If we're viewing saved transcripts, and the focused transcript has been removed
+        // from the saved transcripts, then move focus to the next one (if it exists)
+        const moveFocusedTranscript = (
+          focusedTranscript &&
+          brushedArea != null &&
+          savedTranscripts.has(focusedTranscript) &&
+          !nextSavedTranscripts.has(focusedTranscript)
+        )
+
+        if (moveFocusedTranscript && nextSavedTranscripts.size === 0) {
+          nextFocusedTranscript = null
+        } else if (moveFocusedTranscript) {
+          const savedTranscriptsArr = Array.from(savedTranscripts)
+              , idx = savedTranscriptsArr.indexOf(focusedTranscript!)
+              , inNextSaved = (transcript: TranscriptName) => nextSavedTranscripts.has(transcript)
+
+          // First search for the next one from the list of previous transcripts
+          // that's in the next one
+          nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(idx)) || null
+
+          // If there's nothing available, then go backwards
+          if (!nextFocusedTranscript) {
+            nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(0, idx).reverse()) || null
+          }
+
+          // If there's nothing found, then focus on the first of the new saved
+          // transcripts
+          nextFocusedTranscript = Array.from(nextSavedTranscripts)[0]
+        }
+
+        state.view.savedTranscripts = nextSavedTranscripts;
+        state.view.focusedTranscript = nextFocusedTranscript;
+        state.view.hoveredTranscript = nextHoveredTranscript;
+    })
+    .addCase(actions.setHoveredBinTranscripts, (state, action) => {
+      if (!state.view) return
+
+      const { transcripts } = action.payload
+
+      state.view.hoveredBinTranscripts = transcripts
+    })
+    .addCase(actions.setSelectedBinTranscripts, (state, action) => {
+      if (!state.view) return
+
+      const { transcripts } = action.payload
+
+      state.view.selectedBinTranscripts = transcripts
+    })
+    .addCase(actions.setBrushedArea, (state, action) => {
+      if (!state.view) return
+
+      const { coords } = action.payload
+
+      state.view.brushedArea = coords
+    })
+    .addCase(actions.setHoveredTranscript, (state, action) => {
+      if (!state.view) return
+
+      const { transcript } = action.payload
+
+      state.view.hoveredTranscript = transcript
+    })
+    .addCase(actions.setHoveredTreatment, (state, action) => {
+      if (!state.view) return
+
+      const { treatment } = action.payload
+
+      state.view.hoveredTreatment = treatment
+    })
+    .addCase(actions.setFocusedTranscript, (state, action) => {
+      if (!state.view) return
+
+      const { transcript } = action.payload
+
+      state.view.focusedTranscript = transcript
+    })
+    .addCase(actions.setPValueThreshold, (state, action) => {
+      if (!state.view) return
+
+      const { threshold } = action.payload
+
+      state.view.pValueThreshold = threshold
+    })
+})
+
+export default reducer;
+
+/*
+export default function reducer(state=initialState(), action: any) {
+  if (actions.setPairwiseComparison.fulfilled.match(action)) {
+    const { pairwiseData } = action.payload
+        , { treatmentAKey, treatmentBKey } = action.meta.arg
+        , pairwiseKey = [treatmentAKey, treatmentBKey].toString()
+        , projectKey = state.view!.source.key
+
+    const val = R.view(
+      R.lensPath(['projects', projectKey, 'pairwiseComparisonCache']),
+      state)
+
+    const val2 = state.projects[projectKey]!.pairwiseComparisonCache
+
+    const newState: DredgeState = R.pipe(
+        R.set(
+          R.lensPath(['projects', projectKey, 'pairwiseComparisonCache', [treatmentAKey, treatmentBKey].join(',')]),
+          2),
+    )(state)
+  }
+
   if (!action.readyState) return state
 
   return action.readyState.case({
@@ -160,184 +331,6 @@ export default function reducer(state=initialState(), action) {
         )
       },
 
-      SetPairwiseComparison(treatmentA, treatmentB) {
-        const { pairwiseData } = resp
-            , projectKey = state.view.source.key
-
-        return R.pipe(
-          R.set(
-            R.lensPath(['projects', projectKey, 'pairwiseComparisonCache', [treatmentA, treatmentB]]),
-            pairwiseData),
-          R.over(
-            R.lensProp('view'),
-            R.flip(R.merge)({
-              loading: false,
-              pairwiseData,
-              comparedTreatments: [treatmentA, treatmentB],
-            }))
-        )(state)
-      },
-
-      UpdateSortForTreatments(newSortPath, newOrder) {
-        const { sortPath, order } = state.view
-            , { sortedTranscripts } = resp
-
-        const transcriptsByIndex = {}
-
-        sortedTranscripts.forEach(({ name }, i) => {
-          transcriptsByIndex[name] = i
-        })
-
-        return R.pipe(
-          R.set(
-            R.lensPath(['view', 'loading']),
-            false),
-          R.set(
-            R.lensPath(['view', 'sortPath']),
-            newSortPath || sortPath),
-          R.set(
-            R.lensPath(['view', 'order']),
-            newOrder || order),
-          R.set(
-            R.lensPath(['view', 'sortedTranscripts']),
-            transcriptsByIndex)
-        )(state)
-
-      },
-
-      GetDefaultPairwiseComparison() {
-        return state
-      },
-
-      UpdateDisplayedTranscripts(sortPath, order) {
-        const { displayedTranscripts } = resp
-
-        const updated = { displayedTranscripts }
-
-        if (sortPath) {
-          updated.sortPath = sortPath
-        }
-
-        if (order) {
-          updated.order = order
-        }
-
-        return R.over(
-          R.lensProp('view'),
-          R.flip(R.merge)(updated),
-          state
-        )
-      },
-
-      SetHoveredBinTranscripts(transcripts) {
-        return R.assocPath(
-          ['view', 'hoveredBinTranscripts'],
-          transcripts,
-          state
-        )
-      },
-
-      SetSelectedBinTranscripts(transcripts) {
-        return R.assocPath(
-          ['view', 'selectedBinTranscripts'],
-          transcripts,
-          state
-        )
-      },
-
-      SetHoveredTranscript(transcriptName) {
-        return R.assocPath(
-          ['view', 'hoveredTranscript'],
-          transcriptName,
-          state
-        )
-      },
-
-
-      SetBrushedArea(coords) {
-        return R.assocPath(
-          ['view', 'brushedArea'],
-          coords,
-          state
-        )
-      },
-
-      SetSavedTranscripts(transcriptNames) {
-        if (state.view === null) return state
-
-        const { view: { brushedArea, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
-            , nextSavedTranscripts = new Set(transcriptNames)
-
-        let nextFocusedTranscript = focusedTranscript
-          , nextHoveredTranscript = hoveredTranscript
-
-        if (!nextSavedTranscripts.has(hoveredTranscript)) {
-          nextHoveredTranscript = null
-        }
-
-        // If we're viewing saved transcripts, and the focused transcript has been removed
-        // from the saved transcripts, then move focus to the next one (if it exists)
-        const moveFocusedTranscript = (
-          focusedTranscript &&
-          brushedArea != null &&
-          savedTranscripts.has(focusedTranscript) &&
-          !nextSavedTranscripts.has(focusedTranscript)
-        )
-
-        if (moveFocusedTranscript && nextSavedTranscripts.size === 0) {
-          nextFocusedTranscript = null
-        } else if (moveFocusedTranscript) {
-          const savedTranscriptsArr = Array.from(savedTranscripts)
-              , idx = savedTranscriptsArr.indexOf(focusedTranscript)
-              , inNextSaved = transcript => nextSavedTranscripts.has(transcript)
-
-          // First search for the next one from the list of previous transcripts
-          // that's in the next one
-          nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(idx)) || null
-
-          // If there's nothing available, then go backwards
-          if (!nextFocusedTranscript) {
-            nextFocusedTranscript = R.find(inNextSaved, savedTranscriptsArr.slice(0, idx).reverse()) || null
-          }
-
-          // If there's nothing found, then focus on the first of the new saved
-          // transcripts
-          nextFocusedTranscript = Array.from(nextSavedTranscripts)[0]
-        }
-
-        return R.over(R.lensProp('view'), R.flip(R.merge)({
-          savedTranscripts: nextSavedTranscripts,
-          focusedTranscript: nextFocusedTranscript,
-          hoveredTranscript: nextHoveredTranscript,
-        }), state)
-      },
-
-      SetFocusedTranscript(transcriptName) {
-        return R.assocPath(
-          ['view', 'focusedTranscript'],
-          transcriptName,
-          state
-        )
-      },
-
-      SetPValueThreshold(threshold) {
-        return R.assocPath(
-          ['view', 'pValueThreshold'],
-          threshold,
-          state
-        )
-      },
-
-      SetHoveredTreatment(treatmentName) {
-        return R.assocPath(
-          ['view', 'hoveredTreatment'],
-          treatmentName,
-          state
-        )
-      },
-
-      ImportSavedTranscripts: R.always(state),
-      ExportSavedTranscripts: R.always(state),
     }),
 
     Pending: () => action.type.case({
@@ -388,3 +381,4 @@ export default function reducer(state=initialState(), action) {
     }),
   })
 }
+*/

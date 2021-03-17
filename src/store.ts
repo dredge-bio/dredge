@@ -2,16 +2,30 @@
 
 import * as R from 'ramda'
 import { applyMiddleware, createStore } from 'redux'
+import { useDispatch } from 'react-redux'
+import { configureStore } from '@reduxjs/toolkit'
 import reducer from './reducer'
 // import Action from './actions'
 
+
+const store = configureStore({
+  reducer,
+})
+
+export type AppDispatch = typeof store.dispatch
+export const useAppDispatch = () => useDispatch<AppDispatch>()
 
 
 export default function _createStore() {
   let lastTriggeredSort = []
 
-  return createStore(
+  return configureStore({
     reducer,
+    /*
+    middleware: getDefaultMiddleware =>
+      getDefaultMiddleware().concat(sortingMiddleware)
+      */
+
     /*
     applyMiddleware(
       typedAsyncActionMiddleware(),
@@ -91,5 +105,5 @@ export default function _createStore() {
       }
     )
     */
-  )
+  })
 }
