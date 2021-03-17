@@ -1,6 +1,6 @@
 "use strict";
 
-import * as h from 'react-hyperscript'
+import h from 'react-hyperscript'
 import * as R from 'ramda'
 import * as d3 from 'd3'
 import * as React from 'react'

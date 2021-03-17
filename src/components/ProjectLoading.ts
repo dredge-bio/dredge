@@ -2,7 +2,7 @@
 
 import { Route, useResource } from 'org-shell'
 import { Box, Button } from 'rebass'
-import * as h from 'react-hyperscript'
+import h from 'react-hyperscript'
 import * as React from 'react'
 import * as R from 'ramda'
 import { useSelector } from 'react-redux'
