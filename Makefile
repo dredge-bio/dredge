@@ -15,7 +15,7 @@ MINIFIED_VERSIONED_JS_BUNDLE = $(VERSIONED_JS_BUNDLE:.js=.min.js)
 VERSIONED_DIRECTORY = dist/$(PROJECT_NAME)-$(VERSION)
 VERSIONED_ZIPFILE = $(VERSIONED_DIRECTORY).zip
 
-JS_ENTRY = src/index.js
+JS_ENTRY = src/index.ts
 
 JS_FILES = $(shell find src/ -type f -name *js)
 LIB_FILES = $(shell find lib/ -type f)
