@@ -29,6 +29,7 @@ const opts = {
 }
 
 if (args.serve) {
+  opts.sourcemap = 'inline'
   serve({
     servedir: args.serve,
     port: 9999,
