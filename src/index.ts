@@ -86,12 +86,14 @@ const resources: Record<string, Resource> = {
   },
 
 
+  /*
   'about': {
     name: 'about',
     makeTitle: R.always('Loading project...'),
     onBeforeRoute: loadProject('About'),
     Component: require('./components/About'),
   },
+  */
 
   'configure': {
     name: 'configure',
