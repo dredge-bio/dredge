@@ -89,8 +89,11 @@ const reducer = createReducer(initialState(), builder => {
           , { treatmentAKey, treatmentBKey } = action.meta.arg
           , pairwiseKey = [treatmentAKey, treatmentBKey].toString()
           , projectKey = state.view!.source.key
+          , project = state.projects[projectKey]
 
-      state.projects[projectKey]!.pairwiseComparisonCache[pairwiseKey] = pairwiseData
+      if (!project.loaded) return
+
+      project.pairwiseComparisonCache[pairwiseKey] = pairwiseData
       state.view = {
         ...state.view!,
         loading: false,

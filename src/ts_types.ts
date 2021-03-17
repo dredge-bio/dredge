@@ -60,35 +60,6 @@ export interface PairwiseComparison extends Map<string, DifferentialExpression> 
   ataSorted: Array<DifferentialExpression>;
 }
 
-export interface Project {
-  loaded: boolean;
-  failed: boolean;
-
-  treatments: {
-    [index: string]: ProjectTreatment
-  };
-
-  pairwiseComparisonCache: {
-    [index: string]: PairwiseComparison | null
-  };
-
-  config: DredgeConfig;
-
-  svg: string | null;
-  readme: string | null;
-
-  getCanonicalTranscriptLabel: (label: string) => TranscriptName;
-
-  // FIXME
-  colorScaleForTranscript: (transcriptName: TranscriptName) => any;
-
-
-  abundancesForTreatmentTranscript: (
-    treatmentID: TreatmentName,
-    transcriptName: TranscriptName
-  ) => Array<number> | null,
-}
-
 export type SortPath =
   'name' |
   'pValue' |
@@ -180,12 +151,51 @@ export interface LogEntry {
 export interface ProjectLog {
 }
 
+type UnloadedProjectWithoutConfig = {
+  loaded: false;
+}
+
+type UnloadedProject = {
+  loaded: false;
+  config: DredgeConfig;
+}
+
+export interface LoadedProject {
+  loaded: true;
+  failed: boolean;
+
+  treatments: {
+    [index: string]: ProjectTreatment
+  };
+
+  pairwiseComparisonCache: {
+    [index: string]: PairwiseComparison | null
+  };
+
+  config: DredgeConfig;
+
+  svg: string | null;
+  readme: string | null;
+
+  getCanonicalTranscriptLabel: (label: string) => TranscriptName;
+
+  // FIXME
+  colorScaleForTranscript: (transcriptName: TranscriptName) => any;
+
+
+  abundancesForTreatmentTranscript: (
+    treatmentID: TreatmentName,
+    transcriptName: TranscriptName
+  ) => Array<number> | null,
+}
+
+
 export interface DredgeState {
   log: any;
 
   projects: {
-    global: Project | null,
-    local: Project | null,
+    global: UnloadedProjectWithoutConfig | UnloadedProject | LoadedProject,
+    local: UnloadedProjectWithoutConfig | UnloadedProject | LoadedProject,
   };
 
   view: ViewState | null;

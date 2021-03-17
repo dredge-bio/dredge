@@ -160,7 +160,7 @@ export function projectForView(state: DredgeState) {
 
   const project = state.projects[state.view.source.key]
 
-  if (project === null) {
+  if (project === null || !project.loaded) {
     throw err;
   }
 
