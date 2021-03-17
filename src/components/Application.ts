@@ -190,7 +190,6 @@ function selector(state: DredgeState) {
   }
 }
 
-/*
 function Header(props: HeaderProps){ 
   const { onRequestResize, isLocalFile } = props
       , { view, projects } = useSelector(selector)
@@ -332,8 +331,7 @@ function Header(props: HeaderProps){
 
     ])
   )
-})
-*/
+}
 
 const MIN_HEIGHT = 700
     , MIN_WIDTH = 1280
