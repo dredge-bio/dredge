@@ -4,23 +4,34 @@ import * as R from 'ramda'
 import { applyMiddleware, createStore } from 'redux'
 import { useDispatch } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
-import reducer from './reducer'
-// import Action from './actions'
+
+import { reducer as logReducer } from './log'
+import { reducer as viewReducer } from './view'
+import { reducer as projectsReducer } from './projects'
 
 
 const store = configureStore({
-  reducer,
+  reducer: {
+    log: logReducer,
+    view: viewReducer,
+    projects: projectsReducer,
+  },
 })
 
 export type AppDispatch = typeof store.dispatch
 export const useAppDispatch = () => useDispatch<AppDispatch>()
+
+export type AppState = ReturnType<typeof store.getState>
 
 
 export default function _createStore() {
   let lastTriggeredSort = []
 
   return configureStore({
-    reducer,
+    reducer: {
+      log: logReducer,
+      view: viewReducer,
+    },
     /*
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware().concat(sortingMiddleware)
