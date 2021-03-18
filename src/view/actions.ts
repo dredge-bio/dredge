@@ -16,10 +16,10 @@ import {
   SortOrder,
   DredgeState,
   ThunkConfig,
-} from './ts_types'
+} from '../ts_types'
 
 
-import { projectForView } from './utils'
+import { projectForView } from '../utils'
 
 function delay(time: number): Promise<void> {
   if (time === 0 && window.setTimeout) {

@@ -189,13 +189,17 @@ export interface LoadedProject {
   ) => Array<number> | null,
 }
 
+export type Project =
+  UnloadedProjectWithoutConfig |
+  UnloadedProject |
+  LoadedProject
 
 export interface DredgeState {
   log: any;
 
   projects: {
-    global: UnloadedProjectWithoutConfig | UnloadedProject | LoadedProject,
-    local: UnloadedProjectWithoutConfig | UnloadedProject | LoadedProject,
+    global: Project,
+    local: Project,
   };
 
   view: ViewState | null;
