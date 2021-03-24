@@ -6,6 +6,8 @@ import {
 
 import { createReducer } from '@reduxjs/toolkit'
 
+import * as actions from './actions'
+
 type ProjectState = Record<ProjectSource['key'], Project>
 
 function initial(): ProjectState {
@@ -44,6 +46,14 @@ function defaultLocalConfig(): DredgeConfig {
 }
 
 const reducer = createReducer(initial(), builder => {
+  builder.addCase(actions.loadProjectConfig.rejected, (state, action) => {
+    const project = action.meta.arg.source
+
+    state[project.key] = {
+      loaded: true,
+      failed: true,
+    }
+  })
 })
 
 export default reducer
