@@ -14,6 +14,7 @@ import {
 import {
   ResourceLogEntry,
   StatusLogEntry,
+  Log,
 } from '../log'
 
 const IconWrapper = styled.span`
@@ -81,19 +82,36 @@ const LogProject = styled.div`
   }
 `
 
-function ResourceLog({ url, label, status, message }: ResourceLogEntry) {
-  return (
-    h('div', [
-      h('span', label),
-      h(Status, { status, indent: false }),
-      message ? h('span', message) : null,
-    ])
-  )
-}
+const LogEntryWrapper = styled.div`
+`
 
-function StatusLog({ message }: StatusLogEntry) {
+function LogEntry({ project, id, timestamp, log }: Log) {
+  let children
+
+  if ('status' in log) {
+    children = [
+      h('span', { key: 1 }, h(Status, { status: log.status, indent: false })),
+      h('span', { key: 2 }, log.label),
+      h('span', { key: 3 }, h('a', {
+        href: log.url,
+      }, log.url)),
+      h('span', { key: 4 }, log.message)
+    ]
+  } else {
+    children = [
+      h('span', {
+        key: 1,
+        className: 'status-message',
+      }, log.message)
+    ]
+  }
+
   return (
-    h('div', message)
+    h(LogEntryWrapper, [
+      h('span', { key: 5 }, timestamp),
+      h('span', { key: 6 }, project ? project.key : null),
+      ...children,
+    ])
   )
 }
 
@@ -144,14 +162,11 @@ export default function Log() {
     h('div', [
       h('h2', label),
 
-      h('div', logArr.map(({ project, log, timestamp, id }) =>
-        h('div', {
-          key: id,
-        }, [
-          ('url' in log)
-            ? h(ResourceLog, log)
-            : h(StatusLog, log)
-        ])
+      h('div', logArr.map(entry =>
+        h(LogEntry, {
+          key: entry.id,
+          ...entry,
+        })
       )),
 
       /*
