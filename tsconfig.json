@@ -4,12 +4,17 @@
       "es2016",
       "dom"
     ],
+
+    "target": "ES6",
+
     "module": "commonjs",
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
 
     "strict": true,
+
+    "downlevelIteration": true,
 
     "moduleResolution": "node",
     "resolveJsonModule": true,
