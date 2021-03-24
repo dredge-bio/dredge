@@ -11,6 +11,11 @@ import {
   useAppSelector,
 } from '../ts_types'
 
+import {
+  ResourceLogEntry,
+  StatusLogEntry,
+} from '../log'
+
 const IconWrapper = styled.span`
   svg {
   }
@@ -30,7 +35,8 @@ function Status(props: StatusProps) {
 
   switch (status) {
     case 'Pending':
-      indicator = h(IconWrapper, {} , h(LoadingIcon))
+      // indicator = h(IconWrapper, {} , h(LoadingIcon))
+      indicator = '...'
       break;
 
     case 'Failed':
@@ -75,7 +81,20 @@ const LogProject = styled.div`
   }
 `
 
-interface LogProps {
+function ResourceLog({ url, label, status, message }: ResourceLogEntry) {
+  return (
+    h('div', [
+      h('span', label),
+      h(Status, { status, indent: false }),
+      message ? h('span', message) : null,
+    ])
+  )
+}
+
+function StatusLog({ message }: StatusLogEntry) {
+  return (
+    h('div', message)
+  )
 }
 
 export default function Log() {
@@ -108,6 +127,8 @@ export default function Log() {
     }
   })
 
+  const logArr = useAppSelector(state => state.log)
+
   if (initializing) {
     label = 'Initializing...'
   } else if (failedProject) {
@@ -116,9 +137,22 @@ export default function Log() {
     label = 'Loading project...'
   }
 
+  logArr.map(({ project, log }) => {
+  })
+
   return (
     h('div', [
       h('h2', label),
+
+      h('div', logArr.map(({ project, log, timestamp, id }) =>
+        h('div', {
+          key: id,
+        }, [
+          ('url' in log)
+            ? h(ResourceLog, log)
+            : h(StatusLog, log)
+        ])
+      )),
 
       /*
       logsByProject.map(({ key, label, files, metadata }) =>

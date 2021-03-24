@@ -62,14 +62,26 @@ export const loadProjectConfig = createAsyncThunk<
     return { config: project.config }
   }
 
-  const makeLog = (label: string, url: string) =>
-    (status: LogStatus) =>
+  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
+    (status: LogStatus, message?: string) =>
       dispatch(logAction.log({
-        project: source,
-        resourceName: label,
-        resourceURL: url,
-        status: status,
+        project,
+        log: {
+          url,
+          label,
+          status,
+          message: message || null,
+        }
       }))
+
+    const makeStatusLog = (project: ProjectSource | null) =>
+      (message: string) =>
+        dispatch(logAction.log({
+          project,
+          log: {
+            message,
+          },
+        }))
 
 
   // We should only be dealing with the global config at this point, because
@@ -80,8 +92,14 @@ export const loadProjectConfig = createAsyncThunk<
 
   let resp: Response
 
+  const statusLog = makeStatusLog(null)
+      , projectStatusLog = makeStatusLog(source)
+
+  statusLog('Checking for project configuration')
+
   {
-    const log = makeLog('Project configuration', configURL)
+    const log = makeResourceLog(source, 'Project configuration', configURL)
+
     try {
 
       log('Pending')
@@ -92,15 +110,14 @@ export const loadProjectConfig = createAsyncThunk<
     } catch (e) {
       const { message } = e
       // console.error(e)
-      log('Failed')
-      console.log(getState())
+      log('Failed', 'Resource not found')
       throw new Error('FIXME problem')
     }
   }
 
+  statusLog('Loaded `project.json`, using global project')
 
-
-  const keys = ConfigDef.props
+  projectStatusLog('Checking if `project.json` well formatted')
 
   const json = await resp.json()
 
@@ -109,17 +126,26 @@ export const loadProjectConfig = createAsyncThunk<
     const url = new URL(`project.json#${value}`, window.location.toString()).href
         , decoder = ConfigDef.props[configKey].asDecoder()
 
-    await log('Project configuration', url, 'Pending')
+    const log = makeResourceLog(source, value, url)
+
+    await log('Pending')
 
     pipe(
       decoder.decode(json[configKey]) as Left<t.Errors> | Right<any>,
       fold(
         errors => {
+          log('Failed')
           console.log(errors)
         },
-        val => {}
+        val => {
+          log('OK')
+        }
       ))
   }
+
+  projectStatusLog('`project.json` well formatted. Continuning to load project')
+
+  throw Error()
 
   const config = await tPromise.decode(ConfigDef, await resp.json())
 
