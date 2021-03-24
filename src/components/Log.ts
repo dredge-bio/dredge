@@ -29,6 +29,27 @@ interface StatusProps {
   indent: boolean;
 }
 
+function filterMultiple(log: Array<Log>) {
+  const ret: Array<Log> = []
+      , urlsVisited: Record<string, number> = {}
+
+  log.forEach(entry => {
+    if ('url' in entry.log) {
+      const pos = urlsVisited[entry.log.url]
+
+      if (typeof pos === 'number') {
+        ret[pos] = entry
+      } else {
+        urlsVisited[entry.log.url] = ret.push(entry) - 1
+      }
+    } else {
+      ret.push(entry)
+    }
+  })
+
+  return ret
+}
+
 function Status(props: StatusProps) {
   const { status, indent } = props
 
@@ -36,8 +57,7 @@ function Status(props: StatusProps) {
 
   switch (status) {
     case 'Pending':
-      // indicator = h(IconWrapper, {} , h(LoadingIcon))
-      indicator = '...'
+      indicator = h(IconWrapper, {} , h(LoadingIcon))
       break;
 
     case 'Failed':
@@ -110,9 +130,10 @@ function LogEntry({ project, id, timestamp, log }: Log) {
     ]
   } else {
     children = [
+      h('td'),
       h('td', {
         key: 1,
-        colSpan: 4,
+        colSpan: 3,
         className: 'status-message',
       }, log.message)
     ]
@@ -174,134 +195,16 @@ export default function Log() {
     h('div', [
       h('h2', label),
 
-    h(LogTable, [
-      h('thead', [
-      ]),
+      h(LogTable, [
+        h('thead', []),
 
-      h('tbody', logArr.map(entry =>
-        h(LogEntry, {
-          key: entry.id,
-          ...entry,
-        })
-      ))
-    ])
-
-      /*
-      logsByProject.map(({ key, label, files, metadata }) =>
-        h(LogProject, {
-          key,
-        }, [
-          h('h3', {
-            key: 'project-label',
-          }, [
-            label,
-          ]),
-
-          h('div.-grid', {
-            key: 'grid',
-          }, [
-            Object.values(files).map(({ url, label, status }) => [
-              h(Status, { key: `${label}-status`, status }),
-
-              h('div.-label', { key: `${label}-label` }, [
-                label,
-              ]),
-
-              h('div', {
-                key: `${label}-link`,
-              }, [
-                h('a', {
-                  href: url,
-                  style: {
-                    color: '#666',
-                    fontSize: '80%',
-                  },
-                }, url),
-              ]),
-
-              h('div.-message', {
-                key: `${label}-message`,
-              }, [
-                status.case({
-                  Failed: message => !message ? null : h('div', {
-                    style: {
-                      color: 'red',
-                    },
-                  }, [
-                    h('b', 'Error: '),
-                    message,
-                  ]),
-                  _: R.always(null),
-                }),
-              ]),
-
-              ...(!(url || '').endsWith('project.json') ? [] : (
-                Object.values(metadata).map(({ field, label, status }) => [
-                  h('div', {
-                    key: `project-${field}-spacer`,
-                  }),
-
-                  h('div', { key: `project-${field}-info`, style: { display: 'flex' }}, [
-                    h(Status, { status }),
-
-                    h('div.-label', {
-                      style: {
-                        position: 'absolute',
-                        marginLeft: '18px',
-                      },
-                    }, [
-                      label,
-                    ]),
-                  ]),
-
-                  h('div', {
-                    key: `project-${field}-spacer2`,
-                  }),
-                ])
-              )),
-            ]),
-          ]),
-        ])
-      ),
-      */
+        h('tbody', filterMultiple(logArr).map(entry =>
+          h(LogEntry, {
+            key: entry.id,
+            ...entry,
+          })
+        ))
+      ])
     ])
   )
 }
-
-/*
-const X = connect((state: DredgeState, ownProps) => {
-  const projectLogs = R.omit([''], state.log) || {}
-      , infoLog = (state.log[''] || {})
-      , { loadingProject, failedProject } = ownProps
-
-  const showProject = loadingProject || failedProject
-
-  const logsByProject = Object.entries(projectLogs)
-    .filter(([ key ]) =>
-      showProject
-        ? key === showProject
-        : true)
-    .map(([ key, files ]) => ({
-      key,
-      label: R.path(['projects', key, 'config', 'label'], state) || ' ',
-      files: R.filter(d => {
-        if (typeof d.url !== 'string') return true
-        return !d.url.includes('project.json#')
-      }, files),
-      metadata: R.pipe(
-        R.filter(({ url }) => typeof url === 'string' && url.includes('project.json#')),
-        R.map(({ url, label, status }) => {
-          const [ , field ] = url.split('project.json#')
-          return { field, label, status }
-        })
-      )(files),
-    }))
-
-  return {
-    infoLog,
-    logsByProject,
-  }
-})(Log)
-
-export default X
-*/
