@@ -7,11 +7,13 @@ import {
   LogStatus,
 } from '../ts_types'
 
-interface StatusLogEntry {
+let id = 0
+
+export interface StatusLogEntry {
   message: string,
 }
 
-interface ResourceLogEntry {
+export interface ResourceLogEntry {
   url: string,
   label: string,
   status: LogStatus,
@@ -22,11 +24,16 @@ type LogEntry = StatusLogEntry | ResourceLogEntry
 
 type Log = {
   project: ProjectSource | null,
+  id: number,
+  timestamp: number,
   log: LogEntry,
 }
 
 export const actions = {
-  log: createAction<Log>('append-log'),
+  log: createAction<{
+    project: ProjectSource | null,
+    log: LogEntry,
+  }>('append-log'),
 
   resetProjectLog: createAction<{
     project: ProjectSource,
@@ -43,7 +50,15 @@ function initialState(): LogState {
 export const reducer = createReducer(initialState(), builder => {
   builder
     .addCase(actions.log, (state, action) => {
-      return [...state, action.payload]
+      const { project, log } = action.payload
+
+      const entry = {
+        project,
+        log,
+        timestamp: new Date().getTime(),
+        id: id++,
+      }
+      return [...state, entry]
 
     })
     .addCase(actions.resetProjectLog, (state, action) => {
