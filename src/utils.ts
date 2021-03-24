@@ -33,6 +33,12 @@ type BinDimension = [
   number
 ]
 
+export async function delay(time: number) {
+  return new Promise(resolve => {
+    setTimeout(resolve, time)
+  })
+}
+
 export function findParent(selector: string, el: HTMLElement) {
   return el.closest(selector)
 }

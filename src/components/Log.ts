@@ -7,7 +7,8 @@ import styled from 'styled-components'
 import LoadingIcon from './LoadingIcon'
 
 import {
-  DredgeState
+  DredgeState,
+  useAppSelector,
 } from '../ts_types'
 
 const IconWrapper = styled.span`
@@ -77,8 +78,35 @@ const LogProject = styled.div`
 interface LogProps {
 }
 
-function Log({ infoLog, initializing, failedProject, loadingProject, logsByProject }) {
+export default function Log() {
   let label = 'Log'
+
+  const {
+    initializing,
+    failedProject,
+    loadingProject,
+  } = useAppSelector(state => {
+    let initializing = true
+      , loadingProject = true
+      , failedProject = false
+
+    const globalProject = state.projects.global
+
+    if (globalProject.loaded) {
+      loadingProject = false
+      initializing = false
+
+      if (globalProject.failed) {
+        failedProject = true
+      }
+    }
+
+    return {
+      initializing,
+      failedProject,
+      loadingProject,
+    }
+  })
 
   if (initializing) {
     label = 'Initializing...'
@@ -174,6 +202,7 @@ function Log({ infoLog, initializing, failedProject, loadingProject, logsByProje
   )
 }
 
+/*
 const X = connect((state: DredgeState, ownProps) => {
   const projectLogs = R.omit([''], state.log) || {}
       , infoLog = (state.log[''] || {})
@@ -209,3 +238,4 @@ const X = connect((state: DredgeState, ownProps) => {
 })(Log)
 
 export default X
+*/

@@ -7,7 +7,9 @@ import { Provider } from 'react-redux'
 import { render } from 'react-dom'
 import { ThemeProvider } from 'styled-components'
 
+import { actions as projectActions } from './projects'
 import createStore from './store'
+import { AppDispatch, AppState } from './store'
 import theme from './theme'
 import Application from './components/Application'
 
@@ -17,13 +19,22 @@ import {
   Resource
 } from './ts_types'
 
-function loadProject(title: string) {
-  return () => null
-  /*
-  return async (params, redirectTo, { dispatch, getState }) => {
-    await dispatch(Action.LoadProjectConfig(ProjectSource.Global))
+function loadProject(/* title: string */) {
+  return async (
+    _: any,
+    __: any,
+    { dispatch, getState }: { dispatch: AppDispatch, getState: () => AppState }
+  ) => {
+    console.log('ok!')
+    const action = projectActions.loadProjectConfig({
+      source: { key: 'global' }
+    })
 
-    if (getState().projects.global.config) {
+    const resp = await dispatch(action)
+    // await dispatch(Action.LoadProjectConfig(ProjectSource.Global))
+
+    if ('config' in getState().projects.global) {
+      /*
       dispatch(Action.LoadProject(ProjectSource.Global))
         .then(() => {
           const state = getState()
@@ -37,11 +48,10 @@ function loadProject(title: string) {
 
           dispatch(Action.SetTitle(title ? `${title} - ${label}` : label))
         })
+        */
     }
   }
-  */
 }
-
 
 const resources: Record<string, Resource> = {
   '': {
@@ -52,24 +62,27 @@ const resources: Record<string, Resource> = {
     Component: () => null,
   },
 
+    /*
   'help': {
     name: 'help',
     makeTitle: R.always('Help'),
     Component: require('./components/Help'),
   },
+  */
 
   'home': {
     name: 'home',
     makeTitle: R.always('Loading project...'),
-    // onBeforeRoute: loadProject(),
-    Component: require('./components/View'),
+    onBeforeRoute: loadProject(),
+    //Component: require('./components/View'),
+    Component: () => 'hi',
     absoluteDimensions: true,
   },
 
+  /*
   'test': {
     name: 'test',
     makeTitle: R.always('Loading project...'),
-    /*
     onBeforeRoute: async (params, redirectTo, { dispatch, getState }) => {
       const { config } = getState().projects.local
 
@@ -80,10 +93,10 @@ const resources: Record<string, Resource> = {
 
       dispatch(Action.LoadProject(ProjectSource.Local))
     },
-    */
     Component: require('./components/View'),
     absoluteDimensions: true,
   },
+  */
 
 
   /*
@@ -95,12 +108,15 @@ const resources: Record<string, Resource> = {
   },
   */
 
+ /*
   'configure': {
     name: 'configure',
     makeTitle: R.always('Configure'),
     Component: require('./components/ProjectConfigure'),
   },
+  */
 }
+
 
 const store = createStore()
 

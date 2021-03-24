@@ -5,7 +5,7 @@ import {
   ProjectSource,
   ThunkConfig,
   LogStatus,
-} from './ts_types'
+} from '../ts_types'
 
 export const actions = {
   log: createAction<{
