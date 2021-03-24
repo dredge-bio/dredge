@@ -37,7 +37,6 @@ async function fetchResource(url: string, cache=true) {
 
 const labels: Map<ConfigKey, string> = new Map([
   ['label', 'Project label'],
-  ['url', 'Project URL'],
   ['readme', 'Project documentation'],
   ['abundanceMeasures', 'Transcript abundance measures'],
   ['heatmapMinimumMaximum', 'Abundance heatmap color scale floor'],
@@ -123,7 +122,7 @@ export const loadProjectConfig = createAsyncThunk<
 
 
   for (const [configKey, value ] of labels) {
-    const url = new URL(`project.json#${value}`, window.location.toString()).href
+    const url = new URL(`project.json#${configKey}`, window.location.toString()).href
         , decoder = ConfigDef.props[configKey].asDecoder()
 
     const log = makeResourceLog(source, value, url)

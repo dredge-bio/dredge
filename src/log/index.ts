@@ -22,7 +22,7 @@ export interface ResourceLogEntry {
 
 type LogEntry = StatusLogEntry | ResourceLogEntry
 
-type Log = {
+export type Log = {
   project: ProjectSource | null,
   id: number,
   timestamp: number,
