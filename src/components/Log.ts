@@ -82,7 +82,18 @@ const LogProject = styled.div`
   }
 `
 
-const LogEntryWrapper = styled.div`
+const LogTable = styled.table`
+td {
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+/*
+td:nth-of-type(1),
+td:nth-of-type(2) {
+  padding-right: 12px;
+}
+*/
 `
 
 function LogEntry({ project, id, timestamp, log }: Log) {
@@ -90,26 +101,27 @@ function LogEntry({ project, id, timestamp, log }: Log) {
 
   if ('status' in log) {
     children = [
-      h('span', { key: 1 }, h(Status, { status: log.status, indent: false })),
-      h('span', { key: 2 }, log.label),
-      h('span', { key: 3 }, h('a', {
+      h('td', { key: 1 }, h(Status, { status: log.status, indent: false })),
+      h('td', { key: 2 }, log.label),
+      h('td', { key: 3 }, h('a', {
         href: log.url,
       }, log.url)),
-      h('span', { key: 4 }, log.message)
+      h('td', { key: 4 }, log.message)
     ]
   } else {
     children = [
-      h('span', {
+      h('td', {
         key: 1,
+        colSpan: 4,
         className: 'status-message',
       }, log.message)
     ]
   }
 
   return (
-    h(LogEntryWrapper, [
-      h('span', { key: 5 }, timestamp),
-      h('span', { key: 6 }, project ? project.key : null),
+    h('tr', [
+      h('td', { key: 5 }, new Date(timestamp).toLocaleTimeString()),
+      h('td', { key: 6 }, project ? project.key : null),
       ...children,
     ])
   )
@@ -162,12 +174,17 @@ export default function Log() {
     h('div', [
       h('h2', label),
 
-      h('div', logArr.map(entry =>
+    h(LogTable, [
+      h('thead', [
+      ]),
+
+      h('tbody', logArr.map(entry =>
         h(LogEntry, {
           key: entry.id,
           ...entry,
         })
-      )),
+      ))
+    ])
 
       /*
       logsByProject.map(({ key, label, files, metadata }) =>
