@@ -20,48 +20,38 @@ interface ResourceLogEntry {
 
 type LogEntry = StatusLogEntry | ResourceLogEntry
 
+type Log = {
+  project: ProjectSource | null,
+  log: LogEntry,
+}
+
 export const actions = {
-  log: createAction<{
-    project: ProjectSource | null,
-    log: LogEntry,
-  }>('append-log'),
+  log: createAction<Log>('append-log'),
 
   resetProjectLog: createAction<{
     project: ProjectSource,
   }>('reset-project-log'),
 }
 
-interface LogState {
-  main: Array<LogEntry>,
-  projects: Record<ProjectSource['key'], Array<LogEntry>>,
-}
+type LogState = Array<Log>
 
 
 function initialState(): LogState {
-  return {
-    main: [],
-    projects: {
-      local: [],
-      global: [],
-    },
-  }
+  return []
 }
 
 export const reducer = createReducer(initialState(), builder => {
   builder
     .addCase(actions.log, (state, action) => {
-      const { project, log } = action.payload
-
-      const logToAppend = project
-        ? state.projects[project.key]
-        : state.main
-
-      logToAppend.push(log)
+      return [...state, action.payload]
 
     })
     .addCase(actions.resetProjectLog, (state, action) => {
       const { project } = action.payload
 
-      state.projects[project.key] = []
+      return state.filter(
+        log => (
+          log.project &&
+          log.project.key === project.key))
     })
 })
