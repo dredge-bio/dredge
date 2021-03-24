@@ -7,7 +7,9 @@ import * as React from 'react'
 import styled from 'styled-components'
 import { connect, ConnectedProps } from 'react-redux'
 
+/*
 import { setHoveredTreatment } from '../actions'
+*/
 
 import { projectForView } from '../utils'
 import { DredgeState, DredgeDispatch, ProjectTreatment, TreatmentName, TranscriptName } from '../ts_types'

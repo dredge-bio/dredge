@@ -3,6 +3,9 @@
 import { Action } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
 import { ORGShellResource } from 'org-shell'
+import { TypedUseSelectorHook, useSelector } from 'react-redux'
+
+import { AppDispatch, AppState } from './store'
 
 export type ThunkConfig = {
   state: DredgeState
@@ -24,7 +27,10 @@ interface GlobalProjectSource {
   key: 'global'
 }
 
-export interface Resource extends ORGShellResource {
+export interface Resource extends ORGShellResource<{
+  dispatch: AppDispatch,
+  getState: () => AppState,
+}> {
   makeTitle?: (state: DredgeState) => string;
   absoluteDimensions?: boolean;
 }
@@ -160,6 +166,12 @@ type UnloadedProject = {
   config: DredgeConfig;
 }
 
+type FailedProject = {
+  loaded: true;
+  failed: true,
+}
+
+
 export interface LoadedProject {
   loaded: true;
   failed: boolean;
@@ -192,17 +204,9 @@ export interface LoadedProject {
 export type Project =
   UnloadedProjectWithoutConfig |
   UnloadedProject |
+  FailedProject |
   LoadedProject
 
-export interface DredgeState {
-  log: any;
+export type DredgeState = AppState
 
-  projects: {
-    global: Project,
-    local: Project,
-  };
-
-  view: ViewState | null;
-}
-
-export type DredgeDispatch = ThunkDispatch<DredgeState, null, Action>
+export const useAppSelector: TypedUseSelectorHook<DredgeState> = useSelector

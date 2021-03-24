@@ -27,6 +27,7 @@ export type AppState = ReturnType<typeof store.getState>
 export default function _createStore() {
   let lastTriggeredSort = []
 
+  return store
   return configureStore({
     reducer: {
       log: logReducer,
