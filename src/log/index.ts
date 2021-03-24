@@ -7,53 +7,61 @@ import {
   LogStatus,
 } from '../ts_types'
 
-export const actions = {
-  log: createAction<{
-    project: ProjectSource | null,
-    resourceName: string | null,
-    resourceURL: string | null,
-    status: LogStatus,
-    message?: string
-  }>('append-log'),
-
-  reset: createAction<void>('reset-log'),
+interface StatusLogEntry {
+  message: string,
 }
 
-interface LogEntry {
-  status: LogStatus,
+interface ResourceLogEntry {
   url: string,
   label: string,
+  status: LogStatus,
   message: string | null,
 }
 
-type LogState = Record<ProjectSource['key'] | '', Record<string, LogEntry>>
+type LogEntry = StatusLogEntry | ResourceLogEntry
+
+export const actions = {
+  log: createAction<{
+    project: ProjectSource | null,
+    log: LogEntry,
+  }>('append-log'),
+
+  resetProjectLog: createAction<{
+    project: ProjectSource,
+  }>('reset-project-log'),
+}
+
+interface LogState {
+  main: Array<LogEntry>,
+  projects: Record<ProjectSource['key'], Array<LogEntry>>,
+}
+
 
 function initialState(): LogState {
   return {
-    '': {},
-    local: {},
-    global: {},
+    main: [],
+    projects: {
+      local: [],
+      global: [],
+    },
   }
 }
 
 export const reducer = createReducer(initialState(), builder => {
   builder
     .addCase(actions.log, (state, action) => {
-      const { project, resourceName, resourceURL, status, message=null } = action.payload
+      const { project, log } = action.payload
 
-      const projectKey = project ? project.key : ''
-          , url = resourceURL || ''
-          , label = resourceName || ''
-          , logEntryKey = url || label
+      const logToAppend = project
+        ? state.projects[project.key]
+        : state.main
 
-      state[projectKey][logEntryKey] = {
-        status,
-        url,
-        label,
-        message
-      }
+      logToAppend.push(log)
+
     })
-    .addCase(actions.reset, state => {
-      return initialState()
+    .addCase(actions.resetProjectLog, (state, action) => {
+      const { project } = action.payload
+
+      state.projects[project.key] = []
     })
 })
