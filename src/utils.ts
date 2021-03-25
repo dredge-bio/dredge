@@ -215,3 +215,23 @@ export function readFile(file: File) {
     reader.readAsText(file)
   })
 }
+
+export async function fetchResource(url: string, cache=true) {
+  const headers = new Headers()
+
+  if (!cache) {
+    headers.append('Cache-Control', 'no-cache')
+  }
+
+  const resp = await fetch(url, { headers })
+
+  if (!resp.ok) {
+    if (resp.status === 404) {
+      throw new Error('File not found')
+    }
+
+    throw new Error(`Error requesting file (${resp.statusText || resp.status })`)
+  }
+
+  return resp
+}

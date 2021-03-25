@@ -25,15 +25,16 @@ function loadProject(/* title: string */) {
     __: any,
     { dispatch, getState }: { dispatch: AppDispatch, getState: () => AppState }
   ) => {
-    console.log('ok!')
-    const action = projectActions.loadProjectConfig({
+    await dispatch(projectActions.loadProjectConfig({
       source: { key: 'global' }
-    })
+    }))
 
-    const resp = await dispatch(action)
-    // await dispatch(Action.LoadProjectConfig(ProjectSource.Global))
+    const project = getState().projects.global
 
-    if ('config' in getState().projects.global) {
+    if ('config' in project) {
+      dispatch(projectActions.loadProject({
+        source: { key: 'global' }
+      }))
       /*
       dispatch(Action.LoadProject(ProjectSource.Global))
         .then(() => {
