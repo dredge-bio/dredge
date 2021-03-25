@@ -210,6 +210,7 @@ const Action = module.exports = makeTypedAction({
   */
 })
 
+/*
 const configFields = {
   label: {
     label: 'Project label',
@@ -352,6 +353,7 @@ const configFields = {
     },
   },
 }
+*/
 
 function trim(x) {
   return x.trim()

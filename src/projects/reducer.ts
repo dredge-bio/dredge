@@ -54,6 +54,15 @@ const reducer = createReducer(initial(), builder => {
       failed: true,
     }
   })
+  builder.addCase(actions.loadProjectConfig.fulfilled, (state, action) => {
+    const { config } = action.payload
+        , project = action.meta.arg.source
+
+    state[project.key] = {
+      loaded: false,
+      config,
+    }
+  })
 })
 
 export default reducer

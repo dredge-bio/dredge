@@ -7,33 +7,16 @@ import { pipe } from 'fp-ts/function'
 import { ConfigDef, ConfigKey } from './config'
 import { actions as logAction } from '../log'
 
-import { delay } from '../utils'
+import * as fields from './fields'
+
+import { delay, fetchResource } from '../utils'
+
 import {
   DredgeConfig,
   ProjectSource,
   ThunkConfig,
   LogStatus
 } from '../ts_types'
-
-async function fetchResource(url: string, cache=true) {
-  const headers = new Headers()
-
-  if (!cache) {
-    headers.append('Cache-Control', 'no-cache')
-  }
-
-  const resp = await fetch(url, { headers })
-
-  if (!resp.ok) {
-    if (resp.status === 404) {
-      throw new Error('File not found')
-    }
-
-    throw new Error(`Error requesting file (${resp.statusText || resp.status })`)
-  }
-
-  return resp
-}
 
 const labels: Map<ConfigKey, string> = new Map([
   ['label', 'Project label'],
@@ -53,7 +36,7 @@ export const loadProjectConfig = createAsyncThunk<
   { config: DredgeConfig },
   { source: ProjectSource },
   ThunkConfig
->('load-project', async (args, { dispatch, getState }) => {
+>('load-project-config', async (args, { dispatch, getState }) => {
   const { source } = args
       , project = getState().projects[source.key]
 
@@ -62,7 +45,7 @@ export const loadProjectConfig = createAsyncThunk<
   }
 
   const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
-    (status: LogStatus, message?: string) =>
+    (status: LogStatus, message?: string) => {
       dispatch(logAction.log({
         project,
         log: {
@@ -72,15 +55,17 @@ export const loadProjectConfig = createAsyncThunk<
           message: message || null,
         }
       }))
+    }
 
-    const makeStatusLog = (project: ProjectSource | null) =>
-      (message: string) =>
-        dispatch(logAction.log({
-          project,
-          log: {
-            message,
-          },
-        }))
+  const makeStatusLog = (project: ProjectSource | null) =>
+    (message: string) => {
+      dispatch(logAction.log({
+        project,
+        log: {
+          message,
+        },
+      }))
+    }
 
 
   // We should only be dealing with the global config at this point, because
@@ -142,99 +127,64 @@ export const loadProjectConfig = createAsyncThunk<
       ))
   }
 
-  projectStatusLog('`project.json` well formatted. Continuning to load project')
+  projectStatusLog('`project.json` well formatted')
 
-  throw Error()
-
-  const config = await tPromise.decode(ConfigDef, await resp.json())
+  const config = await tPromise.decode(ConfigDef, json)
 
   await delay(0)
 
   return { config }
 })
 
-/*
+export const loadProject = createAsyncThunk<
+  void,
+  { source: ProjectSource },
+  ThunkConfig
+>('load-project', async (args, { dispatch, getState }) => {
+  const project = args.source
+      , projectState = getState().projects[args.source.key]
 
-function __loadProjectConfig(source) {
-  return async (dispatch, getState) => {
-    const existing = R.path(['projects', source.key, 'config'], getState())
+  if (projectState.loaded) return
 
-    if (existing) return { config: existing }
-
-    const makeProjectLog = R.curry((label, url, status) => {
-      return dispatch(Action.Log(
-        source.key,
-        label,
-        url,
-        status
-      ))
-    })
-
-    // We should only be dealing with the global config at this point, because
-    // the local one is set beforehand. But maybe we want to support loading
-    // arbitrary remote projects at some point (again, lol). In that case, the
-    // global project would not be assumed.
-    const configURL = new URL('./project.json', window.location).href
-
-    let loadedConfig = {}
-
-    {
-      const log = makeProjectLog('Project configuration', configURL)
-
-      await log(LoadingStatus.Pending(null))
-
-      try {
-        const resp = await fetchResource(configURL, false)
-
-        try {
-          loadedConfig = await resp.json()
-        } catch (e) {
-          throw new Error('Project configuration file malformed')
+  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
+    (status: LogStatus, message?: string) =>
+      dispatch(logAction.log({
+        project,
+        log: {
+          url,
+          label,
+          status,
+          message: message || null,
         }
+      }))
 
-        await log(LoadingStatus.OK(null))
-      } catch (e) {
-        let { message } = e
+  const makeStatusLog = (project: ProjectSource | null) =>
+    (message: string) =>
+      dispatch(logAction.log({
+        project,
+        log: {
+          message,
+        },
+      }))
 
-        if (message === 'File not found') {
-          message = 'No configuration file present.'
-        }
+  const projectStatusLog = makeStatusLog(args.source)
 
-        await log(LoadingStatus.Failed(message))
+  projectStatusLog('Loading project')
 
-        return { config: null }
-      }
-    }
-
-    const config = {}
-
-    await Promise.all(Object.entries(configFields).map(async ([ key, { label, test }]) => {
-      const url = new URL(`project.json#${key}`, window.location).href
-          , log = makeProjectLog(label, url)
-
-      await log(LoadingStatus.Pending(null))
-
-      const val = loadedConfig[key]
-
-      if (!val) {
-        await log(LoadingStatus.Missing('No value specified'))
-        return
-      }
-
-      try {
-        test(val);
-
-        await log(LoadingStatus.OK(null))
-
-        config[key] = val
-      } catch (e) {
-        await log(LoadingStatus.Failed(e.message))
-      }
-    }))
-
-    await delay(0)
-
-    return { config }
+  if (!('config' in projectState)) {
+    projectStatusLog('No configuration present')
+    throw new Error()
   }
-}
-*/
+
+  const { config } = projectState
+
+  const makeLog = makeResourceLog.bind(null, project)
+
+  // Load treatments before anything else
+  const treatments = await fields.treatments.validateFromURL(
+    config.treatments, makeLog)
+
+  const runFields = [
+  ]
+
+})
