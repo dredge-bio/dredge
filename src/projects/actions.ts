@@ -82,7 +82,7 @@ export const loadProjectConfig = createAsyncThunk<
   statusLog('Checking for project configuration')
 
   {
-    const log = makeResourceLog(source, 'Project configuration', configURL)
+    const log = makeResourceLog(null, 'Project configuration', configURL)
 
     try {
 
@@ -93,9 +93,9 @@ export const loadProjectConfig = createAsyncThunk<
       log('OK')
     } catch (e) {
       const { message } = e
-      // console.error(e)
-      log('Failed', 'Resource not found')
-      throw new Error('FIXME problem')
+
+      log('Failed', 'Configuration file not found')
+      throw new Error()
     }
   }
 
@@ -184,7 +184,16 @@ export const loadProject = createAsyncThunk<
   const treatments = await fields.treatments.validateFromURL(
     config.treatments, makeLog)
 
-  const runFields = [
-  ]
+  if (treatments === null) {
+    projectStatusLog('Could not load project because loading treatments failed.')
+    throw new Error()
+  }
 
+  const abundanceMeasures = await fields.abundanceMeasures.validateFromURL(
+    config.abundanceMeasures, makeLog)
+
+  if (abundanceMeasures === null) {
+    projectStatusLog('Could not load project because loading abundance measures failed.')
+    throw new Error()
+  }
 })
