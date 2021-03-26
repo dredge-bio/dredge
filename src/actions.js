@@ -26,6 +26,7 @@ const Action = module.exports = makeTypedAction({
     response: {},
   },
 
+  /*
   LoadProjectConfig: {
     exec: loadProjectConfig,
     request: {
@@ -35,6 +36,7 @@ const Action = module.exports = makeTypedAction({
       config: d => typeof d === 'object' || d === null,
     },
   },
+  */
 
   UpdateLocalConfig: {
     exec: R.always({}),
@@ -355,6 +357,7 @@ const configFields = {
 }
 */
 
+/*
 function trim(x) {
   return x.trim()
 }
@@ -362,8 +365,10 @@ function trim(x) {
 function notBlank(x) {
   return x
 }
+*/
 
 const processedConfigFields = {
+/*
   transcriptAliases: {
     label: 'Transcript aliases',
     exec: async url => {
@@ -431,6 +436,7 @@ const processedConfigFields = {
       }
     },
   },
+  */
 
   grid: {
     label: 'Transcript grid',
@@ -474,6 +480,7 @@ const processedConfigFields = {
   },
 }
 
+/*
 function delay(time) {
   if (time === 0 && window.setTimeout) {
     return new Promise(resolve => setImmediate(resolve))
@@ -501,7 +508,9 @@ async function fetchResource(url, cache=true) {
 
   return resp
 }
+*/
 
+/*
 async function parseAbundanceFile(resp) {
   const abundanceRows = (await resp.text()).split('\n')
       , replicates = abundanceRows.shift().split('\t').slice(1)
@@ -603,6 +612,7 @@ function cleanSVGString(svgString, treatments) {
 
   return svgDoc.rootElement.outerHTML
 }
+*/
 
 
 // Actions ----------------
@@ -878,6 +888,7 @@ async function fetchProject(config, makeLog, onUpdate) {
   }))
 }
 
+/*
 function loadProjectConfig(source) {
   return async (dispatch, getState) => {
     const existing = R.path(['projects', source.key, 'config'], getState())
@@ -960,6 +971,7 @@ function loadProjectConfig(source) {
     return { config }
   }
 }
+*/
 
 
 /** DONE
