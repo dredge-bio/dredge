@@ -436,7 +436,6 @@ const processedConfigFields = {
       }
     },
   },
-  */
 
   grid: {
     label: 'Transcript grid',
@@ -478,6 +477,7 @@ const processedConfigFields = {
       }
     },
   },
+  */
 }
 
 /*

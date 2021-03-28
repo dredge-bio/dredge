@@ -15,7 +15,8 @@ import {
   DredgeConfig,
   ProjectSource,
   ThunkConfig,
-  LogStatus
+  LogStatus,
+  ProjectTreatments,
 } from '../ts_types'
 
 const labels: Map<ConfigKey, string> = new Map([
@@ -189,11 +190,79 @@ export const loadProject = createAsyncThunk<
     throw new Error()
   }
 
-  const abundanceMeasures = await fields.abundanceMeasures.validateFromURL(
-    config.abundanceMeasures, makeLog)
+  const [
+    abundanceMeasures,
+    aliases,
+    readme,
+    svg,
+    grid,
+  ] = await Promise.all([
+    fields.abundanceMeasures.validateFromURL(
+      config.abundanceMeasures, makeLog, treatments),
+
+    fields.aliases.validateFromURL(
+      config.transcriptAliases, makeLog, treatments),
+
+    fields.readme.validateFromURL(
+      config.readme, makeLog, treatments),
+
+    fields.svg.validateFromURL(
+      config.diagram, makeLog, treatments),
+
+    fields.grid.validateFromURL(
+      config.grid, makeLog, treatments),
+  ])
 
   if (abundanceMeasures === null) {
     projectStatusLog('Could not load project because loading abundance measures failed.')
     throw new Error()
   }
+
+  const { transcripts, replicates, abundances } = abundanceMeasures
+
+  projectStatusLog('Validating expression matrix...')
+
+  try {
+    validateExpressionMatrix(treatments, abundanceMeasures)
+  } catch (e) {
+    projectStatusLog(e.message)
+    throw new Error()
+  }
+
+  const numReplicates = [...treatments.values()].reduce(
+    (ct, { replicates }) => ct + replicates.length,
+    0)
+
+  projectStatusLog(
+    'Dataset: ' +
+     `${treatments.size.toLocaleString()} treatments, ` +
+     `${numReplicates.toLocaleString()} replicates, ` +
+     `${transcripts.length.toLocaleString()} transcripts.`)
+
 })
+
+function validateExpressionMatrix(
+  treatments: ProjectTreatments,
+  { replicates }: { replicates: string[] }
+) {
+  const matrixReplicates = new Set(replicates)
+      , missingReplicates: { treatment: string, id: string }[] = []
+
+  treatments.forEach((treatment, treatmentID) => {
+    treatment.replicates.forEach(replicate => {
+      if (!matrixReplicates.has(replicate)) {
+        missingReplicates.push({
+          treatment: treatmentID,
+          id: replicate
+        })
+      }
+    })
+  })
+
+  if (missingReplicates.length) {
+    const missingStr = missingReplicates.map(({ treatment, id }) => `${id} (for ${treatment})`).join(', ')
+    throw new Error(`Missing ${missingReplicates.length} replicates from expression matrix: ` + missingStr)
+  }
+
+  return
+}
