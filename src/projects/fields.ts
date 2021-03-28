@@ -19,7 +19,7 @@ class ProjectField<T, V=T> {
   cached: boolean;
   decoder: t.Decoder<unknown, T>;
   processResponse: (resp: Response) => Promise<any>;
-  processValidated: (validated: T, treatments?: Record<string, types.ProjectTreatment>) => Promise<V>;
+  processValidated: (validated: T, treatments?: types.ProjectTreatments) => Promise<V>;
 
   constructor(config: {
     label: string,
@@ -27,7 +27,7 @@ class ProjectField<T, V=T> {
     cached: boolean,
     decoder: t.Decoder<unknown, T>,
     processResponse?: (resp: Response) => Promise<any>,
-    processValidated: (validated: T, treatments?: Record<string, types.ProjectTreatment>) => Promise<V>;
+    processValidated: (validated: T, treatments?: types.ProjectTreatments) => Promise<V>;
   }) {
     this.label = config.label;
     this.required = config.required;
@@ -51,7 +51,7 @@ class ProjectField<T, V=T> {
   async validateFromURL(
     url: string,
     makeLog: (label: string, url: string) => (status: types.LogStatus, message?: string) => void,
-    treatments?: Record<string, types.ProjectTreatment>
+    treatments?: types.ProjectTreatments
   ) {
     const fullURL = new URL(url, window.location.toString()).href
         , log = makeLog(this.label, fullURL)
@@ -103,12 +103,15 @@ class ProjectField<T, V=T> {
   */
 
 export const treatments = new ProjectField<
-  Record<string, types.ProjectTreatment>
+  Record<string, types.ProjectTreatment>,
+  types.ProjectTreatments
 >({
   label: 'Project treatments',
   required: true,
   cached: false,
-  processValidated: asyncIdentity,
+  async processValidated(obj) {
+    return new Map(Object.entries(obj))
+  },
   decoder: t.record(
     t.string, t.type({
       label: t.string,
@@ -235,11 +238,11 @@ export const readme = new ProjectField<
   }
 })
 
-function cleanSVGString(svgString: string, treatments: Record<string, types.ProjectTreatment>) {
+function cleanSVGString(svgString: string, treatments: types.ProjectTreatments) {
   const parser = new DOMParser()
       , svgDoc = parser.parseFromString(svgString, 'image/svg+xml')
       , iterator = svgDoc.createNodeIterator(svgDoc, NodeFilter.SHOW_ELEMENT)
-      , treatmentNames = new Set(Object.keys(treatments))
+      , treatmentNames = new Set(treatments.keys())
 
   let curNode: Node | null
 
@@ -276,7 +279,10 @@ function cleanSVGString(svgString: string, treatments: Record<string, types.Proj
         popTreatmentFromAttr('id') || popTreatmentFromAttr('name')
 
         if (treatment) {
-          const { label } = treatments[treatment]
+          // `treatment` will always be in the treatment map, since it was
+          // derived from the `treatmentNames` set, a set of all the keys in
+          // the map.
+          const { label } = treatments.get(treatment)!
 
           node.setAttribute('data-treatment', treatment)
 
