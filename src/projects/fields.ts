@@ -54,9 +54,14 @@ class ProjectField<T, V=T> {
     treatments?: types.ProjectTreatments
   ) {
     const fullURL = new URL(url, window.location.toString()).href
-        , log = makeLog(this.label, fullURL)
+        , log = makeLog(this.label, url ? fullURL : '')
 
     await log('Pending')
+
+    if (!url) {
+      log('Missing')
+      return null
+    }
 
     try {
       const resp = await fetchResource(url, this.cached)
