@@ -39,9 +39,11 @@ export type ProjectSource = LocalProjectSource | GlobalProjectSource;
 
 
 export interface ProjectTreatment {
-  label: TreatmentName;
+  label: string;
   replicates: Array<ReplicateLabel>;
 }
+
+export type ProjectTreatments = Map<TreatmentName, ProjectTreatment>
 
 // FIXME: it might happen that there is *just* a name, in the case where a
 // transcript is not present in a pairwise comparison (e.g. maybe someone
@@ -176,9 +178,7 @@ export interface LoadedProject {
   loaded: true;
   failed: boolean;
 
-  treatments: {
-    [index: string]: ProjectTreatment
-  };
+  treatments: ProjectTreatments,
 
   pairwiseComparisonCache: {
     [index: string]: PairwiseComparison | null
