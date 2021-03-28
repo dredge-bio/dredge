@@ -1,4 +1,5 @@
 import * as t from 'io-ts'
+import * as d3 from 'd3'
 import { fold, isLeft, Left, Right } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { withValidate, fromNullable } from 'io-ts-types'
@@ -92,20 +93,7 @@ class ProjectField<T, V=T> {
 
   }
 }
-/*
-  abundanceMeasures: {
-    label: 'Transcript abundance measures',
-    exec: async (url, treatments) => {
-      const resp = await fetchResource(url)
 
-      try {
-        return await parseAbundanceFile(resp, treatments)
-      } catch (e) {
-        throw new Error('Error parsing file')
-      }
-    },
-  },
-  */
 
 export const treatments = new ProjectField<
   Record<string, types.ProjectTreatment>,
@@ -124,6 +112,7 @@ export const treatments = new ProjectField<
     })
   )
 })
+
 
 export const abundanceMeasures = new ProjectField<
   [ replicateRow: string, abundances: Array<string> ],
@@ -345,4 +334,45 @@ export const svg = new ProjectField<
 
     return cleanSVGString(str, treatments)
   }
+})
+
+export const grid = new ProjectField<
+  string[][],
+  (string | null)[][]
+>({
+  label: 'Transcript grid',
+  required: false,
+  cached: false,
+  processResponse(resp) {
+    return resp.text()
+  },
+  decoder: withValidate(t.array(t.array(t.string)), (input, context) => {
+    if (typeof input !== 'string') {
+      return t.failure(input, context, 'Input was not a string')
+    }
+
+    let grid: string[][]
+
+    if (input.includes('\t')) {
+      grid = d3.tsvParseRows(input)
+    } else {
+      grid = d3.csvParseRows(input)
+    }
+
+    return t.success(grid)
+  }),
+  async processValidated(grid, treatments) {
+    if (!treatments) throw new Error('Can\'t parse grid without treatments')
+
+    return grid.map(row => row.map(treatment => {
+      if (!treatment) return null
+
+      if (!treatments.has(treatment)) {
+        throw new Error(`Treatment ${treatment} not in project`)
+      }
+
+      return treatment
+    }))
+  }
+
 })
