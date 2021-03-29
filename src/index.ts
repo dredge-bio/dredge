@@ -17,7 +17,7 @@ import {
   ProjectSource,
   DredgeState,
   Resource
-} from './ts_types'
+} from './types'
 
 function loadProject(/* title: string */) {
   return async (

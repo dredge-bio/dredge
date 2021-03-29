@@ -8,7 +8,7 @@ import { Box } from 'rebass'
 import ProjectLoading from './ProjectLoading'
 
 import { projectForView } from '../utils'
-import { DredgeState } from '../ts_types'
+import { DredgeState } from '../types'
 
 
 const DocumentationContainer = styled(Box)`

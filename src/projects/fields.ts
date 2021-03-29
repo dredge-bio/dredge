@@ -5,7 +5,7 @@ import { pipe } from 'fp-ts/function'
 import { withValidate, fromNullable } from 'io-ts-types'
 
 import { fetchResource, delay } from '../utils'
-import * as types from '../ts_types'
+import * as types from '../types'
 
 import { PathReporter } from 'io-ts/PathReporter'
 

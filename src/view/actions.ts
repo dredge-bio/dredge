@@ -16,7 +16,7 @@ import {
   SortOrder,
   DredgeState,
   ThunkConfig,
-} from '../ts_types'
+} from '../types'
 
 
 import { projectForView } from '../utils'

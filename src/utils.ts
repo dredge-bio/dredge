@@ -9,7 +9,7 @@ import {
   ProjectTreatment,
   TreatmentName,
   DredgeState
-} from './ts_types'
+} from './types'
 
 
 // FIXME: Generally, should rename `transcripts` to `difExs`, or something

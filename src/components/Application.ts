@@ -16,7 +16,7 @@ import {
   DredgeState,
   ProjectSource,
   Resource
-} from '../ts_types'
+} from '../types'
 
 const { version } = projectJson
 

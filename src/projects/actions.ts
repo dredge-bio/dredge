@@ -18,7 +18,7 @@ import {
   LogStatus,
   ProjectTreatments,
   ProjectData,
-} from '../ts_types'
+} from '../types'
 
 function getGlobalWatchedGenesKey() {
   return window.location.pathname + '-watched'

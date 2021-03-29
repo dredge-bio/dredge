@@ -6,7 +6,7 @@ import {
   ProjectSource,
   Project,
   LoadedProject,
-} from '../ts_types'
+} from '../types'
 
 function useProject(source: ProjectSource, requireLoaded: false): Project;
 function useProject(source: ProjectSource, requireLoaded: true): LoadedProject;
