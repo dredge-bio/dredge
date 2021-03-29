@@ -7,6 +7,7 @@ import {
   DifferentialExpression,
   PairwiseComparison,
   ProjectTreatment,
+  TreatmentName,
   DredgeState
 } from './ts_types'
 
@@ -173,7 +174,7 @@ export function projectForView(state: DredgeState) {
   return project
 }
 
-export function getDefaultGrid(treatments: Array<ProjectTreatment>) {
+export function getDefaultGrid(treatments: Array<TreatmentName>) {
   const numTreatments = treatments.length
       , numRows = Math.floor(numTreatments / (numTreatments / 5) - .00000000001) + 1
       , numPerRow = Math.ceil(numTreatments / numRows)

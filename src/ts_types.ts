@@ -173,32 +173,39 @@ type FailedProject = {
   failed: true,
 }
 
+export type ProjectData = {
+  treatments: ProjectTreatments,
+
+  // From the abundance matrix
+  transcripts: string[],
+  replicates: string[],
+  abundances: number[][],
+  transcriptIndices: Record<string, number>,
+  replicateIndices: Record<string, number>,
+
+  transcriptCorpus: Record<string, string>;
+  transcriptAliases: ([alias: string, transcript: string])[],
+
+  svg: string | null;
+  grid: (string | null)[][],
+
+  readme: string | null;
+}
+
 
 export interface LoadedProject {
   loaded: true;
-  failed: boolean;
+  failed: false;
+  config: DredgeConfig;
 
-  treatments: ProjectTreatments,
+  // Static information about the project
+  data: ProjectData,
 
   pairwiseComparisonCache: {
     [index: string]: PairwiseComparison | null
   };
 
-  config: DredgeConfig;
-
-  svg: string | null;
-  readme: string | null;
-
-  getCanonicalTranscriptLabel: (label: string) => TranscriptName;
-
-  // FIXME
-  colorScaleForTranscript: (transcriptName: TranscriptName) => any;
-
-
-  abundancesForTreatmentTranscript: (
-    treatmentID: TreatmentName,
-    transcriptName: TranscriptName
-  ) => Array<number> | null,
+  watchedTranscripts: Set<string>,
 }
 
 export type Project =
