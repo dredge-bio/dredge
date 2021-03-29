@@ -8,9 +8,9 @@ import {
   LoadedProject,
 } from '../types'
 
-function useProject(source: ProjectSource, requireLoaded: false): Project;
-function useProject(source: ProjectSource, requireLoaded: true): LoadedProject;
-function useProject(source: ProjectSource, requireLoaded: boolean): Project | LoadedProject {
+export function useProject(source: ProjectSource, requireLoaded: false): Project;
+export function useProject(source: ProjectSource, requireLoaded: true): LoadedProject;
+export function useProject(source: ProjectSource, requireLoaded: boolean): Project | LoadedProject {
   const project = useAppSelector(state => state.projects[source.key])
 
   if (requireLoaded) {
@@ -24,7 +24,7 @@ function useProject(source: ProjectSource, requireLoaded: boolean): Project | Lo
   return project
 }
 
-function useAbundances(source: ProjectSource={ key: 'global' }) {
+export function useAbundances(source: ProjectSource={ key: 'global' }) {
   const project = useProject(source, true)
 
   const {
@@ -85,7 +85,7 @@ function useAbundances(source: ProjectSource={ key: 'global' }) {
   }
 }
 
-function useTranscripts(source: ProjectSource={ key: 'global' }) {
+export function useTranscripts(source: ProjectSource={ key: 'global' }) {
   const project = useProject(source, true)
 
   const {
