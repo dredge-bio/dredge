@@ -9,7 +9,7 @@ import { actions as logAction } from '../log'
 
 import * as fields from './fields'
 
-import { delay, fetchResource } from '../utils'
+import { delay, fetchResource, getDefaultGrid } from '../utils'
 
 import {
   DredgeConfig,
@@ -17,7 +17,12 @@ import {
   ThunkConfig,
   LogStatus,
   ProjectTreatments,
+  ProjectData,
 } from '../ts_types'
+
+function getGlobalWatchedGenesKey() {
+  return window.location.pathname + '-watched'
+}
 
 const labels: Map<ConfigKey, string> = new Map([
   ['label', 'Project label'],
@@ -138,14 +143,24 @@ export const loadProjectConfig = createAsyncThunk<
 })
 
 export const loadProject = createAsyncThunk<
-  void,
+  {
+    data: ProjectData,
+    watchedTranscripts: Set<string>,
+    config: DredgeConfig,
+  },
   { source: ProjectSource },
   ThunkConfig
 >('load-project', async (args, { dispatch, getState }) => {
   const project = args.source
       , projectState = getState().projects[args.source.key]
 
-  if (projectState.loaded) return
+  if (projectState.loaded && !projectState.failed) {
+    return {
+      config: projectState.config,
+      data: projectState.data,
+      watchedTranscripts: projectState.watchedTranscripts,
+    }
+  }
 
   const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
     (status: LogStatus, message?: string) =>
@@ -239,7 +254,87 @@ export const loadProject = createAsyncThunk<
      `${numReplicates.toLocaleString()} replicates, ` +
      `${transcripts.length.toLocaleString()} transcripts.`)
 
+  // FIXME: make this a loading log once entries can be keyed by something other
+  // than URL
+  projectStatusLog('Building transcript corpus...')
+
+  const { corpus, transcriptAliases } = await buildTranscriptCorpus(transcripts, aliases || {})
+
+  const transcriptIndices: Record<string, number> = {}
+      , replicateIndices: Record<string, number> = {}
+
+  {
+    let i = 0
+    for (const t of transcripts) {
+      transcriptIndices[t] = i;
+      i++
+      if (i % 500 === 0) await delay(0)
+    }
+  }
+
+  {
+    let i = 0
+    for (const r of replicates) {
+      replicateIndices[r] = i;
+      i++
+      if (i % 500 === 0) await delay(0)
+    }
+  }
+
+  const watchedTranscripts = args.source.key === 'local'
+    ? new Set([] as string[])
+    : new Set(await getGlobalWatchedTranscripts())
+
+
+  return {
+    config,
+    data: {
+      treatments,
+      transcripts,
+      replicates,
+      abundances,
+      transcriptCorpus: corpus,
+      transcriptAliases,
+      transcriptIndices,
+      replicateIndices,
+      svg,
+      grid: grid || getDefaultGrid(Object.keys(treatments)),
+      readme,
+    },
+    watchedTranscripts,
+  }
 })
+
+async function buildTranscriptCorpus(transcripts: string[], transcriptAliases: Record<string, string[]>) {
+  const corpus: Record<string, string> = {}
+      , corpusVals: ([alias: string, transcript: string])[] = []
+
+  let i = 0
+  for (const [ transcript, aliases ] of Object.entries(transcriptAliases)) {
+    for (const alias in [...aliases, transcript]) {
+      // FIXME: This should probably throw if an alias is not unique (i.e. can
+      // can identify two different transcripts)
+      corpus[alias] = transcript
+      corpusVals.push([alias, transcript])
+
+      i++
+      if (i % 5000 === 0) await delay(0)
+    }
+  }
+
+  i = 0
+  transcripts.forEach(transcript => {
+    if (!(transcript in corpus)) {
+      corpus[transcript] = transcript
+      corpusVals.push([transcript, transcript])
+    }
+  })
+
+  return {
+    corpus,
+    transcriptAliases: corpusVals,
+  }
+}
 
 function validateExpressionMatrix(
   treatments: ProjectTreatments,
@@ -265,4 +360,19 @@ function validateExpressionMatrix(
   }
 
   return
+}
+
+async function getGlobalWatchedTranscripts() {
+  const watchedTranscriptsKey = getGlobalWatchedGenesKey()
+
+  try {
+    const decoder = t.array(t.string)
+        , watchedFromLocalStorage = JSON.parse(localStorage[watchedTranscriptsKey] || '[]')
+        , config = await tPromise.decode(decoder, watchedFromLocalStorage)
+
+    return config
+  } catch (e) {
+    localStorage.removeItem(watchedTranscriptsKey)
+    return [] as string[]
+  }
 }
