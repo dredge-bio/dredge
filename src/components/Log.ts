@@ -9,7 +9,7 @@ import LoadingIcon from './LoadingIcon'
 import {
   DredgeState,
   useAppSelector,
-} from '../ts_types'
+} from '../types'
 
 import {
   ResourceLogEntry,

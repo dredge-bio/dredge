@@ -12,7 +12,7 @@ import Link from './Link'
 import {
   DredgeState,
   ProjectSource
-} from '../ts_types'
+} from '../types'
 
 const { useState } = React
 

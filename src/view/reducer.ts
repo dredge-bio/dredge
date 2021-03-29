@@ -8,7 +8,7 @@ import {
   DredgeConfig,
   DredgeState,
   TranscriptName
-} from '../ts_types'
+} from '../types'
 
 import { createReducer } from '@reduxjs/toolkit'
 
