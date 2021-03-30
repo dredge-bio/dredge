@@ -5,7 +5,7 @@ import * as R from 'ramda'
 import styled from 'styled-components'
 import * as React from 'react'
 
-import { useTreatments } from '../projects'
+import { useTreatments } from '../view'
 
 /*
 const h = require('react-hyperscript')
@@ -49,6 +49,7 @@ const GridArea = styled.div<GridAreaProps>`
 
 export default function View() {
   const { loading, treatmentA, treatmentB } = useTreatments(['minute_28', 'minute_53'])
+
   return h('div', {}, [
     '' + loading,
     h('br'),
