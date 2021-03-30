@@ -16,6 +16,11 @@ const store = configureStore({
     view: viewReducer,
     projects: projectsReducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+      immutableCheck: false,
+    })
 })
 
 export type AppDispatch = typeof store.dispatch
