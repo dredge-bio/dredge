@@ -184,9 +184,9 @@ export const updateSortForTreatments = createAsyncThunk<
   ThunkConfig
 >('update-sort-for-treatments', async (args, { dispatch, getState }) => {
   const { sortPath, order } = args
-      , { view } = getState()
+      , view = getState().view?.default
 
-  if (view === null) {
+  if (view == null) {
     throw new Error('Can\'t update sort for null view')
   }
 
@@ -238,10 +238,10 @@ export const updateDisplayedTranscripts = createAsyncThunk<
   },
   ThunkConfig
 >('update-displayed-transcripts', async (_, { dispatch, getState }) => {
-  const { view } = getState()
+  const view = getState().view?.default
       , project = projectForView(getState())
 
-  if (view === null) {
+  if (view == null) {
     throw new Error('Can\'t run on null view')
   }
 
@@ -414,9 +414,9 @@ const exportSavedTranscripts = createAsyncThunk<
   void,
   ThunkConfig
 >('export-saved-transcripts', async (_, { getState }) => {
-  const { view } = getState()
+  const view = getState().view?.default
 
-  if (view === null) {
+  if (view == null) {
     throw new Error('Can\'t call from null view')
   }
 

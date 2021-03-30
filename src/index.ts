@@ -13,6 +13,8 @@ import { AppDispatch, AppState } from './store'
 import theme from './theme'
 import Application from './components/Application'
 
+import View from './components/View'
+
 import {
   ProjectSource,
   DredgeState,
@@ -32,7 +34,7 @@ function loadProject(/* title: string */) {
     const project = getState().projects.global
 
     if ('config' in project) {
-      dispatch(projectActions.loadProject({
+      await dispatch(projectActions.loadProject({
         source: { key: 'global' }
       }))
       /*
@@ -75,8 +77,7 @@ const resources: Record<string, Resource> = {
     name: 'home',
     makeTitle: R.always('Loading project...'),
     onBeforeRoute: loadProject(),
-    //Component: require('./components/View'),
-    Component: () => 'hi',
+    Component: View,
     absoluteDimensions: true,
   },
 

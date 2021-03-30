@@ -268,7 +268,7 @@ export const loadProject = createAsyncThunk<
     for (const t of transcripts) {
       transcriptIndices[t] = i;
       i++
-      if (i % 500 === 0) await delay(0)
+      if (i % 100 === 0) await delay(0)
     }
   }
 
@@ -277,13 +277,17 @@ export const loadProject = createAsyncThunk<
     for (const r of replicates) {
       replicateIndices[r] = i;
       i++
-      if (i % 500 === 0) await delay(0)
+      if (i % 100 === 0) await delay(0)
     }
   }
+
+  projectStatusLog('Finished building transcript corpus')
 
   const watchedTranscripts = args.source.key === 'local'
     ? new Set([] as string[])
     : new Set(await getGlobalWatchedTranscripts())
+
+  projectStatusLog('Finished loading project')
 
 
   return {
