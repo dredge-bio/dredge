@@ -159,15 +159,17 @@ export function getPlotBins(
 }
 
 export function projectForView(state: DredgeState) {
+  const view = state.view?.default
+
   const err = new Error('No project for view')
 
-  if (state.view === null) {
+  if (view == null) {
     throw err
   }
 
-  const project = state.projects[state.view.source.key]
+  const project = state.projects[view.source.key]
 
-  if (project === null || !project.loaded) {
+  if (project === null || !project.loaded || project.failed) {
     throw err;
   }
 
