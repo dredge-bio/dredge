@@ -1,11 +1,11 @@
-
-import { createAsyncThunk, createAction } from '@reduxjs/toolkit'
 import * as tPromise from 'io-ts-promise'
 import * as t from 'io-ts'
 import { fold, isLeft, Left, Right } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { ConfigDef, ConfigKey } from './config'
 import { actions as logAction } from '../log'
+
+import { createAction, createAsyncAction } from '../actions'
 
 import * as fields from './fields'
 
@@ -14,7 +14,6 @@ import { delay, fetchResource, getDefaultGrid } from '../utils'
 import {
   DredgeConfig,
   ProjectSource,
-  ThunkConfig,
   LogStatus,
   ProjectTreatments,
   ProjectData,
@@ -38,10 +37,9 @@ const labels: Map<ConfigKey, string> = new Map([
   ['grid', 'Project grid'],
 ])
 
-export const loadProjectConfig = createAsyncThunk<
-  { config: DredgeConfig },
+export const loadProjectConfig = createAsyncAction<
   { source: ProjectSource },
-  ThunkConfig
+  { config: DredgeConfig }
 >('load-project-config', async (args, { dispatch, getState }) => {
   const { source } = args
       , project = getState().projects[source.key]
@@ -142,14 +140,13 @@ export const loadProjectConfig = createAsyncThunk<
   return { config }
 })
 
-export const loadProject = createAsyncThunk<
+export const loadProject = createAsyncAction<
+  { source: ProjectSource },
   {
     data: ProjectData,
     watchedTranscripts: Set<string>,
     config: DredgeConfig,
-  },
-  { source: ProjectSource },
-  ThunkConfig
+  }
 >('load-project', async (args, { dispatch, getState }) => {
   const project = args.source
       , projectState = getState().projects[args.source.key]

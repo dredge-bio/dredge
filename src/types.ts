@@ -3,9 +3,8 @@
 import { Action } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
 import { ORGShellResource } from 'org-shell'
-import { TypedUseSelectorHook, useSelector } from 'react-redux'
 
-import { AppDispatch, AppState } from './store'
+import { AppDispatch, AppState, useAppDispatch } from './store'
 
 export type ThunkConfig = {
   state: DredgeState

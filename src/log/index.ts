@@ -1,9 +1,10 @@
-import { createAction, createReducer, PayloadAction } from '@reduxjs/toolkit'
+import { createReducer } from '@reduxjs/toolkit'
+
+import { createAction } from '../actions'
 
 import {
   DredgeConfig,
   ProjectSource,
-  ThunkConfig,
   LogStatus,
 } from '../types'
 
