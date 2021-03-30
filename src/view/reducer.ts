@@ -13,6 +13,7 @@ import {
 import { createReducer } from '@reduxjs/toolkit'
 
 import * as viewActions from './actions'
+import { actions as projectActions } from '../projects'
 
 function blankView(source: ProjectSource): ViewState {
   return {
@@ -45,6 +46,11 @@ type MultiViewState = null | { default: ViewState }
 
 const reducer = createReducer(null as MultiViewState, builder => {
   builder
+    .addCase(projectActions.loadProject.fulfilled, (state, action) => {
+      return {
+        default: blankView(action.meta.arg.source)
+      }
+    })
     .addCase(viewActions.setPairwiseComparison.fulfilled, (state, action) => {
       if (!state) return
 
