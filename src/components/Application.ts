@@ -6,9 +6,16 @@ import * as React from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 import { Flex, Box, Button, Heading } from 'rebass'
 import * as AriaMenuButton from 'react-aria-menubutton'
-import { Navigable, Route, useNavigation, useResource } from 'org-shell'
 import { connect, useSelector } from 'react-redux'
 import * as projectJson from '../../package.json'
+
+import {
+  ResourceAware,
+  Navigable,
+  Route,
+  useNavigation,
+  useResource
+} from 'org-shell'
 
 import Log from './Log'
 
@@ -185,7 +192,7 @@ interface HeaderProps {
 
 function selector(state: DredgeState) {
   return {
-    view: state.view,
+    view: state.view?.default,
     projects: state.projects,
   }
 }
@@ -202,7 +209,7 @@ function Header(props: HeaderProps){
   if (view) {
     const project = projects[view.source.key]
 
-    if (project && project.loaded) {
+    if (project && project.loaded && !project.failed) {
       projectLabel = project.config.label
       headerText = projectLabel
       hasReadme = !!project.config.readme
@@ -383,6 +390,21 @@ interface ApplicationState {
   componentStack: string | null;
 }
 
+function Main(props: React.PropsWithChildren<{}>) {
+  const { resource } = useResource()
+      , { children } = props
+
+  if (resource) {
+    return children as unknown as React.ReactElement
+  } else {
+    return h(Box, { p: 3 }, [
+      h(Log, {
+        source: { key: 'global' },
+      })
+    ])
+  }
+}
+
 export default class Application extends React.Component<any, ApplicationState> {
   constructor(props: any) {
     super(props);
@@ -474,16 +496,8 @@ export default class Application extends React.Component<any, ApplicationState> 
           !componentStack ? null : h(Box, { as: 'pre' }, '----\n' + componentStack.trim()),
         ])
       )
-    } else if (!activeResource) {
-      children = (
-        h(Box, { p: 3 }, [
-          h(Log, {
-            source: { key: 'global' }
-          }),
-        ])
-      )
     } else {
-      children = this.props.children
+      children = React.createElement(Main, null, this.props.children)
     }
 
     return [

@@ -1,5 +1,13 @@
 "use strict";
 
+import h from 'react-hyperscript'
+import * as R from 'ramda'
+import styled from 'styled-components'
+import * as React from 'react'
+
+import { useTreatments } from '../projects'
+
+/*
 const h = require('react-hyperscript')
     , R = require('ramda')
     , React = require('react')
@@ -16,6 +24,7 @@ const h = require('react-hyperscript')
     , PValueSelector = require('./PValueSelector')
     , Log = require('./Log')
     , ProjectLoading = require('./ProjectLoading')
+  */
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -27,11 +36,29 @@ const ViewerContainer = styled.div`
   grid-template-rows: repeat(12, 1fr);
 `
 
-const GridArea = styled.div`
+interface GridAreaProps {
+  column: string,
+  row: string,
+}
+
+const GridArea = styled.div<GridAreaProps>`
   position: relative;
   grid-column: ${ props => props.column };
   grid-row: ${ props => props.row };
 `
+
+export default function View() {
+  const { loading, treatmentA, treatmentB } = useTreatments(['minute_28', 'minute_53'])
+  return h('div', {}, [
+    '' + loading,
+    h('br'),
+    treatmentA,
+    h('br'),
+    treatmentB,
+  ])
+}
+
+/*
 
 class Viewer extends React.Component {
   async componentDidMount() {
@@ -190,3 +217,4 @@ module.exports = R.pipe(
   }),
   ProjectLoading(true)
 )(Viewer)
+*/
