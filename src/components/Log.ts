@@ -6,10 +6,9 @@ import { connect } from 'react-redux'
 import styled from 'styled-components'
 import LoadingIcon from './LoadingIcon'
 
-import {
-  DredgeState,
-  useAppSelector,
-} from '../types'
+import { DredgeState } from '../types'
+
+import { useAppSelector } from '../hooks'
 
 import {
   ResourceLogEntry,

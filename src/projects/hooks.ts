@@ -2,11 +2,14 @@ import * as React from 'react'
 import * as d3 from 'd3'
 import * as R from 'ramda'
 import {
-  useAppSelector,
   ProjectSource,
   Project,
   LoadedProject,
 } from '../types'
+
+import {
+  useAppSelector,
+} from '../hooks'
 
 export function useProject(source: ProjectSource, requireLoaded: false): Project;
 export function useProject(source: ProjectSource, requireLoaded: true): LoadedProject;
