@@ -6,6 +6,7 @@ import { ORGShell, Route } from 'org-shell'
 import { Provider } from 'react-redux'
 import { render } from 'react-dom'
 import { ThemeProvider } from 'styled-components'
+import { enableMapSet } from 'immer'
 
 import { actions as projectActions } from './projects'
 import createStore from './store'
@@ -20,6 +21,8 @@ import {
   DredgeState,
   Resource
 } from './types'
+
+enableMapSet()
 
 function loadProject(/* title: string */) {
   return async (
