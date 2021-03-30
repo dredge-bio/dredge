@@ -4,6 +4,9 @@ import * as R from 'ramda'
 import * as d3 from 'd3'
 import { saveAs } from 'file-saver'
 import { Action } from 'redux'
+import { delay } from '../utils'
+
+import { getTranscriptLookup, getAbundanceLookup } from '../projects'
 
 import { createAction, createAsyncAction } from '../actions'
 
@@ -19,14 +22,6 @@ import {
 
 
 import { projectForView } from '../utils'
-
-function delay(time: number): Promise<void> {
-  if (time === 0 && window.setTimeout) {
-    return new Promise(resolve => setImmediate(resolve))
-  } else {
-    return new Promise(resolve => setTimeout(resolve, time))
-  }
-}
 
 
 // Load the table produced by the edgeR function `exactTest`:
@@ -47,7 +42,7 @@ export const setPairwiseComparison = createAsyncAction<
   const cacheKey = [treatmentAKey, treatmentBKey].toString()
       , cached = project.pairwiseComparisonCache[cacheKey]
 
-  if (cached !== null) {
+  if (cached != null) {
     await delay(0);
 
     return {
@@ -56,8 +51,8 @@ export const setPairwiseComparison = createAsyncAction<
     }
   }
 
-  const treatmentA = project.treatments[treatmentAKey]
-      , treatmentB = project.treatments[treatmentBKey]
+  const treatmentA = project.data.treatments.get(treatmentAKey)
+      , treatmentB = project.data.treatments.get(treatmentBKey)
 
   if (!treatmentA) {
     throw new Error(`No such treatment: ${treatmentAKey}`)
@@ -100,6 +95,9 @@ export const setPairwiseComparison = createAsyncAction<
 
   let minPValue = 1
 
+  const getCanonicalTranscriptLabel = getTranscriptLookup(project)
+      , abundancesForTreatmentTranscript = getAbundanceLookup(project)
+
   const pairwiseMap: Map<TranscriptName, DifferentialExpression> = new Map(text
     .trim()
     .split('\n')
@@ -112,7 +110,7 @@ export const setPairwiseComparison = createAsyncAction<
         minPValue = pValue
       }
 
-      const name = project.getCanonicalTranscriptLabel(id)
+      const name = getCanonicalTranscriptLabel(id)
 
       const [
         treatmentA_AbundanceMean=null,
@@ -120,10 +118,10 @@ export const setPairwiseComparison = createAsyncAction<
         treatmentB_AbundanceMean=null,
         treatmentB_AbundanceMedian=null,
       ] = R.chain(
-        abundances => abundances === null
+        abundances => abundances.length === 0
           ? [null, null]
           : [d3.mean(abundances), d3.median(abundances)],
-        [project.abundancesForTreatmentTranscript(treatmentAKey, name), project.abundancesForTreatmentTranscript(treatmentBKey, name)]
+        [abundancesForTreatmentTranscript(treatmentAKey, name), abundancesForTreatmentTranscript(treatmentBKey, name)]
       )
 
       return [name, {
@@ -143,6 +141,8 @@ export const setPairwiseComparison = createAsyncAction<
     fcSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
     ataSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
   })
+
+  console.log(pairwiseData)
 
   return {
     pairwiseData,

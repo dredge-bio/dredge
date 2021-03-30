@@ -4,6 +4,7 @@ import h from 'react-hyperscript'
 import * as R from 'ramda'
 import styled from 'styled-components'
 import * as React from 'react'
+import { useOptions } from 'org-shell'
 
 import { useTreatments } from '../view'
 
@@ -39,6 +40,7 @@ const ViewerContainer = styled.div`
 interface GridAreaProps {
   column: string,
   row: string,
+  ['data-area']: string,
 }
 
 const GridArea = styled.div<GridAreaProps>`
@@ -48,6 +50,10 @@ const GridArea = styled.div<GridAreaProps>`
 `
 
 export default function View() {
+  const [ opts, updateOpts ] = useOptions()
+
+  let pairwiseComparison = null
+
   const { loading, treatmentA, treatmentB } = useTreatments(['minute_28', 'minute_53'])
 
   return h('div', {}, [
