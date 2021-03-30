@@ -215,5 +215,3 @@ export type Project =
   LoadedProject
 
 export type DredgeState = AppState
-
-export const useAppSelector: TypedUseSelectorHook<DredgeState> = useSelector
