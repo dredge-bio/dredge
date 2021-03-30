@@ -4,8 +4,8 @@ import * as R from 'ramda'
 import * as d3 from 'd3'
 import { saveAs } from 'file-saver'
 import { Action } from 'redux'
-import { ThunkAction } from 'redux-thunk'
-import { createAsyncThunk, createAction } from '@reduxjs/toolkit'
+
+import { createAction, createAsyncAction } from '../actions'
 
 import {
   TreatmentName,
@@ -15,7 +15,6 @@ import {
   SortPath,
   SortOrder,
   DredgeState,
-  ThunkConfig,
 } from '../types'
 
 
@@ -32,16 +31,15 @@ function delay(time: number): Promise<void> {
 
 // Load the table produced by the edgeR function `exactTest`:
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
-export const setPairwiseComparison = createAsyncThunk<
-  {
-    pairwiseData: PairwiseComparison,
-    resort: boolean,
-  },
+export const setPairwiseComparison = createAsyncAction<
   {
     treatmentAKey: string,
     treatmentBKey: string,
   },
-  ThunkConfig
+  {
+    pairwiseData: PairwiseComparison,
+    resort: boolean,
+  }
 >('set-pairwise-comparison', async (arg, { dispatch, getState }) => {
   const { treatmentAKey, treatmentBKey } = arg
     , project = projectForView(getState())
@@ -153,13 +151,12 @@ export const setPairwiseComparison = createAsyncThunk<
 })
 
 
-export const getDefaultPairwiseComparison = createAsyncThunk<
+export const getDefaultPairwiseComparison = createAsyncAction<
+  void,
   {
     treatmentA: TreatmentName;
     treatmentB: TreatmentName;
-  },
-  {},
-  ThunkConfig
+  }
 >('get-default-pairwise-comparison', async (_, { getState }) => {
   const project = projectForView(getState())
       , { treatments } = project
@@ -172,16 +169,15 @@ export const getDefaultPairwiseComparison = createAsyncThunk<
 })
 
 
-export const updateSortForTreatments = createAsyncThunk<
-  {
-    sortedTranscripts: Array<DifferentialExpression>,
-    resort: boolean,
-  },
+export const updateSortForTreatments = createAsyncAction<
   {
     sortPath: SortPath | void,
     order: SortOrder | void
   },
-  ThunkConfig
+  {
+    sortedTranscripts: Array<DifferentialExpression>,
+    resort: boolean,
+  }
 >('update-sort-for-treatments', async (args, { dispatch, getState }) => {
   const { sortPath, order } = args
       , view = getState().view?.default
@@ -228,15 +224,14 @@ function withinBounds(min: number, max: number, value: number | null) {
   return value >= min && value <= max
 }
 
-export const updateDisplayedTranscripts = createAsyncThunk<
-  {
-    displayedTranscripts: Array<DifferentialExpression>
-  },
+export const updateDisplayedTranscripts = createAsyncAction<
   {
     sortPath: SortPath | void,
     order: SortOrder | void,
   },
-  ThunkConfig
+  {
+    displayedTranscripts: Array<DifferentialExpression>
+  }
 >('update-displayed-transcripts', async (_, { dispatch, getState }) => {
   const view = getState().view?.default
       , project = projectForView(getState())
@@ -332,10 +327,9 @@ function getGlobalWatchedGenesKey() {
   return window.location.pathname + '-watched'
 }
 
-export const setSavedTranscripts = createAsyncThunk<
-  { resort: boolean },
+export const setSavedTranscripts = createAsyncAction<
   { transcriptNames: Array<TranscriptName> },
-  ThunkConfig
+  { resort: boolean }
 >('set-saved-transcripts', async (arg, { getState }) => {
   const { transcriptNames } = arg
 
@@ -355,15 +349,14 @@ type ImportedTranscript = [
   canonicalName: string,
 ]
 
-export const importSavedTranscripts = createAsyncThunk<
-  {
-    imported: Array<ImportedTranscript>,
-    skipped: Array<string>,
-  },
+export const importSavedTranscripts = createAsyncAction<
   {
     text: string
   },
-  ThunkConfig
+  {
+    imported: Array<ImportedTranscript>,
+    skipped: Array<string>,
+  }
 >('import-saved-transcripts', async (arg, { getState }) => {
   const { text } = arg
       , { view } = getState()
@@ -409,10 +402,9 @@ export const importSavedTranscripts = createAsyncThunk<
 })
 
 
-const exportSavedTranscripts = createAsyncThunk<
+const exportSavedTranscripts = createAsyncAction<
   void,
-  void,
-  ThunkConfig
+  void
 >('export-saved-transcripts', async (_, { getState }) => {
   const view = getState().view?.default
 
