@@ -5,8 +5,9 @@ import * as R from 'ramda'
 import styled from 'styled-components'
 import * as React from 'react'
 import { useOptions } from 'org-shell'
-
 import { useTreatments } from '../view'
+
+import MAPlot from './MAPlot'
 
 /*
 const h = require('react-hyperscript')
@@ -56,13 +57,13 @@ export default function View() {
 
   const { loading, treatmentA, treatmentB } = useTreatments(['minute_28', 'minute_53'])
 
-  return h('div', {}, [
-    '' + loading,
-    h('br'),
-    treatmentA,
-    h('br'),
-    treatmentB,
-  ])
+  return (
+    h(ViewerContainer, [
+      h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
+        h(MAPlot),
+      ),
+    ])
+  )
 }
 
 /*
