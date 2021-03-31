@@ -139,10 +139,8 @@ export const setPairwiseComparison = createAsyncAction<
   const pairwiseData: PairwiseComparison = Object.assign(pairwiseMap, {
     minPValue,
     fcSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
-    ataSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
+    ataSorted: R.sortBy(x => x.logATA || 0, Array.from(pairwiseMap.values())),
   })
-
-  console.log(pairwiseData)
 
   return {
     pairwiseData,
