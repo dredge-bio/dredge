@@ -1,135 +1,36 @@
-"use strict";
+import h from 'react-hyperscript'
+import * as R from 'ramda'
+import * as d3 from 'd3'
+import * as React from 'react'
+import { connect } from 'react-redux'
+import throttle from 'throttleit'
+import styled from 'styled-components'
 
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , d3 = require('d3')
-    , React = require('react')
-    , { connect  } = require('react-redux')
-    , throttle = require('throttleit')
-    , styled = require('styled-components').default
-    , { getPlotBins, projectForView } = require('../../utils')
-    , onResize = require('../util/Sized')
-    , { Flex, Button } = require('rebass')
-    , { MagnifyingGlass, Target, Reset } = require('../Icons')
-    , Action = require('../../actions')
+import { useOptions, ORGShellOptionsProps } from 'org-shell'
 
-const PlotWrapper = styled.div`
-.button-group {
-  display: flex;
-}
+import { Flex, Button } from 'rebass'
 
-.button-group button {
-  border-radius: 0;
-}
+import { getPlotBins, projectForView } from '../../utils'
+import onResize from '../util/Sized'
+import { MagnifyingGlass, Target, Reset } from '../Icons'
+import { actions } from '../../view'
+import padding from './padding'
 
-.button-group button:last-of-type {
-  border-radius: 0 4px 4px 0;
-}
+import { useAppDispatch, useAppSelector } from '../../hooks'
 
-.button-group button:first-of-type {
-  border-radius: 4px 0 0 4px;
-}
-
-.button-group button + button {
-  margin-left: -1px;
-}
-
-[data-active] {
-  position: relative;
-}
-
-[data-active]:focus {
-  z-index: 1;
-}
-
-.bin-selected,
-.bin-hovered {
-  stroke: red;
-  stroke-width: 2px;
-}
-
-[data-active="true"]::after {
-  position: absolute;
-  content: " ";
-  left: 4px;
-  right: 4px;
-  height: 2px;
-  background-color: hsl(205,35%,45%);
-  bottom: -8px;
-  border: 1px solid #eee;
-  box-shadow: 0 0 0 1px #eee;
-}
-
-.help-text {
-  position: absolute;
-  left: ${props => props.padding.l + 16 }px;
-  right: ${props => props.padding.r + 16 }px;
-  top: ${props => props.padding.t + 8 }px;
-  padding: .66rem;
-  background-color: hsl(205,35%,85%);
-  border: 1px solid hsl(205,35%,45%);
-  text-align: center;
-}
-`
-
-const padding = {
-  l: 60,
-  r: 20,
-  t: 60,
-  b: 60,
-}
-
-const TreatmentLabels = styled.div`
-position: absolute;
-left: ${padding.l - 26}px;
-right: 172px;
-white-space: nowrap;
-padding-bottom: 9px;
-padding-left: 26px;
-
-&:hover {
-  z-index: 2;
-  background-color: hsla(45,31%,93%,1);
-  padding-right: 1em;
-  overflow: unset;
-  right: unset;
-}
-
-> div {
-  font-family: SourceSansPro;
-  font-weight: bold;
-  font-size: 20px;
-
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-> div:hover {
-  width: unset;
-  overflow:  unset;
-  text-overflow:  unset;
-}
-
-> span {
-  position: absolute;
-  left: 0;
-  top: 28px;
-  font-family: SourceSansPro;
-  font-weight: bold;
-  font-size: 16px;
-  color: #888;
-}
-`
+import {
+  PairwiseComparison
+} from '../../types'
 
 const GRID_SQUARE_UNIT = 8
 
-const TRANSCRIPT_BIN_MULTIPLIERS = {
-  1: .35,
-  2: .5,
-  3: .65,
-  4: .8,
-}
+const TRANSCRIPT_BIN_MULTIPLIERS = [
+  0,
+  .35,
+  .5,
+  .65,
+  .8,
+]
 
 const help = {
   zoom: 'Use mouse/touchscreen to zoom and pan',
@@ -138,91 +39,124 @@ const help = {
   reset: 'Reset position of the plot',
 }
 
-class Plot extends React.Component {
-  constructor() {
-    super();
+type PlotProps = {
+  loading: boolean,
+  width: number;
+  height: number;
+  abundanceLimits: [[number, number], [number, number]];
+  pairwiseData: PairwiseComparison | null;
+  pValueThreshold: number;
+
+  hoveredTranscript: string | null;
+  savedTranscripts: Set<string>;
+
+  // FIXME
+  brushedArea: any;
+
+  dispatch: ReturnType<typeof useAppDispatch>;
+} & ORGShellOptionsProps
+
+type PlotState = {
+  width: number;
+  height: number;
+
+  plotWidth: number;
+  plotHeight: number;
+
+  xScale: d3.ScaleLinear<number, number> | null;
+  yScale: d3.ScaleLinear<number, number> | null;
+  dragAction: 'drag' | 'zoom',
+  showHelp: 'drag' | 'zoom' | 'reset' | null,
+  scaleTransform: d3.ZoomTransform,
+}
+
+function getDimensions(props: PlotProps, state?: PlotState) {
+  const plotHeight = props.height! - padding.t - padding.b
+      , plotWidth = props.width! - padding.l - padding.r
+
+  const [ xDomain, yDomain ] = props.abundanceLimits
+
+  const xScale = d3.scaleLinear()
+    .domain(xDomain)
+    .range([0, plotWidth])
+
+  const yScale = d3.scaleLinear()
+      .domain(yDomain)
+      .range([plotHeight, 0])
+
+  const scaleTransform = state
+    ? state.scaleTransform
+    : d3.zoomIdentity
+
+  return {
+    height: props.height,
+    width: props.width,
+    plotHeight,
+    plotWidth,
+    xScale: scaleTransform.rescaleX(xScale),
+    yScale: scaleTransform.rescaleY(yScale),
+    scaleTransform,
+  }
+}
+
+export default class Plot extends React.Component<PlotProps, PlotState> {
+  brush?: d3.BrushBehavior<unknown>;
+  clearBrush?: () => void;
+  setBrushCoords?: (coords: [number, number, number, number] | null) => void;
+
+  constructor(props: PlotProps) {
+    super(props);
 
     this.state = {
-      xScale: null,
-      yScale: null,
       dragAction: 'drag',
       showHelp: null,
-      transform: d3.zoomIdentity,
+      ...getDimensions(props)
     }
+
     this.drawAxes = this.drawAxes.bind(this)
   }
 
-  static getDerivedStateFromProps(props, state) {
+  static getDerivedStateFromProps(props: PlotProps, state: PlotState) {
     const update = (
-      props.width != null &&
-      props.height != null &&
-      props.width !== state.width &&
+      props.width !== state.width ||
       props.height !== state.height
     )
 
     if (update) {
-      const plotHeight = props.height - padding.t - padding.b
-          , plotWidth = props.width - padding.l - padding.r
-
-      const [ xDomain, yDomain ] = props.abundanceLimits
-
-      const xScale = d3.scaleLinear()
-        .domain(xDomain)
-        .range([0, plotWidth])
-
-      const yScale = d3.scaleLinear()
-          .domain(yDomain)
-          .range([plotHeight, 0])
-
-      return {
-        height: props.height,
-        width: props.width,
-        plotHeight,
-        plotWidth,
-        xScale: state.transform.rescaleX(xScale),
-        yScale: state.transform.rescaleY(yScale),
-        _xScale: xScale,
-        _yScale: yScale,
-      }
+      return getDimensions(props, state)
     }
 
     return null
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    const propChanged = lens =>
-      R.view(lens, this.props) !== R.view(lens, prevProps)
+  componentDidUpdate(prevProps: PlotProps, prevState: PlotState) {
+    const propChanged = (field: keyof PlotProps) =>
+      prevProps[field] !== this.props[field]
 
-    const stateChanged = lens =>
-      R.view(lens, this.state) !== R.view(lens, prevState)
-
-    const hasDimensions = (
-      this.props.height != null && this.props.width != null
-    )
-
-    if (!hasDimensions) return
+    const stateChanged = (field: keyof PlotState) =>
+      prevState[field] !== this.state[field]
 
     const dimensionsChanged = (
-      propChanged(R.lensProp('height')) ||
-      propChanged(R.lensProp('width'))
+      propChanged('height') ||
+      propChanged('width')
     )
 
     const scalesChanged = (
-      stateChanged(R.lensProp('xScale')) ||
-      stateChanged(R.lensProp('yScale'))
+      stateChanged('xScale') ||
+      stateChanged('yScale')
     )
 
     const redrawBins = (
       scalesChanged ||
       dimensionsChanged ||
-      propChanged(R.lensProp('pairwiseData')) ||
-      propChanged(R.lensProp('pValueThreshold'))
+      propChanged('pairwiseData') ||
+      propChanged('pValueThreshold')
     )
 
     const resetInteraction = (
       !this.clearBrush ||
       dimensionsChanged ||
-      stateChanged(R.lensProp('dragAction'))
+      stateChanged('dragAction')
     )
 
     const redrawAxes = (
@@ -232,14 +166,14 @@ class Plot extends React.Component {
 
     const mustSetBrush = (
       this.state.dragAction === 'drag' &&
-      propChanged(R.lensProp('brushedArea'))
+      propChanged('brushedArea')
     )
 
     if (resetInteraction) {
       this.initInteractionLayer()
     }
 
-    if (mustSetBrush) {
+    if (mustSetBrush && this.setBrushCoords) {
       this.setBrushCoords(this.props.brushedArea)
     }
 
@@ -253,34 +187,31 @@ class Plot extends React.Component {
       this.drawAxes()
     }
 
-    if (propChanged(R.lensProp('hoveredTranscript'))) {
+    if (propChanged('hoveredTranscript')) {
       this.updateHoveredTranscript()
     }
 
-    if (propChanged(R.lensProp('savedTranscripts'))) {
+    if (propChanged('savedTranscripts')) {
       this.drawSavedTranscripts()
     }
-
   }
 
   initInteractionLayer() {
     const { updateOpts, dispatch } = this.props
         , { dragAction } = this.state
 
-    if (!this.i) {
-      this.i = 0
-    }
-
     d3.select('.interaction')
       .selectAll('*').remove()
 
-    dispatch(Action.SetHoveredBinTranscripts(null))
-    dispatch(Action.SetSelectedBinTranscripts(null))
+    dispatch(actions.setHoveredBinTranscripts(null))
+    dispatch(actions.setSelectedBinTranscripts(null))
 
     if (dragAction === 'drag') {
       this.initBrush()
     } else if (dragAction === 'zoom') {
-      this.clearBrush()
+      if (this.clearBrush) {
+        this.clearBrush()
+      }
       this.initZoom()
       updateOpts(R.omit(['brushed']))
     }
@@ -293,19 +224,17 @@ class Plot extends React.Component {
       .append('rect')
       .attr('x', 0)
       .attr('y', 0)
-      .attr('width', plotWidth)
-      .attr('height', plotHeight)
+      .attr('width', plotWidth!)
+      .attr('height', plotHeight!)
       .attr('fill', 'blue')
       .attr('opacity', 0)
 
-    const zoom = d3.zoom()
-      .on('zoom', () => {
-        const transform = d3.event.transform
+    const zoom = d3.zoom<SVGRectElement, unknown>()
+      .on('zoom', (event: d3.D3ZoomEvent<SVGElement, any>) => {
+        const { transform } = event
 
         this.setState({
-          transform,
-          xScale: transform.rescaleX(xScale),
-          yScale: transform.rescaleY(yScale),
+          scaleTransform: transform,
         })
       })
 
@@ -316,7 +245,8 @@ class Plot extends React.Component {
     const { updateOpts } = this.props
         , { xScale, yScale, dragAction } = this.state
 
-    if (!xScale) return
+    if (!xScale || !yScale) return
+
     const [ x0, x1 ] = xScale.domain().map(xScale)
     const [ y0, y1 ] = yScale.domain().map(yScale)
 
@@ -324,14 +254,15 @@ class Plot extends React.Component {
       const cpmBounds = extent.map(R.head).map(xScale.invert)
           , fcBounds = extent.map(R.last).map(yScale.invert)
 
-      const coords = [
+      const coords = <[number, number, number, number]> [
         cpmBounds[0],
         fcBounds[0],
         cpmBounds[1],
         fcBounds[1],
       ].map(n => n.toFixed(3)).map(parseFloat)
 
-      this.props.dispatch(Action.SetBrushedArea(coords))
+
+      this.props.dispatch(actions.setBrushedArea(coords))
     }, 120)
 
     const brush = this.brush = d3.brush()
@@ -466,6 +397,7 @@ class Plot extends React.Component {
     })
   }
 
+  /*
   drawAxes() {
     const { xScale, yScale } = this.state
 
@@ -503,7 +435,9 @@ class Plot extends React.Component {
         .attr('stroke-width', 1)
     })
   }
+  */
 
+ /*
   drawBins() {
     const { xScale, yScale } = this.state
         , { loading, pairwiseData, pValueThreshold } = this.props
@@ -545,6 +479,7 @@ class Plot extends React.Component {
 
     bins.forEach(bin => {
       if (!bin.transcripts.length) return
+
       bin.multiplier = TRANSCRIPT_BIN_MULTIPLIERS[bin.transcripts.length] || 1
       if (bin.transcripts.length < 5) {
         bin.color = colorScale(5)
@@ -582,6 +517,7 @@ class Plot extends React.Component {
       .attr('height', yScale.range()[0])
 
   }
+      */
 
   drawSavedTranscripts() {
     const { xScale, yScale } = this.state
@@ -672,14 +608,7 @@ class Plot extends React.Component {
     }
 
     return (
-      h(PlotWrapper, {
-        padding,
-        style: {
-          height: '100%',
-          width: '100%',
-          position: 'relative',
-        },
-      }, [
+      h('div', [
         showHelp == null ? null : (
           h('p.help-text', help[showHelp])
         ),
@@ -764,8 +693,8 @@ class Plot extends React.Component {
                 updateOpts(R.omit(['brushed']))
 
                 this.setState({
-                  xScale: _xScale,
-                  yScale: _yScale,
+                  zoomedXScale: null,
+                  zoomedYScale: null,
                   transform: d3.zoomIdentity,
                 }, () => {
                   this.initInteractionLayer()
@@ -846,47 +775,3 @@ class Plot extends React.Component {
     )
   }
 }
-
-module.exports = R.pipe(
-  connect(state => {
-    const project = projectForView(state) || {}
-
-    let treatmentALabel
-      , treatmentBLabel
-      , treatmentA
-      , treatmentB
-
-    {
-      const { view } = state
-
-      if (view) {
-        const { comparedTreatments=[] } = view
-
-        ;[ treatmentA, treatmentB ] = comparedTreatments
-
-        ;[ treatmentALabel, treatmentBLabel ] = comparedTreatments
-          .map(t => R.path(['treatments', t, 'label'], project) || t)
-
-      }
-    }
-
-    return Object.assign({
-      abundanceLimits: R.path(['config', 'abundanceLimits'], project),
-      treatmentA,
-      treatmentB,
-      treatmentALabel,
-      treatmentBLabel,
-    }, R.pick([
-      'loading',
-      'brushedArea',
-      'savedTranscripts',
-      'pairwiseData',
-      'pValueThreshold',
-      'hoveredTranscript',
-    ], state.view))
-  }),
-  onResize(el => ({
-    width: el.clientWidth,
-    height: el.clientHeight,
-  }))
-)(Plot)
