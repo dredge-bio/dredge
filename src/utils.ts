@@ -102,7 +102,13 @@ function binIndexByTranscript(
   const binByTranscript: Map<DifferentialExpression, number> = new Map()
 
   const leftOut = R.takeWhile(
-    d => d[field] < bins[0][0],
+    de => {
+      const val = de[field]
+
+      if (val === null) return false
+
+      return val < bins[0][0]
+    },
     sortedTranscripts.slice(0))
 
   let idx = leftOut.length
@@ -110,6 +116,9 @@ function binIndexByTranscript(
   bins.forEach(([ min, max ], i) => {
     const inBin = (transcript: DifferentialExpression) => {
       const val = transcript[field]
+
+      if (val === null) return false
+
       return val >= min && val <= max
     }
 
