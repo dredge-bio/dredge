@@ -54,6 +54,7 @@
     "@types/react-redux": "^7.1.16",
     "@types/rebass": "^4.0.8",
     "@types/styled-components": "^5.1.7",
+    "@types/throttleit": "^1.0.0",
     "argparse": "^2.0.1",
     "esbuild": "^0.8.46"
   }
