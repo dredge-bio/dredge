@@ -1,13 +1,38 @@
-"use strict";
+import h from 'react-hyperscript'
+import * as React from 'react'
 
-const h = require('react-hyperscript')
+type IconProps = React.PropsWithChildren<{
+  stroke?: string;
+  strokeWidth?: number;
+  height?: number;
+  width?: number;
+  children?: React.ReactNode;
+}>
 
-function MagnifyingGlass({
-  stroke='black',
-  strokeWidth=2,
-  height=16,
-  width=16,
-}) {
+function withDefaults(props: IconProps): Required<Omit<IconProps, 'children'>> {
+  const {
+    stroke='black',
+    strokeWidth=2,
+    height=16,
+    width=16,
+  } = props
+
+  return {
+    stroke,
+    strokeWidth,
+    height,
+    width
+  }
+}
+
+export function MagnifyingGlass(props: IconProps) {
+  const {
+    stroke,
+    strokeWidth,
+    height,
+    width,
+  } = withDefaults(props)
+
   return (
     h('svg', {
       width,
@@ -32,12 +57,14 @@ function MagnifyingGlass({
   )
 }
 
-function Target ({
-  stroke='black',
-  strokeWidth=2,
-  height=16,
-  width=16,
-}) {
+export function Target (props: IconProps) {
+  const {
+    stroke,
+    strokeWidth,
+    height,
+    width,
+  } = withDefaults(props)
+
   return (
     h('svg', {
       width,
@@ -79,12 +106,14 @@ function Target ({
   )
 }
 
-function Pointer({
-  stroke='black',
-  strokeWidth=2,
-  height=16,
-  width=16,
-}) {
+export function Pointer (props: IconProps) {
+  const {
+    stroke,
+    strokeWidth,
+    height,
+    width,
+  } = withDefaults(props)
+
   return (
     h('svg', {
       width,
@@ -111,12 +140,14 @@ function Pointer({
   )
 }
 
-function Reset({
-  stroke='black',
-  strokeWidth=2,
-  height=16,
-  width=16,
-}) {
+export function Reset (props: IconProps) {
+  const {
+    stroke,
+    strokeWidth,
+    height,
+    width,
+  } = withDefaults(props)
+
   return (
     h('svg', {
       width,
@@ -131,11 +162,4 @@ function Reset({
       }),
     ])
   )
-}
-
-module.exports = {
-  Pointer,
-  MagnifyingGlass,
-  Target,
-  Reset,
 }
