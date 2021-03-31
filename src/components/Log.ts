@@ -187,9 +187,6 @@ export default function Log() {
     label = 'Loading project...'
   }
 
-  logArr.map(({ project, log }) => {
-  })
-
   return (
     h('div', [
       h('h2', label),
