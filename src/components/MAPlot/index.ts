@@ -1,19 +1,8 @@
-"use strict";
-
 import h from 'react-hyperscript'
-import * as R from 'ramda'
-import * as React from 'react'
 import LoadingIndicator from './Loading'
 import PlotWrapper from './Outer'
 
 import { useAppSelector, useSized } from '../../hooks'
-
-const { useState } = React
-
-type RectState = {
-  height: number | null;
-  width: number | null;
-}
 
 export default function PlotContainer() {
   const [ ref, rect ] = useSized()

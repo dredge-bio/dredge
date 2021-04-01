@@ -1,7 +1,4 @@
-"use strict";
-
 import * as R from 'ramda'
-import { applyMiddleware, createStore } from 'redux'
 import { useDispatch } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 
@@ -20,7 +17,7 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: false,
-    })
+    }),
 })
 
 export type AppDispatch = typeof store.dispatch
@@ -28,11 +25,18 @@ export const useAppDispatch = () => useDispatch<AppDispatch>()
 
 export type AppState = ReturnType<typeof store.getState>
 
-
 export default function _createStore() {
-  let lastTriggeredSort = []
+  return store
+}
+
+
+/*
+export default function _createStore() {
 
   return store
+
+  let lastTriggeredSort = []
+
   return configureStore({
     reducer: {
       log: logReducer,
@@ -121,6 +125,6 @@ export default function _createStore() {
         return res
       }
     )
-    */
   })
 }
+*/

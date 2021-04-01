@@ -1,8 +1,8 @@
 import * as t from 'io-ts'
 import * as d3 from 'd3'
-import { fold, isLeft, Left, Right } from 'fp-ts/Either'
+import { fold } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-import { withValidate, fromNullable } from 'io-ts-types'
+import { withValidate } from 'io-ts-types'
 
 import { fetchResource, delay } from '../utils'
 import * as types from '../types'
@@ -10,8 +10,6 @@ import * as types from '../types'
 import { PathReporter } from 'io-ts/PathReporter'
 
 import MarkdownIt from 'markdown-it'
-
-async function asyncIdentity<T>(x: T) { return x }
 
 
 class ProjectField<T, V=T> {
@@ -110,7 +108,7 @@ export const treatments = new ProjectField<
       label: t.string,
       replicates: t.array(t.string),
     })
-  )
+  ),
 })
 
 
@@ -130,11 +128,9 @@ export const abundanceMeasures = new ProjectField<
         , transcripts: Array<string> = []
         , abundances: number[][] = []
 
-    const numReplicates = replicates.length
-
     let i = 0
 
-    for (let row of abundanceRows) {
+    for (const row of abundanceRows) {
       const entries = row.split('\t')
           , transcript = entries.shift()
 
@@ -178,7 +174,7 @@ export const abundanceMeasures = new ProjectField<
     }
 
     return t.success([ replicateRow, abundanceRows] )
-  })
+  }),
 })
 
 function trim(x: string) {
@@ -213,7 +209,7 @@ export const aliases = new ProjectField<
     }
 
     return aliases
-  }
+  },
 })
 
 export const readme = new ProjectField<
@@ -229,7 +225,7 @@ export const readme = new ProjectField<
   async processValidated(str) {
     const md = new MarkdownIt()
     return md.render(str)
-  }
+  },
 })
 
 function cleanSVGString(svgString: string, treatments: types.ProjectTreatments) {
@@ -333,7 +329,7 @@ export const svg = new ProjectField<
     if (!treatments) throw new Error('Can\'t parse SVG without treatments')
 
     return cleanSVGString(str, treatments)
-  }
+  },
 })
 
 export const grid = new ProjectField<
@@ -373,6 +369,6 @@ export const grid = new ProjectField<
 
       return treatment
     }))
-  }
+  },
 
 })

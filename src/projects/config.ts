@@ -1,14 +1,7 @@
 import * as t from 'io-ts'
 import { withValidate, fromNullable } from 'io-ts-types'
-import * as tPromise from 'io-ts-promise'
 import { fold, either } from 'fp-ts/Either'
-import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-
-type AbundanceLimit = [
-  [number, number],
-  [number, number]
-]
 
 const URLString = withValidate(t.string, (input, context) => {
   if (typeof input === 'string') {
@@ -46,7 +39,7 @@ const AbundanceLimits = withValidate(coordTuple, (input, context) => {
   return pipe(
     coordTuple.validate(input, context),
     fold(
-      errors => {
+      () => {
         return t.failure(input, context, 'Value must be a matrix of two two-number arrays')
       },
       value => {
@@ -74,7 +67,7 @@ const TranscriptHyperlink = withValidate(transcriptHyperlink, (input, context) =
   return pipe(
     transcriptHyperlink.validate(input, context),
     fold(
-      errors => {
+      () => {
         return t.failure(input, context, 'Value must be an array of objects with keys "label" and "url"')
       },
       value => {
@@ -88,22 +81,6 @@ const TranscriptHyperlink = withValidate(transcriptHyperlink, (input, context) =
       })
     )
 })
-
-const type = {
-  label: t.string,
-  abundanceMeasures: URLString,
-  pairwiseName: PairwiseName,
-  treatments: URLString,
-  abundanceLimits: AbundanceLimits,
-
-  // Optional
-  transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
-  heatmapMinimumMaximum: fromNullable(t.number, 0),
-  readme: fromNullable(URLString, ''),
-  transcriptAliases: fromNullable(URLString, ''),
-  diagram: fromNullable(URLString, ''),
-  grid: fromNullable(URLString, ''),
-}
 
 export const ConfigDef = t.type({
   label: t.string,

@@ -17,7 +17,7 @@ type TreatmentState =
     loading: true;
     pairwiseData: null,
     error: null,
-  } | 
+  } |
   {
     loading: false;
     pairwiseData: null,
@@ -57,7 +57,7 @@ export function useTreatments(compared: ComparedTreatments) {
           setState({
             loading: false,
             error: null,
-            pairwiseData: result.pairwiseData
+            pairwiseData: result.pairwiseData,
           })
         }
       } catch (e) {

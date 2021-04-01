@@ -1,10 +1,7 @@
 "use strict";
 
 import h from 'react-hyperscript'
-import * as R from 'ramda'
 import styled from 'styled-components'
-import * as React from 'react'
-import { useOptions } from 'org-shell'
 import { useTreatments } from '../view'
 
 import MAPlot from './MAPlot'
@@ -51,16 +48,12 @@ const GridArea = styled.div<GridAreaProps>`
 `
 
 export default function View() {
-  const [ opts, updateOpts ] = useOptions()
-
-  let pairwiseComparison = null
-
-  const { loading, treatmentA, treatmentB } = useTreatments(['minute_28', 'minute_53'])
+  useTreatments(['minute_28', 'minute_53'])
 
   return (
     h(ViewerContainer, [
       h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
-        h(MAPlot),
+        h(MAPlot)
       ),
     ])
   )

@@ -6,5 +6,5 @@ import { useTreatments } from './hooks'
 export {
   actions,
   reducer,
-  useTreatments,
+  useTreatments
 }

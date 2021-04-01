@@ -5,8 +5,6 @@ import * as R from 'ramda';
 import {
   ProjectSource,
   ViewState,
-  DredgeConfig,
-  DredgeState,
   TranscriptName
 } from '../types'
 
@@ -48,7 +46,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
   builder
     .addCase(projectActions.loadProject.fulfilled, (state, action) => {
       return {
-        default: blankView(action.meta.arg.source)
+        default: blankView(action.meta.arg.source),
       }
     })
     .addCase(viewActions.setPairwiseComparison.fulfilled, (state, action) => {
@@ -65,13 +63,12 @@ const reducer = createReducer(null as MultiViewState, builder => {
 
       const { pairwiseData } = action.payload
           , { treatmentAKey, treatmentBKey } = action.meta.arg
-          , pairwiseKey = [treatmentAKey, treatmentBKey].toString()
 
       state.default = {
         ...state.default,
         loading: false,
         pairwiseData,
-        comparedTreatments: [treatmentAKey, treatmentBKey]
+        comparedTreatments: [treatmentAKey, treatmentBKey],
       }
     })
     .addCase(viewActions.updateSortForTreatments.fulfilled, (state, action) => {

@@ -1,12 +1,7 @@
 import { createReducer } from '@reduxjs/toolkit'
 
 import { createAction } from '../actions'
-
-import {
-  DredgeConfig,
-  ProjectSource,
-  LogStatus,
-} from '../types'
+import { ProjectSource, LogStatus } from '../types'
 
 let id = 0
 

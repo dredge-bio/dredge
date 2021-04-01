@@ -1,11 +1,11 @@
 import * as tPromise from 'io-ts-promise'
 import * as t from 'io-ts'
-import { fold, isLeft, Left, Right } from 'fp-ts/Either'
+import { fold, Left, Right } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { ConfigDef, ConfigKey } from './config'
 import { actions as logAction } from '../log'
 
-import { createAction, createAsyncAction } from '../actions'
+import { createAsyncAction } from '../actions'
 
 import * as fields from './fields'
 
@@ -16,7 +16,7 @@ import {
   ProjectSource,
   LogStatus,
   ProjectTreatments,
-  ProjectData,
+  ProjectData
 } from '../types'
 
 function getGlobalWatchedGenesKey() {
@@ -57,7 +57,7 @@ export const loadProjectConfig = createAsyncAction<
           label,
           status,
           message: message || null,
-        }
+        },
       }))
     }
 
@@ -96,7 +96,7 @@ export const loadProjectConfig = createAsyncAction<
 
       log('OK')
     } catch (e) {
-      const { message } = e
+      // const { message } = e
 
       log('Failed', 'Configuration file not found')
       throw new Error()
@@ -125,7 +125,7 @@ export const loadProjectConfig = createAsyncAction<
           log('Failed')
           console.log(errors)
         },
-        val => {
+        () => {
           log('OK')
         }
       ))
@@ -168,7 +168,7 @@ export const loadProject = createAsyncAction<
           label,
           status,
           message: message || null,
-        }
+        },
       }))
 
   const makeStatusLog = (project: ProjectSource | null) =>
@@ -349,7 +349,7 @@ function validateExpressionMatrix(
       if (!matrixReplicates.has(replicate)) {
         missingReplicates.push({
           treatment: treatmentID,
-          id: replicate
+          id: replicate,
         })
       }
     })

@@ -3,9 +3,7 @@ import * as actions from './actions'
 import { useProject, useAbundances, useTranscripts } from './hooks'
 import {
   getAbundanceLookup,
-  getColorScaleLookup,
-  getTranscriptLookup,
-  getSearchTranscripts,
+  getTranscriptLookup
 } from './utils'
 
 export {
@@ -17,5 +15,5 @@ export {
   useTranscripts,
 
   getAbundanceLookup,
-  getTranscriptLookup,
+  getTranscriptLookup
 }

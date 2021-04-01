@@ -1,21 +1,18 @@
-import * as React from 'react'
-import * as d3 from 'd3'
-import * as R from 'ramda'
 import {
   ProjectSource,
   Project,
-  LoadedProject,
+  LoadedProject
 } from '../types'
 
 import {
   getAbundanceLookup,
   getColorScaleLookup,
   getTranscriptLookup,
-  getSearchTranscripts,
+  getSearchTranscripts
 } from './utils'
 
 import {
-  useAppSelector,
+  useAppSelector
 } from '../hooks'
 
 export function useProject(source: ProjectSource, requireLoaded: false): Project;
