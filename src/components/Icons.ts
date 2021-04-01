@@ -21,7 +21,7 @@ function withDefaults(props: IconProps): Required<Omit<IconProps, 'children'>> {
     stroke,
     strokeWidth,
     height,
-    width
+    width,
   }
 }
 

@@ -2,17 +2,13 @@ import * as d3 from 'd3'
 import * as React from 'react'
 import padding from './padding'
 
-const { useEffect, useRef, useState } = React
+const { useRef } = React
 
 type DimensionsArgs = {
   height: number;
   width: number;
   transform: d3.ZoomTransform;
   abundanceLimits: [[number, number], [number, number]];
-}
-
-type DimensionsRef = DimensionsArgs & {
-  dimensions: PlotDimensions | null;
 }
 
 export type PlotDimensions = {
@@ -24,6 +20,10 @@ export type PlotDimensions = {
   xScale: d3.ScaleLinear<number, number>;
   yScale: d3.ScaleLinear<number, number>;
   padding: typeof padding,
+}
+
+type DimensionsRef = DimensionsArgs & {
+  dimensions: PlotDimensions | null;
 }
 
 

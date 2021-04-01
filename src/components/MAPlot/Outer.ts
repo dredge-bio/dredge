@@ -1,6 +1,5 @@
 import h from 'react-hyperscript'
 import * as R from 'ramda'
-import * as React from 'react'
 
 import styled from 'styled-components'
 import { useOptions } from 'org-shell'
@@ -10,8 +9,6 @@ import { projectForView } from '../../utils'
 
 import padding from './padding'
 import Plot from './Plot'
-
-const { useState } = React
 
 
 const PlotWrapper = styled.div<{
@@ -84,7 +81,6 @@ type OuterProps = {
 export default function Wrapper(props: OuterProps) {
   const [ opts, updateOpts ] = useOptions()
       , dispatch = useAppDispatch()
-      , { width, height } = props
 
   const passedProps = useAppSelector(state => {
     const view = state.view?.default
@@ -125,7 +121,7 @@ export default function Wrapper(props: OuterProps) {
       treatmentB,
       treatmentALabel,
       treatmentBLabel,
-      ...viewProps
+      ...viewProps,
     }
   })
 
@@ -148,7 +144,7 @@ export default function Wrapper(props: OuterProps) {
         updateOpts,
         ...props,
         ...passedProps,
-      })
+      }),
     ])
   )
 }

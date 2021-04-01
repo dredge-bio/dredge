@@ -1,9 +1,6 @@
-"use strict";
-
 import * as R from 'ramda'
 import * as d3 from 'd3'
 import { saveAs } from 'file-saver'
-import { Action } from 'redux'
 import { delay } from '../utils'
 
 import { getTranscriptLookup, getAbundanceLookup } from '../projects'
@@ -16,8 +13,7 @@ import {
   PairwiseComparison,
   DifferentialExpression,
   SortPath,
-  SortOrder,
-  DredgeState,
+  SortOrder
 } from '../types'
 
 
@@ -35,7 +31,7 @@ export const setPairwiseComparison = createAsyncAction<
     pairwiseData: PairwiseComparison,
     resort: boolean,
   }
->('set-pairwise-comparison', async (arg, { dispatch, getState }) => {
+>('set-pairwise-comparison', async (arg, { getState }) => {
   const { treatmentAKey, treatmentBKey } = arg
     , project = projectForView(getState())
 
@@ -157,7 +153,7 @@ export const getDefaultPairwiseComparison = createAsyncAction<
   }
 >('get-default-pairwise-comparison', async (_, { getState }) => {
   const project = projectForView(getState())
-      , { treatments } = project
+      , { treatments } = project.data
       , [ treatmentA, treatmentB ] = Object.keys(treatments)
 
   return {
@@ -176,7 +172,7 @@ export const updateSortForTreatments = createAsyncAction<
     sortedTranscripts: Array<DifferentialExpression>,
     resort: boolean,
   }
->('update-sort-for-treatments', async (args, { dispatch, getState }) => {
+>('update-sort-for-treatments', async (args, { getState }) => {
   const { sortPath, order } = args
       , view = getState().view?.default
 
@@ -230,7 +226,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
   {
     displayedTranscripts: Array<DifferentialExpression>
   }
->('update-displayed-transcripts', async (_, { dispatch, getState }) => {
+>('update-displayed-transcripts', async (_, { getState }) => {
   const view = getState().view?.default
       , project = projectForView(getState())
 
@@ -294,6 +290,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
   const extraTranscripts: Array<DifferentialExpression> = Array.from(listedTranscripts)
     .filter(name => !pairwiseData.has(name))
     .map(name => ({
+      // FIXME
       name: project.getCanonicalTranscriptLabel(name),
 
       treatmentA_AbundanceMean: null,
@@ -369,7 +366,7 @@ export const importSavedTranscripts = createAsyncAction<
   }
 
   const transcriptsInFile = rows.map(row => row[0])
-      , { getCanonicalTranscriptLabel } = projectForView(getState())
+      , { getCanonicalTranscriptLabel } = projectForView(getState()) // FIXME
       , newWatchedTranscripts = []
       , imported: Array<ImportedTranscript> = []
       , skipped: Array<string> = []
@@ -400,7 +397,7 @@ export const importSavedTranscripts = createAsyncAction<
 })
 
 
-const exportSavedTranscripts = createAsyncAction<
+export const exportSavedTranscripts = createAsyncAction<
   void,
   void
 >('export-saved-transcripts', async (_, { getState }) => {
@@ -460,7 +457,7 @@ export const setHoveredBinTranscripts = createAction(
       payload: {
         transcripts,
         resort: true,
-      }
+      },
     }
   }
 )
@@ -472,7 +469,7 @@ export const setSelectedBinTranscripts = createAction(
       payload: {
         transcripts,
         resort: true,
-      }
+      },
     }
   }
 )
@@ -486,7 +483,7 @@ export const setBrushedArea = createAction(
       payload: {
         coords,
         resort: true,
-      }
+      },
     }
   }
 )
@@ -517,7 +514,7 @@ export const setPValueThreshold = createAction(
       payload: {
         threshold,
         resort: true,
-      }
+      },
     }
   }
 )

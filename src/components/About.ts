@@ -3,7 +3,6 @@
 import h from 'react-hyperscript'
 import * as R from 'ramda'
 import styled from 'styled-components'
-import { connect, ConnectedProps } from 'react-redux'
 import { Box } from 'rebass'
 import ProjectLoading from './ProjectLoading'
 
@@ -30,8 +29,8 @@ function AboutProject(props) {
     h(DocumentationContainer, {
       px: 4, py: 2,
       dangerouslySetInnerHTML: {
-        __html: props.documentation
-      }
+        __html: props.documentation,
+      },
     })
   )
 }

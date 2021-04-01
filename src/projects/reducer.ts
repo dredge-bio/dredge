@@ -1,7 +1,7 @@
 import {
   ProjectSource,
   DredgeConfig,
-  Project,
+  Project
 } from '../types'
 
 import { createReducer } from '@reduxjs/toolkit'

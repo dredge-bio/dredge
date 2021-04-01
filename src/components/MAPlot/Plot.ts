@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import * as React from 'react'
 
 import { PairwiseComparison } from '../../types'
-import { getPlotBins, projectForView } from '../../utils'
+import { getPlotBins } from '../../utils'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
@@ -79,7 +79,7 @@ function drawAxes(
 function drawBins(
   svgEl: SVGSVGElement,
   dimensions: PlotDimensions,
-  props: PlotProps,
+  props: PlotProps
 ) {
   const { xScale, yScale } = dimensions
       , { loading, pairwiseData, pValueThreshold } = props

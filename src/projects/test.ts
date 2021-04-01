@@ -1,8 +1,5 @@
-"use strict";
-
-import { ConfigDef, Config } from './config'
+import { ConfigDef } from './config'
 import * as tPromise from 'io-ts-promise'
-import { PathReporter } from 'io-ts/PathReporter'
 
 const OK = {
   label: 'Project label',
@@ -23,13 +20,11 @@ async function runTest() {
     console.log(key)
     console.log(value)
   })
-  /*
   try {
-    const result = await tPromise.decode(ConfigDef, OK)
+    await tPromise.decode(ConfigDef, OK)
   } catch (e) {
     console.log(e)
   }
-  */
 }
 
 runTest()

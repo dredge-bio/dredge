@@ -1,34 +1,15 @@
-"use strict";
-
 import h from 'react-hyperscript'
-import * as R from 'ramda'
 import * as React from 'react'
-import styled, { createGlobalStyle } from 'styled-components'
-import { Flex, Box, Button, Heading } from 'rebass'
-import * as AriaMenuButton from 'react-aria-menubutton'
-import { connect, useSelector } from 'react-redux'
-import * as projectJson from '../../package.json'
+import { createGlobalStyle } from 'styled-components'
+import { Box, Heading } from 'rebass'
+import { useResource } from 'org-shell'
 
+import { Resource } from '../types'
+
+import Log from './Log'
 import Header from './Header'
 import LocalFileMessage from './LocalFileMessage'
 
-import {
-  ResourceAware,
-  Navigable,
-  Route,
-  useNavigation,
-  useResource
-} from 'org-shell'
-
-import Log from './Log'
-
-import {
-  DredgeState,
-  ProjectSource,
-  Resource
-} from '../types'
-
-const { version } = projectJson
 
 const GlobalStyle = createGlobalStyle`
 html, body, #application {
@@ -56,14 +37,8 @@ pre {
 }
 `
 
-
-
 const MIN_HEIGHT = 700
     , MIN_WIDTH = 1280
-
-interface ApplicationContainerExtraProps {
-  absoluteDimensions?: boolean;
-}
 
 function ApplicationContainer(props: any) {
   const { resource } = useResource()
@@ -89,7 +64,7 @@ function ApplicationContainer(props: any) {
   return (
     h('div', {
       ...props,
-      style
+      style,
     })
   )
 }
@@ -118,7 +93,7 @@ function Main(props: React.PropsWithChildren<{}>) {
     return h(Box, { p: 3 }, [
       h(Log, {
         source: { key: 'global' },
-      })
+      }),
     ])
   }
 }
@@ -162,7 +137,6 @@ export default class Application extends React.Component<any, ApplicationState> 
 
   render() {
     const { error, componentStack } = this.state
-        , { activeResource } = this.props
         , isLocalFile = window.location.protocol === 'file:'
 
     let children: React.ReactNode

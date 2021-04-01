@@ -12,7 +12,7 @@ import { setHoveredTreatment } from '../actions'
 */
 
 import { projectForView } from '../utils'
-import { DredgeState, DredgeDispatch, ProjectTreatment, TreatmentName, TranscriptName } from '../types'
+import { DredgeState, TreatmentName, TranscriptName } from '../types'
 
 const connector = connect(mapStateToProps)
 

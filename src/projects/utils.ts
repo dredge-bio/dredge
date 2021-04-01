@@ -3,7 +3,7 @@ import * as R from 'ramda'
 
 import {
   Project,
-  LoadedProject,
+  LoadedProject
 } from '../types'
 
 function ensureProjectLoaded(project: Project) {
@@ -15,7 +15,7 @@ function ensureProjectLoaded(project: Project) {
 }
 
 function memoizeForProject<T, U extends object>(
-  cache: WeakMap<U, T>, 
+  cache: WeakMap<U, T>,
   getCacheKey: (project: LoadedProject) => U,
   makeCache: (project: LoadedProject) => T
 ) {
@@ -35,7 +35,7 @@ function memoizeForProject<T, U extends object>(
 }
 
 const abundanceLookupCache: WeakMap<
-  object, 
+  object,
   (treamentID: string, transcriptName: string) => number[]
 > = new WeakMap()
 
@@ -48,7 +48,7 @@ export const getAbundanceLookup = memoizeForProject(
       treatments,
       transcriptIndices,
       replicateIndices,
-      abundances
+      abundances,
     } = project.data
 
     const cached = abundanceLookupCache.get(abundances)
@@ -69,7 +69,7 @@ export const getAbundanceLookup = memoizeForProject(
 
         if (transcriptIdx === undefined) return acc
 
-        // This is guaranteed to exist 
+        // This is guaranteed to exist
         const abundance = abundances[transcriptIdx]![replicateIdx]!
 
         return [...acc, abundance]

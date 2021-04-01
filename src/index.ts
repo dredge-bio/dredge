@@ -1,5 +1,3 @@
-"use strict";
-
 import h from 'react-hyperscript'
 import * as R from 'ramda'
 import { ORGShell, Route } from 'org-shell'
@@ -16,11 +14,7 @@ import Application from './components/Application'
 
 import View from './components/View'
 
-import {
-  ProjectSource,
-  DredgeState,
-  Resource
-} from './types'
+import { Resource } from './types'
 
 enableMapSet()
 
@@ -31,14 +25,14 @@ function loadProject(/* title: string */) {
     { dispatch, getState }: { dispatch: AppDispatch, getState: () => AppState }
   ) => {
     await dispatch(projectActions.loadProjectConfig({
-      source: { key: 'global' }
+      source: { key: 'global' },
     }))
 
     const project = getState().projects.global
 
     if ('config' in project) {
       await dispatch(projectActions.loadProject({
-        source: { key: 'global' }
+        source: { key: 'global' },
       }))
       /*
       dispatch(Action.LoadProject(ProjectSource.Global))
@@ -152,7 +146,7 @@ render(
   h(Provider, { store },
     h(ThemeProvider, { theme },
       h(Main)
-    ),
+    )
   ),
   document.getElementById('application')
 )

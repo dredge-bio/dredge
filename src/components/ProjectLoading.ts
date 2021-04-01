@@ -1,6 +1,4 @@
-"use strict";
-
-import { Route, useResource } from 'org-shell'
+import { Route } from 'org-shell'
 import { Box, Button } from 'rebass'
 import h from 'react-hyperscript'
 import * as React from 'react'

@@ -1,20 +1,11 @@
-"use strict";
-
 import h from 'react-hyperscript'
-import * as R from 'ramda'
-import { connect } from 'react-redux'
 import styled from 'styled-components'
 import LoadingIcon from './LoadingIcon'
-
-import { DredgeState } from '../types'
+import * as React from 'react'
 
 import { useAppSelector } from '../hooks'
 
-import {
-  ResourceLogEntry,
-  StatusLogEntry,
-  Log,
-} from '../log'
+import { Log as LogItem } from '../log'
 
 const IconWrapper = styled.span`
   svg {
@@ -28,8 +19,8 @@ interface StatusProps {
   indent: boolean;
 }
 
-function filterMultiple(log: Array<Log>) {
-  const ret: Array<Log> = []
+function filterMultiple(log: Array<LogItem>) {
+  const ret: Array<LogItem> = []
       , urlsVisited: Record<string, number> = {}
 
   log.forEach(entry => {
@@ -78,6 +69,7 @@ function Status(props: StatusProps) {
   }, indicator)
 }
 
+/*
 const LogProject = styled.div`
   margin-top: 1rem;
 
@@ -100,6 +92,7 @@ const LogProject = styled.div`
     margin-left: .5rem;
   }
 `
+*/
 
 const LogTable = styled.table`
 td {
@@ -115,7 +108,7 @@ td:nth-of-type(2) {
 */
 `
 
-function LogEntry({ project, id, timestamp, log }: Log) {
+function LogEntry({ project, timestamp, log }: LogItem) {
   let children
 
   if ('status' in log) {
@@ -125,7 +118,7 @@ function LogEntry({ project, id, timestamp, log }: Log) {
       h('td', { key: 3 }, h('a', {
         href: log.url,
       }, log.url)),
-      h('td', { key: 4 }, log.message)
+      h('td', { key: 4 }, log.message),
     ]
   } else {
     children = [
@@ -134,7 +127,7 @@ function LogEntry({ project, id, timestamp, log }: Log) {
         key: 1,
         colSpan: 3,
         className: 'status-message',
-      }, log.message)
+      }, log.message),
     ]
   }
 
@@ -199,8 +192,8 @@ export default function Log() {
             key: entry.id,
             ...entry,
           })
-        ))
-      ])
+        )),
+      ]),
     ])
   )
 }
