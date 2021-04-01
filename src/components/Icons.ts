@@ -1,9 +1,9 @@
 import h from 'react-hyperscript'
 import * as React from 'react'
 
-type IconProps = React.PropsWithChildren<{
+export type IconProps = React.PropsWithChildren<{
   stroke?: string;
-  strokeWidth?: number;
+  strokeWidth?: number | string;
   height?: number;
   width?: number;
   children?: React.ReactNode;
