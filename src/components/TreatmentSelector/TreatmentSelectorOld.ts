@@ -32,73 +32,6 @@ type State = {
   _hoveredTreatment: TreatmentName | null;
 }
 
-const SelectorWrapper = styled.div`
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  height: 100%;
-  padding: 10px 0;
-
-  & select {
-    padding: 1em;
-  }
-
-  & svg, & div.svg-wrapper {
-    height: 100%;
-    width: 100%;
-  }
-
-  & div.svg-wrapper {
-    position: relative;
-  }
-
-  & svg {
-    position: absolute;
-  }
-
-  & svg path:hover,
-  & svg rect:hover {
-    fill: #ccc;
-    cursor: pointer;
-  }
-
-  & svg .treatment-selected {
-    fill: lightsteelblue;
-  }
-
-  & .active {
-    stroke: blue;
-    stroke-width: 5px;
-  }
-`
-
-interface TooltipProps {
-  readonly pos: TooltipPosition;
-}
-
-const Tooltip = styled.div<TooltipProps>`
-  position: absolute;
-  z-index: 1;
-
-  left: 0;
-  right: 0;
-  ${ props => props.pos === 'bottom' ? 'top: 100%;' : 'bottom: 100%;' }
-
-  text-align: center;
-  font-weight: bold;
-
-  & span {
-    display: inline-block;
-    padding: .75rem 1.5rem;
-
-    min-width: 200px;
-    background: #fafafa;
-
-    border: 1px solid #ccc;
-    borderRadius: 4px;
-  }
-`
-
 class TreatmentSelector extends React.Component<Props, State> {
   public svgEl: null | HTMLDivElement
 
@@ -118,20 +51,6 @@ class TreatmentSelector extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    const { svg } = this.props
-
-    if (!svg || !this.svgEl) return null
-
-    this.svgEl.innerHTML = svg;
-    this.svgEl.addEventListener('click', this.handleSVGClick)
-
-    Array.from(this.svgEl.querySelectorAll('[data-treatment]')).forEach(el => {
-      (el as HTMLDivElement).addEventListener('mouseenter', this.handleTreatmentEnter)
-      el.addEventListener('mouseleave', this.handleTreatmentLeave)
-    })
-
-    this.updateSelectedTreatment()
-
     if (this.props.transcript) {
       this.paintTreatments()
     }
@@ -142,10 +61,6 @@ class TreatmentSelector extends React.Component<Props, State> {
 
     if (!svg) return null
 
-    if (this.props.selectedTreatment !== prevProps.selectedTreatment) {
-      this.updateSelectedTreatment()
-    }
-
     if (this.props.transcript !== prevProps.transcript) {
       this.paintTreatments()
     }
@@ -153,39 +68,6 @@ class TreatmentSelector extends React.Component<Props, State> {
     if (this.props.paintHovered && this.props.hoveredTreatment !== prevProps.hoveredTreatment) {
       this.paintHoveredTreatment()
     }
-  }
-
-  updateSelectedTreatment() {
-    const { selectedTreatment } = this.props
-
-    if (this.svgEl === null) return
-
-    Array.from(this.svgEl.querySelectorAll('.treatment-selected')).forEach(el => {
-      el.classList.remove('treatment-selected')
-    })
-
-    const selectedEl = this.svgEl.querySelector(`[data-treatment="${selectedTreatment}"]`)
-
-    if (selectedEl) {
-      selectedEl.classList.add('treatment-selected')
-    }
-  }
-
-  handleSVGClick(e: MouseEvent) {
-    const { onSelectTreatment } = this.props
-        , clickedTreatment = (e.target as HTMLDivElement).dataset.treatment || null
-
-    if (clickedTreatment) {
-      onSelectTreatment(clickedTreatment, e.shiftKey)
-    }
-  }
-
-  handleTreatmentEnter(e: MouseEvent) {
-    const { dispatch } = this.props
-        , _hoveredTreatment = (e.target as HTMLDivElement).dataset.treatment || null
-
-    this.setState({ _hoveredTreatment })
-    // dispatch(setHoveredTreatment(_hoveredTreatment))
   }
 
   paintTreatments() {
@@ -243,89 +125,4 @@ class TreatmentSelector extends React.Component<Props, State> {
 
     el.classList.add('active')
   }
-
-  handleTreatmentLeave() {
-    const { dispatch } = this.props
-
-    this.setState({ _hoveredTreatment: null })
-    // dispatch(setHoveredTreatment(null))
-  }
-
-
-  render() {
-    const {
-      svg,
-      useSelectBackup,
-      treatments,
-      selectedTreatment,
-      onSelectTreatment,
-      loading,
-      tooltipPos,
-    } = this.props
-
-    const { _hoveredTreatment } = this.state
-
-    const initialLoad = loading && !selectedTreatment
-
-    const _treatments = Object.entries(treatments).map(([key, val]) => ({
-      key,
-      label: val.label || key,
-    }))
-
-    return (
-      h(SelectorWrapper, [
-        svg == null ? null :h('div.svg-wrapper', [
-          h('div', {
-            ref: (el: HTMLDivElement) => { this.svgEl = el },
-          }),
-
-          tooltipPos && _hoveredTreatment && h(Tooltip, {
-            pos: tooltipPos,
-          }, [
-            h('span', treatments[_hoveredTreatment].label),
-          ]),
-        ]),
-
-        !(svg == null && useSelectBackup) ? null : h('select', {
-          value: selectedTreatment || '',
-          disabled: initialLoad,
-          onChange: (e: React.ChangeEvent<HTMLSelectElement>) => {
-            onSelectTreatment(e.target.value, false)
-                                                    },
-        }, (!selectedTreatment ? [h('option', {
-          key: '_blank',
-          value: '',
-        }, 'Initializing...')] : []).concat(_treatments.map(treatment =>
-          h('option', {
-            key: treatment.key,
-            value: treatment.key,
-          }, treatment.label)
-        ))),
-      ])
-    )
-  }
 }
-
-function mapStateToProps(state: DredgeState) {
-  const project = projectForView(state)
-
-  const {
-    svg,
-    treatments,
-    abundancesForTreatmentTranscript,
-    colorScaleForTranscript,
-  } = project
-
-  const { loading=true, hoveredTreatment=null } = state.view || {}
-
-  return {
-    svg,
-    treatments,
-    abundancesForTreatmentTranscript,
-    colorScaleForTranscript,
-    loading,
-    hoveredTreatment,
-  }
-}
-
-export default connector(TreatmentSelector)
