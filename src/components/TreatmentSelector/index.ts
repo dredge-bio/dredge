@@ -2,10 +2,10 @@ import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as React from 'react'
 
-import { TreatmentName } from '../types'
-import { useView, useViewProject } from '../view'
+import { TreatmentName } from '../../types'
+import { useView, useViewProject } from '../../view'
 
-import TreatmentListSelector from './TreatmentListSelector'
+import TreatmentSelect from './Select'
 
 const { useEffect, useRef, useCallback, useState } = React
 
@@ -145,7 +145,7 @@ export default function TreatmentSelector(props: SelectorProps) {
       ]),
 
       !useSelectElement ? null : (
-        React.createElement(TreatmentListSelector, {
+        React.createElement(TreatmentSelect, {
           selectedTreatment,
           onSelectTreatment(treatmentName: string) {
             onSelectTreatment(treatmentName)

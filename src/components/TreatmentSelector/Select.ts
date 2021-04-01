@@ -1,8 +1,8 @@
 import h from 'react-hyperscript'
 import * as React from 'react'
 
-import { TreatmentName } from '../types'
-import { useViewProject } from '../view'
+import { TreatmentName } from '../../types'
+import { useViewProject } from '../../view'
 
 const { useState, useEffect } = React
 
