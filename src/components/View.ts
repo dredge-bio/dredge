@@ -5,6 +5,7 @@ import styled from 'styled-components'
 import { useTreatments } from '../view'
 
 import MAPlot from './MAPlot'
+import TreatmentSelector from './TreatmentSelector'
 
 /*
 const h = require('react-hyperscript')
@@ -38,7 +39,7 @@ const ViewerContainer = styled.div`
 interface GridAreaProps {
   column: string,
   row: string,
-  ['data-area']: string,
+  ['data-area']?: string,
 }
 
 const GridArea = styled.div<GridAreaProps>`
@@ -48,10 +49,43 @@ const GridArea = styled.div<GridAreaProps>`
 `
 
 export default function View() {
-  useTreatments(['minute_28', 'minute_53'])
+  const treatmentA = '4mic'
+      , treatmentB = '4mac'
+
+  useTreatments([treatmentA, treatmentB])
 
   return (
     h(ViewerContainer, [
+      h(GridArea, {
+        column: '1 / span 10',
+        row: '1 / span 2',
+      }, [
+        h(TreatmentSelector, {
+          useSelectBackup: true,
+          selectedTreatment: treatmentA,
+          onSelectTreatment: treatment => {
+            console.log(treatment)
+            // updateOpts(opts => Object.assign({}, opts, { treatmentA: treatment }))
+          },
+          tooltipPos: 'bottom' as const,
+        }),
+      ]),
+
+      h(GridArea, {
+        column: '1 / span 10',
+        row: '11 / span 2',
+      }, [
+        h(TreatmentSelector, {
+          useSelectBackup: true,
+          selectedTreatment: treatmentB,
+          onSelectTreatment: treatment => {
+            console.log(treatment)
+            // updateOpts(opts => Object.assign({}, opts, { treatmentB: treatment }))
+          },
+          tooltipPos: 'top' as const,
+        }),
+      ]),
+
       h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
         h(MAPlot)
       ),
