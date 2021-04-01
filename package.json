@@ -55,7 +55,10 @@
     "@types/rebass": "^4.0.8",
     "@types/styled-components": "^5.1.7",
     "@types/throttleit": "^1.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.20.0",
+    "@typescript-eslint/parser": "^4.20.0",
     "argparse": "^2.0.1",
-    "esbuild": "^0.8.46"
+    "esbuild": "^0.8.46",
+    "eslint": "^7.23.0"
   }
 }
