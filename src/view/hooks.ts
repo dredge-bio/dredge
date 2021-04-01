@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { unwrapResult } from '@reduxjs/toolkit'
-import { useAppDispatch } from '../hooks'
+import { useAppDispatch, useAppSelector } from '../hooks'
 import { setPairwiseComparison } from './actions'
+import { useProject } from '../projects'
 
 import { PairwiseComparison } from '../types'
 
@@ -83,4 +84,20 @@ export function useTreatments(compared: ComparedTreatments) {
     treatmentA,
     treatmentB,
   }
+}
+
+export function useView() {
+  const view = useAppSelector(state => state.view && state.view.default)
+
+  if (view === null) {
+    throw new Error('No view is loaded')
+  }
+
+  return view
+}
+
+export function useViewProject() {
+  const view = useView()
+
+  return useProject(view.source, true)
 }
