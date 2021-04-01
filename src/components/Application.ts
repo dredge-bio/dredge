@@ -1,5 +1,6 @@
 import h from 'react-hyperscript'
 import * as React from 'react'
+import * as R from 'ramda'
 import { createGlobalStyle } from 'styled-components'
 import { Box, Heading } from 'rebass'
 import { useResource } from 'org-shell'
@@ -9,6 +10,8 @@ import { Resource } from '../types'
 import Log from './Log'
 import Header from './Header'
 import LocalFileMessage from './LocalFileMessage'
+
+const { useRef, useEffect } = React
 
 
 const GlobalStyle = createGlobalStyle`
@@ -40,21 +43,49 @@ pre {
 const MIN_HEIGHT = 700
     , MIN_WIDTH = 1280
 
+type ApplicationSize = {
+  resource: Resource | null,
+  width: number | null,
+  height: number | null,
+}
+
 function ApplicationContainer(props: any) {
   const { resource } = useResource()
+
+  const sizeRef = useRef<ApplicationSize>({
+    resource: null,
+    width: null,
+    height: null,
+  })
 
   const absoluteDimensions = !!(
     resource &&
     !!(resource as Resource).absoluteDimensions
   )
 
-  // FIXME: probably the wrong typing here
+  if (sizeRef.current.resource !== resource) {
+    if (absoluteDimensions) {
+      const newWidth = R.max(window.innerWidth, MIN_WIDTH)
+          , newHeight = R.max(window.innerHeight, MIN_HEIGHT)
+
+      sizeRef.current.width = newWidth;
+      sizeRef.current.height = newHeight;
+    } else {
+      sizeRef.current.width = null;
+      sizeRef.current.height = null;
+    }
+
+    sizeRef.current.resource = resource;
+  }
+
   const style: Partial<CSSStyleDeclaration> = {
     display: 'grid',
     backgroundColor: 'hsla(45, 31%, 93%, 1)',
   }
 
   if (absoluteDimensions) {
+    style.width = sizeRef.current.width! + 'px'
+    style.height = sizeRef.current.height! + 'px'
     style.gridTemplateRows = `64px minmax(${MIN_HEIGHT - 64}px, 1fr)`;
     style.gridTemplateColumns = `minmax(${MIN_WIDTH}px, 1fr)`;
   } else {
@@ -157,16 +188,8 @@ export default class Application extends React.Component<any, ApplicationState> 
       children = React.createElement(Main, null, this.props.children)
     }
 
-    return [
-      h(ApplicationContainer, {
-        key: 'container',
-        /*
-        style: !absoluteDimensions ? null : {
-          height: this.state.height,
-          width: this.state.width,
-        },
-        */
-      }, [
+    return (
+      h(ApplicationContainer, [
         h(GlobalStyle),
 
         h(Header, {
@@ -175,7 +198,7 @@ export default class Application extends React.Component<any, ApplicationState> 
         }),
 
         React.createElement('main', {}, children),
-      ]),
-    ]
+      ])
+    )
   }
 }
