@@ -7,7 +7,7 @@ import { useView, useViewProject } from '../view'
 
 import TreatmentListSelector from './TreatmentListSelector'
 
-const { useEffect, useRef, useState } = React
+const { useEffect, useRef, useCallback, useState } = React
 
 type SelectorProps = {
   useSelectBackup: boolean;
@@ -48,7 +48,8 @@ const SelectorWrapper = styled.div`
   }
 
   & svg .treatment-selected {
-    fill: lightsteelblue;
+    stroke: black;
+    stroke-width: 3px;
   }
 
   & .active {
@@ -58,9 +59,9 @@ const SelectorWrapper = styled.div`
 `
 
 export default function TreatmentSelector(props: SelectorProps) {
-  const ref = useRef<HTMLDivElement>()
-      , view = useView()
+  const view = useView()
       , project = useViewProject()
+      , svgRef = useRef<SVGSVGElement>()
       , { svg, treatments } = project.data
       , { loading, hoveredTreatment } = view
 
@@ -83,13 +84,51 @@ export default function TreatmentSelector(props: SelectorProps) {
     !!localHoveredTreatment
   )
 
-  useEffect(() => {
-    const node = ref.current
+  const ref = useCallback((el : HTMLDivElement | null) => {
+    if (el && svg) {
+      el.innerHTML = svg
 
-    if (node && svg) {
-      node.innerHTML = svg
+      el.addEventListener('click', (e: MouseEvent) => {
+        const target = e.target as (SVGElement | HTMLElement)
+
+        const { treatment } = target.dataset
+
+        if (treatment) {
+          onSelectTreatment(treatment, e.shiftKey)
+        }
+      })
+
+      Array.from(el.querySelectorAll('[data-treatment]')).forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          setLocalHoveredTreatment((el as SVGElement).dataset.treatment || null)
+        })
+
+        el.addEventListener('mouseleave', () => {
+          setLocalHoveredTreatment(null)
+        })
+      })
+
+      svgRef.current = el.querySelector('svg')!
     }
-  }, [ref.current])
+  }, [])
+
+  useEffect(() => {
+    const svgEl = svgRef.current
+
+    if (!svgEl) return
+
+    Array.from(svgEl.querySelectorAll('.treatment-selected')).forEach(el => {
+      el.classList.remove('treatment-selected')
+    })
+
+    if (!selectedTreatment) return
+
+    const selectedEls = Array.from(svgEl.querySelectorAll(`[data-treatment="${selectedTreatment}"]`))
+
+    selectedEls.forEach(el => {
+      el.classList.add('treatment-selected')
+    })
+  }, [selectedTreatment])
 
   return (
     h(SelectorWrapper, [
