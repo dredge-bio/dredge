@@ -3,9 +3,10 @@ import styled from 'styled-components'
 import * as React from 'react'
 
 import { TreatmentName } from '../../types'
-import { useView, useViewProject } from '../../view'
+import { useViewProject } from '../../view'
 
 import TreatmentSelect from './Select'
+import Tooltip from './Tooltip'
 
 const { useEffect, useRef, useCallback, useState } = React
 
@@ -59,11 +60,9 @@ const SelectorWrapper = styled.div`
 `
 
 export default function TreatmentSelector(props: SelectorProps) {
-  const view = useView()
-      , project = useViewProject()
+  const project = useViewProject()
       , svgRef = useRef<SVGSVGElement>()
-      , { svg, treatments } = project.data
-      , { loading, hoveredTreatment } = view
+      , { svg } = project.data
 
   const {
     tooltipPos,
@@ -78,11 +77,6 @@ export default function TreatmentSelector(props: SelectorProps) {
   )
 
   const [ localHoveredTreatment, setLocalHoveredTreatment ] = useState<null | string>(null)
-
-  const showTooltip = (
-    !!tooltipPos &&
-    !!localHoveredTreatment
-  )
 
   const ref = useCallback((el : HTMLDivElement | null) => {
     if (el && svg) {
@@ -135,13 +129,10 @@ export default function TreatmentSelector(props: SelectorProps) {
       svg && h('div.svg-wrapper', [
         h('div', { ref }),
 
-        /*
-        !showTooltip ? null : (
-          h(Tooltip, { pos: tooltipPos }, [
-            h('span', treatments.get(localHoveredTreatment!)?.label),
-          ])
-        )
-        */
+        h(Tooltip, {
+          position: tooltipPos,
+          treatment: localHoveredTreatment,
+        }),
       ]),
 
       !useSelectElement ? null : (
