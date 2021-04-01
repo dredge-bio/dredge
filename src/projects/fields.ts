@@ -253,28 +253,39 @@ function cleanSVGString(svgString: string, treatments: types.ProjectTreatments) 
       case 'circle':
       case 'elipse':
       case 'polyline':
-      case 'polygon': {
-        let treatment = null
+      case 'polygon':
+      case 'g': {
+        let treatment: (null | string) = null
 
         const popTreatmentFromAttr = (attr: string) => {
           treatment = node.getAttribute(attr)
-
-          if (treatment !== null && treatmentNames.has(treatment)) {
+          if (treatment && treatmentNames.has(treatment)) {
             node.removeAttribute(attr)
-            return true
+            return treatment
           }
-          return false
+          return null
         }
 
-        popTreatmentFromAttr('id') || popTreatmentFromAttr('name')
+        treatment = (
+          popTreatmentFromAttr('id') ||
+          popTreatmentFromAttr('name')
+        )
 
-        if (treatment) {
+        if (treatment !== null) {
           // `treatment` will always be in the treatment map, since it was
           // derived from the `treatmentNames` set, a set of all the keys in
           // the map.
           const { label } = treatments.get(treatment)!
 
           node.setAttribute('data-treatment', treatment)
+
+          if (node.nodeName === 'g') {
+            Array.from(node.querySelectorAll('*')).forEach(el => {
+              if (!el.hasAttribute('data-treatment')) {
+                el.setAttribute('data-treatment', treatment!)
+              }
+            })
+          }
 
           const titleEl = document.createElement('title')
           titleEl.textContent = label || treatment
