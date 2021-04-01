@@ -91,7 +91,8 @@ function drawBins(
   if (loading) return;
 
   if (pairwiseData === null) {
-    d3.select('.squares')
+    d3.select(svgEl)
+      .select('.squares')
       .append('g')
       .append('text')
       .attr('x', xScale(d3.mean(xScale.domain())!))
@@ -159,9 +160,11 @@ function drawBins(
       .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
       .attr('fill', d => d.color)
 
-  d3.select('defs').selectAll('*').remove()
+  d3.select(svgEl)
+    .select('defs').selectAll('*').remove()
 
-  d3.select('defs')
+  d3.select(svgEl)
+    .select('defs')
     .append('clipPath')
     .attr('id', 'visible-plot')
     .append('rect')
