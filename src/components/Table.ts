@@ -1,14 +1,14 @@
-"use strict";
+import h from 'react-hyperscript'
+import styled, { CSSObject } from 'styled-components'
+import * as R from 'ramda'
+import * as React from 'react'
+import { FixedSizeList as List } from 'react-window'
 
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , React = require('react')
-    , styled = require('styled-components').default
-    , { connect } = require('react-redux')
-    , Action = require('../actions')
-    , onResize = require('./util/Sized')
-    , { findParent, projectForView, formatNumber } = require('../utils')
-    , { FixedSizeList: List } = require('react-window')
+import { useAppDispatch, useResizeCallback } from '../hooks'
+import { useView, useViewProject } from '../view'
+import { DifferentialExpression } from '../types'
+import { formatNumber } from '../utils'
+
 
 const TableWrapper = styled.div`
   position: relative;
@@ -57,13 +57,19 @@ const TableWrapper = styled.div`
   }
 `
 
+type TableCellProps = {
+  columnWidths: number[],
+  columnNumber: number,
+}
 
-function TableCell({ columnWidths, columnNumber, children }) {
-  const left = R.sum(columnWidths.slice(0, columnNumber))
+
+function TableCell(props: React.PropsWithChildren<TableCellProps>) {
+  const { columnWidths, columnNumber, children } = props
+      , left = R.sum(columnWidths.slice(0, columnNumber))
       , width = columnWidths[columnNumber]
 
   return (
-    h('div', {
+    React.createElement('div', {
       style: {
         padding: 0,
         position: 'absolute',
@@ -78,17 +84,17 @@ const HEADER_HEIGHT = 84;
 
 const FIELDS = [
   { sortPath: '', label: '' },
-  { sortPath: ['name'], label: 'Transcript' },
-  { sortPath: ['pValue'], label: 'P-Value' },
-  { sortPath: ['logATA'], label: 'logATA' },
-  { sortPath: ['logFC'], label: 'logFC' },
-  { sortPath: ['treatmentA_AbundanceMean'], label: 'Mean' },
-  { sortPath: ['treatmentA_AbundanceMedian'], label: 'Median' },
-  { sortPath: ['treatmentB_AbundanceMean'], label: 'Mean' },
-  { sortPath: ['treatmentB_AbundanceMedian'], label: 'Median' },
+  { sortPath: 'name', label: 'Transcript' },
+  { sortPath: 'pValue', label: 'P-Value' },
+  { sortPath: 'logATA', label: 'logATA' },
+  { sortPath: 'logFC', label: 'logFC' },
+  { sortPath: 'treatmentA_AbundanceMean', label: 'Mean' },
+  { sortPath: 'treatmentA_AbundanceMedian', label: 'Median' },
+  { sortPath: 'treatmentB_AbundanceMean', label: 'Mean' },
+  { sortPath: 'treatmentB_AbundanceMedian', label: 'Median' },
 ]
 
-function calcColumnWidths(width) {
+function calcColumnWidths(width: number) {
   const widths = [
     // Pairwise information (logATA, logFC, p-value)
     ...R.repeat(64, 3),
@@ -106,6 +112,139 @@ function calcColumnWidths(width) {
   ]
 }
 
+type TranscriptCallback = (transcript: string | null) => void
+
+type TranscriptData = {
+  displayedTranscripts: Array<DifferentialExpression>;
+  savedTranscripts: Set<string>;
+  pValueThreshold: number;
+  columnWidths: number[];
+  focusedTranscript: string | null;
+
+  setHoveredTranscript: TranscriptCallback;
+  addSavedTranscript: TranscriptCallback;
+  removeSavedTranscript: TranscriptCallback;
+  setFocusedTranscript: TranscriptCallback;
+}
+
+
+type TranscriptRowProps = {
+  index: number;
+  data: TranscriptData;
+  style: Partial<CSSStyleDeclaration>;
+}
+
+function handleRowMouseEvent(dispatch: ReturnType<typeof useAppDispatch>) {
+  return (e: React.MouseEvent) => {
+    let transcript: string | null
+
+    if (e.type === 'mouseenter') {
+      transcript = (e.target as HTMLElement).dataset.transcriptName!
+    } else {
+      transcript = null
+    }
+  }
+}
+
+function TranscriptRow(props: TranscriptRowProps) {
+  const { data, index, style } = props
+      , { columnWidths } = data
+      , datum = data.displayedTranscripts[index]!
+      , dispatch = useAppDispatch()
+      , handler = handleRowMouseEvent(dispatch) // FIXME: Share this among all rows
+      , saved = data.savedTranscripts.has(datum.name)
+
+  const extraStyle: Partial<CSSStyleDeclaration> = {}
+
+  if (data.focusedTranscript === datum.name) {
+    extraStyle.backgroundColor = '#e6e6e6'
+  }
+
+  if (datum.pValue === null || datum.pValue > data.pValueThreshold) {
+    extraStyle.color = '#aaa'
+  }
+
+  return (
+    h('div', {
+      className: 'transcript-row',
+      ['data-transcript-name']: datum.name,
+      onMouseEnter: handler,
+      onMouseLeave: handler,
+      // onClick: this.handleClick,
+      style: {
+        ...style,
+        ...extraStyle,
+      },
+    }, [
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 0,
+      }, [
+        h('a', {
+          className: 'transcript-save-marker',
+          href: '',
+          style: {
+            color: saved ? 'orangered' : 'blue',
+          },
+          onClick(e: React.MouseEvent) {
+            e.preventDefault()
+
+            if (saved) {
+              data.removeSavedTranscript(datum.name)
+            } else {
+              data.addSavedTranscript(datum.name)
+            }
+
+          },
+        }, saved ? '×' : '<'),
+      ]),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 1,
+      }, [
+        h('div.transcript-label', datum.name),
+      ]),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 2,
+      }, formatNumber(datum.pValue, 3)),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 3,
+      }, formatNumber(datum.logATA)),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 4,
+      }, formatNumber(datum.logFC)),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 5,
+      }, formatNumber(datum.treatmentA_AbundanceMean)),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 6,
+      }, formatNumber(datum.treatmentA_AbundanceMedian)),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 7,
+      }, formatNumber(datum.treatmentB_AbundanceMean)),
+
+      h(TableCell, {
+        columnWidths,
+        columnNumber: 8,
+      }, formatNumber(datum.treatmentB_AbundanceMedian)),
+    ])
+  )
+}
+
+/*
 class TranscriptRow extends React.Component {
   constructor() {
     super()
@@ -168,106 +307,8 @@ class TranscriptRow extends React.Component {
 
     setFocusedTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
   }
-
-  render() {
-    const {
-      style,
-      data: {
-        focusedTranscript,
-        columnWidths,
-        pValueThreshold,
-        savedTranscripts,
-        addSavedTranscript,
-        removeSavedTranscript,
-      },
-    } = this.props
-
-    const { datum } = this
-        , { pValue } = datum
-        , saved = savedTranscripts.has(datum.name)
-
-    return (
-      h('div', {
-        className: 'transcript-row',
-        ['data-transcript-name']: datum.name,
-        onMouseEnter: this.handleMouseEnter,
-        onMouseLeave: this.handleMouseLeave,
-        onClick: this.handleClick,
-        style: Object.assign({}, style,
-          focusedTranscript !== datum.name
-            ? null : { backgroundColor: '#e6e6e6' },
-          (datum.pValue === undefined || pValue > pValueThreshold)
-            ? { color: '#aaa' } : null
-        ),
-      }, [
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 0,
-        }, [
-          h('a', {
-            className: 'transcript-save-marker',
-            href: '',
-            style: {
-              color: saved ? 'orangered' : 'blue',
-            },
-            onClick(e) {
-              e.preventDefault()
-
-              if (saved) {
-                removeSavedTranscript(datum.name)
-              } else {
-                addSavedTranscript(datum.name)
-              }
-
-            },
-          }, saved ? '×' : '<'),
-        ]),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 1,
-        }, [
-          h('div.transcript-label', datum.name),
-        ]),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 2,
-        }, formatNumber(datum.pValue, 3)),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 3,
-        }, formatNumber(datum.logATA)),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 4,
-        }, formatNumber(datum.logFC)),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 5,
-        }, formatNumber(datum.treatmentA_AbundanceMean)),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 6,
-        }, formatNumber(datum.treatmentA_AbundanceMedian)),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 7,
-        }, formatNumber(datum.treatmentB_AbundanceMean)),
-
-        h(TableCell, {
-          columnWidths,
-          columnNumber: 8,
-        }, formatNumber(datum.treatmentB_AbundanceMedian)),
-      ])
-    )
-  }
 }
+*/
 
 const TableHeaderWrapper = styled.div`
   height: ${HEADER_HEIGHT}px;
@@ -281,7 +322,9 @@ const TableHeaderRow = styled.div`
   line-height: ${HEADER_HEIGHT / 3}px;
 `
 
-const TableBodyWrapper = styled.div`
+const TableBodyWrapper = styled.div<{
+  tableWidthSet: boolean;
+}>`
   width: 100%;
   height: calc(100% - ${HEADER_HEIGHT}px);
   background-color: white;
@@ -296,7 +339,11 @@ const TableBodyWrapper = styled.div`
   }
 `
 
-const TableHeaderCell = styled.span`
+const TableHeaderCell = styled.span<{
+  left: number;
+  clickable: number;
+  css: CSSObject;
+}>`
   position: absolute;
   font-weight: bold;
   user-select: none;

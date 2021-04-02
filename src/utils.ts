@@ -193,8 +193,8 @@ export function getDefaultGrid(treatments: Array<TreatmentName>) {
   return R.splitEvery(numPerRow, treatments)
 }
 
-export function formatNumber(number: number, places=2) {
-  if (number == null) {
+export function formatNumber(number: number | null, places=2) {
+  if (number === null) {
     return '--'
   } else if (number === 0) {
     return '0'
