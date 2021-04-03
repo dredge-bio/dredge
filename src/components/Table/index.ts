@@ -4,11 +4,15 @@ import * as R from 'ramda'
 import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
 
-import { useAppDispatch, useResizeCallback } from '../hooks'
-import { useView, useViewProject } from '../view'
-import { DifferentialExpression } from '../types'
-import { formatNumber } from '../utils'
+import { useAppDispatch, useResizeCallback } from '../../hooks'
+import { useView, useViewProject } from '../../view'
+import { DifferentialExpression } from '../../types'
+import { formatNumber } from '../../utils'
 
+import { TranscriptData } from './types'
+import TranscriptRow from './Row'
+
+const { useEffect, useState } = React
 
 const TableWrapper = styled.div`
   position: relative;
@@ -57,29 +61,6 @@ const TableWrapper = styled.div`
   }
 `
 
-type TableCellProps = {
-  columnWidths: number[],
-  columnNumber: number,
-}
-
-
-function TableCell(props: React.PropsWithChildren<TableCellProps>) {
-  const { columnWidths, columnNumber, children } = props
-      , left = R.sum(columnWidths.slice(0, columnNumber))
-      , width = columnWidths[columnNumber]
-
-  return (
-    React.createElement('div', {
-      style: {
-        padding: 0,
-        position: 'absolute',
-        left,
-        width,
-      },
-    }, children)
-  )
-}
-
 const HEADER_HEIGHT = 84;
 
 const FIELDS = [
@@ -112,204 +93,6 @@ function calcColumnWidths(width: number) {
   ]
 }
 
-type TranscriptCallback = (transcript: string | null) => void
-
-type TranscriptData = {
-  displayedTranscripts: Array<DifferentialExpression>;
-  savedTranscripts: Set<string>;
-  pValueThreshold: number;
-  columnWidths: number[];
-  focusedTranscript: string | null;
-
-  setHoveredTranscript: TranscriptCallback;
-  addSavedTranscript: TranscriptCallback;
-  removeSavedTranscript: TranscriptCallback;
-  setFocusedTranscript: TranscriptCallback;
-}
-
-
-type TranscriptRowProps = {
-  index: number;
-  data: TranscriptData;
-  style: Partial<CSSStyleDeclaration>;
-}
-
-function handleRowMouseEvent(dispatch: ReturnType<typeof useAppDispatch>) {
-  return (e: React.MouseEvent) => {
-    let transcript: string | null
-
-    if (e.type === 'mouseenter') {
-      transcript = (e.target as HTMLElement).dataset.transcriptName!
-    } else {
-      transcript = null
-    }
-  }
-}
-
-function TranscriptRow(props: TranscriptRowProps) {
-  const { data, index, style } = props
-      , { columnWidths } = data
-      , datum = data.displayedTranscripts[index]!
-      , dispatch = useAppDispatch()
-      , handler = handleRowMouseEvent(dispatch) // FIXME: Share this among all rows
-      , saved = data.savedTranscripts.has(datum.name)
-
-  const extraStyle: Partial<CSSStyleDeclaration> = {}
-
-  if (data.focusedTranscript === datum.name) {
-    extraStyle.backgroundColor = '#e6e6e6'
-  }
-
-  if (datum.pValue === null || datum.pValue > data.pValueThreshold) {
-    extraStyle.color = '#aaa'
-  }
-
-  return (
-    h('div', {
-      className: 'transcript-row',
-      ['data-transcript-name']: datum.name,
-      onMouseEnter: handler,
-      onMouseLeave: handler,
-      // onClick: this.handleClick,
-      style: {
-        ...style,
-        ...extraStyle,
-      },
-    }, [
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 0,
-      }, [
-        h('a', {
-          className: 'transcript-save-marker',
-          href: '',
-          style: {
-            color: saved ? 'orangered' : 'blue',
-          },
-          onClick(e: React.MouseEvent) {
-            e.preventDefault()
-
-            if (saved) {
-              data.removeSavedTranscript(datum.name)
-            } else {
-              data.addSavedTranscript(datum.name)
-            }
-
-          },
-        }, saved ? '×' : '<'),
-      ]),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 1,
-      }, [
-        h('div.transcript-label', datum.name),
-      ]),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 2,
-      }, formatNumber(datum.pValue, 3)),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 3,
-      }, formatNumber(datum.logATA)),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 4,
-      }, formatNumber(datum.logFC)),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 5,
-      }, formatNumber(datum.treatmentA_AbundanceMean)),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 6,
-      }, formatNumber(datum.treatmentA_AbundanceMedian)),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 7,
-      }, formatNumber(datum.treatmentB_AbundanceMean)),
-
-      h(TableCell, {
-        columnWidths,
-        columnNumber: 8,
-      }, formatNumber(datum.treatmentB_AbundanceMedian)),
-    ])
-  )
-}
-
-/*
-class TranscriptRow extends React.Component {
-  constructor() {
-    super()
-
-    this.handleMouseEnter = this.handleMouseEnter.bind(this)
-    this.handleMouseLeave = this.handleMouseLeave.bind(this)
-    this.handleClick = this.handleClick.bind(this)
-  }
-
-  get datum() {
-    const { index } = this.props
-
-    return this.props.data.displayedTranscripts[index]
-  }
-
-  shouldComponentUpdate(nextProps) {
-    let update = false
-
-    for (const k in nextProps.data) {
-      if (k === 'focusedTranscript') {
-        const transcriptID = this.datum.name
-
-        update = (
-          (nextProps.data[k] === transcriptID && this.props.data[k] !== transcriptID) ||
-          (nextProps.data[k] !== transcriptID && this.props.data[k] === transcriptID)
-        )
-      } else if (k === 'pValueThreshold') {
-        const pValueMeasure = this.datum.pValue
-
-        update = (
-          (pValueMeasure < nextProps.data[k] && pValueMeasure >= this.props.data[k]) ||
-          (pValueMeasure >= nextProps.data[k] && pValueMeasure < this.props.data[k])
-        )
-      } else if (nextProps.data[k] !== this.props.data[k]) {
-        update = true
-      }
-
-      if (update) break;
-    }
-
-    return update
-  }
-
-  handleMouseEnter(e) {
-    const { setHoveredTranscript } = this.props.data
-
-    setHoveredTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
-  }
-
-  handleMouseLeave() {
-    const { setHoveredTranscript } = this.props.data
-
-    setHoveredTranscript(null)
-  }
-
-  handleClick(e) {
-    const { setFocusedTranscript } = this.props.data
-
-    if (e.target.nodeName.toLowerCase() === 'a') return
-
-    setFocusedTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
-  }
-}
-*/
-
 const TableHeaderWrapper = styled.div`
   height: ${HEADER_HEIGHT}px;
   background-color: #f0f0f0;
@@ -341,8 +124,8 @@ const TableBodyWrapper = styled.div<{
 
 const TableHeaderCell = styled.span<{
   left: number;
-  clickable: number;
-  css: CSSObject;
+  clickable?: boolean;
+  css?: CSSObject;
 }>`
   position: absolute;
   font-weight: bold;
@@ -353,6 +136,166 @@ const TableHeaderCell = styled.span<{
   ${props => props.clickable ? 'cursor: pointer;' : ''}
   ${props => props.css}
 `
+
+type DimensionState = null | {
+  height: number;
+  width: number;
+  widthWithScrollbar: number;
+  columnWidths: number[];
+}
+
+export default function _Table() {
+  const view = useView()
+      , project = useViewProject()
+      , [ dimensions, setDimensions ] = useState<DimensionState>(null)
+
+  const ref = useResizeCallback(el => {
+    const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
+
+    const dims = {
+      height: tableEl.clientHeight,
+      width: tableEl.clientWidth,
+
+      // FIXME: is this right?
+      widthWithScrollbar: tableEl.offsetWidth,
+    }
+
+    setDimensions({
+      ...dims,
+      columnWidths: calcColumnWidths(dims.width),
+    })
+  })
+
+  useEffect(() => {
+    const cb = () => {
+    }
+
+    window.addEventListener('keydown', cb)
+    return () => {
+      window.removeEventListener('keydown', cb)
+    }
+  }, [])
+
+  const {
+    comparedTreatments,
+    savedTranscripts,
+    focusedTranscript,
+    displayedTranscripts,
+    order,
+    pValueThreshold,
+  } = view
+
+  let treatmentALabel: string | null = null
+    , treatmentBLabel: string | null = null
+
+  if (comparedTreatments) {
+    const [ treatmentA, treatmentB ] = comparedTreatments
+
+    treatmentALabel = project.data.treatments.get(treatmentA)?.label || treatmentA
+    treatmentBLabel = project.data.treatments.get(treatmentB)?.label || treatmentB
+  }
+
+
+  return (
+    h(TableWrapper, [
+      h(TableHeaderWrapper, dimensions && [
+        h('div', [-2, -4].map(col =>
+          h('span', {
+            style: {
+              position: 'absolute',
+              left: R.sum(dimensions.columnWidths.slice(0, col)) - 8,
+              top: 0,
+              bottom: 0,
+              borderLeft: '1px solid #ccc',
+            },
+          })
+        )),
+
+        h(TableHeaderRow, [
+          dimensions && h(TableHeaderCell, {
+            left: R.sum(dimensions.columnWidths.slice(0, -4)),
+            css: {
+              right: 0,
+              borderBottom: '1px solid #ccc',
+              backgroundColor: '#f0f0f0',
+              marginLeft: '-7px',
+              paddingLeft: '7px',
+            },
+          }, 'Treatment abundance'),
+        ]),
+
+        h(TableHeaderRow, [
+          h('div', {
+            style: {
+              marginLeft: 24,
+            },
+          }, this.getDisplayMessage()),
+
+          dimensions && h(TableHeaderCell, {
+            left: R.sum(dimensions.columnWidths.slice(0, -4)),
+          }, treatmentALabel),
+
+          dimensions && h(TableHeaderCell, {
+            left: R.sum(dimensions.columnWidths.slice(0, -2)),
+          }, treatmentBLabel),
+        ]),
+
+        h(TableHeaderRow, FIELDS.slice(1).map(({ label, sortPath }, i) =>
+          h(TableHeaderCell, {
+            key: i,
+            left: R.sum(dimensions.columnWidths.slice(0, i + 1)),
+            clickable: true,
+            onClick: () => {
+              dispatch(Action.UpdateSortForTreatments(
+                sortPath,
+                (R.equals(view.sortPath, sortPath) && order === 'asc')
+                  ? 'desc'
+                  : 'asc'
+              ))
+            },
+          }, [
+            label,
+            R.equals(sortPath, view.sortPath)
+              ? h('span', {
+                  style: {
+                    position: 'relative',
+                    fontSize: 10,
+                    top: -1,
+                    left: 1,
+                  },
+                }, view.order === 'asc' ? ' ▾' : ' ▴')
+              : null,
+          ])
+        )),
+      ]),
+
+      h(TableBodyWrapper, {
+        className: 'table-scroll',
+        tableWidthSet: dimensions !== null,
+      }, dimensions && displayedTranscripts && (
+        h(List, {
+          overscanCount: 10,
+          height: dimensions.height,
+          itemCount: displayedTranscripts.length,
+          itemData: {
+            focusedTranscript,
+            displayedTranscripts,
+            savedTranscripts,
+            setHoveredTranscript: this.setHoveredTranscript,
+            addSavedTranscript: this.addSavedTranscript,
+            removeSavedTranscript: this.removeSavedTranscript,
+            setFocusedTranscript: this.setFocusedTranscript,
+            pValueThreshold,
+            columnWidths: dimensions.columnWidths,
+            focusedTranscript,
+          },
+          itemSize: 24,
+          width: dimensions.widthWithScrollbar,
+        }, TranscriptRow),
+      ))
+    ])
+  )
+}
 
 class Table extends React.Component {
   constructor() {
@@ -614,15 +557,3 @@ class Table extends React.Component {
     )
   }
 }
-
-module.exports = R.pipe(
-  connect(state => ({
-    view: state.view,
-    project: projectForView(state) || {},
-  })),
-  onResize(el => ({
-    height: el.querySelector('.table-scroll').clientHeight,
-    width: el.querySelector('.table-scroll').clientWidth,
-    widthWithScrollbar: el.querySelector('.table-scroll').innerWidth,
-  })),
-)(Table)
