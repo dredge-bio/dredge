@@ -154,7 +154,7 @@ export const getDefaultPairwiseComparison = createAsyncAction<
 >('get-default-pairwise-comparison', async (_, { getState }) => {
   const project = projectForView(getState())
       , { treatments } = project.data
-      , [ treatmentA, treatmentB ] = Object.keys(treatments)
+      , [ treatmentA, treatmentB ] = Array.from(treatments.keys())
 
   return {
     treatmentA,
