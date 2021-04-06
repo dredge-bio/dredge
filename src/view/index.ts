@@ -1,12 +1,12 @@
 import * as actions from './actions'
 import reducer from './reducer'
 
-import { useTreatments, useView, useViewProject } from './hooks'
+import { useView, useViewProject, useViewOptions } from './hooks'
 
 export {
   actions,
   reducer,
-  useTreatments,
   useView,
-  useViewProject
+  useViewProject,
+  useViewOptions
 }

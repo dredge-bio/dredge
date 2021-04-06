@@ -1,11 +1,16 @@
-"use strict";
-
 import h from 'react-hyperscript'
 import styled from 'styled-components'
-import { useTreatments } from '../view'
+import * as React from 'react'
+import { unwrapResult } from '@reduxjs/toolkit'
+
+import { useViewOptions } from '../view'
+import { useAppDispatch } from '../hooks'
+import { actions as viewActions } from '../view'
 
 import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
+
+const { useEffect } = React
 
 /*
 const h = require('react-hyperscript')
@@ -49,10 +54,27 @@ const GridArea = styled.div<GridAreaProps>`
 `
 
 export default function View() {
-  const treatmentA = '4mic'
-      , treatmentB = '4mac'
+  const dispatch = useAppDispatch()
+      , [ viewOptions, updateViewOptions ] = useViewOptions()
+      , { treatmentA, treatmentB } = viewOptions
 
-  useTreatments([treatmentA, treatmentB])
+  useEffect(() => {
+    if (!treatmentA || !treatmentB) {
+      dispatch(viewActions.getDefaultPairwiseComparison())
+        .then(unwrapResult)
+        .then(({ treatmentA, treatmentB}) => {
+          updateViewOptions({
+            treatmentA,
+            treatmentB,
+          })
+        })
+    } else {
+      dispatch(viewActions.setPairwiseComparison({
+        treatmentAKey: treatmentA,
+        treatmentBKey: treatmentB,
+      }))
+    }
+  }, [treatmentA, treatmentB])
 
   return (
     h(ViewerContainer, [
@@ -64,8 +86,9 @@ export default function View() {
           useSelectBackup: true,
           selectedTreatment: treatmentA,
           onSelectTreatment: treatment => {
-            console.log(treatment)
-            // updateOpts(opts => Object.assign({}, opts, { treatmentA: treatment }))
+            updateViewOptions({
+              treatmentA: treatment,
+            })
           },
           tooltipPos: 'bottom' as const,
         }),
@@ -79,8 +102,9 @@ export default function View() {
           useSelectBackup: true,
           selectedTreatment: treatmentB,
           onSelectTreatment: treatment => {
-            console.log(treatment)
-            // updateOpts(opts => Object.assign({}, opts, { treatmentB: treatment }))
+            updateViewOptions({
+              treatmentB: treatment
+            })
           },
           tooltipPos: 'top' as const,
         }),
