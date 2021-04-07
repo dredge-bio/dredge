@@ -274,8 +274,10 @@ export const updateDisplayedTranscripts = createAsyncAction<
     listedTranscripts = selectedBinTranscripts
   } else if (hoveredBinTranscripts) {
     listedTranscripts = hoveredBinTranscripts
-  } else {
+  } else if (savedTranscripts.size) {
     listedTranscripts = savedTranscripts
+  } else {
+    listedTranscripts = new Set(pairwiseData.keys())
   }
 
   let displayedTranscripts = sortedTranscripts
