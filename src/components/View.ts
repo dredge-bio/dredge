@@ -3,33 +3,14 @@ import styled from 'styled-components'
 import * as React from 'react'
 import { unwrapResult } from '@reduxjs/toolkit'
 
-import { useViewOptions } from '../view'
+import { useViewOptions, useView } from '../view'
 import { useAppDispatch } from '../hooks'
 import { actions as viewActions } from '../view'
 
 import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
 
-const { useEffect } = React
-
-/*
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , React = require('react')
-    , styled = require('styled-components').default
-    , { Navigable } = require('org-shell')
-    , { connect } = require('react-redux')
-    , { Box, Button } = require('rebass')
-    , MAPlot = require('./MAPlot')
-    , TreatmentSelector = require('./TreatmentSelector')
-    , Action = require('../actions')
-    , Table = require('./Table')
-    , WatchedTranscripts = require('./WatchedTranscripts')
-    , InfoBox = require('./InfoBox')
-    , PValueSelector = require('./PValueSelector')
-    , Log = require('./Log')
-    , ProjectLoading = require('./ProjectLoading')
-  */
+const { useEffect, useState } = React
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -57,6 +38,26 @@ export default function View() {
   const dispatch = useAppDispatch()
       , [ viewOptions, updateViewOptions ] = useViewOptions()
       , { treatmentA, treatmentB } = viewOptions
+      , view = useView()
+
+  useEffect(() => {
+    dispatch(viewActions.updateSortForTreatments({
+      sortPath: view.sortPath,
+      order: view.order,
+    }))
+  }, [ view.pairwiseData ])
+
+  useEffect(() => {
+    dispatch(viewActions.updateDisplayedTranscripts())
+  }, [
+    view.sortedTranscripts,
+    view.order,
+    view.sortPath,
+    view.savedTranscripts,
+    view.pValueThreshold,
+    view.brushedArea,
+    view.selectedBinTranscripts,
+  ])
 
   useEffect(() => {
     if (!treatmentA || !treatmentB) {
