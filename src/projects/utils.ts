@@ -121,7 +121,7 @@ export const getColorScaleLookup = memoizeForProject(
 
 const transcriptLookupCache: WeakMap<
   object,
-  (transcriptID: string) => string
+  (transcriptID: string) => string | null
 > = new WeakMap()
 
 export const getTranscriptLookup = memoizeForProject(
@@ -131,7 +131,7 @@ export const getTranscriptLookup = memoizeForProject(
     const { transcriptCorpus } = project.data
 
     const fn = function getCanonicalTranscriptLabel(transcriptName: string) {
-      return transcriptCorpus[transcriptName]
+      return transcriptCorpus[transcriptName] || null
     }
 
     return fn
