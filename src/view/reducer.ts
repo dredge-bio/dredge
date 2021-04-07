@@ -36,7 +36,7 @@ function blankView(source: ProjectSource): ViewState {
 
     displayedTranscripts: null,
     order: 'asc',
-    sortPath: 'name',
+    sortPath: 'label',
   }
 }
 

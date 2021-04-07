@@ -65,7 +65,7 @@ const HEADER_HEIGHT = 84;
 
 const FIELDS = [
   { sortPath: '', label: '' },
-  { sortPath: 'name', label: 'Transcript' },
+  { sortPath: 'label', label: 'Transcript' },
   { sortPath: 'pValue', label: 'P-Value' },
   { sortPath: 'logATA', label: 'logATA' },
   { sortPath: 'logFC', label: 'logFC' },

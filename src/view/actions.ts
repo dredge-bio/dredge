@@ -106,7 +106,8 @@ export const setPairwiseComparison = createAsyncAction<
         minPValue = pValue
       }
 
-      const name = getCanonicalTranscriptLabel(id)
+      const name = id
+          , label = getCanonicalTranscriptLabel(name) || name
 
       const [
         treatmentA_AbundanceMean=null,
@@ -122,6 +123,7 @@ export const setPairwiseComparison = createAsyncAction<
 
       return [name, {
         name,
+        label,
         treatmentA_AbundanceMean,
         treatmentA_AbundanceMedian,
         treatmentB_AbundanceMean,
@@ -185,8 +187,8 @@ export const updateSortForTreatments = createAsyncAction<
       , resolvedOrder = order || view.order
 
   const getter =
-    resolvedSortPath === 'name'
-      ? (d: DifferentialExpression) => d.name.toLowerCase()
+    resolvedSortPath === 'label'
+      ? (d: DifferentialExpression) => d.label.toLowerCase()
       : (d: DifferentialExpression) => d[resolvedSortPath]
 
   const comparator = (resolvedOrder === 'asc' ? R.ascend : R.descend)(R.identity)
@@ -287,11 +289,14 @@ export const updateDisplayedTranscripts = createAsyncAction<
   const alphaSort = R.sort((a: DifferentialExpression, b: DifferentialExpression) =>
     comparator(a.name.toLowerCase(), b.name.toLowerCase()))
 
+  const getCanonicalTranscriptLabel = getTranscriptLookup(project)
+
   const extraTranscripts: Array<DifferentialExpression> = Array.from(listedTranscripts)
     .filter(name => !pairwiseData.has(name))
     .map(name => ({
       // FIXME
-      name: project.getCanonicalTranscriptLabel(name),
+      name: name,
+      label: getCanonicalTranscriptLabel(name) || name,
 
       treatmentA_AbundanceMean: null,
       treatmentA_AbundanceMedian: null,

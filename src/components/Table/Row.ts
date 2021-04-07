@@ -108,7 +108,7 @@ export default function TranscriptRow(props: TranscriptRowProps) {
         columnWidths,
         columnNumber: 1,
       }, [
-        h('div.transcript-label', datum.name),
+        h('div.transcript-label', datum.label),
       ]),
 
       h(TableCell, {

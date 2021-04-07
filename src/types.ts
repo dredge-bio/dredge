@@ -47,8 +47,8 @@ export type ProjectTreatments = Map<TreatmentName, ProjectTreatment>
 // added a transcript from the search bar, or maybe a certain transcript has
 // zeroes on some treatments versus others
 export interface DifferentialExpression {
-  // FIXME: rename this to transcriptName
   name: TranscriptName;
+  label: string,
 
   treatmentA_AbundanceMean: number | null;
   treatmentA_AbundanceMedian: number | null;
@@ -66,7 +66,7 @@ export interface PairwiseComparison extends Map<string, DifferentialExpression> 
 }
 
 export type SortPath =
-  'name' |
+  'label' |
   'pValue' |
   'logATA' |
   'logFC' |
