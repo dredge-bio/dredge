@@ -312,7 +312,7 @@ async function buildTranscriptCorpus(transcripts: string[], transcriptAliases: R
 
   let i = 0
   for (const [ transcript, aliases ] of Object.entries(transcriptAliases)) {
-    for (const alias in [...aliases, transcript]) {
+    for (const alias of [...aliases, transcript]) {
       // FIXME: This should probably throw if an alias is not unique (i.e. can
       // can identify two different transcripts)
       corpus[alias] = transcript
