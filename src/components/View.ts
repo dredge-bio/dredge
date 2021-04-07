@@ -9,6 +9,7 @@ import { actions as viewActions } from '../view'
 
 import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
+import Table from './Table'
 
 const { useEffect, useState } = React
 
@@ -104,7 +105,7 @@ export default function View() {
           selectedTreatment: treatmentB,
           onSelectTreatment: treatment => {
             updateViewOptions({
-              treatmentB: treatment
+              treatmentB: treatment,
             })
           },
           tooltipPos: 'top' as const,
@@ -114,6 +115,29 @@ export default function View() {
       h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
         h(MAPlot)
       ),
+
+      h(GridArea, { column: '12 / span 13', row: '1 / span 9' }, [
+        h('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+          },
+        }, [
+          // h(WatchedTranscripts),
+          h('div', {
+            ['data-area']: 'table',
+
+            // This sucks big time
+            style: {
+              flex: 1,
+              maxHeight: 'calc(100% - 84px)',
+            },
+          }, [
+            h(Table),
+          ]),
+        ]),
+      ]),
     ])
   )
 }

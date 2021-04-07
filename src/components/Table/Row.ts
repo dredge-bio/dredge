@@ -11,7 +11,7 @@ import { TranscriptData } from './types'
 type TranscriptRowProps = {
   index: number;
   data: TranscriptData;
-  style: CSSObject;
+  style: React.CSSProperties;
 }
 
 

@@ -5,11 +5,11 @@ import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
 
 import { useAppDispatch, useResizeCallback } from '../../hooks'
-import { useView, useViewProject } from '../../view'
+import { useView, useViewProject, actions as viewActions } from '../../view'
 import { DifferentialExpression } from '../../types'
 import { formatNumber } from '../../utils'
 
-import { TranscriptData } from './types'
+import { TranscriptData, SortPath } from './types'
 import TranscriptRow from './Row'
 
 const { useEffect, useState } = React
@@ -147,6 +147,7 @@ type DimensionState = null | {
 export default function _Table() {
   const view = useView()
       , project = useViewProject()
+      , dispatch = useAppDispatch()
       , [ dimensions, setDimensions ] = useState<DimensionState>(null)
 
   const ref = useResizeCallback(el => {
@@ -195,9 +196,8 @@ export default function _Table() {
     treatmentBLabel = project.data.treatments.get(treatmentB)?.label || treatmentB
   }
 
-
   return (
-    h(TableWrapper, [
+    h(TableWrapper, { ref }, [
       h(TableHeaderWrapper, dimensions && [
         h('div', [-2, -4].map(col =>
           h('span', {
@@ -229,7 +229,7 @@ export default function _Table() {
             style: {
               marginLeft: 24,
             },
-          }, this.getDisplayMessage()),
+          }, /* FIXME this.getDisplayMessage() */),
 
           dimensions && h(TableHeaderCell, {
             left: R.sum(dimensions.columnWidths.slice(0, -4)),
@@ -246,12 +246,12 @@ export default function _Table() {
             left: R.sum(dimensions.columnWidths.slice(0, i + 1)),
             clickable: true,
             onClick: () => {
-              dispatch(Action.UpdateSortForTreatments(
-                sortPath,
-                (R.equals(view.sortPath, sortPath) && order === 'asc')
+              dispatch(viewActions.updateSortForTreatments({
+                sortPath: sortPath as SortPath,
+                order: (R.equals(view.sortPath, sortPath) && order === 'asc')
                   ? 'desc'
                   : 'asc'
-              ))
+              }))
             },
           }, [
             label,
@@ -273,7 +273,7 @@ export default function _Table() {
         className: 'table-scroll',
         tableWidthSet: dimensions !== null,
       }, dimensions && displayedTranscripts && (
-        h(List, {
+        React.createElement(List, {
           overscanCount: 10,
           height: dimensions.height,
           itemCount: displayedTranscripts.length,
@@ -281,22 +281,27 @@ export default function _Table() {
             focusedTranscript,
             displayedTranscripts,
             savedTranscripts,
-            setHoveredTranscript: this.setHoveredTranscript,
-            addSavedTranscript: this.addSavedTranscript,
-            removeSavedTranscript: this.removeSavedTranscript,
-            setFocusedTranscript: this.setFocusedTranscript,
+            setHoveredTranscript: noop,
+            addSavedTranscript: noop,
+            removeSavedTranscript: noop,
+            setFocusedTranscript: noop,
             pValueThreshold,
             columnWidths: dimensions.columnWidths,
-            focusedTranscript,
           },
           itemSize: 24,
           width: dimensions.widthWithScrollbar,
-        }, TranscriptRow),
+          children: TranscriptRow
+        })
       ))
     ])
   )
 }
 
+function noop() {
+  return
+}
+
+/*
 class Table extends React.Component {
   constructor() {
     super()
@@ -557,3 +562,4 @@ class Table extends React.Component {
     )
   }
 }
+*/
