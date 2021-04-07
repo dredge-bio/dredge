@@ -221,10 +221,7 @@ function withinBounds(min: number, max: number, value: number | null) {
 }
 
 export const updateDisplayedTranscripts = createAsyncAction<
-  {
-    sortPath: SortPath | void,
-    order: SortOrder | void,
-  },
+  void,
   {
     displayedTranscripts: Array<DifferentialExpression>
   }

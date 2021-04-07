@@ -89,18 +89,9 @@ const reducer = createReducer(null as MultiViewState, builder => {
     .addCase(viewActions.updateDisplayedTranscripts.fulfilled, (state, action) => {
       if (!state) return
 
-      const { sortPath, order } = action.meta.arg
-          , { displayedTranscripts } = action.payload
+      const { displayedTranscripts } = action.payload
 
       state.default.displayedTranscripts = displayedTranscripts
-
-      if (sortPath) {
-        state.default.sortPath = sortPath
-      }
-
-      if (order) {
-        state.default.order = order
-      }
     })
     .addCase(viewActions.setSavedTranscripts.fulfilled, (state, action) => {
       if (!state) return
