@@ -49,6 +49,18 @@ const reducer = createReducer(null as MultiViewState, builder => {
         default: blankView(action.meta.arg.source),
       }
     })
+    .addCase(viewActions.setPairwiseComparison.pending, (state, action) => {
+      if (!state) return
+      const { treatmentAKey, treatmentBKey } = action.meta.arg
+
+      state.default = {
+        ...state.default,
+        loading: true,
+        pairwiseData: null,
+        displayedTranscripts: null,
+        comparedTreatments: [treatmentAKey, treatmentBKey],
+      }
+    })
     .addCase(viewActions.setPairwiseComparison.fulfilled, (state, action) => {
       if (!state) return
 
