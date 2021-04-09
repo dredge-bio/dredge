@@ -10,6 +10,7 @@ import { actions as viewActions } from '../view'
 import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
 import Table from './Table'
+import InfoBox from './InfoBox'
 
 const { useEffect, useState } = React
 
@@ -138,6 +139,10 @@ export default function View() {
           ]),
         ]),
       ]),
+
+      h(GridArea, { column: '12 / span 13', row: '10 / span 3' },
+        h(InfoBox),
+      ),
     ])
   )
 }
@@ -284,9 +289,6 @@ class Viewer extends React.Component {
           ]),
         ]),
 
-        h(GridArea, { column: '12 / span 13', row: '10 / span 3' },
-          h(InfoBox, { updateOpts })
-        ),
       ])
     )
   }

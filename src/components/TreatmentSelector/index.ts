@@ -1,9 +1,12 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as React from 'react'
+import * as d3 from 'd3'
 
 import { TreatmentName } from '../../types'
-import { useViewProject } from '../../view'
+import { useView, useViewProject, actions as viewActions } from '../../view'
+import { getColorScaleLookup, getAbundanceLookup } from '../../projects'
+import { useAppDispatch } from '../../hooks'
 
 import TreatmentSelect from './Select'
 import Tooltip from './Tooltip'
@@ -11,10 +14,11 @@ import Tooltip from './Tooltip'
 const { useEffect, useRef, useCallback, useState } = React
 
 type SelectorProps = {
-  useSelectBackup: boolean;
-  selectedTreatment: TreatmentName | null;
+  selectedTreatment?: TreatmentName | null;
   onSelectTreatment: (treatment: TreatmentName, bottom?: boolean) => void;
   tooltipPos: 'bottom' | 'top';
+  heatMap?: boolean;
+  useSelectBackup?: boolean;
   paintHovered?: boolean;
 }
 
@@ -61,11 +65,17 @@ const SelectorWrapper = styled.div`
 
 export default function TreatmentSelector(props: SelectorProps) {
   const project = useViewProject()
+      , view = useView()
       , svgRef = useRef<SVGSVGElement>()
-      , { svg } = project.data
+      , dispatch = useAppDispatch()
+      , { svg, treatments } = project.data
+      , colorScaleForTranscript = getColorScaleLookup(project)
+      , abundancesForTreatmentTranscript = getAbundanceLookup(project)
 
   const {
+    heatMap,
     tooltipPos,
+    paintHovered,
     useSelectBackup,
     selectedTreatment,
     onSelectTreatment,
@@ -94,11 +104,14 @@ export default function TreatmentSelector(props: SelectorProps) {
 
       Array.from(el.querySelectorAll('[data-treatment]')).forEach(el => {
         el.addEventListener('mouseenter', () => {
-          setLocalHoveredTreatment((el as SVGElement).dataset.treatment || null)
+          const treatment = (el as SVGElement).dataset.treatment || null
+          setLocalHoveredTreatment(treatment)
+          dispatch(viewActions.setHoveredTreatment({ treatment }))
         })
 
         el.addEventListener('mouseleave', () => {
           setLocalHoveredTreatment(null)
+          dispatch(viewActions.setHoveredTreatment({ treatment: null }))
         })
       })
 
@@ -124,6 +137,69 @@ export default function TreatmentSelector(props: SelectorProps) {
     })
   }, [selectedTreatment])
 
+  useEffect(() => {
+    const svgEl = svgRef.current
+
+    if (!heatMap) return
+    if (!svgEl) return
+
+    const elsForTreatments = new Map([...treatments.keys()].map(treatment => {
+      const treatmentEls = Array.from(svgEl.querySelectorAll(`[data-treatment="${treatment}"]`)) as SVGElement[]
+
+      return [treatment, treatmentEls]
+    }))
+
+    elsForTreatments.forEach(els => {
+      els.forEach(el => {
+        el.style.fill = 'none'
+      })
+    })
+
+    const transcript = view.hoveredTranscript || view.focusedTranscript
+
+    if (!transcript) return
+
+    const colorScale = colorScaleForTranscript(transcript)
+
+    elsForTreatments.forEach((treatmentEls, treatment) => {
+      const abundances = abundancesForTreatmentTranscript(treatment, transcript)
+
+      let abundanceMean: number
+
+      if (abundances === null) {
+        abundanceMean = 0
+      } else {
+        abundanceMean = d3.mean(abundances) || 0
+      }
+
+      treatmentEls.forEach(el => {
+        el.style.fill = colorScale(abundanceMean)
+      })
+    })
+
+  }, [view.hoveredTranscript, view.focusedTranscript])
+
+  useEffect(() => {
+    const svgEl = svgRef.current
+
+    if (!paintHovered) return
+    if (!svgEl) return
+
+    Array.from(svgEl.querySelectorAll('[data-treatment]')).forEach(el => {
+      el.classList.remove('active')
+    })
+
+    const treatmentEls = Array.from(
+      svgEl.querySelectorAll(`[data-treatment="${view.hoveredTreatment}"]`)) as SVGElement[]
+
+    console.log(treatmentEls)
+
+    treatmentEls.forEach(el => {
+      el.classList.add('active')
+    })
+
+  }, [view.hoveredTreatment])
+
   return (
     h(SelectorWrapper, [
       svg && h('div.svg-wrapper', [
@@ -137,7 +213,7 @@ export default function TreatmentSelector(props: SelectorProps) {
 
       !useSelectElement ? null : (
         React.createElement(TreatmentSelect, {
-          selectedTreatment,
+          selectedTreatment: selectedTreatment || null,
           onSelectTreatment(treatmentName: string) {
             onSelectTreatment(treatmentName)
           },
