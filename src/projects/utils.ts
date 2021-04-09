@@ -82,7 +82,7 @@ export const getAbundanceLookup = memoizeForProject(
 
 const colorScaleLookupCache: WeakMap<
   object,
-  (transcriptID: string) => d3.ScaleSequential<string, never>
+  (transcriptID: string) => d3.ScaleLinear<number, string>
 > = new WeakMap()
 
 export const getColorScaleLookup = memoizeForProject(
@@ -110,7 +110,7 @@ export const getColorScaleLookup = memoizeForProject(
         maxAbundance = minMax
       }
 
-      return d3.scaleSequential([0, maxAbundance], d3.interpolateOranges)
+      return d3.scaleSequential([0, maxAbundance], d3.interpolateOranges) as unknown as d3.ScaleLinear<number, string>
     })
 
     colorScaleLookupCache.set(abundances, fn)
