@@ -98,7 +98,7 @@ export const getColorScaleLookup = memoizeForProject(
 
       let maxAbundance = 1
 
-      Object.keys(treatments).forEach(treatmentID => {
+      Array.from(treatments.keys()).forEach(treatmentID => {
         const abundance = d3.mean(abundancesForTreatmentTranscript(treatmentID, transcriptName)) || 0
 
         if (abundance > maxAbundance) {

@@ -299,7 +299,7 @@ export const loadProject = createAsyncAction<
       transcriptIndices,
       replicateIndices,
       svg,
-      grid: grid || getDefaultGrid(Object.keys(treatments)),
+      grid: grid || getDefaultGrid([...treatments.keys()]),
       readme,
     },
     watchedTranscripts,
