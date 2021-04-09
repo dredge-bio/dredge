@@ -182,6 +182,51 @@ function drawSavedTranscripts() {
 function resetSelectedBin() {
 }
 
+function updateHoveredTranscript(
+  svgEl: SVGSVGElement,
+  dimensions: PlotDimensions,
+  props: PlotProps
+) {
+  const { xScale, yScale } = dimensions
+      , { hoveredTranscript, pairwiseData } = props
+
+  const container = d3.select(svgEl).select('.hovered-marker')
+
+  container.selectAll('circle')
+    .transition()
+    .duration(360)
+    .ease(d3.easeCubicOut)
+    .style('opacity', 0)
+    .remove()
+
+  if (hoveredTranscript === null) return;
+  if (pairwiseData === null) return;
+
+  const data = pairwiseData.get(hoveredTranscript)
+
+  if (!data) return
+
+  const { logATA, logFC } = data
+
+  if (logATA === null || logFC === null) return
+
+  container.append('circle')
+    .attr('cx', xScale(logATA))
+    .attr('cy', yScale(logFC))
+    .attr('r', 20)
+    .attr('opacity', 1)
+    .attr('fill', 'none')
+    .attr('stroke', 'coral')
+    .attr('stroke-width', 2)
+
+  container.append('circle')
+    .attr('cx', xScale(logATA))
+    .attr('cy', yScale(logFC))
+    .attr('opacity', 1)
+    .attr('r', 3)
+    .attr('fill', 'coral')
+}
+
 export default function Plot(props: PlotProps) {
   const [ transform, setTransform ] = useState<d3.ZoomTransform>(d3.zoomIdentity)
       , svgRef = useRef<SVGSVGElement>(null)
@@ -213,6 +258,12 @@ export default function Plot(props: PlotProps) {
       // resetSelectedBin()
     }
   }, [svgEl, dimensions, props.pairwiseData, props.pValueThreshold])
+
+  useEffect(() => {
+    if (svgEl !== null) {
+      updateHoveredTranscript(svgEl, dimensions, props)
+    }
+  }, [props.hoveredTranscript, props.pairwiseData, dimensions])
 
   return (
     h('svg', {

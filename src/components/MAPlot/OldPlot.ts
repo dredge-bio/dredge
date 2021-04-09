@@ -543,6 +543,7 @@ export default class Plot extends React.Component<PlotProps, PlotState> {
 
   }
 
+  /*
   updateHoveredTranscript() {
     const { xScale, yScale } = this.state
         , { hoveredTranscript, pairwiseData } = this.props
@@ -581,6 +582,7 @@ export default class Plot extends React.Component<PlotProps, PlotState> {
       .attr('r', 3)
       .attr('fill', 'coral')
   }
+  */
 
   render() {
     const {
