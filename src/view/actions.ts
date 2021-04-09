@@ -294,7 +294,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
     .filter(name => !pairwiseData.has(name))
     .map(name => ({
       // FIXME
-      name: name,
+      name,
       label: getCanonicalTranscriptLabel(name) || name,
 
       treatmentA_AbundanceMean: null,
@@ -315,7 +315,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
   // sorted lists progressively, but now we just resort the whole concatenated
   // list. If it's a bottleneck, we can go back to doing the old way.
 
-  if (sortPath === 'name') {
+  if (sortPath === 'label') {
     displayedTranscripts = alphaSort(displayedTranscripts)
   }
 
@@ -494,17 +494,17 @@ export const setBrushedArea = createAction(
 
 
 export const setHoveredTranscript = createAction<
-  { transcript: TranscriptName }
+  { transcript: TranscriptName | null }
 >('set-hovered-transcript')
 
 
 export const setHoveredTreatment = createAction<
-  { treatment: TreatmentName }
+  { treatment: TreatmentName | null }
 >('set-hovered-treatment')
 
 
 export const setFocusedTranscript = createAction<
-  { transcript: TranscriptName }
+  { transcript: TranscriptName | null }
 >('set-focused-transcript')
 
 

@@ -6,10 +6,10 @@ import { FixedSizeList as List } from 'react-window'
 
 import { useAppDispatch, useResizeCallback } from '../../hooks'
 import { useView, useViewProject, actions as viewActions } from '../../view'
-import { DifferentialExpression } from '../../types'
+import { DifferentialExpression, SortPath } from '../../types'
 import { formatNumber } from '../../utils'
 
-import { TranscriptData, SortPath } from './types'
+import { TranscriptData } from './types'
 import TranscriptRow from './Row'
 
 const { useEffect, useState } = React
@@ -196,6 +196,29 @@ export default function _Table() {
     treatmentBLabel = project.data.treatments.get(treatmentB)?.label || treatmentB
   }
 
+  const handlers = {
+    setHoveredTranscript(transcript: string | null) {
+      dispatch(viewActions.setHoveredTranscript({ transcript }))
+    },
+    setFocusedTranscript(transcript: string | null) {
+      dispatch(viewActions.setFocusedTranscript({ transcript }))
+    },
+    addSavedTranscript(transcript: string) {
+      const next = new Set([...savedTranscripts, transcript])
+
+      dispatch(viewActions.setSavedTranscripts({
+        transcriptNames: [...next],
+      }))
+    },
+    removeSavedTranscript(transcript: string) {
+      const next = new Set(savedTranscripts)
+      next.delete(transcript)
+      dispatch(viewActions.setSavedTranscripts({
+        transcriptNames: [...next],
+      }))
+    }
+  }
+
   return (
     h(TableWrapper, { ref }, [
       h(TableHeaderWrapper, dimensions && [
@@ -281,12 +304,9 @@ export default function _Table() {
             focusedTranscript,
             displayedTranscripts,
             savedTranscripts,
-            setHoveredTranscript: noop,
-            addSavedTranscript: noop,
-            removeSavedTranscript: noop,
-            setFocusedTranscript: noop,
             pValueThreshold,
             columnWidths: dimensions.columnWidths,
+            ...handlers,
           },
           itemSize: 24,
           width: dimensions.widthWithScrollbar,

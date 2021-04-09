@@ -38,14 +38,31 @@ function TableCell(props: React.PropsWithChildren<TableCellProps>) {
   )
 }
 
-function handleRowMouseEvent(dispatch: ReturnType<typeof useAppDispatch>) {
+function handleRowMouseEvent(
+  dispatch: ReturnType<typeof useAppDispatch>,
+  data: TranscriptData,
+) {
   return (e: React.MouseEvent) => {
     let transcript: string | null
 
+    const target = e.target as HTMLElement
+        , transcriptRow = target.closest('.transcript-row') as HTMLElement | null
+
     if (e.type === 'mouseenter') {
-      transcript = (e.target as HTMLElement).dataset.transcriptName!
-    } else {
-      transcript = null
+      if (!transcriptRow) return
+      transcript = transcriptRow.dataset.transcriptName!
+      data.setHoveredTranscript(transcript)
+    } else if (e.type === 'mouseleave') {
+      data.setHoveredTranscript(null)
+    } else if (e.type === 'click') {
+      if (target.nodeName.toLowerCase() === 'a' || !transcriptRow) return
+      transcript = transcriptRow.dataset.transcriptName!
+
+      if (data.focusedTranscript === transcript) {
+        data.setFocusedTranscript(null)
+      } else {
+        data.setFocusedTranscript(transcript)
+      }
     }
   }
 }
@@ -56,7 +73,7 @@ export default function TranscriptRow(props: TranscriptRowProps) {
       , { columnWidths } = data
       , datum = data.displayedTranscripts[index]!
       , dispatch = useAppDispatch()
-      , handler = handleRowMouseEvent(dispatch) // FIXME: Share this among all rows
+      , handler = handleRowMouseEvent(dispatch, data) // FIXME: Share this among all rows
       , saved = data.savedTranscripts.has(datum.name)
 
   const extraStyle: Partial<CSSStyleDeclaration> = {}
@@ -75,7 +92,7 @@ export default function TranscriptRow(props: TranscriptRowProps) {
       ['data-transcript-name']: datum.name,
       onMouseEnter: handler,
       onMouseLeave: handler,
-      // onClick: this.handleClick,
+      onClick: handler,
       style: {
         ...style,
         ...extraStyle,
