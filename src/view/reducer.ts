@@ -101,9 +101,12 @@ const reducer = createReducer(null as MultiViewState, builder => {
     .addCase(viewActions.updateDisplayedTranscripts.fulfilled, (state, action) => {
       if (!state) return
 
-      const { displayedTranscripts } = action.payload
+      const { source, displayedTranscripts } = action.payload
 
-      state.default.displayedTranscripts = displayedTranscripts
+      state.default.displayedTranscripts = {
+        source,
+        transcripts: displayedTranscripts,
+      }
     })
     .addCase(viewActions.setSavedTranscripts.fulfilled, (state, action) => {
       if (!state) return

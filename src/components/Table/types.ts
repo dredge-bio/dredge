@@ -1,9 +1,12 @@
-import { DifferentialExpression } from '../../types'
+import { DifferentialExpression, DisplayedTranscriptsSource } from '../../types'
 
 export type TranscriptCallback = (transcript: string | null) => void
 
 export type TranscriptData = {
-  displayedTranscripts: Array<DifferentialExpression>;
+  displayedTranscripts: {
+    source: DisplayedTranscriptsSource;
+    transcripts: Array<DifferentialExpression>;
+  };
   savedTranscripts: Set<string>;
   pValueThreshold: number;
   columnWidths: number[];

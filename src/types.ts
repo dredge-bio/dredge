@@ -77,6 +77,13 @@ export type SortPath =
 
 export type SortOrder = 'asc' | 'desc'
 
+export type DisplayedTranscriptsSource =
+  'all' |
+  'selectedBin' |
+  'hoveredBin' |
+  'brushed' |
+  'watched'
+
 export interface ViewState {
   source: ProjectSource;
   loading: boolean;
@@ -109,7 +116,10 @@ export interface ViewState {
   hoveredBinTranscripts: Set<TranscriptName> | null;
   selectedBinTranscripts: Set<TranscriptName> | null;
 
-  displayedTranscripts: Array<DifferentialExpression> | null;
+  displayedTranscripts: null | {
+    source: DisplayedTranscriptsSource,
+    transcripts: Array<DifferentialExpression>,
+  },
 
   order: SortOrder;
 

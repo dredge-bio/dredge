@@ -12,6 +12,7 @@ import {
   TranscriptName,
   PairwiseComparison,
   DifferentialExpression,
+  DisplayedTranscriptsSource,
   SortPath,
   SortOrder
 } from '../types'
@@ -223,7 +224,8 @@ function withinBounds(min: number, max: number, value: number | null) {
 export const updateDisplayedTranscripts = createAsyncAction<
   void,
   {
-    displayedTranscripts: Array<DifferentialExpression>
+    displayedTranscripts: Array<DifferentialExpression>,
+    source: DisplayedTranscriptsSource
   }
 >('update-displayed-transcripts', async (_, { getState }) => {
   const view = getState().view?.default
@@ -252,6 +254,8 @@ export const updateDisplayedTranscripts = createAsyncAction<
 
   let listedTranscripts: Set<TranscriptName> = new Set()
 
+  let source: DisplayedTranscriptsSource = 'all'
+
   if (pairwiseData && brushedArea) {
     const [ minLogATA, maxLogFC, maxLogATA, minLogFC ] = brushedArea
 
@@ -265,16 +269,21 @@ export const updateDisplayedTranscripts = createAsyncAction<
       )
     }
 
+    source = 'brushed'
+
     pairwiseData.forEach(transcript => {
       if (ok(transcript)) {
         listedTranscripts.add(transcript.name)
       }
     })
   } else if (selectedBinTranscripts) {
+    source = 'selectedBin'
     listedTranscripts = selectedBinTranscripts
   } else if (hoveredBinTranscripts) {
+    source = 'hoveredBin'
     listedTranscripts = hoveredBinTranscripts
   } else if (savedTranscripts.size) {
+    source = 'watched'
     listedTranscripts = savedTranscripts
   } else {
     listedTranscripts = new Set(pairwiseData.keys())
@@ -286,7 +295,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
   const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
 
   const alphaSort = R.sort((a: DifferentialExpression, b: DifferentialExpression) =>
-    comparator(a.name.toLowerCase(), b.name.toLowerCase()))
+    comparator(a.label.toLowerCase(), b.label.toLowerCase()))
 
   const getCanonicalTranscriptLabel = getTranscriptLookup(project)
 
@@ -319,7 +328,10 @@ export const updateDisplayedTranscripts = createAsyncAction<
     displayedTranscripts = alphaSort(displayedTranscripts)
   }
 
-  return { displayedTranscripts }
+  return {
+    displayedTranscripts,
+    source,
+  }
 })
 
 function getGlobalWatchedGenesKey() {
@@ -370,7 +382,8 @@ export const importSavedTranscripts = createAsyncAction<
   }
 
   const transcriptsInFile = rows.map(row => row[0])
-      , { getCanonicalTranscriptLabel } = projectForView(getState()) // FIXME
+      , project = projectForView(getState())
+      , getCanonicalTranscriptLabel = getTranscriptLookup(project)
       , newWatchedTranscripts = []
       , imported: Array<ImportedTranscript> = []
       , skipped: Array<string> = []
@@ -435,7 +448,7 @@ export const exportSavedTranscripts = createAsyncAction<
       ? ''
       : x.toString()
 
-  const rows = displayedTranscripts.map(row => ([
+  const rows = displayedTranscripts.transcripts.map(row => ([
     row.name,
     formatNumRow(row.pValue),
     formatNumRow(row.logATA),

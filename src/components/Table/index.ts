@@ -299,7 +299,7 @@ export default function _Table() {
         React.createElement(List, {
           overscanCount: 10,
           height: dimensions.height,
-          itemCount: displayedTranscripts.length,
+          itemCount: displayedTranscripts.transcripts.length,
           itemData: {
             focusedTranscript,
             displayedTranscripts,

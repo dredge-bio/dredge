@@ -71,7 +71,7 @@ function handleRowMouseEvent(
 export default function TranscriptRow(props: TranscriptRowProps) {
   const { data, index, style } = props
       , { columnWidths } = data
-      , datum = data.displayedTranscripts[index]!
+      , datum = data.displayedTranscripts.transcripts[index]!
       , dispatch = useAppDispatch()
       , handler = handleRowMouseEvent(dispatch, data) // FIXME: Share this among all rows
       , saved = data.savedTranscripts.has(datum.name)
