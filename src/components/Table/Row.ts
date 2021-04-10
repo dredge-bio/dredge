@@ -1,5 +1,4 @@
 import h from 'react-hyperscript'
-import { CSSObject } from 'styled-components'
 import * as R from 'ramda'
 import * as React from 'react'
 
@@ -40,7 +39,7 @@ function TableCell(props: React.PropsWithChildren<TableCellProps>) {
 
 function handleRowMouseEvent(
   dispatch: ReturnType<typeof useAppDispatch>,
-  data: TranscriptData,
+  data: TranscriptData
 ) {
   return (e: React.MouseEvent) => {
     let transcript: string | null
@@ -165,69 +164,3 @@ export default function TranscriptRow(props: TranscriptRowProps) {
     ])
   )
 }
-
-/*
-class TranscriptRow extends React.Component {
-  constructor() {
-    super()
-
-    this.handleMouseEnter = this.handleMouseEnter.bind(this)
-    this.handleMouseLeave = this.handleMouseLeave.bind(this)
-    this.handleClick = this.handleClick.bind(this)
-  }
-
-  get datum() {
-    const { index } = this.props
-
-    return this.props.data.displayedTranscripts[index]
-  }
-
-  shouldComponentUpdate(nextProps) {
-    let update = false
-
-    for (const k in nextProps.data) {
-      if (k === 'focusedTranscript') {
-        const transcriptID = this.datum.name
-
-        update = (
-          (nextProps.data[k] === transcriptID && this.props.data[k] !== transcriptID) ||
-          (nextProps.data[k] !== transcriptID && this.props.data[k] === transcriptID)
-        )
-      } else if (k === 'pValueThreshold') {
-        const pValueMeasure = this.datum.pValue
-
-        update = (
-          (pValueMeasure < nextProps.data[k] && pValueMeasure >= this.props.data[k]) ||
-          (pValueMeasure >= nextProps.data[k] && pValueMeasure < this.props.data[k])
-        )
-      } else if (nextProps.data[k] !== this.props.data[k]) {
-        update = true
-      }
-
-      if (update) break;
-    }
-
-    return update
-  }
-
-  handleMouseEnter(e) {
-    const { setHoveredTranscript } = this.props.data
-
-    setHoveredTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
-  }
-
-  handleMouseLeave() {
-    const { setHoveredTranscript } = this.props.data
-
-    setHoveredTranscript(null)
-  }
-
-  handleClick(e) {
-    const { setFocusedTranscript } = this.props.data
-
-    if (e.target.nodeName.toLowerCase() === 'a') return
-
-    setFocusedTranscript(e.target.closest('.transcript-row').dataset.transcriptName)
-  }
-}
-*/

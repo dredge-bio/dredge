@@ -6,10 +6,8 @@ import { FixedSizeList as List } from 'react-window'
 
 import { useAppDispatch, useResizeCallback } from '../../hooks'
 import { useView, useViewProject, actions as viewActions } from '../../view'
-import { DifferentialExpression, SortPath } from '../../types'
-import { formatNumber } from '../../utils'
+import { SortPath } from '../../types'
 
-import { TranscriptData } from './types'
 import TranscriptRow from './Row'
 
 const { useEffect, useState } = React
@@ -216,7 +214,7 @@ export default function _Table() {
       dispatch(viewActions.setSavedTranscripts({
         transcriptNames: [...next],
       }))
-    }
+    },
   }
 
   return (
@@ -252,7 +250,7 @@ export default function _Table() {
             style: {
               marginLeft: 24,
             },
-          }, /* FIXME this.getDisplayMessage() */),
+          } /* FIXME this.getDisplayMessage() */),
 
           dimensions && h(TableHeaderCell, {
             left: R.sum(dimensions.columnWidths.slice(0, -4)),
@@ -273,7 +271,7 @@ export default function _Table() {
                 sortPath: sortPath as SortPath,
                 order: (R.equals(view.sortPath, sortPath) && order === 'asc')
                   ? 'desc'
-                  : 'asc'
+                  : 'asc',
               }))
             },
           }, [
@@ -310,276 +308,9 @@ export default function _Table() {
           },
           itemSize: 24,
           width: dimensions.widthWithScrollbar,
-          children: TranscriptRow
+          children: TranscriptRow,
         })
-      ))
+      )),
     ])
   )
 }
-
-function noop() {
-  return
-}
-
-/*
-class Table extends React.Component {
-  constructor() {
-    super()
-
-    this.state = {}
-
-    this.setFocusedTranscript = this.setFocusedTranscript.bind(this)
-    this.setHoveredTranscript = this.setHoveredTranscript.bind(this)
-    this.handleKeyDown = this.handleKeyDown.bind(this)
-    this.addSavedTranscript = this.addSavedTranscript.bind(this)
-    this.removeSavedTranscript = this.removeSavedTranscript.bind(this)
-  }
-
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
-
-  static getDerivedStateFromProps(props, state) {
-    if (state.width !== props.width) {
-      return {
-        width: props.width,
-        columnWidths: calcColumnWidths(props.width),
-      }
-    }
-
-    return null
-  }
-
-  handleKeyDown(e) {
-    const { dispatch, view } = this.props
-
-    const { displayedTranscripts } = view
-
-    switch (e.code) {
-      case "ArrowUp":
-      case "ArrowDown": {
-        e.preventDefault()
-
-        const selectedIdx = R.findIndex(
-          d => R.pathEq(['view', 'focusedTranscript'], d.name, this.props),
-          displayedTranscripts
-        )
-
-        if (selectedIdx === -1) return
-
-        let nextSelection
-
-        if (e.code === "ArrowDown") {
-          if (selectedIdx + 1 === displayedTranscripts.length) return
-
-          nextSelection = displayedTranscripts[selectedIdx + 1].name
-        }
-
-        if (e.code === "ArrowUp") {
-          if (selectedIdx - 1 === -1) return
-
-          nextSelection = displayedTranscripts[selectedIdx - 1].name
-        }
-
-        dispatch(Action.SetFocusedTranscript(nextSelection))
-        break;
-      }
-
-      case "Space": {
-        e.preventDefault()
-
-        const { focusedTranscript, savedTranscripts } = view
-
-        if (focusedTranscript) {
-          if (savedTranscripts.has(focusedTranscript)) {
-            this.removeSavedTranscript(focusedTranscript)
-          } else {
-            this.addSavedTranscript(focusedTranscript)
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  getDisplayMessage() {
-    const {
-      displayedTranscripts,
-      brushedArea,
-      hoveredBinTranscripts,
-      selectedBinTranscripts,
-    } = this.props.view
-
-    function text(verb, number) {
-      return `${number} ${verb} transcript${number > 1 ? 's' : ''}`
-    }
-
-    if (displayedTranscripts) {
-      if (brushedArea || hoveredBinTranscripts || selectedBinTranscripts) {
-        return text('selected', displayedTranscripts.length)
-      } else {
-        return text('watched', displayedTranscripts.length)
-      }
-    }
-
-    return null
-  }
-
-  addSavedTranscript(transcriptName) {
-    const { dispatch, view: { savedTranscripts }} = this.props
-        , newSavedTranscripts = new Set(savedTranscripts)
-
-    newSavedTranscripts.add(transcriptName)
-
-    dispatch(Action.SetSavedTranscripts(newSavedTranscripts))
-  }
-
-  removeSavedTranscript(transcriptName) {
-    const { dispatch, view: { savedTranscripts }} = this.props
-        , newSavedTranscripts = new Set(savedTranscripts)
-
-    newSavedTranscripts.delete(transcriptName)
-
-    dispatch(Action.SetSavedTranscripts(newSavedTranscripts))
-  }
-
-  setFocusedTranscript(transcriptName) {
-    const { dispatch } = this.props
-
-    dispatch(Action.SetFocusedTranscript(transcriptName))
-  }
-
-  setHoveredTranscript(transcriptName) {
-    const { dispatch } = this.props
-
-    dispatch(Action.SetHoveredTranscript(transcriptName))
-  }
-
-  render() {
-    const { width, widthWithScrollbar, height, view, dispatch, project } = this.props
-        , { columnWidths } = this.state
-
-    const {
-      comparedTreatments,
-      savedTranscripts,
-      focusedTranscript,
-      displayedTranscripts,
-      order,
-      pValueThreshold,
-    } = view
-
-    let treatmentALabel, treatmentBLabel
-
-    if (comparedTreatments) {
-      ;[ treatmentALabel, treatmentBLabel ] = comparedTreatments
-          .map(t => R.path(['treatments', t, 'label'], project) || t)
-    }
-
-    const ready = width == null ? null : true
-
-    return (
-      h(TableWrapper, [
-        h(TableHeaderWrapper, ready && [
-          h('div', [-2, -4].map(col =>
-            h('span', {
-              style: {
-                position: 'absolute',
-                left: R.sum(columnWidths.slice(0, col)) - 8,
-                top: 0,
-                bottom: 0,
-                borderLeft: '1px solid #ccc',
-              },
-            })
-          )),
-
-          h(TableHeaderRow, [
-            ready && h(TableHeaderCell, {
-              left: R.sum(columnWidths.slice(0, -4)),
-              css: {
-                right: 0,
-                borderBottom: '1px solid #ccc',
-                backgroundColor: '#f0f0f0',
-                marginLeft: '-7px',
-                paddingLeft: '7px',
-              },
-            }, 'Treatment abundance'),
-          ]),
-
-          h(TableHeaderRow, [
-            h('div', {
-              style: {
-                marginLeft: 24,
-              },
-            }, this.getDisplayMessage()),
-
-            ready && h(TableHeaderCell, {
-              left: R.sum(columnWidths.slice(0, -4)),
-            }, treatmentALabel),
-
-            ready && h(TableHeaderCell, {
-              left: R.sum(columnWidths.slice(0, -2)),
-            }, treatmentBLabel),
-          ]),
-
-          h(TableHeaderRow, FIELDS.slice(1).map(({ label, sortPath }, i) =>
-            h(TableHeaderCell, {
-              key: i,
-              left: R.sum(columnWidths.slice(0, i + 1)),
-              clickable: true,
-              onClick: () => {
-                dispatch(Action.UpdateSortForTreatments(
-                  sortPath,
-                  (R.equals(view.sortPath, sortPath) && order === 'asc')
-                    ? 'desc'
-                    : 'asc'
-                ))
-              },
-            }, [
-              label,
-              R.equals(sortPath, view.sortPath)
-                ? h('span', {
-                    style: {
-                      position: 'relative',
-                      fontSize: 10,
-                      top: -1,
-                      left: 1,
-                    },
-                  }, view.order === 'asc' ? ' ▾' : ' ▴')
-                : null,
-            ])
-          )),
-        ]),
-
-        h(TableBodyWrapper, {
-          className: 'table-scroll',
-          tableWidthSet: ready,
-        }, ready && [
-          displayedTranscripts && h(List, {
-            overscanCount: 10,
-            height,
-            itemCount: displayedTranscripts.length,
-            focusedTranscript,
-            itemData: {
-              displayedTranscripts,
-              savedTranscripts,
-              setHoveredTranscript: this.setHoveredTranscript,
-              addSavedTranscript: this.addSavedTranscript,
-              removeSavedTranscript: this.removeSavedTranscript,
-              setFocusedTranscript: this.setFocusedTranscript,
-              pValueThreshold,
-              columnWidths,
-              focusedTranscript,
-            },
-            itemSize: 24,
-            width: widthWithScrollbar,
-          }, TranscriptRow),
-        ]),
-      ])
-    )
-  }
-}
-*/

@@ -2,10 +2,8 @@ import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import * as R from 'ramda'
-import * as React from 'react'
 
-import { useAppSelector } from '../hooks'
-import { actions, useView, useViewProject } from '../view'
+import { useView, useViewProject } from '../view'
 import { useAbundances } from '../projects'
 
 const SQUARE_WIDTH = 20

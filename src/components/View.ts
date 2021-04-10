@@ -14,7 +14,7 @@ import InfoBox from './InfoBox'
 import PValueSelector from './PValueSelector'
 import WatchedTranscripts from './WatchedTranscripts'
 
-const { useEffect, useState } = React
+const { useEffect } = React
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -161,7 +161,7 @@ export default function View() {
       ]),
 
       h(GridArea, { column: '12 / span 13', row: '10 / span 3' },
-        h(InfoBox),
+        h(InfoBox)
       ),
     ])
   )

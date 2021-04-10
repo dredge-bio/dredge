@@ -11,7 +11,7 @@ import Log from './Log'
 import Header from './Header'
 import LocalFileMessage from './LocalFileMessage'
 
-const { useRef, useEffect } = React
+const { useRef } = React
 
 
 const GlobalStyle = createGlobalStyle`
