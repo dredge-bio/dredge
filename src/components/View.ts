@@ -12,6 +12,7 @@ import TreatmentSelector from './TreatmentSelector'
 import Table from './Table'
 import InfoBox from './InfoBox'
 import PValueSelector from './PValueSelector'
+import WatchedTranscripts from './WatchedTranscripts'
 
 const { useEffect, useState } = React
 
@@ -144,7 +145,7 @@ export default function View() {
             height: '100%',
           },
         }, [
-          // h(WatchedTranscripts),
+          h(WatchedTranscripts),
           h('div', {
             ['data-area']: 'table',
 

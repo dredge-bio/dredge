@@ -160,8 +160,7 @@ export const getSearchTranscripts = memoizeForProject(
       for (const x of transcriptAliases) {
         if (x[0].startsWith(name)) {
           results.push({
-            alias: x[0],
-            canonical: x[1],
+            alias: x[0], canonical: x[1],
           })
 
           if (results.length === limit) break;

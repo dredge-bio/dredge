@@ -1,21 +1,21 @@
-import reducer from './reducer'
-import * as actions from './actions'
-import { useProject, useAbundances, useTranscripts } from './hooks'
-import {
+export {
+  default as reducer
+} from './reducer'
+
+
+export {
+  useProject,
+  useAbundances,
+  useTranscripts
+} from './hooks'
+
+export {
   getAbundanceLookup,
   getTranscriptLookup,
   getColorScaleLookup,
+  getSearchTranscripts
 } from './utils'
 
-export {
-  reducer,
-  actions,
+import * as actions from './actions'
 
-  useProject,
-  useAbundances,
-  useTranscripts,
-
-  getAbundanceLookup,
-  getTranscriptLookup,
-  getColorScaleLookup
-}
+export { actions }
