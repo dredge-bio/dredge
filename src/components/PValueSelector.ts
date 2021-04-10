@@ -106,14 +106,11 @@ type PValueSelectorProps = {
   onChange: (pValue: number) => void;
 }
 
-export default function PValueSelector(props: PValueSelectorProps) {
+function usePValueHistogram() {
   const view = useView()
-      , { onChange } = props
-      , { comparedTreatments, pValueThreshold } = view
       , { pairwiseData } = view
 
   if (!pairwiseData) return null
-  if (!comparedTreatments) return null
 
   const { minPValue } = pairwiseData
 
@@ -140,8 +137,26 @@ export default function PValueSelector(props: PValueSelectorProps) {
     .domain([0, d3.max(bins)!])
     .range([0, 100])
 
+  return {
+    bins,
+    scale,
+    logScale,
+    ticks,
+  }
+}
+
+export default function PValueSelector(props: PValueSelectorProps) {
+  const view = useView()
+      , histogram = usePValueHistogram()
+      , { onChange } = props
+      , { comparedTreatments, pValueThreshold } = view
+
   const handleChange = debounce((pValue: number) => {
+    if (!histogram) return
+
     let threshold = pValue
+
+    const scaleMinimum = histogram.logScale.domain()[0]
 
     if (threshold < (scaleMinimum * 1.5)) {
       // Lock to 0 if the p-value is small
@@ -200,20 +215,20 @@ export default function PValueSelector(props: PValueSelectorProps) {
       ]),
 
       h('div.pvalue-histogram', [
-        h('div.histogram', {}, bins && bins.reverse().map((ct, i) =>
+        h('div.histogram', {}, histogram && histogram.bins.reverse().map((ct, i) =>
           h('span.histogram-bar', {
             key: `${comparedTreatments}-${i}`,
             style: {
-              height: `${100 / ticks.length}%`,
-              top: `${i * (100 / ticks.length)}%`,
-              width: ct === 0 ? 0 : `${scale(ct)}%`,
+              height: `${100 / histogram.ticks.length}%`,
+              top: `${i * (100 / histogram.ticks.length)}%`,
+              width: ct === 0 ? 0 : `${histogram.scale(ct)}%`,
               minWidth: ct === 0 ? 0 : '2px',
-              opacity: logScale.invert(i) <= pValueThreshold ? 1 : .33,
+              opacity: histogram.logScale.invert(i) <= pValueThreshold ? 1 : .33,
             },
         }))),
 
-        h(PValueBrush, {
-          scale: logScale,
+        histogram && h(PValueBrush, {
+          scale: histogram.logScale,
           onPValueChange: handleChange,
           comparedTreatments,
         }),
