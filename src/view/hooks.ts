@@ -54,11 +54,14 @@ export function useViewOptions(): [
   const setValidatedOptions = (newOptions: Partial<ViewOptions>) => {
     const newOptionsCopy = { ...newOptions }
 
+    const deleteKeys: string[] = []
+
     Object.entries(newOptionsCopy).forEach(([ key, val ]) => {
       const optKey = key as keyof ViewOptions
 
       if (val == null) {
         delete newOptionsCopy[optKey]
+        deleteKeys.push(optKey)
       }
     })
 
@@ -67,6 +70,10 @@ export function useViewOptions(): [
         ...prevOpts,
         ...newOptionsCopy,
       }
+
+      deleteKeys.forEach(key => {
+        delete next[key]
+      })
 
       return Object.keys(next).length === 0
         ? null
