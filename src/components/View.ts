@@ -11,6 +11,7 @@ import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
 import Table from './Table'
 import InfoBox from './InfoBox'
+import PValueSelector from './PValueSelector'
 
 const { useEffect, useState } = React
 
@@ -39,7 +40,7 @@ const GridArea = styled.div<GridAreaProps>`
 export default function View() {
   const dispatch = useAppDispatch()
       , [ viewOptions, updateViewOptions ] = useViewOptions()
-      , { treatmentA, treatmentB } = viewOptions
+      , { treatmentA, treatmentB, pValue } = viewOptions
       , view = useView()
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function View() {
       sortPath: view.sortPath,
       order: view.order,
     }))
-  }, [ view.pairwiseData ])
+  }, [view.pairwiseData])
 
   useEffect(() => {
     dispatch(viewActions.updateDisplayedTranscripts())
@@ -78,6 +79,12 @@ export default function View() {
       }))
     }
   }, [treatmentA, treatmentB])
+
+  useEffect(() => {
+    const threshold = pValue || 1
+
+    dispatch(viewActions.setPValueThreshold(threshold))
+  }, [pValue])
 
   return (
     h(ViewerContainer, [
@@ -116,6 +123,18 @@ export default function View() {
       h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
         h(MAPlot)
       ),
+
+      h(GridArea, { column: '10 / span 2', row: '3 / span 8' },
+        h(PValueSelector, {
+          onChange: (pValue: number) => {
+
+            updateViewOptions({
+              pValue: pValue === 1 ? undefined : pValue,
+            })
+          },
+        })
+      ),
+
 
       h(GridArea, { column: '12 / span 13', row: '1 / span 9' }, [
         h('div', {

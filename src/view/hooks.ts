@@ -1,7 +1,7 @@
 import * as t from 'io-ts'
 import { fold } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-import { withFallback } from 'io-ts-types'
+import { withFallback, withValidate } from 'io-ts-types'
 import { useOptions } from 'org-shell'
 
 import { useAppSelector } from '../hooks'
@@ -30,7 +30,27 @@ function nullFallback<T extends t.Mixed>(codec: T) {
 const viewOptionsObject = t.type({
   treatmentA: nullFallback(t.string),
   treatmentB: nullFallback(t.string),
-  pValue: nullFallback(t.number),
+  pValue: withValidate(t.number, (input, context) => {
+    let val: number | null = null
+
+    if (typeof input === 'number') {
+      val = input
+    } else if (typeof input === 'string') {
+      const parsed = parseFloat(input)
+
+      if (!isNaN(parsed)) {
+        val = parsed
+      }
+    }
+
+    if (val === null || val > 1) {
+      val = 1
+    } else if (val < 0) {
+      val = 0
+    }
+
+    return t.success(val)
+  }),
   brushedArea: nullFallback(
     t.tuple([t.number, t.number, t.number, t.number])),
 })
