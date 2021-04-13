@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import * as React from 'react'
 
 import { PairwiseComparison } from '../../types'
-import { getPlotBins } from '../../utils'
+import { getPlotBins, Bin } from '../../utils'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
@@ -35,145 +35,173 @@ type PlotProps = {
   brushedArea: any;
 }
 
-function drawAxes(
-  svgEl: SVGSVGElement,
+function useAxes(
+  svgEl: SVGSVGElement | null,
   dimensions: PlotDimensions
 ) {
-  const { xScale, yScale } = dimensions
+  useEffect(() => {
+    if (svgEl === null) return
 
-  const xEl = d3.select(svgEl)
-    .select<SVGGElement>('.x-axis')
+    const { xScale, yScale } = dimensions
 
-  xEl.selectAll('*').remove()
+    const xEl = d3.select(svgEl)
+      .select<SVGGElement>('.x-axis')
 
-  xEl.call(d3.axisBottom(xScale))
+    xEl.selectAll('*').remove()
 
-  const yEl = d3.select(svgEl)
-    .select<SVGGElement>('.y-axis')
+    xEl.call(d3.axisBottom(xScale))
 
-  yEl.selectAll('*').remove()
+    const yEl = d3.select(svgEl)
+      .select<SVGGElement>('.y-axis')
 
-  yEl.call(d3.axisLeft(yScale));
+    yEl.selectAll('*').remove()
 
-  yScale.ticks().forEach(y => {
-    yEl.append('line')
-      .attr('x1', Math.ceil(xScale(xScale.domain()[0])))
-      .attr('x2', Math.ceil(xScale(xScale.domain()[1])))
-      .attr('y1', Math.ceil(yScale(y)))
-      .attr('y2', Math.ceil(yScale(y)))
-      .attr('stroke', '#eee')
-      .attr('stroke-width', 1)
-  });
+    yEl.call(d3.axisLeft(yScale));
 
-  xScale.ticks().forEach(x => {
-    yEl.append('line')
-      .attr('x1', Math.ceil(xScale(x)))
-      .attr('x2', Math.ceil(xScale(x)))
-      .attr('y1', Math.ceil(yScale(yScale.domain()[0])))
-      .attr('y2', Math.ceil(yScale(yScale.domain()[1])))
-      .attr('stroke', '#eee')
-      .attr('stroke-width', 1)
-  })
+    yScale.ticks().forEach(y => {
+      yEl.append('line')
+        .attr('x1', Math.ceil(xScale(xScale.domain()[0])))
+        .attr('x2', Math.ceil(xScale(xScale.domain()[1])))
+        .attr('y1', Math.ceil(yScale(y)))
+        .attr('y2', Math.ceil(yScale(y)))
+        .attr('stroke', '#eee')
+        .attr('stroke-width', 1)
+    });
+
+    xScale.ticks().forEach(x => {
+      yEl.append('line')
+        .attr('x1', Math.ceil(xScale(x)))
+        .attr('x2', Math.ceil(xScale(x)))
+        .attr('y1', Math.ceil(yScale(yScale.domain()[0])))
+        .attr('y2', Math.ceil(yScale(yScale.domain()[1])))
+        .attr('stroke', '#eee')
+        .attr('stroke-width', 1)
+    })
+  }, [svgEl, dimensions])
 }
 
-function drawBins(
-  svgEl: SVGSVGElement,
+type BinData = {
+  bin: Bin;
+  color: string;
+  brushedColor: string;
+  multiplier: number;
+}
+
+function useBins(
+  svgEl: SVGSVGElement | null,
   dimensions: PlotDimensions,
-  props: PlotProps
-) {
-  const { xScale, yScale } = dimensions
-      , { loading, pairwiseData, pValueThreshold } = props
-
-  d3.select(svgEl)
-    .select('.squares > g')
-    .remove()
-
-  if (loading) return;
-
-  if (pairwiseData === null) {
-    d3.select(svgEl)
-      .select('.squares')
-      .append('g')
-      .append('text')
-      .attr('x', xScale(d3.mean(xScale.domain())!))
-      .attr('y', yScale(d3.mean(yScale.domain())!))
-      .text('No data available for comparison')
-      .style('text-anchor', 'middle')
-
-    return;
-  }
-
-  const bins = getPlotBins(
+  {
+    loading,
     pairwiseData,
-    ({ pValue }) => (
-      pValue !== null &&
-      pValue <= pValueThreshold
-    ),
-    xScale,
-    yScale,
-    8)
+    pValueThreshold,
+  } : PlotProps
+) {
+  const ref = useRef<d3.Selection<SVGRectElement, BinData, SVGElement, unknown>>()
 
-  const colorScale = d3.scaleSequential(d3.interpolateBlues)
-    .domain([-300,150])
+  useEffect(() => {
+    if (svgEl) {
+      const { xScale, yScale } = dimensions
 
-  const brushedColorScale = d3.scaleSequential(d3.interpolatePurples)
-    .domain([-500,150])
+      d3.select(svgEl)
+        .select('.squares > g')
+        .remove()
 
-  const data = bins.map(bin => {
-    const multiplier = TRANSCRIPT_BIN_MULTIPLIERS[bin.transcripts.length] || 1
+      if (loading) return;
 
-    let color: string
-      , brushedColor: string
+      if (pairwiseData === null) {
+        d3.select(svgEl)
+          .select('.squares')
+          .append('g')
+          .append('text')
+          .attr('x', xScale(d3.mean(xScale.domain())!))
+          .attr('y', yScale(d3.mean(yScale.domain())!))
+          .text('No data available for comparison')
+          .style('text-anchor', 'middle')
+
+        return;
+      }
+
+      const bins = getPlotBins(
+        pairwiseData,
+        ({ pValue }) => (
+          pValue !== null &&
+          pValue <= pValueThreshold
+        ),
+        xScale,
+        yScale,
+        8)
+
+      const colorScale = d3.scaleSequential(d3.interpolateBlues)
+        .domain([-300,150])
+
+      const brushedColorScale = d3.scaleSequential(d3.interpolatePurples)
+        .domain([-500,150])
+
+      const data = bins.map(bin => {
+        const multiplier = TRANSCRIPT_BIN_MULTIPLIERS[bin.transcripts.length] || 1
+
+        let color: string
+          , brushedColor: string
 
 
-    if (bin.transcripts.length === 0) {
-      color = colorScale(0)
-      brushedColor = colorScale(0)
-    } else if (bin.transcripts.length < 5) {
-      color = colorScale(5)
-      brushedColor = brushedColorScale(5)
-    } else if (bin.transcripts.length >= 150) {
-      color = colorScale(150)
-      brushedColor = brushedColorScale(150)
-    } else {
-      color = colorScale(bin.transcripts.length)
-      brushedColor = brushedColorScale(bin.transcripts.length)
+        if (bin.transcripts.length === 0) {
+          color = colorScale(0)
+          brushedColor = colorScale(0)
+        } else if (bin.transcripts.length < 5) {
+          color = colorScale(5)
+          brushedColor = brushedColorScale(5)
+        } else if (bin.transcripts.length >= 150) {
+          color = colorScale(150)
+          brushedColor = brushedColorScale(150)
+        } else {
+          color = colorScale(bin.transcripts.length)
+          brushedColor = brushedColorScale(bin.transcripts.length)
+        }
+
+        return {
+          bin,
+          color,
+          brushedColor,
+          multiplier,
+        }
+      })
+
+      const binSelection = d3.select(svgEl)
+        .select('.squares')
+        .append('g')
+        .selectAll('rect')
+        .data(data.filter(b => b.bin.transcripts.length)).enter()
+          .append('rect')
+          .attr('x', d => d.bin.x0 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
+          .attr('y', d => d.bin.y1 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
+          .attr('width', d => GRID_SQUARE_UNIT * d.multiplier)
+          .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
+          .attr('fill', d => d.color)
+
+      ref.current = binSelection
+
+      d3.select(svgEl)
+        .select('defs').selectAll('*').remove()
+
+      d3.select(svgEl)
+        .select('defs')
+        .append('clipPath')
+        .attr('id', 'visible-plot')
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', xScale.range()[1])
+        .attr('height', yScale.range()[0])
+
+      // drawSavedTranscripts()
     }
 
-    return {
-      bin,
-      color,
-      brushedColor,
-      multiplier,
+    return () => {
+      // resetSelectedBin()
     }
-  })
+  }, [ svgEl, dimensions, pairwiseData, pValueThreshold ])
 
-  const binSelection = d3.select(svgEl)
-    .select('.squares')
-    .append('g')
-    .selectAll('rect')
-    .data(data.filter(b => b.bin.transcripts.length)).enter()
-      .append('rect')
-      .attr('x', d => d.bin.x0 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
-      .attr('y', d => d.bin.y1 + (1 - d.multiplier) / 2 * GRID_SQUARE_UNIT)
-      .attr('width', d => GRID_SQUARE_UNIT * d.multiplier)
-      .attr('height', d => GRID_SQUARE_UNIT * d.multiplier)
-      .attr('fill', d => d.color)
-
-  d3.select(svgEl)
-    .select('defs').selectAll('*').remove()
-
-  d3.select(svgEl)
-    .select('defs')
-    .append('clipPath')
-    .attr('id', 'visible-plot')
-    .append('rect')
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('width', xScale.range()[1])
-    .attr('height', yScale.range()[0])
-
-  return binSelection
+  return ref
 }
 
 function drawSavedTranscripts() {
@@ -182,49 +210,55 @@ function drawSavedTranscripts() {
 function resetSelectedBin() {
 }
 
-function updateHoveredTranscript(
-  svgEl: SVGSVGElement,
+function useHoveredTranscriptMarker(
+  svgEl: SVGSVGElement | null,
   dimensions: PlotDimensions,
-  props: PlotProps
+  {
+    hoveredTranscript,
+    pairwiseData
+  }: PlotProps
 ) {
-  const { xScale, yScale } = dimensions
-      , { hoveredTranscript, pairwiseData } = props
+  useEffect(() => {
+    if (svgEl === null) return
 
-  const container = d3.select(svgEl).select('.hovered-marker')
+    const { xScale, yScale } = dimensions
 
-  container.selectAll('circle')
-    .transition()
-    .duration(360)
-    .ease(d3.easeCubicOut)
-    .style('opacity', 0)
-    .remove()
+    const container = d3.select(svgEl).select('.hovered-marker')
 
-  if (hoveredTranscript === null) return;
-  if (pairwiseData === null) return;
+    container.selectAll('circle')
+      .transition()
+      .duration(360)
+      .ease(d3.easeCubicOut)
+      .style('opacity', 0)
+      .remove()
 
-  const data = pairwiseData.get(hoveredTranscript)
+    if (hoveredTranscript === null) return;
+    if (pairwiseData === null) return;
 
-  if (!data) return
+    const data = pairwiseData.get(hoveredTranscript)
 
-  const { logATA, logFC } = data
+    if (!data) return
 
-  if (logATA === null || logFC === null) return
+    const { logATA, logFC } = data
 
-  container.append('circle')
-    .attr('cx', xScale(logATA))
-    .attr('cy', yScale(logFC))
-    .attr('r', 20)
-    .attr('opacity', 1)
-    .attr('fill', 'none')
-    .attr('stroke', 'coral')
-    .attr('stroke-width', 2)
+    if (logATA === null || logFC === null) return
 
-  container.append('circle')
-    .attr('cx', xScale(logATA))
-    .attr('cy', yScale(logFC))
-    .attr('opacity', 1)
-    .attr('r', 3)
-    .attr('fill', 'coral')
+    container.append('circle')
+      .attr('cx', xScale(logATA))
+      .attr('cy', yScale(logFC))
+      .attr('r', 20)
+      .attr('opacity', 1)
+      .attr('fill', 'none')
+      .attr('stroke', 'coral')
+      .attr('stroke-width', 2)
+
+    container.append('circle')
+      .attr('cx', xScale(logATA))
+      .attr('cy', yScale(logFC))
+      .attr('opacity', 1)
+      .attr('r', 3)
+      .attr('fill', 'coral')
+  }, [ hoveredTranscript, pairwiseData, dimensions ])
 }
 
 export default function Plot(props: PlotProps) {
@@ -242,97 +276,82 @@ export default function Plot(props: PlotProps) {
     transform,
   })
 
-  useEffect(() => {
-    if (svgEl !== null) {
-      drawAxes(svgEl, dimensions)
-    }
-  }, [svgEl, dimensions])
+  useAxes(svgEl, dimensions)
 
-  useEffect(() => {
-    if (svgEl !== null) {
-      drawBins(svgEl, dimensions, props)
-    }
-    // drawSavedTranscripts()
+  const binSelectionRef = useBins(svgEl, dimensions, props)
 
-    return () => {
-      // resetSelectedBin()
-    }
-  }, [svgEl, dimensions, props.pairwiseData, props.pValueThreshold])
-
-  useEffect(() => {
-    if (svgEl !== null) {
-      updateHoveredTranscript(svgEl, dimensions, props)
-    }
-  }, [props.hoveredTranscript, props.pairwiseData, dimensions])
+  useHoveredTranscriptMarker(svgEl, dimensions, props)
 
   return (
-    h('svg', {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      height: '100%',
-      viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
-      ref: svgRef,
-    }, [
-      h('defs', [
-      ]),
-
-      // X Axis label
-      h('text', {
-        dx: padding.l,
-        dy: padding.t,
-        x: dimensions.plotWidth / 2,
-        y: dimensions.plotHeight + (dimensions.padding.b / 2) + 6, // extra pixels to bump it down from axis
-        style: {
-          fontWeight: 'bold',
-          textAnchor: 'middle',
-          dominantBaseline: 'central',
-        },
-      }, 'log₂ (Average Transcript Abundance)'),
-
-      // Y Axis label
-      h('text', {
-        x: 0,
-        y: (dimensions.plotHeight / 2) + dimensions.padding.t,
-        transform: `
-          rotate(-90, 0, ${dimensions.plotHeight / 2 + dimensions.padding.t})
-          translate(0, ${dimensions.padding.l / 2 - 6})
-        `,
-        style: {
-          fontWeight: 'bold',
-          textAnchor: 'middle',
-          dominantBaseline: 'central',
-        },
-      }, 'log₂ (Fold Change)'),
-
-      h('g', {
-        ref: plotGRef,
-        transform: `translate(${padding.l}, ${padding.t})`,
+    h('div', [
+      h('svg', {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        height: '100%',
+        viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
+        ref: svgRef,
       }, [
-        h('rect', {
-          fill: '#f9f9f9',
-          stroke: '#ccc',
-          x: 0,
-          y: 0,
-          width: dimensions.plotWidth,
-          height: dimensions.plotHeight,
-        }),
-
-        h('g.x-axis', {
-          transform: `translate(0, ${dimensions.plotHeight})`,
-        }),
-        h('g.y-axis'),
-
-        h('g', { clipPath: 'url(#visible-plot)' }, [
-          h('g.squares'),
-
-          h('g.saved-transcripts'),
-
-          h('g.interaction'),
-
-          h('g.hovered-marker'),
+        h('defs', [
         ]),
-      ]),
+
+        // X Axis label
+        h('text', {
+          dx: padding.l,
+          dy: padding.t,
+          x: dimensions.plotWidth / 2,
+          y: dimensions.plotHeight + (dimensions.padding.b / 2) + 6, // extra pixels to bump it down from axis
+          style: {
+            fontWeight: 'bold',
+            textAnchor: 'middle',
+            dominantBaseline: 'central',
+          },
+        }, 'log₂ (Average Transcript Abundance)'),
+
+        // Y Axis label
+        h('text', {
+          x: 0,
+          y: (dimensions.plotHeight / 2) + dimensions.padding.t,
+          transform: `
+            rotate(-90, 0, ${dimensions.plotHeight / 2 + dimensions.padding.t})
+            translate(0, ${dimensions.padding.l / 2 - 6})
+          `,
+          style: {
+            fontWeight: 'bold',
+            textAnchor: 'middle',
+            dominantBaseline: 'central',
+          },
+        }, 'log₂ (Fold Change)'),
+
+        h('g', {
+          ref: plotGRef,
+          transform: `translate(${padding.l}, ${padding.t})`,
+        }, [
+          h('rect', {
+            fill: '#f9f9f9',
+            stroke: '#ccc',
+            x: 0,
+            y: 0,
+            width: dimensions.plotWidth,
+            height: dimensions.plotHeight,
+          }),
+
+          h('g.x-axis', {
+            transform: `translate(0, ${dimensions.plotHeight})`,
+          }),
+          h('g.y-axis'),
+
+          h('g', { clipPath: 'url(#visible-plot)' }, [
+            h('g.squares'),
+
+            h('g.saved-transcripts'),
+
+            h('g.interaction'),
+
+            h('g.hovered-marker'),
+          ]),
+        ]),
+      ])
     ])
   )
 }
