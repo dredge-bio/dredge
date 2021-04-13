@@ -107,6 +107,8 @@ const reducer = createReducer(null as MultiViewState, builder => {
         source,
         transcripts: displayedTranscripts,
       }
+
+      state.default.hoveredTranscript = null
     })
     .addCase(viewActions.setSavedTranscripts.fulfilled, (state, action) => {
       if (!state) return

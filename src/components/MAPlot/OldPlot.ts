@@ -70,6 +70,7 @@ type PlotState = {
   scaleTransform: d3.ZoomTransform,
 }
 
+/*
 function getDimensions(props: PlotProps, state?: PlotState) {
   const plotHeight = props.height! - padding.t - padding.b
       , plotWidth = props.width! - padding.l - padding.r
@@ -98,6 +99,7 @@ function getDimensions(props: PlotProps, state?: PlotState) {
     scaleTransform,
   }
 }
+*/
 
 export default class Plot extends React.Component<PlotProps, PlotState> {
   brush?: d3.BrushBehavior<unknown>;
@@ -519,6 +521,7 @@ export default class Plot extends React.Component<PlotProps, PlotState> {
   }
       */
 
+     /*
   drawSavedTranscripts() {
     const { xScale, yScale } = this.state
         , { savedTranscripts, pairwiseData } = this.props
@@ -542,6 +545,7 @@ export default class Plot extends React.Component<PlotProps, PlotState> {
         .attr('fill', 'red')
 
   }
+  */
 
   /*
   updateHoveredTranscript() {

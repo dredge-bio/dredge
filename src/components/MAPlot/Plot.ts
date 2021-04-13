@@ -2,11 +2,15 @@ import h from 'react-hyperscript'
 import * as d3 from 'd3'
 import * as React from 'react'
 
-import { PairwiseComparison } from '../../types'
+import { ViewState, DredgeConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
+
+type InteractionActions =
+  'drag' |
+  'zoom'
 
 const { useState, useEffect, useRef } = React
 
@@ -24,16 +28,16 @@ type PlotProps = {
   loading: boolean,
   width: number;
   height: number;
-  abundanceLimits: [[number, number], [number, number]];
-  pairwiseData: PairwiseComparison | null;
-  pValueThreshold: number;
-
-  hoveredTranscript: string | null;
-  savedTranscripts: Set<string>;
-
-  // FIXME
-  brushedArea: any;
-}
+} & Pick<ViewState,
+  'pairwiseData' |
+  'pValueThreshold' |
+  'hoveredTranscript' |
+  'savedTranscripts' |
+  'displayedTranscripts' |
+  'brushedArea'
+> & Pick<DredgeConfig,
+  'abundanceLimits'
+>
 
 function useAxes(
   svgEl: SVGSVGElement | null,
@@ -99,28 +103,22 @@ function useBins(
   const ref = useRef<d3.Selection<SVGRectElement, BinData, SVGElement, unknown>>()
 
   useEffect(() => {
-    if (svgEl) {
-      const { xScale, yScale } = dimensions
+    if (!svgEl || loading) return;
 
+    const { xScale, yScale } = dimensions
+
+    if (pairwiseData === null) {
       d3.select(svgEl)
-        .select('.squares > g')
-        .remove()
+        .select('.squares')
+        .append('g')
+        .append('text')
+        .attr('x', xScale(d3.mean(xScale.domain())!))
+        .attr('y', yScale(d3.mean(yScale.domain())!))
+        .text('No data available for comparison')
+        .style('text-anchor', 'middle')
 
-      if (loading) return;
-
-      if (pairwiseData === null) {
-        d3.select(svgEl)
-          .select('.squares')
-          .append('g')
-          .append('text')
-          .attr('x', xScale(d3.mean(xScale.domain())!))
-          .attr('y', yScale(d3.mean(yScale.domain())!))
-          .text('No data available for comparison')
-          .style('text-anchor', 'middle')
-
-        return;
-      }
-
+      return;
+    } else {
       const bins = getPlotBins(
         pairwiseData,
         ({ pValue }) => (
@@ -192,22 +190,53 @@ function useBins(
         .attr('y', 0)
         .attr('width', xScale.range()[1])
         .attr('height', yScale.range()[0])
-
-      // drawSavedTranscripts()
     }
 
     return () => {
-      // resetSelectedBin()
+      d3.select(svgEl)
+        .select('.squares > g')
+        .remove()
     }
   }, [ svgEl, dimensions, pairwiseData, pValueThreshold ])
 
   return ref
 }
 
-function drawSavedTranscripts() {
-}
+function useWatchedTranscripts(
+  svgEl: SVGSVGElement | null,
+  dimensions: PlotDimensions,
+  {
+    savedTranscripts,
+    pairwiseData,
+  }: PlotProps
+) {
+  useEffect(() => {
+    if (!svgEl || !pairwiseData) return
 
-function resetSelectedBin() {
+    const { xScale, yScale } = dimensions
+
+    d3.select(svgEl)
+      .select('.saved-transcripts')
+      .selectAll('circle')
+      .data([...savedTranscripts].filter(x => pairwiseData.has(x)))
+          .enter()
+        .append('circle')
+        // The pairwise data is guaranteed to have the transcript in it
+        // because of the filter above. I'm pretty sure this means that
+        // logATA and logFC are guaranteed to exist as well, but I can't
+        // quite recall right now. so.... TODO
+        .attr('cx', d => xScale(pairwiseData.get(d)!.logATA!))
+        .attr('cy', d => yScale(pairwiseData.get(d)!.logFC!))
+        .attr('r', 2)
+        .attr('fill', 'red')
+
+    return () => {
+      d3.select(svgEl)
+        .select('.saved-transcripts')
+        .selectAll('circle')
+          .remove()
+    }
+  }, [ svgEl, dimensions, pairwiseData, savedTranscripts ])
 }
 
 function useHoveredTranscriptMarker(
@@ -215,49 +244,50 @@ function useHoveredTranscriptMarker(
   dimensions: PlotDimensions,
   {
     hoveredTranscript,
-    pairwiseData
+    pairwiseData,
   }: PlotProps
 ) {
   useEffect(() => {
-    if (svgEl === null) return
+    if (!svgEl) return
 
-    const { xScale, yScale } = dimensions
+      const { xScale, yScale } = dimensions
+          , container = d3.select(svgEl).select('.hovered-marker')
 
-    const container = d3.select(svgEl).select('.hovered-marker')
+      if (hoveredTranscript === null) return;
+      if (pairwiseData === null) return;
 
-    container.selectAll('circle')
-      .transition()
-      .duration(360)
-      .ease(d3.easeCubicOut)
-      .style('opacity', 0)
-      .remove()
+      const data = pairwiseData.get(hoveredTranscript)
 
-    if (hoveredTranscript === null) return;
-    if (pairwiseData === null) return;
+      if (!data) return
 
-    const data = pairwiseData.get(hoveredTranscript)
+      const { logATA, logFC } = data
 
-    if (!data) return
+      if (logATA === null || logFC === null) return
 
-    const { logATA, logFC } = data
+      container.append('circle')
+        .attr('cx', xScale(logATA))
+        .attr('cy', yScale(logFC))
+        .attr('r', 20)
+        .attr('opacity', 1)
+        .attr('fill', 'none')
+        .attr('stroke', 'coral')
+        .attr('stroke-width', 2)
 
-    if (logATA === null || logFC === null) return
+      container.append('circle')
+        .attr('cx', xScale(logATA))
+        .attr('cy', yScale(logFC))
+        .attr('opacity', 1)
+        .attr('r', 3)
+        .attr('fill', 'coral')
 
-    container.append('circle')
-      .attr('cx', xScale(logATA))
-      .attr('cy', yScale(logFC))
-      .attr('r', 20)
-      .attr('opacity', 1)
-      .attr('fill', 'none')
-      .attr('stroke', 'coral')
-      .attr('stroke-width', 2)
-
-    container.append('circle')
-      .attr('cx', xScale(logATA))
-      .attr('cy', yScale(logFC))
-      .attr('opacity', 1)
-      .attr('r', 3)
-      .attr('fill', 'coral')
+    return () => {
+      container.selectAll('circle')
+        .transition()
+        .duration(360)
+        .ease(d3.easeCubicOut)
+        .style('opacity', 0)
+        .remove()
+    }
   }, [ hoveredTranscript, pairwiseData, dimensions ])
 }
 
@@ -281,6 +311,7 @@ export default function Plot(props: PlotProps) {
   const binSelectionRef = useBins(svgEl, dimensions, props)
 
   useHoveredTranscriptMarker(svgEl, dimensions, props)
+  useWatchedTranscripts(svgEl, dimensions, props)
 
   return (
     h('div', [
@@ -351,7 +382,7 @@ export default function Plot(props: PlotProps) {
             h('g.hovered-marker'),
           ]),
         ]),
-      ])
+      ]),
     ])
   )
 }

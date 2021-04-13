@@ -113,6 +113,7 @@ export default function Wrapper(props: OuterProps) {
       'pairwiseData',
       'pValueThreshold',
       'hoveredTranscript',
+      'displayedTranscripts',
     ], view)
 
     return {

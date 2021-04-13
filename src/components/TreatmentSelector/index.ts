@@ -192,8 +192,6 @@ export default function TreatmentSelector(props: SelectorProps) {
     const treatmentEls = Array.from(
       svgEl.querySelectorAll(`[data-treatment="${view.hoveredTreatment}"]`)) as SVGElement[]
 
-    console.log(treatmentEls)
-
     treatmentEls.forEach(el => {
       el.classList.add('active')
     })
