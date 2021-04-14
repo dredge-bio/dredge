@@ -12,7 +12,7 @@ type InteractionActions =
   'drag' |
   'zoom'
 
-const { useState, useEffect, useRef } = React
+const { useState, useLayoutEffect, useEffect, useRef } = React
 
 const TRANSCRIPT_BIN_MULTIPLIERS = [
   0,
@@ -40,11 +40,11 @@ type PlotProps = {
 >
 
 function useAxes(
-  svgEl: SVGSVGElement | null,
+  svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions
 ) {
-  useEffect(() => {
-    if (svgEl === null) return
+  useLayoutEffect(() => {
+    const svgEl = svgRef.current
 
     const { xScale, yScale } = dimensions
 
@@ -81,7 +81,7 @@ function useAxes(
         .attr('stroke', '#eee')
         .attr('stroke-width', 1)
     })
-  }, [svgEl, dimensions])
+  }, [dimensions])
 }
 
 type BinData = {
@@ -92,7 +92,7 @@ type BinData = {
 }
 
 function useBins(
-  svgEl: SVGSVGElement | null,
+  svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions,
   {
     loading,
@@ -102,10 +102,11 @@ function useBins(
 ) {
   const ref = useRef<d3.Selection<SVGRectElement, BinData, SVGElement, unknown>>()
 
-  useEffect(() => {
-    if (!svgEl || loading) return;
+  useLayoutEffect(() => {
+    if (loading) return;
 
-    const { xScale, yScale } = dimensions
+    const svgEl = svgRef.current
+        , { xScale, yScale } = dimensions
 
     if (pairwiseData === null) {
       d3.select(svgEl)
@@ -197,23 +198,24 @@ function useBins(
         .select('.squares > g')
         .remove()
     }
-  }, [ svgEl, dimensions, pairwiseData, pValueThreshold ])
+  }, [ dimensions, pairwiseData, pValueThreshold ])
 
   return ref
 }
 
 function useWatchedTranscripts(
-  svgEl: SVGSVGElement | null,
+  svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions,
   {
     savedTranscripts,
     pairwiseData,
   }: PlotProps
 ) {
-  useEffect(() => {
-    if (!svgEl || !pairwiseData) return
+  useLayoutEffect(() => {
+    if (!pairwiseData) return
 
-    const { xScale, yScale } = dimensions
+    const svgEl = svgRef.current
+        , { xScale, yScale } = dimensions
 
     d3.select(svgEl)
       .select('.saved-transcripts')
@@ -236,57 +238,56 @@ function useWatchedTranscripts(
         .selectAll('circle')
           .remove()
     }
-  }, [ svgEl, dimensions, pairwiseData, savedTranscripts ])
+  }, [ dimensions, pairwiseData, savedTranscripts ])
 }
 
 function useHoveredTranscriptMarker(
-  svgEl: SVGSVGElement | null,
+  svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions,
   {
     hoveredTranscript,
     pairwiseData,
   }: PlotProps
 ) {
-  useEffect(() => {
-    if (!svgEl) return
+  useLayoutEffect(() => {
+    const svgEl = svgRef.current
+        , { xScale, yScale } = dimensions
+        , container = d3.select(svgEl).select('.hovered-marker')
 
-      const { xScale, yScale } = dimensions
-          , container = d3.select(svgEl).select('.hovered-marker')
+    if (hoveredTranscript === null) return;
+    if (pairwiseData === null) return;
 
-      if (hoveredTranscript === null) return;
-      if (pairwiseData === null) return;
+    const data = pairwiseData.get(hoveredTranscript)
 
-      const data = pairwiseData.get(hoveredTranscript)
+    if (!data) return
 
-      if (!data) return
+    const { logATA, logFC } = data
 
-      const { logATA, logFC } = data
+    if (logATA === null || logFC === null) return
 
-      if (logATA === null || logFC === null) return
+    container.append('circle')
+      .attr('cx', xScale(logATA))
+      .attr('cy', yScale(logFC))
+      .attr('r', 20)
+      .attr('opacity', 1)
+      .attr('fill', 'none')
+      .attr('stroke', 'coral')
+      .attr('stroke-width', 2)
 
-      container.append('circle')
-        .attr('cx', xScale(logATA))
-        .attr('cy', yScale(logFC))
-        .attr('r', 20)
-        .attr('opacity', 1)
-        .attr('fill', 'none')
-        .attr('stroke', 'coral')
-        .attr('stroke-width', 2)
+    container.append('circle')
+      .attr('cx', xScale(logATA))
+      .attr('cy', yScale(logFC))
+      .attr('opacity', 1)
+      .attr('r', 3)
+      .attr('fill', 'coral')
 
-      container.append('circle')
-        .attr('cx', xScale(logATA))
-        .attr('cy', yScale(logFC))
-        .attr('opacity', 1)
-        .attr('r', 3)
-        .attr('fill', 'coral')
-
-    return () => {
-      container.selectAll('circle')
-        .transition()
-        .duration(360)
-        .ease(d3.easeCubicOut)
-        .style('opacity', 0)
-        .remove()
+  return () => {
+    container.selectAll('circle')
+      .transition()
+      .duration(360)
+      .ease(d3.easeCubicOut)
+      .style('opacity', 0)
+      .remove()
     }
   }, [ hoveredTranscript, pairwiseData, dimensions ])
 }
@@ -306,12 +307,12 @@ export default function Plot(props: PlotProps) {
     transform,
   })
 
-  useAxes(svgEl, dimensions)
+  useAxes(svgRef, dimensions)
 
-  const binSelectionRef = useBins(svgEl, dimensions, props)
+  const binSelectionRef = useBins(svgRef, dimensions, props)
 
-  useHoveredTranscriptMarker(svgEl, dimensions, props)
-  useWatchedTranscripts(svgEl, dimensions, props)
+  useHoveredTranscriptMarker(svgRef, dimensions, props)
+  useWatchedTranscripts(svgRef, dimensions, props)
 
   return (
     h('div', [
