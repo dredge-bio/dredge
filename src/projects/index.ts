@@ -16,6 +16,4 @@ export {
   getSearchTranscripts
 } from './utils'
 
-import * as actions from './actions'
-
-export { actions }
+export * as actions from './actions'

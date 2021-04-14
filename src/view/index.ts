@@ -1,12 +1,11 @@
-import * as actions from './actions'
-import reducer from './reducer'
-
-import { useView, useViewProject, useViewOptions } from './hooks'
+export * as actions from './actions'
 
 export {
-  actions,
-  reducer,
+  default as reducer
+} from './reducer'
+
+export {
   useView,
   useViewProject,
   useViewOptions
-}
+} from './hooks'
