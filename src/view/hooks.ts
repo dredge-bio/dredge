@@ -46,7 +46,7 @@ const brushedCodec = new t.Type<
         return t.failure(u, c)
       }
 
-      const numbers = numberStrs.map(x => parseInt(x)) as BrushedCoords
+      const numbers = numberStrs.map(x => parseFloat(x)) as BrushedCoords
 
       if (!numbers.every(x => !isNaN(x))) {
         return t.failure(u, c)
