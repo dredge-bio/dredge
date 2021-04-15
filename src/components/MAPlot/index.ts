@@ -4,7 +4,12 @@ import PlotWrapper from './Outer'
 
 import { useAppSelector, useSized } from '../../hooks'
 
-export default function PlotContainer() {
+type PlotContainerProps = {
+  onBrush: (extend: [number, number, number, number] | null) => void
+  persistBrush: (extend: [number, number, number, number] | null) => void
+}
+
+export default function PlotContainer(props: PlotContainerProps) {
   const [ ref, rect ] = useSized()
 
   const { isLoading, key } = useAppSelector(state => {
@@ -26,6 +31,8 @@ export default function PlotContainer() {
     }, [
       rect === null ? null : h(PlotWrapper, {
         key,
+        onBrush: props.onBrush,
+        persistBrush: props.persistBrush,
         height: rect.height,
         width: rect.width,
       }),

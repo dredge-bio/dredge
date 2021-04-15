@@ -75,6 +75,8 @@ const PlotWrapper = styled.div<{
 type OuterProps = {
   width: number;
   height: number;
+  onBrush: (extend: [number, number, number, number] | null) => void
+  persistBrush: (extend: [number, number, number, number] | null) => void
 }
 
 

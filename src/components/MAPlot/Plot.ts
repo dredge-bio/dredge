@@ -1,9 +1,13 @@
 import h from 'react-hyperscript'
+import throttle from 'throttleit'
+import * as R from 'ramda'
 import * as d3 from 'd3'
 import * as React from 'react'
 
 import { ViewState, DredgeConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
+import { useAppDispatch } from '../../hooks'
+import { actions as viewActions, useViewOptions } from '../../view'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
@@ -24,10 +28,14 @@ const TRANSCRIPT_BIN_MULTIPLIERS = [
 
 const GRID_SQUARE_UNIT = 8
 
+type Brush2D = [[number, number], [number, number]]
+
 type PlotProps = {
   loading: boolean,
   width: number;
   height: number;
+  onBrush: (extent: [number, number, number, number] | null) => void;
+  persistBrush: (extent: [number, number, number, number] | null) => void;
 } & Pick<ViewState,
   'pairwiseData' |
   'pValueThreshold' |
@@ -38,6 +46,119 @@ type PlotProps = {
 > & Pick<DredgeConfig,
   'abundanceLimits'
 >
+
+function useBrush(
+  svgRef: React.RefObject<SVGSVGElement>,
+  dimensions: PlotDimensions,
+  binSelectionRef: ReturnType<typeof useBins>,
+  {
+    onBrush,
+    persistBrush,
+  }: PlotProps
+) {
+  const dispatch = useAppDispatch()
+      , [ , setViewOpts ] = useViewOptions()
+      , brushedRef = useRef(false)
+
+  useEffect(() => {
+    const svgEl = svgRef.current
+        , { xScale, yScale } = dimensions
+        , [ x0, x1 ] = xScale.domain().map(xScale)
+        , [ y0, y1 ] = yScale.domain().map(yScale)
+
+    let finishedBrush = false
+
+    const setBrush = (
+      extent: [[number, number], [number, number]] | null,
+      persist?: boolean
+    ) => {
+      if (!extent) {
+        onBrush(null)
+        if (persist) {
+          persistBrush(null)
+        }
+        return
+      }
+
+      const cpmBounds = extent.map(x => x[0]).map(xScale.invert)
+          , fcBounds = extent.map(x => x[1]).map(yScale.invert)
+
+      const coords = <[number, number, number, number]> [
+        cpmBounds[0],
+        fcBounds[0],
+        cpmBounds[1],
+        fcBounds[1],
+      ].map(n => n.toFixed(3)).map(parseFloat)
+
+      onBrush(coords)
+
+      if (persist) {
+        persistBrush(coords)
+      }
+    }
+
+    const throttledSetBrush = throttle((extent: [[number, number], [number, number]] | null) => {
+      if (finishedBrush) return;
+      setBrush(extent)
+    }, 120)
+
+    const brush = d3.brush()
+      .extent([[x0, y1], [x1, y0]])
+      .on('brush', (e: d3.D3BrushEvent<unknown>) => {
+        if (!e.sourceEvent) return
+        if (!e.selection) return
+
+        const extent = e.selection as Brush2D
+
+        throttledSetBrush(extent)
+      })
+      .on('start', () => {
+        const binSelection = binSelectionRef.current
+
+        finishedBrush = false
+
+        if (binSelection) {
+          binSelection
+            .attr('stroke', 'none')
+            .attr('class', '')
+        }
+
+        dispatch(viewActions.setHoveredBinTranscripts(null))
+        dispatch(viewActions.setSelectedBinTranscripts(null))
+      })
+      .on('end', (e: d3.D3BrushEvent<unknown>) => {
+        finishedBrush = true
+
+        const binSelection = binSelectionRef.current
+
+        if (!e.sourceEvent) return
+        if (!binSelection) return
+
+        // Reset each bin to its original fill
+        // FIXME: do we even color brushed bins anymore? If not, this can be
+        // taken out.
+        binSelection.attr('fill', d => d.color)
+
+        if (!e.selection) {
+          brushedRef.current = false
+
+          setBrush(null, true)
+          return
+        }
+
+        brushedRef.current = true
+        setBrush(e.selection as Brush2D, true)
+      })
+
+      const brushSel = d3.select(svgEl)
+        .select('.interaction')
+        .append('g')
+
+      brushSel.call(brush)
+  }, [])
+
+  return brushedRef
+}
 
 function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
@@ -297,9 +418,6 @@ export default function Plot(props: PlotProps) {
       , svgRef = useRef<SVGSVGElement>(null)
       , plotGRef = useRef<SVGGElement>(null)
 
-  const svgEl = svgRef.current
-      , plotGEl = svgRef.current
-
   const dimensions = useDimensions({
     abundanceLimits: props.abundanceLimits,
     height: props.height,
@@ -313,6 +431,8 @@ export default function Plot(props: PlotProps) {
 
   useHoveredTranscriptMarker(svgRef, dimensions, props)
   useWatchedTranscripts(svgRef, dimensions, props)
+
+  const brushRef = useBrush(svgRef, dimensions, binSelectionRef, props)
 
   return (
     h('div', [
@@ -356,7 +476,6 @@ export default function Plot(props: PlotProps) {
         }, 'log₂ (Fold Change)'),
 
         h('g', {
-          ref: plotGRef,
           transform: `translate(${padding.l}, ${padding.t})`,
         }, [
           h('rect', {

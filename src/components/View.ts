@@ -122,7 +122,16 @@ export default function View() {
       ]),
 
       h(GridArea, { column: '1 / span 9', row: '3 / span 8', ['data-area']: 'plot' },
-        h(MAPlot)
+        h(MAPlot, {
+          onBrush: brushed => {
+            dispatch(viewActions.setBrushedArea(brushed))
+          },
+          persistBrush: brushed => {
+            updateViewOptions({
+              brushed,
+            })
+          }
+        })
       ),
 
       h(GridArea, { column: '10 / span 2', row: '3 / span 8' },
@@ -130,7 +139,7 @@ export default function View() {
           onChange: (pValue: number) => {
 
             updateViewOptions({
-              pValue: pValue === 1 ? undefined : pValue,
+              pValue,
             })
           },
         })
