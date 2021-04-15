@@ -1,13 +1,12 @@
 import h from 'react-hyperscript'
 import throttle from 'throttleit'
-import * as R from 'ramda'
 import * as d3 from 'd3'
 import * as React from 'react'
 
 import { ViewState, DredgeConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
 import { useAppDispatch } from '../../hooks'
-import { actions as viewActions, useViewOptions } from '../../view'
+import { actions as viewActions } from '../../view'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
@@ -54,10 +53,10 @@ function useBrush(
   {
     onBrush,
     persistBrush,
+    brushedArea,
   }: PlotProps
 ) {
   const dispatch = useAppDispatch()
-      , [ , setViewOpts ] = useViewOptions()
       , brushedRef = useRef(false)
 
   useEffect(() => {
@@ -150,12 +149,22 @@ function useBrush(
         setBrush(e.selection as Brush2D, true)
       })
 
-      const brushSel = d3.select(svgEl)
-        .select('.interaction')
-        .append('g')
+    const brushSel = d3.select(svgEl)
+      .select('.interaction')
+      .append('g')
 
-      brushSel.call(brush)
+    brushSel.call(brush)
+
+    if (brushedArea) {
+      const [ x0, y0, x1, y1 ] = brushedArea
+
+      brush.move(brushSel, [
+        [xScale(x0), yScale(y0)],
+        [xScale(x1), yScale(y1)],
+      ])
+    }
   }, [])
+
 
   return brushedRef
 }

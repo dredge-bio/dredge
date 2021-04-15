@@ -1,5 +1,6 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
+import * as R from 'ramda'
 import * as React from 'react'
 import { unwrapResult } from '@reduxjs/toolkit'
 
@@ -41,7 +42,7 @@ const GridArea = styled.div<GridAreaProps>`
 export default function View() {
   const dispatch = useAppDispatch()
       , [ viewOptions, updateViewOptions ] = useViewOptions()
-      , { treatmentA, treatmentB, pValue } = viewOptions
+      , { treatmentA, treatmentB, pValue, brushed } = viewOptions
       , view = useView()
 
   useEffect(() => {
@@ -62,6 +63,13 @@ export default function View() {
     view.brushedArea,
     view.selectedBinTranscripts,
   ])
+
+  // Set the brush from the options *once* on mount
+  useEffect(() => {
+    const brushedFromOptions = brushed
+
+    dispatch(viewActions.setBrushedArea(brushedFromOptions))
+  }, [])
 
   useEffect(() => {
     if (!treatmentA || !treatmentB) {
