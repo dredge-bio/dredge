@@ -137,3 +137,20 @@ export function useViewOptions(): [
 
   return [ validatedOptions, setValidatedOptions ]
 }
+
+export function useComparedTreatmentLabels() {
+  const { comparedTreatments } = useView()
+      , project = useViewProject()
+
+  let treatmentALabel: string | null = null
+    , treatmentBLabel: string | null = null
+
+  if (comparedTreatments) {
+    const [ treatmentA, treatmentB ] = comparedTreatments
+
+    treatmentALabel = project.data.treatments.get(treatmentA)?.label || treatmentA
+    treatmentBLabel = project.data.treatments.get(treatmentB)?.label || treatmentB
+  }
+
+  return [ treatmentALabel, treatmentBLabel ]
+}

@@ -6,10 +6,11 @@ import * as React from 'react'
 import { ViewState, DredgeConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
 import { useAppDispatch } from '../../hooks'
-import { actions as viewActions } from '../../view'
+import { actions as viewActions, useComparedTreatmentLabels } from '../../view'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
+import TreatmentLabels from './TreatmentLabels'
 
 type InteractionActions =
   'brush' |
@@ -451,8 +452,36 @@ export default function Plot(props: PlotProps) {
 
   const brushRef = useBrush(svgRef, dimensions, binSelectionRef, interactionType, props)
 
+  const [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
+
   return (
     h('div', [
+      h(TreatmentLabels, {
+      }, [
+        h('div', {
+          /*
+          onMouseLeave() {
+            dispatch(Action.SetHoveredTreatment(null))
+          },
+          onMouseEnter() {
+            dispatch(Action.SetHoveredTreatment(treatmentA))
+          },
+          */
+        }, treatmentALabel),
+        h('span', {
+        }, 'vs.'),
+        h('div', {
+          /*
+          onMouseLeave() {
+            dispatch(Action.SetHoveredTreatment(null))
+          },
+          onMouseEnter() {
+            dispatch(Action.SetHoveredTreatment(treatmentB))
+          },
+          */
+        }, treatmentBLabel),
+      ]),
+
       h('svg', {
         position: 'absolute',
         top: 0,

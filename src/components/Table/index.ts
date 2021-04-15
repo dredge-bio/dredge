@@ -5,7 +5,11 @@ import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
 
 import { useAppDispatch, useResizeCallback } from '../../hooks'
-import { useView, useViewProject, actions as viewActions } from '../../view'
+import {
+  useView,
+  useComparedTreatmentLabels,
+  actions as viewActions
+} from '../../view'
 import { SortPath } from '../../types'
 
 import TranscriptRow from './Row'
@@ -144,7 +148,6 @@ type DimensionState = null | {
 
 export default function _Table() {
   const view = useView()
-      , project = useViewProject()
       , dispatch = useAppDispatch()
       , [ dimensions, setDimensions ] = useState<DimensionState>(null)
 
@@ -176,7 +179,6 @@ export default function _Table() {
   }, [])
 
   const {
-    comparedTreatments,
     savedTranscripts,
     focusedTranscript,
     displayedTranscripts,
@@ -184,15 +186,7 @@ export default function _Table() {
     pValueThreshold,
   } = view
 
-  let treatmentALabel: string | null = null
-    , treatmentBLabel: string | null = null
-
-  if (comparedTreatments) {
-    const [ treatmentA, treatmentB ] = comparedTreatments
-
-    treatmentALabel = project.data.treatments.get(treatmentA)?.label || treatmentA
-    treatmentBLabel = project.data.treatments.get(treatmentB)?.label || treatmentB
-  }
+  const [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
   const handlers = {
     setHoveredTranscript(transcript: string | null) {
