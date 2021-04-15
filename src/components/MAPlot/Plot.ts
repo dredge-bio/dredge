@@ -12,7 +12,7 @@ import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
 
 type InteractionActions =
-  'drag' |
+  'brush' |
   'zoom'
 
 const { useState, useLayoutEffect, useEffect, useRef } = React
@@ -50,6 +50,7 @@ function useBrush(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions,
   binSelectionRef: ReturnType<typeof useBins>,
+  interactionType: InteractionActions,
   {
     onBrush,
     persistBrush,
@@ -60,6 +61,8 @@ function useBrush(
       , brushedRef = useRef(false)
 
   useEffect(() => {
+    if (interactionType !== 'brush') return
+
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
         , [ x0, x1 ] = xScale.domain().map(xScale)
@@ -163,7 +166,11 @@ function useBrush(
         [xScale(x1), yScale(y1)],
       ])
     }
-  }, [])
+
+    return () => {
+      brushSel.call(brush.move, null)
+    }
+  }, [ interactionType ])
 
 
   return brushedRef
@@ -424,6 +431,7 @@ function useHoveredTranscriptMarker(
 
 export default function Plot(props: PlotProps) {
   const [ transform, setTransform ] = useState<d3.ZoomTransform>(d3.zoomIdentity)
+      , [ interactionType, setInteractionType ] = useState<InteractionActions>('brush')
       , svgRef = useRef<SVGSVGElement>(null)
       , plotGRef = useRef<SVGGElement>(null)
 
@@ -441,7 +449,7 @@ export default function Plot(props: PlotProps) {
   useHoveredTranscriptMarker(svgRef, dimensions, props)
   useWatchedTranscripts(svgRef, dimensions, props)
 
-  const brushRef = useBrush(svgRef, dimensions, binSelectionRef, props)
+  const brushRef = useBrush(svgRef, dimensions, binSelectionRef, interactionType, props)
 
   return (
     h('div', [
