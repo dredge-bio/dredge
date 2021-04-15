@@ -27,6 +27,42 @@ function nullFallback<T extends t.Mixed>(codec: T) {
   return withFallback(t.union([t.null, codec]), null)
 }
 
+type BrushedCoords = [number, number, number, number]
+
+const brushedCodec = new t.Type<
+  BrushedCoords,
+  string
+>(
+  'brushedArea',
+  (u): u is BrushedCoords =>
+    Array.isArray(u) &&
+      u.length === 4 &&
+      u.every(x => typeof x === 'number'),
+  (u, c) => {
+    if (typeof u === 'string') {
+      const numberStrs = u.split(',')
+
+      if (numberStrs.length !== 4) {
+        return t.failure(u, c)
+      }
+
+      const numbers = numberStrs.map(x => parseInt(x)) as BrushedCoords
+
+      if (!numbers.every(x => !isNaN(x))) {
+        return t.failure(u, c)
+      }
+
+      // FIXME: validate that the coordinates are in the right order
+      return t.success(numbers)
+    }
+
+    return t.failure(u, c)
+  },
+  a => a.join(',')
+)
+
+
+
 const viewOptionsObject = t.type({
   treatmentA: nullFallback(t.string),
   treatmentB: nullFallback(t.string),
@@ -51,11 +87,22 @@ const viewOptionsObject = t.type({
 
     return t.success(val)
   }),
-  brushedArea: nullFallback(
-    t.tuple([t.number, t.number, t.number, t.number])),
+  brushed: nullFallback(brushedCodec),
 })
 
 type ViewOptions = t.TypeOf<typeof viewOptionsObject>
+
+function validateOptions(options: Object) {
+  return pipe(
+    viewOptionsObject.decode(options),
+    fold(
+      () => {
+        throw new Error()
+      },
+      value => value))
+}
+
+const defaultOptions = validateOptions({})
 
 export function useViewOptions(): [
   ViewOptions,
@@ -63,41 +110,28 @@ export function useViewOptions(): [
 ]{
   const [ options, setOptions ] = useOptions()
 
-  const validatedOptions = pipe(
-    viewOptionsObject.decode(options),
-    fold(
-      () => {
-        throw new Error()
-      },
-      value => value))
+  const validatedOptions = validateOptions(options)
 
   const setValidatedOptions = (newOptions: Partial<ViewOptions>) => {
-    const newOptionsCopy = { ...newOptions }
-
-    const deleteKeys: string[] = []
-
-    Object.entries(newOptionsCopy).forEach(([ key, val ]) => {
-      const optKey = key as keyof ViewOptions
-
-      if (val == null) {
-        delete newOptionsCopy[optKey]
-        deleteKeys.push(optKey)
-      }
-    })
-
-    setOptions(prevOpts => {
+    setOptions(prevOptions => {
       const next = {
-        ...prevOpts,
-        ...newOptionsCopy,
+        ...validateOptions(prevOptions),
+        ...newOptions,
       }
 
-      deleteKeys.forEach(key => {
-        delete next[key]
-      })
+      const validated = viewOptionsObject.encode(next)
 
-      return Object.keys(next).length === 0
+      for (const k in validated) {
+        const key = k as keyof ViewOptions
+
+        if (validated[key] === defaultOptions[key]) {
+          delete validated[key]
+        }
+      }
+
+      return Object.keys(validated).length === 0
         ? null
-        : next
+        : validated
     })
   }
 
