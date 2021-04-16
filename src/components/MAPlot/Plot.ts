@@ -2,15 +2,18 @@ import h from 'react-hyperscript'
 import throttle from 'throttleit'
 import * as d3 from 'd3'
 import * as React from 'react'
+import { Button, Flex } from 'rebass'
 
 import { ViewState, DredgeConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
 import { useAppDispatch } from '../../hooks'
 import { actions as viewActions, useComparedTreatmentLabels } from '../../view'
+import { MagnifyingGlass, Target, Reset } from '../Icons'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
 import TreatmentLabels from './TreatmentLabels'
+
 
 type InteractionActions =
   'brush' |
@@ -59,7 +62,7 @@ function useBrush(
   }: PlotProps
 ) {
   const dispatch = useAppDispatch()
-      , brushedRef = useRef(false)
+      , resetBrushRef = useRef<() => void>()
 
   useEffect(() => {
     if (interactionType !== 'brush') return
@@ -143,21 +146,26 @@ function useBrush(
         binSelection.attr('fill', d => d.color)
 
         if (!e.selection) {
-          brushedRef.current = false
-
           setBrush(null, true)
           return
         }
 
-        brushedRef.current = true
         setBrush(e.selection as Brush2D, true)
       })
+
 
     const brushSel = d3.select(svgEl)
       .select('.interaction')
       .append('g')
 
     brushSel.call(brush)
+
+    const resetBrush = () => {
+      setBrush(null, true)
+      brush.move(brushSel, null)
+    }
+
+    resetBrushRef.current = resetBrush
 
     if (brushedArea) {
       const [ x0, y0, x1, y1 ] = brushedArea
@@ -169,19 +177,27 @@ function useBrush(
     }
 
     return () => {
+      resetBrush()
+
       brushSel.call(brush.move, null)
+
+      d3.select(svgEl)
+        .select('.interaction')
+        .selectAll('*').remove()
     }
   }, [ interactionType ])
 
 
-  return brushedRef
+  return {
+    resetBrush: resetBrushRef.current || ( () => {} ),
+  }
 }
 
 function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions
 ) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     const svgEl = svgRef.current
 
     const { xScale, yScale } = dimensions
@@ -240,7 +256,7 @@ function useBins(
 ) {
   const ref = useRef<d3.Selection<SVGRectElement, BinData, SVGElement, unknown>>()
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (loading) return;
 
     const svgEl = svgRef.current
@@ -349,7 +365,7 @@ function useWatchedTranscripts(
     pairwiseData,
   }: PlotProps
 ) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!pairwiseData) return
 
     const svgEl = svgRef.current
@@ -430,11 +446,49 @@ function useHoveredTranscriptMarker(
   }, [ hoveredTranscript, pairwiseData, dimensions ])
 }
 
+function useZoom(
+  svgRef: React.RefObject<SVGSVGElement>,
+  dimensions: PlotDimensions,
+  interactionType: InteractionActions,
+  setTranform: (transform: d3.ZoomTransform) => void
+) {
+  useEffect(() => {
+    const svgEl = svgRef.current
+        , { plotWidth, plotHeight } = dimensions
+
+    if (interactionType !== 'zoom') return
+
+    const el = d3.select(svgEl)
+      .select('.interaction')
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', plotWidth!)
+      .attr('height', plotHeight!)
+      .attr('fill', 'blue')
+      .attr('opacity', 0)
+
+    const zoom = d3.zoom<SVGRectElement, unknown>()
+      .on('zoom', (event: d3.D3ZoomEvent<SVGElement, any>) => {
+        const { transform } = event
+
+        setTranform(transform)
+      })
+
+    el.call(zoom)
+
+    return () => {
+      d3.select(svgEl)
+        .select('.interaction')
+        .selectAll('*').remove()
+    }
+  }, [ interactionType ])
+}
+
 export default function Plot(props: PlotProps) {
   const [ transform, setTransform ] = useState<d3.ZoomTransform>(d3.zoomIdentity)
       , [ interactionType, setInteractionType ] = useState<InteractionActions>('brush')
       , svgRef = useRef<SVGSVGElement>(null)
-      , plotGRef = useRef<SVGGElement>(null)
 
   const dimensions = useDimensions({
     abundanceLimits: props.abundanceLimits,
@@ -450,7 +504,8 @@ export default function Plot(props: PlotProps) {
   useHoveredTranscriptMarker(svgRef, dimensions, props)
   useWatchedTranscripts(svgRef, dimensions, props)
 
-  const brushRef = useBrush(svgRef, dimensions, binSelectionRef, interactionType, props)
+  const { resetBrush } = useBrush(svgRef, dimensions, binSelectionRef, interactionType, props)
+  useZoom(svgRef, dimensions, interactionType, setTransform)
 
   const [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
@@ -480,6 +535,74 @@ export default function Plot(props: PlotProps) {
           },
           */
         }, treatmentBLabel),
+      ]),
+
+      h('div', {
+        style: {
+          position: 'absolute',
+          right: padding.r,
+          top: 6,
+          width: 146,
+          height: padding.t - 6,
+          background: '#eee',
+          border: '1px solid #ccc',
+          borderRadius: '4px 4px 0 0',
+          borderBottom: 'none',
+        },
+      }, [
+        h(Flex, {
+          className: 'toolbar',
+          p: 2,
+        }, [
+          h('.button-group', [
+            h(Button, {
+              onClick: () => {
+                setInteractionType('brush')
+              },
+              /*
+              onMouseEnter: () => {
+                this.setState({ showHelp: 'drag' })
+              },
+              onMouseLeave: () => {
+                this.setState({ showHelp: null })
+              },
+              */
+              ['data-active']: interactionType === 'brush',
+            }, h(Target)),
+            h(Button, {
+              onClick: () => {
+                setInteractionType('zoom')
+              },
+              /*
+              onMouseEnter: () => {
+                this.setState({ showHelp: 'zoom' })
+              },
+              onMouseLeave: () => {
+                this.setState({ showHelp: null })
+              },
+              */
+              ['data-active']: interactionType === 'zoom',
+            }, h(MagnifyingGlass)),
+          ]),
+          h(Button, {
+            ml: 1,
+            /*
+            onMouseEnter: () => {
+              this.setState({ showHelp: 'reset' })
+            },
+            onMouseLeave: () => {
+              this.setState({ showHelp: null })
+            },
+            */
+            onClick: () => {
+              resetBrush()
+
+              if (transform === d3.zoomIdentity) return
+
+              setTransform(d3.zoomIdentity)
+            },
+          }, h(Reset)),
+        ]),
       ]),
 
       h('svg', {
