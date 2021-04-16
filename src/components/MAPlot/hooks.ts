@@ -54,7 +54,11 @@ export function useDimensions(args: DimensionsArgs) {
         .domain(yDomain)
         .range([plotHeight, 0])
 
-    ref.current!.dimensions = {
+    ref.current.height = height;
+    ref.current.width = width
+    ref.current.transform = transform
+
+    ref.current.dimensions = {
       height,
       width,
       plotHeight,
