@@ -47,6 +47,9 @@ zip: $(VERSIONED_ZIPFILE)
 serve: node_modules | dist
 	./build --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
 
+check:
+	tsc --noEmit -p .
+
 watch: serve
 
 test:
