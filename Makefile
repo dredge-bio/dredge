@@ -40,31 +40,38 @@ VERSION_ZIPFILES := $(patsubst v%,dist/dredge-%.zip,$(VERSION_TAGS))
 #  Phony targets  #
 ###################
 
+.PHONY: all
 all: node_modules $(VERSIONED_JS_BUNDLE) $(MINIFIED_VERSIONED_JS_BUNDLE)
 
+.PHONY: zip
 zip: $(VERSIONED_ZIPFILE)
 
+.PHONY: serve
 serve: node_modules | dist
 	./build --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
 
+.PHONY: check
 check:
 	tsc --noEmit -p .
 
+.PHONY: watch
 watch: serve
 
+.PHONY: test
 test:
 	@$(NPM_BIN)/blue-tape $(TEST_FILES)
 
+.PHONY: clean
 clean:
 	rm -rf dist
 	rm -rf node_modules
 
+.PHONY: list_versions
 list_versions:
 	@echo $(VERSION_TAGS)
 
+.PHONY: history
 history: $(VERSION_ZIPFILES)
-
-.PHONY: all watch zip serve test clean history list_versions
 
 
 #############
