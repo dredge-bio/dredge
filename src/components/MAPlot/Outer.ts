@@ -7,7 +7,6 @@ import { useOptions } from 'org-shell'
 import { useAppSelector, useAppDispatch } from '../../hooks'
 import { projectForView } from '../../utils'
 
-import padding from './padding'
 import Plot from './Plot'
 
 
@@ -81,7 +80,6 @@ export default function Wrapper(props: OuterProps) {
 
   return (
     h(PlotWrapper, {
-      padding,
       style: {
         height: '100%',
         width: '100%',

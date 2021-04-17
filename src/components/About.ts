@@ -1,13 +1,8 @@
-"use strict";
-
 import h from 'react-hyperscript'
-import * as R from 'ramda'
 import styled from 'styled-components'
 import { Box } from 'rebass'
-import ProjectLoading from './ProjectLoading'
 
-import { projectForView } from '../utils'
-import { DredgeState } from '../types'
+import { useViewProject } from '../view'
 
 
 const DocumentationContainer = styled(Box)`
@@ -24,26 +19,15 @@ const DocumentationContainer = styled(Box)`
  }
 `
 
-function AboutProject(props) {
+export default function AboutProject() {
+  const project = useViewProject()
+
   return (
     h(DocumentationContainer, {
       px: 4, py: 2,
       dangerouslySetInnerHTML: {
-        __html: props.documentation,
+        __html: project.data.readme || '',
       },
     })
   )
 }
-
-function mapStateToProps(state: DredgeState) {
-  const project = projectForView(state)
-
-  return {
-    documentation: project.readme || '',
-  }
-}
-
-module.exports = R.pipe(
-  mapStateToProps,
-  ProjectLoading()
-)(AboutProject)

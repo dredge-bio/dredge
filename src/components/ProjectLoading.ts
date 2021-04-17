@@ -51,7 +51,7 @@ module.exports = function makeProjectLoading(promptLocal=false) {
       let source: ProjectSource
 
       if (view) {
-        source = view.source
+        source = view.default.source
       } else {
         source = { key: 'global' }
       }
@@ -67,8 +67,8 @@ module.exports = function makeProjectLoading(promptLocal=false) {
 
       const showLog = (
         mustContinue ||
-        project.failed === true ||
-        project.loaded === false
+        project.loaded === false ||
+        project.failed === true
       )
 
       const failedGlobal = (
