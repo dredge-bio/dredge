@@ -34,6 +34,7 @@ export default function HeatMap(props: HeatMapProps) {
   } = useAbundances(view.source)
 
   if (!grid) return null
+  if (!grid.length) return null
   if (!transcript) return null
 
   const abundances = grid.map(row =>
@@ -43,9 +44,10 @@ export default function HeatMap(props: HeatMapProps) {
 
   const colorScale = colorScaleForTranscript(transcript)
 
+
   const xScale = d3.scaleLinear()
-    .domain([0, grid[0].length - 1])
-    .range([0, SQUARE_WIDTH * (grid[0].length - 1)])
+    .domain([0, grid[0]!.length - 1])
+    .range([0, SQUARE_WIDTH * (grid[0]!.length - 1)])
 
   const yScale = d3.scaleLinear()
     .domain([0, grid.length - 1])
@@ -56,7 +58,7 @@ export default function HeatMap(props: HeatMapProps) {
       row.map((treatment, j) => !treatment ? null : {
         treatment,
         attrs: {
-          fill: colorScale(abundances[i][j] || 0),
+          fill: colorScale(abundances[i]![j] || 0),
           x: xScale(j),
           y: yScale(i),
           height: SQUARE_WIDTH,
@@ -69,10 +71,10 @@ export default function HeatMap(props: HeatMapProps) {
 
   return (
     h(HeatMapContainer, {
-      viewBox: `0 0 ${xScale.range()[1] + SQUARE_WIDTH + 8} ${yScale.range()[1] + SQUARE_WIDTH + 8}`,
+      viewBox: `0 0 ${xScale.range()[1]! + SQUARE_WIDTH + 8} ${yScale.range()[1]! + SQUARE_WIDTH + 8}`,
       preserveAspectRatio: 'xMinYMid meet',
       style: {
-        height: (yScale.domain()[1] + 1) * SQUARE_WIDTH,
+        height: (yScale.domain()[1]! + 1) * SQUARE_WIDTH,
       },
     }, [
       h('g', {

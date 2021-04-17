@@ -101,7 +101,17 @@ export const setPairwiseComparison = createAsyncAction<
     .slice(1) // Skip header
     .map(row => {
       const [ id, logFC, logATA, _pValue ] = row.split('\t')
-          , pValue = parseFloat(_pValue)
+
+      if (
+        id === undefined ||
+        logFC === undefined ||
+        logATA === undefined ||
+        _pValue === undefined
+      ) {
+        throw new Error('Pairwise comparison file is malformed')
+      }
+
+      const pValue = parseFloat(_pValue)
 
       if (pValue !== 0 && !isNaN(pValue) && (pValue < minPValue)) {
         minPValue = pValue
@@ -159,9 +169,13 @@ export const getDefaultPairwiseComparison = createAsyncAction<
       , { treatments } = project.data
       , [ treatmentA, treatmentB ] = Array.from(treatments.keys())
 
+  if (treatments.size < 2) {
+    throw new Error('There need to be at least two treatments to compare')
+  }
+
   return {
-    treatmentA,
-    treatmentB,
+    treatmentA: treatmentA!,
+    treatmentB: treatmentB!,
   }
 })
 
@@ -389,6 +403,8 @@ export const importSavedTranscripts = createAsyncAction<
       , skipped: Array<string> = []
 
   for (const t of transcriptsInFile) {
+    if (t === undefined) continue
+
     const canonicalName = getCanonicalTranscriptLabel(t)
 
     if (canonicalName) {

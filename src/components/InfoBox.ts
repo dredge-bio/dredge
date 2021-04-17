@@ -51,7 +51,7 @@ function ColorLegend(props: {
       , gradients = colorScale.ticks(10).map(x => colorScale(x)).join(', ')
       , ticks = colorScale.nice().domain()
 
-  ticks.splice(1, 0, (ticks[0] + ticks[1]) / 2)
+  ticks.splice(1, 0, (ticks[0]! + ticks[1]!) / 2)
 
   return (
     h('div', {

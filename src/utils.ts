@@ -6,7 +6,6 @@ import * as d3 from 'd3'
 import {
   DifferentialExpression,
   PairwiseComparison,
-  ProjectTreatment,
   TreatmentName,
   DredgeState
 } from './types'
@@ -88,8 +87,8 @@ function getBins(
   }
 
   // Cap off bins
-  bins[0][0] = binMin;
-  bins[bins.length - 1][1] = binMax;
+  bins[0]![0] = binMin;
+  bins[bins.length - 1]![1] = binMax;
 
   return bins;
 }
@@ -107,7 +106,7 @@ function binIndexByTranscript(
 
       if (val === null) return false
 
-      return val < bins[0][0]
+      return val < bins[0]![0]!
     },
     sortedTranscripts.slice(0))
 
@@ -160,7 +159,7 @@ export function getPlotBins(
         , ataBin = ataBinByTranscript.get(d)
 
     if (fcBin !== undefined && ataBin !== undefined) {
-      bins[fcBin][ataBin].transcripts.push(d)
+      bins[fcBin]![ataBin]!.transcripts.push(d)
     }
   })
 

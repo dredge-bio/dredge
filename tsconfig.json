@@ -5,6 +5,8 @@
       "dom"
     ],
 
+    "strict": true,
+
     "target": "ES6",
 
     "module": "commonjs",
@@ -13,6 +15,7 @@
     "noEmit": true,
 
     "strict": true,
+    "noUncheckedIndexedAccess": true,
 
     "downlevelIteration": true,
 

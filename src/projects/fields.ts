@@ -203,6 +203,10 @@ export const aliases = new ProjectField<
 
     for (const line of str.split('\n')) {
       const [ canonical, ...others ] = line.split(/\t|,/).map(trim).filter(notBlank)
+
+      // Make sure the line is not blank
+      if (!canonical) continue
+
       aliases[canonical] = others
       i++
       if (i % 1500 === 0) await delay(0)
@@ -320,7 +324,7 @@ function cleanSVGString(svgString: string, treatments: types.ProjectTreatments) 
 
   anchorsToRemove.forEach(el => {
     if (!el) return
-    (el as SVGElement).replaceWith(el.children[0])
+    (el as SVGElement).replaceWith(el.children[0]!)
   })
 
   return svgDoc.documentElement.outerHTML

@@ -151,7 +151,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
 
           // If there's nothing found, then focus on the first of the new saved
           // transcripts
-          nextFocusedTranscript = Array.from(nextSavedTranscripts)[0]
+          nextFocusedTranscript = Array.from(nextSavedTranscripts)[0] || null
         }
 
         state.default.savedTranscripts = nextSavedTranscripts;

@@ -89,7 +89,7 @@ function useBrush(
         fcBounds[0],
         cpmBounds[1],
         fcBounds[1],
-      ].map(n => n.toFixed(3)).map(parseFloat)
+      ].map(n => n!.toFixed(3)).map(parseFloat)
 
       onBrush(coords)
 
@@ -104,7 +104,7 @@ function useBrush(
     }, 120)
 
     const brush = d3.brush()
-      .extent([[x0, y1], [x1, y0]])
+      .extent([[x0!, y1!], [x1!, y0!]])
       .on('brush', (e: d3.D3BrushEvent<unknown>) => {
         if (!e.sourceEvent) return
         if (!e.selection) return
@@ -215,8 +215,8 @@ function useAxes(
 
     yScale.ticks().forEach(y => {
       yEl.append('line')
-        .attr('x1', Math.ceil(xScale(xScale.domain()[0])))
-        .attr('x2', Math.ceil(xScale(xScale.domain()[1])))
+        .attr('x1', Math.ceil(xScale(xScale.domain()[0]!)))
+        .attr('x2', Math.ceil(xScale(xScale.domain()[1]!)))
         .attr('y1', Math.ceil(yScale(y)))
         .attr('y2', Math.ceil(yScale(y)))
         .attr('stroke', '#eee')
@@ -227,8 +227,8 @@ function useAxes(
       yEl.append('line')
         .attr('x1', Math.ceil(xScale(x)))
         .attr('x2', Math.ceil(xScale(x)))
-        .attr('y1', Math.ceil(yScale(yScale.domain()[0])))
-        .attr('y2', Math.ceil(yScale(yScale.domain()[1])))
+        .attr('y1', Math.ceil(yScale(yScale.domain()[0]!)))
+        .attr('y2', Math.ceil(yScale(yScale.domain()[1]!)))
         .attr('stroke', '#eee')
         .attr('stroke-width', 1)
     })
@@ -340,8 +340,8 @@ function useBins(
         .append('rect')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('width', xScale.range()[1])
-        .attr('height', yScale.range()[0])
+        .attr('width', xScale.range()[1]!)
+        .attr('height', yScale.range()[0]!)
     }
 
     return () => {

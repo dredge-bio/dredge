@@ -156,7 +156,7 @@ export default function PValueSelector(props: PValueSelectorProps) {
 
     let threshold = pValue
 
-    const scaleMinimum = histogram.logScale.domain()[0]
+    const scaleMinimum = histogram.logScale.domain()[0]!
 
     if (threshold < (scaleMinimum * 1.5)) {
       // Lock to 0 if the p-value is small
@@ -323,8 +323,8 @@ function PValueBrush(props: PValueBrushProps) {
 
         setState(prev => ({
           ...prev,
-          hoveredPValue: scale.invert(yCoord),
-          hoveredPosition: yCoord,
+          hoveredPValue: scale.invert(yCoord!),
+          hoveredPosition: yCoord!,
         }))
       })
 

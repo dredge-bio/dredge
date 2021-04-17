@@ -200,9 +200,9 @@ export default function WatchedTranscripts() {
   })
 
   const handleFiles = async (files: FileList | null) => {
-    if (!files) return
+    if (!files || !files.length) return
 
-    const text = await readFile(files[0])
+    const text = await readFile(files[0]!)
 
     try {
       const resp = await dispatch(viewActions.importSavedTranscripts({
