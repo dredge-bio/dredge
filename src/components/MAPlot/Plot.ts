@@ -2,22 +2,18 @@ import h from 'react-hyperscript'
 import throttle from 'throttleit'
 import * as d3 from 'd3'
 import * as React from 'react'
-import { Button, Flex } from 'rebass'
 
 import { ViewState, DredgeConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
 import { useAppDispatch } from '../../hooks'
 import { actions as viewActions, useComparedTreatmentLabels } from '../../view'
-import { MagnifyingGlass, Target, Reset } from '../Icons'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
 import TreatmentLabels from './TreatmentLabels'
+import { InteractionAction, Brush2D } from './types'
+import Toolbar from './Toolbar'
 
-
-type InteractionActions =
-  'brush' |
-  'zoom'
 
 const { useState, useLayoutEffect, useEffect, useRef } = React
 
@@ -31,7 +27,6 @@ const TRANSCRIPT_BIN_MULTIPLIERS = [
 
 const GRID_SQUARE_UNIT = 8
 
-type Brush2D = [[number, number], [number, number]]
 
 type PlotProps = {
   loading: boolean,
@@ -54,7 +49,7 @@ function useBrush(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions,
   binSelectionRef: ReturnType<typeof useBins>,
-  interactionType: InteractionActions,
+  interactionType: InteractionAction,
   {
     onBrush,
     persistBrush,
@@ -449,7 +444,7 @@ function useHoveredTranscriptMarker(
 function useZoom(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: PlotDimensions,
-  interactionType: InteractionActions,
+  interactionType: InteractionAction,
   setTranform: (transform: d3.ZoomTransform) => void
 ) {
   useEffect(() => {
@@ -487,7 +482,7 @@ function useZoom(
 
 export default function Plot(props: PlotProps) {
   const [ transform, setTransform ] = useState<d3.ZoomTransform>(d3.zoomIdentity)
-      , [ interactionType, setInteractionType ] = useState<InteractionActions>('brush')
+      , [ interactionType, setInteractionType ] = useState<InteractionAction>('brush')
       , svgRef = useRef<SVGSVGElement>(null)
 
   const dimensions = useDimensions({
@@ -537,73 +532,13 @@ export default function Plot(props: PlotProps) {
         }, treatmentBLabel),
       ]),
 
-      h('div', {
-        style: {
-          position: 'absolute',
-          right: padding.r,
-          top: 6,
-          width: 146,
-          height: padding.t - 6,
-          background: '#eee',
-          border: '1px solid #ccc',
-          borderRadius: '4px 4px 0 0',
-          borderBottom: 'none',
-        },
-      }, [
-        h(Flex, {
-          className: 'toolbar',
-          p: 2,
-        }, [
-          h('.button-group', [
-            h(Button, {
-              onClick: () => {
-                setInteractionType('brush')
-              },
-              /*
-              onMouseEnter: () => {
-                this.setState({ showHelp: 'drag' })
-              },
-              onMouseLeave: () => {
-                this.setState({ showHelp: null })
-              },
-              */
-              ['data-active']: interactionType === 'brush',
-            }, h(Target)),
-            h(Button, {
-              onClick: () => {
-                setInteractionType('zoom')
-              },
-              /*
-              onMouseEnter: () => {
-                this.setState({ showHelp: 'zoom' })
-              },
-              onMouseLeave: () => {
-                this.setState({ showHelp: null })
-              },
-              */
-              ['data-active']: interactionType === 'zoom',
-            }, h(MagnifyingGlass)),
-          ]),
-          h(Button, {
-            ml: 1,
-            /*
-            onMouseEnter: () => {
-              this.setState({ showHelp: 'reset' })
-            },
-            onMouseLeave: () => {
-              this.setState({ showHelp: null })
-            },
-            */
-            onClick: () => {
-              resetBrush()
-
-              if (transform === d3.zoomIdentity) return
-
-              setTransform(d3.zoomIdentity)
-            },
-          }, h(Reset)),
-        ]),
-      ]),
+      h(Toolbar, {
+        interactionType,
+        setInteractionType,
+        resetBrush,
+        transform,
+        setTransform,
+      }),
 
       h('svg', {
         position: 'absolute',

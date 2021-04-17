@@ -11,64 +11,11 @@ import padding from './padding'
 import Plot from './Plot'
 
 
-const PlotWrapper = styled.div<{
-  padding: typeof padding
-}>`
-.button-group {
-  display: flex;
-}
-
-.button-group button {
-  border-radius: 0;
-}
-
-.button-group button:last-of-type {
-  border-radius: 0 4px 4px 0;
-}
-
-.button-group button:first-of-type {
-  border-radius: 4px 0 0 4px;
-}
-
-.button-group button + button {
-  margin-left: -1px;
-}
-
-[data-active] {
-  position: relative;
-}
-
-[data-active]:focus {
-  z-index: 1;
-}
-
+const PlotWrapper = styled.div`
 .bin-selected,
 .bin-hovered {
   stroke: red;
   stroke-width: 2px;
-}
-
-[data-active="true"]::after {
-  position: absolute;
-  content: " ";
-  left: 4px;
-  right: 4px;
-  height: 2px;
-  background-color: hsl(205,35%,45%);
-  bottom: -8px;
-  border: 1px solid #eee;
-  box-shadow: 0 0 0 1px #eee;
-}
-
-.help-text {
-  position: absolute;
-  left: ${props => props.padding.l + 16 }px;
-  right: ${props => props.padding.r + 16 }px;
-  top: ${props => props.padding.t + 8 }px;
-  padding: .66rem;
-  background-color: hsl(205,35%,85%);
-  border: 1px solid hsl(205,35%,45%);
-  text-align: center;
 }
 `
 
