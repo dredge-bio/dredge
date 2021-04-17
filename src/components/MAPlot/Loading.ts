@@ -17,7 +17,7 @@ type LoadingProps = {
   loading: boolean;
 }
 
-const TIMER_SHOWN_TIME = 100
+const TIMER_SHOWN_TIME = 300
 
 export default function LoadingIndicator(props: LoadingProps) {
   const { loading } = props
@@ -32,10 +32,10 @@ export default function LoadingIndicator(props: LoadingProps) {
     }
 
     setShowTimer(true)
-    
+
     const timer = setTimeout(() => {
       setShowTimer(false)
-    }, 400)
+    }, TIMER_SHOWN_TIME)
 
     timerRef.current = timer
   }, [ loading ])

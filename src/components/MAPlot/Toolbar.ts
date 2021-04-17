@@ -162,7 +162,7 @@ export default function Toolbar(props: ToolbarProps) {
             },
           }, h(Reset)),
         ]),
-      ])
+      ]),
     ])
   )
 }
