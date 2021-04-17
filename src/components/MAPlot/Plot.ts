@@ -162,6 +162,8 @@ function useBrush(
 
     resetBrushRef.current = resetBrush
 
+    // Set brushed area on mount if it's already in the view (i.e. it was in
+    // the URL parameters)
     if (brushedArea) {
       const [ x0, y0, x1, y1 ] = brushedArea
 
