@@ -11,6 +11,7 @@ import createStore from './store'
 import { AppDispatch, AppState } from './store'
 import theme from './theme'
 import Application from './components/Application'
+import SingleCell from './components/SC'
 
 import View from './components/View'
 
@@ -69,6 +70,12 @@ const resources: Record<string, Resource> = {
     Component: require('./components/Help'),
   },
   */
+
+  'sc-test': {
+    name: 'sc-test',
+    makeTitle: () => 'UMAP drawing test',
+    Component: SingleCell,
+  },
 
   'home': {
     name: 'home',
