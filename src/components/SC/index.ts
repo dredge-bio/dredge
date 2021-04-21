@@ -2,6 +2,7 @@ import h from 'react-hyperscript'
 import * as d3 from 'd3'
 import * as React from 'react'
 import * as t from 'io-ts'
+import { inflate } from 'pako'
 import { fold } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { fetchResource } from '../../utils'
@@ -172,8 +173,6 @@ function useAxes(
     () => d3.extent(embeddings, x => x.umap2) as [number, number],
     [embeddings])
 
-  console.log(umap1Extent, umap2Extent)
-
   const dimensions = useDimensions({
     height,
     width,
@@ -265,7 +264,7 @@ function useEmbeddings(
       cluster.points.push(point)
     })
 
-    const clusterColor = d3.scaleOrdinal(d3.schemeTableau10)
+    const clusterColor = d3.scaleOrdinal(d3.schemePaired)
       .domain([...clusters.keys()].map(x => x.toString()))
 
     clusters.forEach((cluster, i) => {
@@ -282,7 +281,7 @@ function useEmbeddings(
         .attr('d', path)
         .attr('fill', 'none')
         .attr('stroke', '#ccc')
-      */
+        */
 
       d3.select(svgEl)
         .select('g.umap')
@@ -393,6 +392,7 @@ function SingleCell(props: SingleCellProps) {
   )
 }
 
+/*
 export default function SingleCellLoader() {
   const { embeddings, metadata } = useSeuratData()
 
@@ -402,4 +402,84 @@ export default function SingleCellLoader() {
     embeddings,
     metadata,
   })
+}
+*/
+
+const RECORD_SIZE = 8
+
+function getOffsetsForBuffer(view: DataView) {
+  const offsetStarts = [] as number[]
+      , offsets = [] as [number, number][]
+
+  let prevTranscriptID: number | null = null
+
+  for (let i = 0; i < view.byteLength; i += RECORD_SIZE) {
+    const transcriptID = view.getInt16(i, true) - 1
+
+    if (offsetStarts[transcriptID] == null) {
+      offsetStarts[transcriptID] = i
+      if (prevTranscriptID !== null) {
+        offsets[prevTranscriptID] = [
+          offsetStarts[prevTranscriptID]!,
+          i,
+        ]
+      }
+
+      prevTranscriptID = transcriptID
+    }
+  }
+
+  const lastTranscript = offsetStarts.length - 1
+
+  offsets[lastTranscript] = [
+    offsetStarts[lastTranscript]!,
+    view.byteLength,
+  ]
+
+  return offsets
+}
+
+function readTranscriptExpressions(view: DataView, offsets: [number, number][], transcriptIdx: number) {
+  const termini = offsets[transcriptIdx]
+
+  if (!termini) {
+    throw new Error(`Transcript ${transcriptIdx} does not exist in expression data`)
+  }
+
+  const [ start, end ] = termini
+
+  const expressions = [] as [number, number, number][]
+
+  for (let i = start; i < end; i += RECORD_SIZE) {
+    const transcriptID = view.getInt16(i, true) - 1
+        , cellID = view.getInt16(i + 2, true) - 1
+        , expression = view.getFloat32(i + 4, true)
+
+    expressions.push([
+      transcriptID,
+      cellID,
+      expression,
+    ])
+  }
+
+  return expressions
+}
+
+export default function ExpressionLoader() {
+  fetch('expressions.bin.gz')
+    .then(resp => resp.arrayBuffer())
+    .then(buffer => {
+      const uint8arr = new Uint8Array(buffer)
+          , res = inflate(uint8arr)
+          , dv = new DataView(res.buffer)
+          , offsets = getOffsetsForBuffer(dv)
+
+      console.log('done')
+      setTimeout(() => {
+        console.log('now getting expressions')
+        const expressions = readTranscriptExpressions(dv, offsets, 1)
+        console.log(expressions)
+      }, 100)
+    })
+  return null
 }
