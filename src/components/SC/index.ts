@@ -10,6 +10,8 @@ import { fetchResource } from '../../utils'
 import padding from '../MAPlot/padding'
 import { useDimensions } from '../MAPlot/hooks'
 
+import SingleCellExpression from '../../single-cell'
+
 const { useEffect, useMemo, useRef, useState } = React
 
 type SeuratMetadata = {
@@ -405,80 +407,22 @@ export default function SingleCellLoader() {
 }
 */
 
-const RECORD_SIZE = 8
-
-function getOffsetsForBuffer(view: DataView) {
-  const offsetStarts = [] as number[]
-      , offsets = [] as [number, number][]
-
-  let prevTranscriptID: number | null = null
-
-  for (let i = 0; i < view.byteLength; i += RECORD_SIZE) {
-    const transcriptID = view.getInt16(i, true) - 1
-
-    if (offsetStarts[transcriptID] == null) {
-      offsetStarts[transcriptID] = i
-      if (prevTranscriptID !== null) {
-        offsets[prevTranscriptID] = [
-          offsetStarts[prevTranscriptID]!,
-          i,
-        ]
-      }
-
-      prevTranscriptID = transcriptID
-    }
-  }
-
-  const lastTranscript = offsetStarts.length - 1
-
-  offsets[lastTranscript] = [
-    offsetStarts[lastTranscript]!,
-    view.byteLength,
-  ]
-
-  return offsets
-}
-
-function readTranscriptExpressions(view: DataView, offsets: [number, number][], transcriptIdx: number) {
-  const termini = offsets[transcriptIdx]
-
-  if (!termini) {
-    throw new Error(`Transcript ${transcriptIdx} does not exist in expression data`)
-  }
-
-  const [ start, end ] = termini
-
-  const expressions = [] as [number, number, number][]
-
-  for (let i = start; i < end; i += RECORD_SIZE) {
-    const transcriptID = view.getInt16(i, true) - 1
-        , cellID = view.getInt16(i + 2, true) - 1
-        , expression = view.getFloat32(i + 4, true)
-
-    expressions.push([
-      transcriptID,
-      cellID,
-      expression,
-    ])
-  }
-
-  return expressions
-}
-
 export default function ExpressionLoader() {
   fetch('expressions.bin.gz')
     .then(resp => resp.arrayBuffer())
     .then(buffer => {
       const uint8arr = new Uint8Array(buffer)
           , res = inflate(uint8arr)
-          , dv = new DataView(res.buffer)
-          , offsets = getOffsetsForBuffer(dv)
 
-      console.log('done')
+      const dataset = new SingleCellExpression(
+        [],
+        [],
+        new DataView(res.buffer)
+      )
+
       setTimeout(() => {
-        console.log('now getting expressions')
-        const expressions = readTranscriptExpressions(dv, offsets, 1)
-        console.log(expressions)
+        const expressions = dataset.getExpressionsForTranscript(1)
+        console.log(expressions.slice(0, 100))
       }, 100)
     })
   return null
