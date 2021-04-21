@@ -8,7 +8,8 @@ type DimensionsArgs = {
   height: number;
   width: number;
   transform: d3.ZoomTransform;
-  abundanceLimits: [[number, number], [number, number]];
+  xDomain: [number, number];
+  yDomain: [number, number];
 }
 
 export type PlotDimensions = {
@@ -41,10 +42,9 @@ export function useDimensions(args: DimensionsArgs) {
   )
 
   if (update) {
-    const { height, width, abundanceLimits, transform } = args
+    const { height, width, transform, xDomain, yDomain } = args
         , plotHeight = height! - padding.t - padding.b
         , plotWidth = width! - padding.l - padding.r
-        , [ xDomain, yDomain ] = abundanceLimits
 
     const xScale = d3.scaleLinear()
       .domain(xDomain)

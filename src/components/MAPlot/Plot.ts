@@ -488,7 +488,8 @@ export default function Plot(props: PlotProps) {
       , svgRef = useRef<SVGSVGElement>(null)
 
   const dimensions = useDimensions({
-    abundanceLimits: props.abundanceLimits,
+    xDomain: props.abundanceLimits[0],
+    yDomain: props.abundanceLimits[1],
     height: props.height,
     width: props.width,
     transform,
