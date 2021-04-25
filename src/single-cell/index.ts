@@ -1,5 +1,8 @@
 
-const RECORD_SIZE = 8
+const RECORD_SIZE = 6
+    , VERSION_OFFSET = 0x00
+    , LOOKUP_TABLE_SIZE_OFFSET = 0x02
+    , FLOATS_START = 0x04
 
 export default class SingleCellExpression {
   transcripts: string[];
@@ -25,10 +28,16 @@ export default class SingleCellExpression {
         , offsetStarts = [] as number[]
         , offsets = [] as [number, number][]
 
+    const version = view.getUint16(VERSION_OFFSET, true)
+        , floatLookupSize = view.getUint16(LOOKUP_TABLE_SIZE_OFFSET, true)
+
+    const floats = [] as number[]
+        , expressionRecordsStart = FLOATS_START + (4 * floatLookupSize)
+
     let prevTranscriptID: number | null = null
 
-    for (let i = 0; i < view.byteLength; i += RECORD_SIZE) {
-      const transcriptID = view.getInt16(i, true) - 1
+    for (let i = expressionRecordsStart; i < view.byteLength; i += RECORD_SIZE) {
+      const transcriptID = view.getUint16(i, true) - 1
 
       if (offsetStarts[transcriptID] == null) {
         offsetStarts[transcriptID] = i
@@ -66,9 +75,10 @@ export default class SingleCellExpression {
     const expressions = [] as [number, number, number][]
 
     for (let i = start; i < end; i += RECORD_SIZE) {
-      const transcriptID = view.getInt16(i, true) - 1
-          , cellID = view.getInt16(i + 2, true) - 1
-          , expression = view.getFloat32(i + 4, true)
+      const transcriptID = view.getUint16(i, true) - 1
+          , cellID = view.getUint16(i + 2, true) - 1
+          , expressionID = view.getUint16(i + 4, true)
+          , expression = view.getFloat32(FLOATS_START + expressionID * 4, true)
 
       expressions.push([
         transcriptID,
