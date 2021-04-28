@@ -11,6 +11,8 @@ export default class SingleCellExpression {
 
   offsets: [number, number][];
 
+  transcriptIdxsByLabel: Map<string, number>;
+
   constructor(
     transcripts: string[],
     cells: string[],
@@ -21,6 +23,9 @@ export default class SingleCellExpression {
     this.expressions = expressions;
 
     this.offsets = this.buildOffsets()
+
+    this.transcriptIdxsByLabel = new Map(
+      transcripts.map((label, i) => [label, i]))
   }
 
   buildOffsets() {
@@ -29,15 +34,19 @@ export default class SingleCellExpression {
         , offsets = [] as [number, number][]
 
     const version = view.getUint16(VERSION_OFFSET, true)
-        , floatLookupSize = view.getUint16(LOOKUP_TABLE_SIZE_OFFSET, true)
 
-    const floats = [] as number[]
-        , expressionRecordsStart = FLOATS_START + (4 * floatLookupSize)
+    if (version !== 2) {
+      throw Error('Invalid version number')
+    }
+
+    const floatLookupSize = view.getUint16(LOOKUP_TABLE_SIZE_OFFSET, true)
+
+    const expressionRecordsStart = FLOATS_START + (4 * floatLookupSize)
 
     let prevTranscriptID: number | null = null
 
     for (let i = expressionRecordsStart; i < view.byteLength; i += RECORD_SIZE) {
-      const transcriptID = view.getUint16(i, true) - 1
+      const transcriptID = view.getUint16(i, true)
 
       if (offsetStarts[transcriptID] == null) {
         offsetStarts[transcriptID] = i
@@ -62,29 +71,35 @@ export default class SingleCellExpression {
     return offsets
   }
 
-  getExpressionsForTranscript(transcriptIdx: number) {
+  getExpressionsForTranscript(transcript: number | string) {
+    const transcriptIdx = typeof transcript === 'number'
+      ? transcript
+      : this.transcriptIdxsByLabel.get(transcript)
+
+    if (transcriptIdx === undefined) {
+      throw new Error(`Transcript ${transcript} does not exist in expression data`)
+    }
+
     const termini = this.offsets[transcriptIdx]
         , view = this.expressions
 
     if (!termini) {
-      throw new Error(`Transcript ${transcriptIdx} does not exist in expression data`)
+      throw new Error(`Transcript index ${transcriptIdx} does not exist in expression data`)
     }
 
     const [ start, end ] = termini
 
-    const expressions = [] as [number, number, number][]
+    const expressions = [] as { cell: string, expression: number }[]
 
     for (let i = start; i < end; i += RECORD_SIZE) {
-      const transcriptID = view.getUint16(i, true) - 1
-          , cellID = view.getUint16(i + 2, true) - 1
+      const cellID = view.getUint16(i + 2, true)
           , expressionID = view.getUint16(i + 4, true)
           , expression = view.getFloat32(FLOATS_START + expressionID * 4, true)
 
-      expressions.push([
-        transcriptID,
-        cellID,
+      expressions.push({
+        cell: this.cells[cellID]!,
         expression,
-      ])
+      })
     }
 
     return expressions
