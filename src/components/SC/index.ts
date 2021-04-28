@@ -256,12 +256,66 @@ function useAxes(
   return dimensions
 }
 
+function useEmbeddingsByTranscript(
+  svgRef: React.RefObject<SVGSVGElement>,
+  dimensions: ReturnType<typeof useDimensions>,
+  embeddings: SeuratEmbedding[],
+  scDataset: SingleCellExpression,
+  transcriptName: string
+) {
+  useEffect(() => {
+    const svgEl = svgRef.current
+        , { xScale, yScale } = dimensions
+
+    const expressions = scDataset.getExpressionsForTranscript(transcriptName)
+
+    const expressionsByCell = new Map(
+      expressions.map(({ cell, expression }) => [cell, expression]))
+
+    const colorScale = d3.scaleLinear<number, string>()
+      .domain([0, d3.max(expressions, d => d.expression) || 1])
+      .range(['#ddd', 'red'])
+
+    const canvas: d3.Selection<HTMLCanvasElement, unknown, null, undefined> = d3.select(svgEl)
+      .select('canvas')
+
+    const ctx = canvas.node()!.getContext('2d')!
+
+    ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
+
+    // Sort embeddings so that they are drawn in order of transcript expression
+    // level from lowest to highest
+    embeddings.sort((a, b) => {
+      const levelA = expressionsByCell.get(a.cellID) || 0
+          , levelB = expressionsByCell.get(b.cellID) || 0
+
+      if (levelA === levelB) return 0
+
+      return levelA > levelB
+        ? 1
+        : -1
+    })
+
+    embeddings.forEach(({ cellID, umap1, umap2 }) => {
+      const x = xScale(umap1)
+          , y = yScale(umap2)
+          , r = expressionsByCell.has(cellID) ? 1.75 : 1
+          , fill = colorScale(expressionsByCell.get(cellID) || 0)
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI, true);
+      ctx.fillStyle = fill;
+      ctx.closePath();
+      ctx.fill();
+    })
+  })
+}
+
 function useEmbeddings(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
   embeddings: SeuratEmbedding[],
-  metadata: SeuratMetadata[],
-  scDataset: SingleCellExpression
+  metadata: SeuratMetadata[]
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
@@ -269,29 +323,6 @@ function useEmbeddings(
 
     const embeddingsByCellID: Map<string, SeuratEmbedding> =
       new Map(embeddings.map(obj => [obj.cellID, obj]))
-
-    const expressions = scDataset.getExpressionsForTranscript('cah6')
-
-    const expressionsByCell = new Map(
-      expressions.map(({ cell, expression }) => [cell, expression]))
-
-    const colorScale = d3.scaleLinear<number, string>()
-      .domain([0, d3.max(expressions, d => d.expression) || 1])
-      .range(['#ccc', 'red'])
-
-    d3.select(svgEl)
-      .select('g.umap')
-      .append('g')
-      .selectAll('circle')
-      .data(embeddings).enter()
-        .append('circle')
-        .attr('r', 1)
-        .attr('cx', d => xScale(d.umap1))
-        .attr('cy', d => yScale(d.umap2))
-        .attr('fill', d => colorScale(expressionsByCell.get(d.cellID) || 0))
-        .attr('stroke', 'none')
-
-    return
 
     const clusters: Map<number, {
       embeddings: SeuratEmbedding[],
@@ -377,13 +408,14 @@ function SingleCell(props: SingleCellProps) {
   const { metadata, embeddings, scDataset } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , dimensions = useAxes(svgRef, 800, 800, embeddings)
+      , [ transcript, setTranscript ] = useState('cah6')
 
-  useEmbeddings(
+  useEmbeddingsByTranscript(
     svgRef,
     dimensions,
     embeddings,
-    metadata,
-    scDataset
+    scDataset,
+    transcript
   )
 
   return (
@@ -445,7 +477,29 @@ function SingleCell(props: SingleCellProps) {
         h('g.y-axis'),
 
         h('g', { clipPath: 'url(#visible-plot)' }, [
-          h('g.umap'),
+          h('g.umap', [
+            React.createElement('foreignObject', {
+              x: 0,
+              y: 0,
+              width: dimensions.plotWidth,
+              height: dimensions.plotHeight,
+            }, [
+              React.createElement('xhtml:body', {
+                margin: '0px',
+                padding: '0px',
+                backgroundColor: 'transparent',
+                width: dimensions.plotWidth + 'px',
+                height: dimensions.plotHeight + 'px',
+              }, [
+                h('canvas', {
+                  x: 0,
+                  y: 0,
+                  width: dimensions.plotWidth,
+                  height: dimensions.plotHeight,
+                }),
+              ]),
+            ]),
+          ]),
         ]),
       ]),
     ])
