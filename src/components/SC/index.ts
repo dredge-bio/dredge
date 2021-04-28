@@ -55,10 +55,10 @@ const seuratMetadataCodec = new t.Type<
     return t.success({
       cellID,
       replicateID,
-      seuratCluster: parseInt(seuratCluster)
+      seuratCluster: parseInt(seuratCluster),
     })
   },
-  x => {
+  () => {
     throw new Error()
   }
 )
@@ -85,14 +85,6 @@ const seuratEmbeddingsCodec = new t.Type<
       return val
     }
 
-    function assertNumber(val: unknown) {
-      if (typeof val !== 'number') {
-        throw new Error()
-      }
-
-      return val
-    }
-
     const cellID = assertString(u[0])
         , umap1 = assertString(u[1])
         , umap2 = assertString(u[2])
@@ -100,10 +92,10 @@ const seuratEmbeddingsCodec = new t.Type<
     return t.success({
       cellID,
       umap1: parseFloat(umap1),
-      umap2: parseFloat(umap2)
+      umap2: parseFloat(umap2),
     })
   },
-  x => {
+  () => {
     throw new Error()
   }
 )
@@ -117,7 +109,7 @@ function useSeuratData() {
       , [ transcripts, setTranscripts ] = useState<string[]>()
 
   useEffect(() => {
-    const p1 = fetchResource('data/metadata.csv')
+    fetchResource('data/metadata.csv')
       .then(resp => resp.text())
       .then(text => {
         const rawMetadata = d3.csvParseRows(text).slice(1)
@@ -133,7 +125,7 @@ function useSeuratData() {
         setMetadata(metadata)
       })
 
-    const p2 = fetchResource('data/embeddings.csv')
+    fetchResource('data/embeddings.csv')
       .then(resp => resp.text())
       .then(text => {
         const rawEmbeddings = d3.csvParseRows(text).slice(1)
@@ -149,7 +141,7 @@ function useSeuratData() {
         setEmbeddings(embeddings)
       })
 
-    const p3 = fetchResource('data/expressions.bin.gz')
+    fetchResource('data/expressions.bin.gz')
       .then(resp => resp.arrayBuffer())
       .then(buffer => {
         const uint8arr = new Uint8Array(buffer)
@@ -158,7 +150,7 @@ function useSeuratData() {
         setExpressionData(new DataView(res.buffer))
       })
 
-    const p4 = fetchResource('data/transcripts.csv')
+    fetchResource('data/transcripts.csv')
       .then(resp => resp.text())
       .then(text => {
         const transcripts = text.split('\n').map(row => row.split(',')[0]!)
