@@ -15,13 +15,13 @@ import SingleCellExpression from '../../single-cell'
 const { useEffect, useMemo, useRef, useState } = React
 
 type SeuratMetadata = {
-  transcriptID: string;
+  cellID: string;
   replicateID: string;
   seuratCluster: number;
 }
 
 type SeuratEmbedding = {
-  transcriptID: string;
+  cellID: string;
   umap1: number;
   umap2: number;
 }
@@ -48,12 +48,12 @@ const seuratMetadataCodec = new t.Type<
       return val
     }
 
-    const transcriptID = assertString(u[0])
+    const cellID = assertString(u[0])
         , replicateID = assertString(u[1])
         , seuratCluster = assertString(u[5])
 
     return t.success({
-      transcriptID,
+      cellID,
       replicateID,
       seuratCluster: parseInt(seuratCluster)
     })
@@ -93,12 +93,12 @@ const seuratEmbeddingsCodec = new t.Type<
       return val
     }
 
-    const transcriptID = assertString(u[0])
+    const cellID = assertString(u[0])
         , umap1 = assertString(u[1])
         , umap2 = assertString(u[2])
 
     return t.success({
-      transcriptID,
+      cellID,
       umap1: parseFloat(umap1),
       umap2: parseFloat(umap2)
     })
@@ -113,9 +113,11 @@ const seuratEmbeddingsCodec = new t.Type<
 function useSeuratData() {
   const [ metadata, setMetadata ] = useState<SeuratMetadata[]>()
       , [ embeddings, setEmbeddings ] = useState<SeuratEmbedding[]>()
+      , [ expressionData, setExpressionData ] = useState<DataView>()
+      , [ transcripts, setTranscripts ] = useState<string[]>()
 
   useEffect(() => {
-    fetchResource('metadata.csv')
+    const p1 = fetchResource('data/metadata.csv')
       .then(resp => resp.text())
       .then(text => {
         const rawMetadata = d3.csvParseRows(text).slice(1)
@@ -131,7 +133,7 @@ function useSeuratData() {
         setMetadata(metadata)
       })
 
-    fetchResource('embeddings.csv')
+    const p2 = fetchResource('data/embeddings.csv')
       .then(resp => resp.text())
       .then(text => {
         const rawEmbeddings = d3.csvParseRows(text).slice(1)
@@ -146,20 +148,45 @@ function useSeuratData() {
 
         setEmbeddings(embeddings)
       })
+
+    const p3 = fetchResource('data/expressions.bin.gz')
+      .then(resp => resp.arrayBuffer())
+      .then(buffer => {
+        const uint8arr = new Uint8Array(buffer)
+            , res = inflate(uint8arr)
+
+        setExpressionData(new DataView(res.buffer))
+      })
+
+    const p4 = fetchResource('data/transcripts.csv')
+      .then(resp => resp.text())
+      .then(text => {
+        const transcripts = text.split('\n').map(row => row.split(',')[0]!)
+
+        setTranscripts(transcripts)
+      })
   }, [])
 
-  if (embeddings && metadata) {
+  if (embeddings && metadata && transcripts && expressionData) {
+    const scDataset = new SingleCellExpression(
+      transcripts,
+      metadata.map(x => x.cellID),
+      expressionData)
+
     return {
+      scDataset,
       embeddings,
       metadata,
     }
   }
 
   return {
+    scDataset: null,
     embeddings: null,
     metadata: null,
   }
 }
+
 
 function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
@@ -233,14 +260,38 @@ function useEmbeddings(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
   embeddings: SeuratEmbedding[],
-  metadata: SeuratMetadata[]
+  metadata: SeuratMetadata[],
+  scDataset: SingleCellExpression
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
 
-    const embeddingsByTranscriptID: Map<string, SeuratEmbedding> =
-      new Map(embeddings.map(obj => [obj.transcriptID, obj]))
+    const embeddingsByCellID: Map<string, SeuratEmbedding> =
+      new Map(embeddings.map(obj => [obj.cellID, obj]))
+
+    const expressions = scDataset.getExpressionsForTranscript('cah6')
+
+    const expressionsByCell = new Map(
+      expressions.map(({ cell, expression }) => [cell, expression]))
+
+    const colorScale = d3.scaleLinear<number, string>()
+      .domain([0, d3.max(expressions, d => d.expression) || 1])
+      .range(['#ccc', 'red'])
+
+    d3.select(svgEl)
+      .select('g.umap')
+      .append('g')
+      .selectAll('circle')
+      .data(embeddings).enter()
+        .append('circle')
+        .attr('r', 1)
+        .attr('cx', d => xScale(d.umap1))
+        .attr('cy', d => yScale(d.umap2))
+        .attr('fill', d => colorScale(expressionsByCell.get(d.cellID) || 0))
+        .attr('stroke', 'none')
+
+    return
 
     const clusters: Map<number, {
       embeddings: SeuratEmbedding[],
@@ -248,7 +299,7 @@ function useEmbeddings(
     }> = new Map()
 
     metadata.forEach(val => {
-      const { seuratCluster, transcriptID } = val
+      const { seuratCluster, cellID } = val
 
       if (!clusters.has(seuratCluster)) {
         clusters.set(seuratCluster, {
@@ -257,7 +308,7 @@ function useEmbeddings(
         })
       }
 
-      const embedding = embeddingsByTranscriptID.get(transcriptID)!
+      const embedding = embeddingsByCellID.get(cellID)!
           , point = [xScale(embedding.umap1), yScale(embedding.umap2)] as [number, number]
 
       const cluster = clusters.get(seuratCluster)!
@@ -319,14 +370,21 @@ function useEmbeddings(
 type SingleCellProps = {
   metadata: SeuratMetadata[];
   embeddings: SeuratEmbedding[];
+  scDataset: SingleCellExpression;
 }
 
 function SingleCell(props: SingleCellProps) {
-  const { metadata, embeddings } = props
+  const { metadata, embeddings, scDataset } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , dimensions = useAxes(svgRef, 800, 800, embeddings)
 
-  useEmbeddings(svgRef, dimensions, embeddings, metadata)
+  useEmbeddings(
+    svgRef,
+    dimensions,
+    embeddings,
+    metadata,
+    scDataset
+  )
 
   return (
     h('svg', {
@@ -394,36 +452,15 @@ function SingleCell(props: SingleCellProps) {
   )
 }
 
-/*
 export default function SingleCellLoader() {
-  const { embeddings, metadata } = useSeuratData()
+  const { embeddings, metadata, scDataset } = useSeuratData()
 
-  if (embeddings === null || metadata === null) return null
+  if (embeddings === null || metadata === null || scDataset === null) return null
 
   return h(SingleCell, {
+    scDataset,
     embeddings,
     metadata,
   })
 }
-*/
 
-export default function ExpressionLoader() {
-  fetch('expressions.bin.gz')
-    .then(resp => resp.arrayBuffer())
-    .then(buffer => {
-      const uint8arr = new Uint8Array(buffer)
-          , res = inflate(uint8arr)
-
-      const dataset = new SingleCellExpression(
-        [],
-        [],
-        new DataView(res.buffer)
-      )
-
-      setTimeout(() => {
-        const expressions = dataset.getExpressionsForTranscript(1)
-        console.log(expressions.slice(0, 100))
-      }, 100)
-    })
-  return null
-}
