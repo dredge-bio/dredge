@@ -502,6 +502,20 @@ function SingleCell(props: SingleCellProps) {
           ]),
         ]),
       ]),
+
+      // Transcript label
+      h('text', {
+        dx: 0,
+        dy: padding.t / 2,
+        x: dimensions.width / 2,
+        y: 0,
+        style: {
+          fontWeight: 'bold',
+          textAnchor: 'middle',
+          dominantBaseline: 'central',
+        },
+      }, transcript),
+
     ])
   )
 }
