@@ -1,6 +1,6 @@
 *.swp
 npm-debug.log
-data/*
+data
 dist/*
 node_modules/*
 project.json
