@@ -1,11 +1,15 @@
 "use strict";
 
 import { ORGShellResource } from 'org-shell'
-
 import { AppDispatch, AppState } from './store'
 
+import { BulkProjectData, BulkProjectConfig, BulkPairwiseComparison } from './projects/bulk/types'
+import { SingleCellProjectData, SingleCellProjectConfig } from './projects/sc/types'
+
+export type DredgeState = AppState
+
 export type ThunkConfig = {
-  state: DredgeState
+  state: DredgeState;
 }
 
 export type ReplicateLabel = string;
@@ -13,8 +17,6 @@ export type TranscriptName = string;
 export type TreatmentName = string;
 
 
-
-type URLString = string;
 
 interface LocalProjectSource {
   key: 'local'
@@ -35,116 +37,9 @@ export interface Resource extends ORGShellResource<{
 export type ProjectSource = LocalProjectSource | GlobalProjectSource;
 
 
-export interface ProjectTreatment {
-  label: string;
-  replicates: Array<ReplicateLabel>;
-}
 
-export type ProjectTreatments = Map<TreatmentName, ProjectTreatment>
+export type TableSortOrder = 'asc' | 'desc'
 
-// FIXME: it might happen that there is *just* a name, in the case where a
-// transcript is not present in a pairwise comparison (e.g. maybe someone
-// added a transcript from the search bar, or maybe a certain transcript has
-// zeroes on some treatments versus others
-export interface DifferentialExpression {
-  name: TranscriptName;
-  label: string,
-
-  treatmentA_AbundanceMean: number | null;
-  treatmentA_AbundanceMedian: number | null;
-  treatmentB_AbundanceMean: number | null;
-  treatmentB_AbundanceMedian: number | null;
-  pValue: number | null;
-  logFC: number | null;
-  logATA: number | null;
-}
-
-export interface PairwiseComparison extends Map<string, DifferentialExpression> {
-  minPValue: number;
-  fcSorted: Array<DifferentialExpression>;
-  ataSorted: Array<DifferentialExpression>;
-}
-
-export type SortPath =
-  'label' |
-  'pValue' |
-  'logATA' |
-  'logFC' |
-  'treatmentA_AbundanceMean' |
-  'treatmentA_AbundanceMedian' |
-  'treatmentB_AbundanceMean' |
-  'treatmentB_AbundanceMedian'
-
-export type SortOrder = 'asc' | 'desc'
-
-export type DisplayedTranscriptsSource =
-  'all' |
-  'selectedBin' |
-  'hoveredBin' |
-  'brushed' |
-  'watched'
-
-export interface ViewState {
-  source: ProjectSource;
-  loading: boolean;
-  pairwiseData: PairwiseComparison | null;
-  sortedTranscripts: Array<DifferentialExpression>;
-  pValueThreshold: number;
-
-  focusedTranscript: TranscriptName | null;
-  hoveredTranscript: TranscriptName | null;
-  hoveredTreatment: TreatmentName | null;
-
-  savedTranscripts: Set<TranscriptName>;
-
-  comparedTreatments: [TreatmentName, TreatmentName] | null;
-
-  brushedArea: [
-    // minLogATA
-    number,
-
-    // maxLogFC
-    number,
-
-    // maxLogATA
-    number,
-
-    // minLogFC
-    number
-  ] | null;
-
-  hoveredBinTranscripts: Set<TranscriptName> | null;
-  selectedBinTranscripts: Set<TranscriptName> | null;
-
-  displayedTranscripts: null | {
-    source: DisplayedTranscriptsSource,
-    transcripts: Array<DifferentialExpression>,
-  },
-
-  order: SortOrder;
-
-  sortPath: SortPath;
-}
-
-export interface DredgeConfig {
-  label: string;
-  readme: URLString;
-  transcriptHyperlink: Array<{
-    label: string,
-    url: URLString,
-  }>;
-  abundanceLimits: [
-    [number, number],
-    [number, number]
-  ];
-  heatmapMinimumMaximum: number;
-  treatments: URLString;
-  pairwiseName: URLString;
-  transcriptAliases: URLString;
-  abundanceMeasures: URLString;
-  diagram: URLString;
-  grid: URLString;
-}
 
 export type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
 
@@ -166,53 +61,41 @@ export interface LogEntry {
 export interface ProjectLog {
 }
 
+export type UnloadedProject = { loaded: false } & (
+  {
+    type: 'SingleCell',
+    config: SingleCellProjectConfig,
+  } |
+  {
+    type: 'Bulk',
+    config: BulkProjectConfig,
+  }
+)
+
+export type LoadedProject = { loaded: true } & (
+  {
+    type: 'SingleCell',
+    config: SingleCellProjectConfig,
+    data: SingleCellProjectData,
+  } |
+  {
+    type: 'Bulk',
+    config: BulkProjectConfig,
+    data: BulkProjectData,
+    pairwiseComparisonCache: {
+      [index: string]: BulkPairwiseComparison | null
+    };
+    watchedTranscripts: Set<string>,
+  }
+)
+
 type UnloadedProjectWithoutConfig = {
   loaded: false;
-}
-
-type UnloadedProject = {
-  loaded: false;
-  config: DredgeConfig;
 }
 
 type FailedProject = {
   loaded: true;
   failed: true,
-}
-
-export type ProjectData = {
-  treatments: ProjectTreatments,
-
-  // From the abundance matrix
-  transcripts: string[],
-  replicates: string[],
-  abundances: number[][],
-  transcriptIndices: Record<string, number>,
-  replicateIndices: Record<string, number>,
-
-  transcriptCorpus: Record<string, string>;
-  transcriptAliases: ([alias: string, transcript: string])[],
-
-  svg: string | null;
-  grid: (string | null)[][],
-
-  readme: string | null;
-}
-
-
-export interface LoadedProject {
-  loaded: true;
-  failed: false;
-  config: DredgeConfig;
-
-  // Static information about the project
-  data: ProjectData,
-
-  pairwiseComparisonCache: {
-    [index: string]: PairwiseComparison | null
-  };
-
-  watchedTranscripts: Set<string>,
 }
 
 export type Project =
@@ -221,4 +104,3 @@ export type Project =
   FailedProject |
   LoadedProject
 
-export type DredgeState = AppState
