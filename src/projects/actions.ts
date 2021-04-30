@@ -1,8 +1,9 @@
 import * as tPromise from 'io-ts-promise'
 import * as t from 'io-ts'
-import { fold, Left, Right } from 'fp-ts/Either'
+import { fold, Left, Right, Either } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-import { ConfigDef, ConfigKey } from './config'
+import { BulkConfiguration, bulkConfiguration } from './config'
+import { SingleCellConfiguration, singleCellConfiguration } from './config'
 import { actions as logAction } from '../log'
 
 import { createAsyncAction } from '../actions'
@@ -36,6 +37,14 @@ const labels: Map<ConfigKey, string> = new Map([
   ['diagram', 'Project diagram'],
   ['grid', 'Project grid'],
 ])
+
+function parseConfiguration<T>(
+  configurationType: T,
+  log: any,
+  json: unknown
+) {
+}
+
 
 export const loadProjectConfig = createAsyncAction<
   { source: ProjectSource },
@@ -78,7 +87,7 @@ export const loadProjectConfig = createAsyncAction<
   // global project would not be assumed.
   const configURL = new URL('./project.json', window.location.toString()).href
 
-  let resp: Response
+  let configJson: any
 
   const statusLog = makeStatusLog(null)
       , projectStatusLog = makeStatusLog(source)
@@ -86,6 +95,8 @@ export const loadProjectConfig = createAsyncAction<
   statusLog('Checking for project configuration')
 
   {
+    let resp: Response
+
     const log = makeResourceLog(null, 'Project configuration', configURL)
 
     try {
@@ -101,16 +112,28 @@ export const loadProjectConfig = createAsyncAction<
       log('Failed', 'Configuration file not found')
       throw new Error()
     }
+
+    try {
+      configJson = await resp.json()
+    } catch (e) {
+      log('Failed', 'Configuration file not valid json')
+    }
+
+    // Check what kind of project this is-- bulk RNAseq or single cell RNAseq
+    const { type='Bulk' } = configJson
+
+    if (type !== 'Bulk' || type !== 'SingleCell') {
+      const message = 'Project type must be either `Bulk` or `SingleCell`'
+      log('Failed', message)
+      throw new Error(message)
+    }
   }
 
   statusLog('Loaded `project.json`, using global project')
 
   projectStatusLog('Checking if `project.json` well formatted')
 
-  const json = await resp.json()
-
-
-  for (const [configKey, value ] of labels) {
+  for (const [ configKey, value ] of labels) {
     const url = new URL(`project.json#${configKey}`, window.location.toString()).href
         , decoder = ConfigDef.props[configKey].asDecoder()
 
@@ -118,8 +141,33 @@ export const loadProjectConfig = createAsyncAction<
 
     await log('Pending')
 
+    const x = configJson[configKey]
+
+    ConfigDef.props
+
+    type T = t.TypeOf<typeof ConfigDef>
+    type Val = T[keyof T]
+
+    const f: Either<t.Errors, Val> = decoder.decode(x)
+
+    fold
+
+    const a = pipe(
+      f,
+      fold(
+        errors => {
+          return 1
+        },
+        val => {
+          return 'a'
+        }),
+      x => {
+        return 1
+      }
+    )
+
     pipe(
-      decoder.decode(json[configKey]) as Left<t.Errors> | Right<any>,
+      decoder.decode(configJson[configKey]) as Left<t.Errors> | Right<any>,
       fold(
         errors => {
           log('Failed')
@@ -133,7 +181,7 @@ export const loadProjectConfig = createAsyncAction<
 
   projectStatusLog('`project.json` well formatted')
 
-  const config = await tPromise.decode(ConfigDef, json)
+  const config = await tPromise.decode(ConfigDef, configJson)
 
   await delay(0)
 
