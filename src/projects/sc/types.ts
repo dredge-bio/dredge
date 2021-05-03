@@ -19,7 +19,8 @@ export type SingleCellProjectConfig = Config & {
   type: "SingleCell"
   expressionData: string;
   transcripts: string;
-  embeddings: string;
+  seuratEmbeddings: string;
+  seuratMetadata: string;
 }
 
 export type SingleCellProjectData = {
