@@ -3,10 +3,11 @@ import { fromNullable } from 'io-ts-types'
 import { URLString, TranscriptHyperlink } from '../config'
 
 export const singleCellConfiguration = t.type({
+  type: t.literal('SingleCell'),
   label: t.string,
 
   seuratEmbeddings: URLString,
-  seurateMetadata: URLString,
+  seuratMetadata: URLString,
   transcripts: URLString,
   expressionData: URLString,
 

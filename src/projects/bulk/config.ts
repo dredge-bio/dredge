@@ -53,6 +53,7 @@ const AbundanceLimits = withValidate(coordTuple, (input, context) => {
 })
 
 export const bulkConfiguration = t.type({
+  type: t.literal('Bulk'),
   label: t.string,
   abundanceMeasures: URLString,
   pairwiseName: PairwiseName,
@@ -60,7 +61,6 @@ export const bulkConfiguration = t.type({
   abundanceLimits: AbundanceLimits,
 
   // Optional
-  url: fromNullable(URLString, ''),
   transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
   heatmapMinimumMaximum: fromNullable(t.number, 0),
   readme: fromNullable(URLString, ''),
