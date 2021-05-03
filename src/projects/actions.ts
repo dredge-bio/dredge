@@ -1,9 +1,9 @@
 import * as tPromise from 'io-ts-promise'
 import * as t from 'io-ts'
-import { fold, Left, Right, Either } from 'fp-ts/Either'
+import { fold, Either } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-import { BulkConfiguration, bulkConfiguration } from './config'
-import { SingleCellConfiguration, singleCellConfiguration } from './config'
+import { BulkConfiguration, bulkConfiguration } from './bulk/config'
+import { SingleCellConfiguration, singleCellConfiguration } from './sc/config'
 import { actions as logAction } from '../log'
 
 import { createAsyncAction } from '../actions'
@@ -13,7 +13,6 @@ import * as fields from './fields'
 import { delay, fetchResource, getDefaultGrid } from '../utils'
 
 import {
-  DredgeConfig,
   ProjectSource,
   LogStatus,
   ProjectTreatments,
@@ -24,7 +23,7 @@ function getGlobalWatchedGenesKey() {
   return window.location.pathname + '-watched'
 }
 
-const labels: Map<ConfigKey, string> = new Map([
+const bulkLabels: Map<keyof BulkConfiguration, string> = new Map([
   ['label', 'Project label'],
   ['readme', 'Project documentation'],
   ['abundanceMeasures', 'Transcript abundance measures'],
@@ -38,17 +37,23 @@ const labels: Map<ConfigKey, string> = new Map([
   ['grid', 'Project grid'],
 ])
 
-function parseConfiguration<T>(
-  configurationType: T,
-  log: any,
-  json: unknown
-) {
-}
+const singleCellLabels: Map<keyof SingleCellConfiguration, string> = new Map([
+  ['label', 'Project label'],
+  ['readme', 'Project documentation'],
+  ['transcriptHyperlink', 'Transcript hyperlink'],
+  ['seuratEmbeddings', 'Seurat UMAP embedding coordinates'],
+  ['seuratMetadata', 'Seurat cell metadata'],
+  ['transcripts', 'List of transcripts'],
+  ['expressionData', 'Transcript expression data'],
+])
+
+type ConfigurationDefinition = typeof bulkConfiguration | typeof singleCellConfiguration
+type Configuration = BulkConfiguration | SingleCellConfiguration
 
 
 export const loadProjectConfig = createAsyncAction<
   { source: ProjectSource },
-  { config: DredgeConfig }
+  { config: Configuration }
 >('load-project-config', async (args, { dispatch, getState }) => {
   const { source } = args
       , project = getState().projects[source.key]
@@ -94,6 +99,8 @@ export const loadProjectConfig = createAsyncAction<
 
   statusLog('Checking for project configuration')
 
+  let definition: ConfigurationDefinition
+
   {
     let resp: Response
 
@@ -119,13 +126,64 @@ export const loadProjectConfig = createAsyncAction<
       log('Failed', 'Configuration file not valid json')
     }
 
-    // Check what kind of project this is-- bulk RNAseq or single cell RNAseq
-    const { type='Bulk' } = configJson
+    if (configJson.type === 'Bulk' || configJson.type === undefined) {
+      const labels = bulkLabels
+          , configDef = definition = bulkConfiguration
 
-    if (type !== 'Bulk' || type !== 'SingleCell') {
-      const message = 'Project type must be either `Bulk` or `SingleCell`'
-      log('Failed', message)
-      throw new Error(message)
+      for (const [ configKey, value ] of labels) {
+        const url = new URL(`project.json#${configKey}`, window.location.toString()).href
+            , decoder = configDef.props[configKey].asDecoder()
+
+        const log = makeResourceLog(source, value, url)
+
+        await log('Pending')
+
+        const decoded: Either<t.Errors, any> = decoder.decode(configJson[configKey])
+
+        pipe(
+          decoded,
+          fold(
+            errors => {
+              log('Failed')
+              console.log(errors)
+            },
+            () => {
+              log('OK')
+            }
+          ))
+      }
+    } else if (configJson.type === 'SingleCell') {
+      const labels = singleCellLabels
+          , configDef = definition = singleCellConfiguration
+
+      // Repeated from above :-(
+      // See https://github.com/microsoft/TypeScript/issues/30581
+      for (const [ configKey, value ] of labels) {
+        const url = new URL(`project.json#${configKey}`, window.location.toString()).href
+            , decoder = configDef.props[configKey].asDecoder()
+
+        const log = makeResourceLog(source, value, url)
+
+        await log('Pending')
+
+        const decoded: Either<t.Errors, any> = decoder.decode(configJson[configKey])
+
+        pipe(
+          decoded,
+          fold(
+            errors => {
+              log('Failed')
+              console.log(errors)
+            },
+            () => {
+              log('OK')
+            }
+          ))
+      }
+    } else {
+        const message = 'Project type must be either `Bulk` or `SingleCell`'
+        log('Failed', message)
+        throw new Error(message)
     }
   }
 
@@ -133,59 +191,17 @@ export const loadProjectConfig = createAsyncAction<
 
   projectStatusLog('Checking if `project.json` well formatted')
 
-  for (const [ configKey, value ] of labels) {
-    const url = new URL(`project.json#${configKey}`, window.location.toString()).href
-        , decoder = ConfigDef.props[configKey].asDecoder()
-
-    const log = makeResourceLog(source, value, url)
-
-    await log('Pending')
-
-    const x = configJson[configKey]
-
-    ConfigDef.props
-
-    type T = t.TypeOf<typeof ConfigDef>
-    type Val = T[keyof T]
-
-    const f: Either<t.Errors, Val> = decoder.decode(x)
-
-    fold
-
-    const a = pipe(
-      f,
-      fold(
-        errors => {
-          return 1
-        },
-        val => {
-          return 'a'
-        }),
-      x => {
-        return 1
-      }
-    )
-
-    pipe(
-      decoder.decode(configJson[configKey]) as Left<t.Errors> | Right<any>,
-      fold(
-        errors => {
-          log('Failed')
-          console.log(errors)
-        },
-        () => {
-          log('OK')
-        }
-      ))
-  }
-
   projectStatusLog('`project.json` well formatted')
 
-  const config = await tPromise.decode(ConfigDef, configJson)
+  const parsed: Either<t.Errors, Configuration> = definition.decode(configJson)
 
-  await delay(0)
-
-  return { config }
+  if (parsed._tag === 'Right') {
+    return {
+      config: parsed.right,
+    }
+  } else {
+    throw new Error()
+  }
 })
 
 export const loadProject = createAsyncAction<
@@ -193,7 +209,7 @@ export const loadProject = createAsyncAction<
   {
     data: ProjectData,
     watchedTranscripts: Set<string>,
-    config: DredgeConfig,
+    config: Configuration,
   }
 >('load-project', async (args, { dispatch, getState }) => {
   const project = args.source
