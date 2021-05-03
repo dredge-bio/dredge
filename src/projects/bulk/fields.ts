@@ -9,10 +9,7 @@ import MarkdownIt from 'markdown-it'
 import { ProjectField } from '../fields'
 import * as types from './types'
 
-export const treatments = new ProjectField<
-  Record<string, types.BulkTreatment>,
-  types.BulkTreatmentMap
->({
+export const treatments = new ProjectField({
   label: 'Project treatments',
   required: true,
   cached: false,
@@ -28,14 +25,7 @@ export const treatments = new ProjectField<
 })
 
 
-export const abundanceMeasures = new ProjectField<
-  [ replicateRow: string, abundances: Array<string> ],
-  {
-    transcripts: Array<string>,
-    replicates: Array<string>,
-    abundances: number[][],
-  }
->({
+export const abundanceMeasures = new ProjectField({
   label: 'Transcript abundance measures',
   required: true,
   cached: false,
@@ -101,10 +91,7 @@ function notBlank(x: string) {
   return x
 }
 
-export const aliases = new ProjectField<
-  string,
-  Record<string, Array<string>>
->({
+export const aliases = new ProjectField({
   label: 'Transcript aliases',
   required: false,
   cached: false,
@@ -132,9 +119,7 @@ export const aliases = new ProjectField<
   },
 })
 
-export const readme = new ProjectField<
-  string
->({
+export const readme = new ProjectField({
   label: 'Project documentation',
   required: false,
   cached: false,
@@ -246,11 +231,7 @@ function cleanSVGString(svgString: string, treatments: types.BulkTreatmentMap) {
   return svgDoc.documentElement.outerHTML
 }
 
-export const svg = new ProjectField<
-  string,
-  string,
-  { treatments: types.BulkTreatmentMap }
->({
+export const svg = new ProjectField({
   label: 'SVG diagram',
   required: false,
   cached: false,
@@ -258,16 +239,12 @@ export const svg = new ProjectField<
     return resp.text()
   },
   decoder: t.string,
-  async processValidated(str, context) {
+  async processValidated(str, context: { treatments: types.BulkTreatmentMap }) {
     return cleanSVGString(str, context.treatments)
   },
 })
 
-export const grid = new ProjectField<
-  string[][],
-  (string | null)[][],
-  { treatments: types.BulkTreatmentMap }
->({
+export const grid = new ProjectField({
   label: 'Transcript grid',
   required: false,
   cached: false,
@@ -289,7 +266,7 @@ export const grid = new ProjectField<
 
     return t.success(grid)
   }),
-  async processValidated(grid, context) {
+  async processValidated(grid, context: { treatments: types.BulkTreatmentMap }) {
     const { treatments } = context
 
     return grid.map(row => row.map(treatment => {
