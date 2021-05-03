@@ -60,9 +60,7 @@ async function noopPromise<T>(x: T) {
   return x
 }
 
-export const embeddings = new ProjectField<
-  SeuratEmbedding[]
->({
+export const embeddings = new ProjectField({
   label: 'Seurat UMAP embeddings',
   required: true,
   cached: false,
@@ -108,9 +106,7 @@ const seuratMetadataCodec = new t.Type<SeuratMetadata>(
   }
 )
 
-export const metadata = new ProjectField<
-  SeuratMetadata[]
->({
+export const metadata = new ProjectField({
   label: 'Seurat metadata',
   required: true,
   cached: false,
@@ -140,9 +136,7 @@ const seuratExpressionCodec = new t.Type<DataView>(
   }
 )
 
-export const expressionData = new ProjectField<
-  DataView
->({
+export const expressionData = new ProjectField({
   label: 'Transcript expression data',
   required: true,
   cached: false,
