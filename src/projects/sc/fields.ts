@@ -1,4 +1,5 @@
 import * as t from 'io-ts'
+import * as d3 from 'd3'
 import { inflate } from 'pako'
 
 import { ProjectField } from '../fields'
@@ -65,6 +66,10 @@ export const embeddings = new ProjectField({
   required: true,
   cached: false,
   decoder: t.array(seuratEmbeddingsCodec),
+  processResponse: async resp => {
+    const text = await resp.text()
+    return d3.csvParseRows(text).slice(1)
+  },
   processValidated: noopPromise,
 })
 
@@ -111,6 +116,10 @@ export const metadata = new ProjectField({
   required: true,
   cached: false,
   decoder: t.array(seuratMetadataCodec),
+  processResponse: async resp => {
+    const text = await resp.text()
+    return d3.csvParseRows(text).slice(1)
+  },
   processValidated: noopPromise,
 })
 
