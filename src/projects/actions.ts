@@ -8,16 +8,27 @@ import { actions as logAction } from '../log'
 
 import { createAsyncAction } from '../actions'
 
-import * as fields from './fields'
+import * as bulkFields from './bulk/fields'
+import * as singleCellFields from './sc/fields'
 
 import { delay, fetchResource, getDefaultGrid } from '../utils'
 
 import {
   ProjectSource,
   LogStatus,
-  ProjectTreatments,
-  ProjectData
+  LoadedProject,
+  BulkProject,
+  SingleCellProject
 } from '../types'
+
+import {
+  BulkTreatment,
+  BulkTreatmentMap
+} from './bulk/types'
+
+import {
+  SeuratCellMap
+} from './sc/types'
 
 function getGlobalWatchedGenesKey() {
   return window.location.pathname + '-watched'
@@ -127,6 +138,8 @@ export const loadProjectConfig = createAsyncAction<
     }
 
     if (configJson.type === 'Bulk' || configJson.type === undefined) {
+      configJson.type = 'Bulk'
+
       const labels = bulkLabels
           , configDef = definition = bulkConfiguration
 
@@ -191,74 +204,27 @@ export const loadProjectConfig = createAsyncAction<
 
   projectStatusLog('Checking if `project.json` well formatted')
 
-  projectStatusLog('`project.json` well formatted')
-
   const parsed: Either<t.Errors, Configuration> = definition.decode(configJson)
 
   if (parsed._tag === 'Right') {
+    projectStatusLog('`project.json` well formatted')
     return {
       config: parsed.right,
     }
   } else {
+    projectStatusLog('Could not load project. See errors above.')
     throw new Error()
   }
 })
 
-export const loadProject = createAsyncAction<
-  { source: ProjectSource },
-  {
-    data: ProjectData,
-    watchedTranscripts: Set<string>,
-    config: Configuration,
-  }
->('load-project', async (args, { dispatch, getState }) => {
-  const project = args.source
-      , projectState = getState().projects[args.source.key]
-
-  if (projectState.loaded && !projectState.failed) {
-    return {
-      config: projectState.config,
-      data: projectState.data,
-      watchedTranscripts: projectState.watchedTranscripts,
-    }
-  }
-
-  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
-    (status: LogStatus, message?: string) =>
-      dispatch(logAction.log({
-        project,
-        log: {
-          url,
-          label,
-          status,
-          message: message || null,
-        },
-      }))
-
-  const makeStatusLog = (project: ProjectSource | null) =>
-    (message: string) =>
-      dispatch(logAction.log({
-        project,
-        log: {
-          message,
-        },
-      }))
-
-  const projectStatusLog = makeStatusLog(args.source)
-
-  projectStatusLog('Loading project')
-
-  if (!('config' in projectState)) {
-    projectStatusLog('No configuration present')
-    throw new Error()
-  }
-
-  const { config } = projectState
-
-  const makeLog = makeResourceLog.bind(null, project)
-
+async function loadBulkProject(
+  source: ProjectSource,
+  config: BulkConfiguration,
+  projectStatusLog: (message: string) => void,
+  makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void,
+): Promise<BulkProject> {
   // Load treatments before anything else
-  const treatments = await fields.treatments.validateFromURL(
+  const treatments = await bulkFields.treatments.validateFromURL(
     config.treatments, makeLog)
 
   if (treatments === null) {
@@ -273,20 +239,20 @@ export const loadProject = createAsyncAction<
     svg,
     grid,
   ] = await Promise.all([
-    fields.abundanceMeasures.validateFromURL(
-      config.abundanceMeasures, makeLog, treatments),
+    bulkFields.abundanceMeasures.validateFromURL(
+      config.abundanceMeasures, makeLog),
 
-    fields.aliases.validateFromURL(
-      config.transcriptAliases, makeLog, treatments),
+    bulkFields.aliases.validateFromURL(
+      config.transcriptAliases, makeLog),
 
-    fields.readme.validateFromURL(
-      config.readme, makeLog, treatments),
+    bulkFields.readme.validateFromURL(
+      config.readme, makeLog),
 
-    fields.svg.validateFromURL(
-      config.diagram, makeLog, treatments),
+    bulkFields.svg.validateFromURL(
+      config.diagram, makeLog, { treatments }),
 
-    fields.grid.validateFromURL(
-      config.grid, makeLog, treatments),
+    bulkFields.grid.validateFromURL(
+      config.grid, makeLog, { treatments }),
   ])
 
   if (abundanceMeasures === null) {
@@ -344,14 +310,14 @@ export const loadProject = createAsyncAction<
 
   projectStatusLog('Finished building transcript corpus')
 
-  const watchedTranscripts = args.source.key === 'local'
+  const watchedTranscripts = source.key === 'local'
     ? new Set([] as string[])
     : new Set(await getGlobalWatchedTranscripts())
 
   projectStatusLog('Finished loading project')
 
-
   return {
+    type: 'Bulk',
     config,
     data: {
       treatments,
@@ -367,6 +333,148 @@ export const loadProject = createAsyncAction<
       readme,
     },
     watchedTranscripts,
+    pairwiseComparisonCache: {},
+  }
+}
+
+async function loadSingleCellProject(
+  source: ProjectSource,
+  config: SingleCellConfiguration,
+  projectStatusLog: (message: string) => void,
+  makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void,
+): Promise<SingleCellProject> {
+  const [
+    embeddings,
+    metadata,
+    expressionData,
+    transcripts,
+  ] = await Promise.all([
+    singleCellFields.embeddings.validateFromURL(
+      config.seuratEmbeddings, makeLog),
+
+    singleCellFields.metadata.validateFromURL(
+      config.seuratMetadata, makeLog),
+
+    singleCellFields.expressionData.validateFromURL(
+      config.expressionData, makeLog),
+
+    bulkFields.aliases.validateFromURL(
+      config.expressionData, makeLog),
+  ])
+
+  if (
+    embeddings === null ||
+    metadata === null ||
+    expressionData === null ||
+    transcripts === null
+  ) {
+    projectStatusLog('Could not load project.')
+    throw new Error()
+  }
+
+  const embeddingMap = new Map(
+    embeddings.map(x => ([ x.cellID, x])))
+
+  const metadataMap = new Map(
+    metadata.map(x => ([ x.cellID, x])))
+
+  const allCells = new Set([...embeddingMap.keys(), ...metadataMap.keys()])
+      , cellMap: SeuratCellMap = new Map()
+
+  for (const cellID of allCells) {
+    const embedding = embeddingMap.get(cellID)
+        , metadata = metadataMap.get(cellID)
+
+    if (!embedding) {
+      projectStatusLog(`Cell ${cellID} was in Seurat metadata, but not in Seurat embeddings`)
+      throw new Error()
+    }
+
+    if (!metadata) {
+      projectStatusLog(`Cell ${cellID} was in Seurat embeddings, but not in Seurat metadata`)
+      throw new Error()
+    }
+
+    cellMap.set(cellID, {
+      ...metadata,
+      ...embedding,
+    })
+  }
+
+  return {
+    type: 'SingleCell',
+    config,
+    data: {
+      cells: cellMap,
+      expressionData,
+      transcripts: new Map(Object.entries(transcripts)),
+    }
+  }
+}
+
+export const loadProject = createAsyncAction<
+  { source: ProjectSource },
+  (BulkProject | SingleCellProject)
+>('load-project', async (args, { dispatch, getState }) => {
+  const project = args.source
+      , projectState = getState().projects[args.source.key]
+
+  if (projectState.loaded && !projectState.failed) {
+    const { loaded, failed, ...rest } = projectState
+
+    return rest
+  }
+
+  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
+    (status: LogStatus, message?: string) =>
+      dispatch(logAction.log({
+        project,
+        log: {
+          url,
+          label,
+          status,
+          message: message || null,
+        },
+      }))
+
+  const makeStatusLog = (project: ProjectSource | null) =>
+    (message: string) =>
+      dispatch(logAction.log({
+        project,
+        log: {
+          message,
+        },
+      }))
+
+  const projectStatusLog = makeStatusLog(args.source)
+
+  projectStatusLog('Loading project')
+
+  if (!('config' in projectState)) {
+    projectStatusLog('No configuration present')
+    throw new Error()
+  }
+
+  const { config } = projectState
+
+  const makeLog = makeResourceLog.bind(null, project)
+
+  if (config.type === 'Bulk') {
+    return await loadBulkProject(
+      args.source,
+      config,
+      projectStatusLog,
+      makeLog
+    )
+  } else if (config.type === 'SingleCell') {
+    return await loadSingleCellProject(
+      args.source,
+      config,
+      projectStatusLog,
+      makeLog
+    )
+  } else {
+    throw Error()
   }
 })
 
@@ -402,7 +510,7 @@ async function buildTranscriptCorpus(transcripts: string[], transcriptAliases: R
 }
 
 function validateExpressionMatrix(
-  treatments: ProjectTreatments,
+  treatments: BulkTreatmentMap,
   { replicates }: { replicates: string[] }
 ) {
   const matrixReplicates = new Set(replicates)

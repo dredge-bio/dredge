@@ -58,9 +58,6 @@ export interface LogEntry {
   }>
 }
 
-export interface ProjectLog {
-}
-
 export type UnloadedProject = { loaded: false } & (
   {
     type: 'SingleCell',
@@ -72,13 +69,13 @@ export type UnloadedProject = { loaded: false } & (
   }
 )
 
-export type LoadedProject = { loaded: true } & (
-  {
-    type: 'SingleCell',
-    config: SingleCellProjectConfig,
-    data: SingleCellProjectData,
-  } |
-  {
+export type SingleCellProject = {
+  type: 'SingleCell',
+  config: SingleCellProjectConfig,
+  data: SingleCellProjectData,
+}
+
+export type BulkProject = {
     type: 'Bulk',
     config: BulkProjectConfig,
     data: BulkProjectData,
@@ -86,7 +83,10 @@ export type LoadedProject = { loaded: true } & (
       [index: string]: BulkPairwiseComparison | null
     };
     watchedTranscripts: Set<string>,
-  }
+}
+
+export type LoadedProject = { loaded: true, failed: false } & (
+  BulkProject | SingleCellProject
 )
 
 type UnloadedProjectWithoutConfig = {
