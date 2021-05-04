@@ -67,15 +67,11 @@ const reducer = createReducer(initial(), builder => {
 
   builder.addCase(actions.loadProject.fulfilled, (state, action) => {
     const project = action.meta.arg.source
-        , { data, config, watchedTranscripts } = action.payload
 
     state[project.key] = {
       loaded: true,
       failed: false,
-      data,
-      config,
-      watchedTranscripts,
-      pairwiseComparisonCache: {},
+      ...action.payload,
     }
   })
 })

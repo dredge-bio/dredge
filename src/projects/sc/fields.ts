@@ -6,7 +6,7 @@ import { ProjectField } from '../fields'
 type SeuratMetadata = {
   cellID: string;
   replicateID: string;
-  seuratCluster: number;
+  clusterID: number;
 }
 
 type SeuratEmbedding = {
@@ -90,12 +90,12 @@ const seuratMetadataCodec = new t.Type<SeuratMetadata>(
     try {
       const cellID = assertString(u[0])
           , replicateID = assertString(u[1])
-          , seuratCluster = assertString(u[5])
+          , clusterID = assertString(u[5])
 
       return t.success({
         cellID,
         replicateID,
-        seuratCluster: parseInt(seuratCluster),
+        clusterID: parseInt(clusterID),
       })
     } catch (e) {
       return t.failure(u, c)
@@ -144,5 +144,16 @@ export const expressionData = new ProjectField({
   processValidated: noopPromise,
   processResponse: resp => {
     return resp.arrayBuffer()
+  },
+})
+
+export const transcripts = new ProjectField({
+  label: 'Transcripts',
+  required: true,
+  cached: false,
+  decoder: seuratExpressionCodec,
+  processValidated: noopPromise,
+  processResponse: resp => {
+    return resp.text()
   },
 })

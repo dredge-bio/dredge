@@ -14,6 +14,7 @@ import Application from './components/Application'
 import SingleCell from './components/SC'
 
 import View from './components/View'
+import Main from './components/Main'
 
 import { Resource } from './types'
 
@@ -81,7 +82,7 @@ const resources: Record<string, Resource> = {
     name: 'home',
     makeTitle: R.always('Loading project...'),
     onBeforeRoute: loadProject(),
-    Component: View,
+    Component: Main,
     absoluteDimensions: true,
   },
 
@@ -126,10 +127,10 @@ const resources: Record<string, Resource> = {
 
 const store = createStore()
 
-let Main
+let Shell
 
 if (window.location.protocol.startsWith('http')) {
-  Main = ORGShell({
+  Shell = ORGShell({
     extraArgs: {
       dispatch: store.dispatch,
       getState: store.getState,
@@ -146,13 +147,13 @@ if (window.location.protocol.startsWith('http')) {
     },
   }, Application)
 } else {
-  Main = Application
+  Shell = Application
 }
 
 render(
   h(Provider, { store },
     h(ThemeProvider, { theme },
-      h(Main)
+      h(Shell)
     )
   ),
   document.getElementById('application')
