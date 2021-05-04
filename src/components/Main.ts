@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '../hooks'
 
 import Log from './Log'
 import View from './View'
+import SingleCell from './SC'
 
 export default function Main() {
   const project = useAppSelector(state => state.projects.global)
@@ -21,6 +22,9 @@ export default function Main() {
 
   if (project.type === 'Bulk') {
     return h(View)
+  } else if (project.type === 'SingleCell') {
+    return h(SingleCell)
+  } else {
   }
 
   return null

@@ -188,8 +188,12 @@ export const loadProjectConfig = createAsyncAction<
               log('Failed')
               console.log(errors)
             },
-            () => {
-              log('OK')
+            (val: any) => {
+              if (val === null || (val.length === 0)) {
+                log('Missing')
+              } else {
+                log('OK')
+              }
             }
           ))
       }
@@ -341,7 +345,7 @@ async function loadSingleCellProject(
   source: ProjectSource,
   config: SingleCellConfiguration,
   projectStatusLog: (message: string) => void,
-  makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void,
+  makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void
 ): Promise<SingleCellProject> {
   const [
     embeddings,
@@ -359,7 +363,7 @@ async function loadSingleCellProject(
       config.expressionData, makeLog),
 
     bulkFields.aliases.validateFromURL(
-      config.expressionData, makeLog),
+      config.transcripts, makeLog),
   ])
 
   if (

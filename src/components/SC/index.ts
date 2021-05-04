@@ -1,182 +1,38 @@
 import h from 'react-hyperscript'
 import * as d3 from 'd3'
 import * as React from 'react'
-import * as t from 'io-ts'
-import { inflate } from 'pako'
-import { fold } from 'fp-ts/Either'
-import { pipe } from 'fp-ts/function'
-import { fetchResource } from '../../utils'
 
 import padding from '../MAPlot/padding'
 import { useDimensions } from '../MAPlot/hooks'
 
 import SingleCellExpression from '../../single-cell'
+import { SeuratCell, SeuratCellMap } from '../../projects/sc/types'
 
 const { useEffect, useMemo, useRef, useState } = React
 
-type SeuratMetadata = {
-  cellID: string;
-  replicateID: string;
-  seuratCluster: number;
-}
-
-type SeuratEmbedding = {
-  cellID: string;
-  umap1: number;
-  umap2: number;
-}
-
-const seuratMetadataCodec = new t.Type<
-  SeuratMetadata,
-  string[]
->(
-  'seuratMetadata',
-  (u): u is SeuratMetadata => {
-    // ???
-    return true
-  },
-  (u, c) => {
-    if (!Array.isArray(u)) {
-      throw new Error()
-    }
-
-    function assertString(val: unknown) {
-      if (typeof val !== 'string') {
-        throw new Error()
-      }
-
-      return val
-    }
-
-    const cellID = assertString(u[0])
-        , replicateID = assertString(u[1])
-        , seuratCluster = assertString(u[5])
-
-    return t.success({
-      cellID,
-      replicateID,
-      seuratCluster: parseInt(seuratCluster),
-    })
-  },
-  () => {
-    throw new Error()
-  }
-)
-
-const seuratEmbeddingsCodec = new t.Type<
-  SeuratEmbedding,
-  string[]
->(
-  'seuratEmbedding',
-  (u): u is SeuratEmbedding => {
-    // ???
-    return true
-  },
-  (u, c) => {
-    if (!Array.isArray(u)) {
-      throw new Error()
-    }
-
-    function assertString(val: unknown) {
-      if (typeof val !== 'string') {
-        throw new Error()
-      }
-
-      return val
-    }
-
-    const cellID = assertString(u[0])
-        , umap1 = assertString(u[1])
-        , umap2 = assertString(u[2])
-
-    return t.success({
-      cellID,
-      umap1: parseFloat(umap1),
-      umap2: parseFloat(umap2),
-    })
-  },
-  () => {
-    throw new Error()
-  }
-)
-
-
+import { useProject } from '../../projects/hooks'
 
 function useSeuratData() {
-  const [ metadata, setMetadata ] = useState<SeuratMetadata[]>()
-      , [ embeddings, setEmbeddings ] = useState<SeuratEmbedding[]>()
-      , [ expressionData, setExpressionData ] = useState<DataView>()
-      , [ transcripts, setTranscripts ] = useState<string[]>()
+  const project = useProject({ key: 'global' }, true)
 
-  useEffect(() => {
-    fetchResource('data/metadata.csv')
-      .then(resp => resp.text())
-      .then(text => {
-        const rawMetadata = d3.csvParseRows(text).slice(1)
+  const ret = useMemo(() => {
+    if (project.type !== 'SingleCell') {
+      throw new Error()
+    }
 
-        const metadata = pipe(
-          t.array(seuratMetadataCodec).decode(rawMetadata),
-          fold(
-            () => {
-              throw new Error()
-            },
-            value => value))
+    const { transcripts, cells, expressionData } = project.data
 
-        setMetadata(metadata)
-      })
-
-    fetchResource('data/embeddings.csv')
-      .then(resp => resp.text())
-      .then(text => {
-        const rawEmbeddings = d3.csvParseRows(text).slice(1)
-
-        const embeddings = pipe(
-          t.array(seuratEmbeddingsCodec).decode(rawEmbeddings),
-          fold(
-            () => {
-              throw new Error()
-            },
-            value => value))
-
-        setEmbeddings(embeddings)
-      })
-
-    fetchResource('data/expressions.bin.gz')
-      .then(resp => resp.arrayBuffer())
-      .then(buffer => {
-        const uint8arr = new Uint8Array(buffer)
-            , res = inflate(uint8arr)
-
-        setExpressionData(new DataView(res.buffer))
-      })
-
-    fetchResource('data/transcripts.csv')
-      .then(resp => resp.text())
-      .then(text => {
-        const transcripts = text.split('\n').map(row => row.split(',')[0]!)
-
-        setTranscripts(transcripts)
-      })
-  }, [])
-
-  if (embeddings && metadata && transcripts && expressionData) {
-    const scDataset = new SingleCellExpression(
-      transcripts,
-      metadata.map(x => x.cellID),
-      expressionData)
+    const scDataset = new SingleCellExpression([...transcripts.keys()], [...cells.keys()], expressionData)
 
     return {
       scDataset,
-      embeddings,
-      metadata,
+      transcripts,
+      cells,
+      expressionData,
     }
-  }
+  }, [project])
 
-  return {
-    scDataset: null,
-    embeddings: null,
-    metadata: null,
-  }
+  return ret
 }
 
 
@@ -184,15 +40,15 @@ function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
   width: number,
   height: number,
-  embeddings: SeuratEmbedding[]
+  cells: SeuratCellMap,
 ) {
   const umap1Extent = useMemo(
-    () => d3.extent(embeddings, x => x.umap1) as [number, number],
-    [embeddings])
+    () => d3.extent(cells.values(), x => x.umap1) as [number, number],
+    [cells])
 
   const umap2Extent = useMemo(
-    () => d3.extent(embeddings, x => x.umap2) as [number, number],
-    [embeddings])
+    () => d3.extent(cells.values(), x => x.umap2) as [number, number],
+    [cells])
 
   const dimensions = useDimensions({
     height,
@@ -251,7 +107,7 @@ function useAxes(
 function useEmbeddingsByTranscript(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
-  embeddings: SeuratEmbedding[],
+  cells: SeuratCellMap,
   scDataset: SingleCellExpression,
   transcriptName: string
 ) {
@@ -277,7 +133,7 @@ function useEmbeddingsByTranscript(
 
     // Sort embeddings so that they are drawn in order of transcript expression
     // level from lowest to highest
-    embeddings.sort((a, b) => {
+    const sortedCells = [...cells.values()].sort((a, b) => {
       const levelA = expressionsByCell.get(a.cellID) || 0
           , levelB = expressionsByCell.get(b.cellID) || 0
 
@@ -288,7 +144,7 @@ function useEmbeddingsByTranscript(
         : -1
     })
 
-    embeddings.forEach(({ cellID, umap1, umap2 }) => {
+    sortedCells.forEach(({ cellID, umap1, umap2 }) => {
       const x = xScale(umap1)
           , y = yScale(umap2)
           , r = expressionsByCell.has(cellID) ? 1.75 : 1
@@ -306,37 +162,33 @@ function useEmbeddingsByTranscript(
 function useEmbeddings(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
-  embeddings: SeuratEmbedding[],
-  metadata: SeuratMetadata[]
+  cells: SeuratCellMap,
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
 
-    const embeddingsByCellID: Map<string, SeuratEmbedding> =
-      new Map(embeddings.map(obj => [obj.cellID, obj]))
-
     const clusters: Map<number, {
-      embeddings: SeuratEmbedding[],
+      cells: SeuratCell[],
       points: [number, number ][],
     }> = new Map()
 
-    metadata.forEach(val => {
-      const { seuratCluster, cellID } = val
+    cells.forEach(val => {
+      const { clusterID, cellID } = val
 
-      if (!clusters.has(seuratCluster)) {
-        clusters.set(seuratCluster, {
-          embeddings: [],
+      if (!clusters.has(clusterID)) {
+        clusters.set(clusterID, {
+          cells: [],
           points: [],
         })
       }
 
-      const embedding = embeddingsByCellID.get(cellID)!
-          , point = [xScale(embedding.umap1), yScale(embedding.umap2)] as [number, number]
+      const cell = cells.get(cellID)!
+          , point = [xScale(cell.umap1), yScale(cell.umap2)] as [number, number]
 
-      const cluster = clusters.get(seuratCluster)!
+      const cluster = clusters.get(clusterID)!
 
-      cluster.embeddings.push(embedding)
+      cluster.cells.push(cell)
       cluster.points.push(point)
     })
 
@@ -363,7 +215,7 @@ function useEmbeddings(
         .select('g.umap')
         .append('g')
         .selectAll('circle')
-        .data(cluster.embeddings).enter()
+        .data(cluster.cells).enter()
           .append('circle')
           .attr('r', 1)
           .attr('cx', d => xScale(d.umap1))
@@ -387,25 +239,24 @@ function useEmbeddings(
         .attr('stroke', 'none')
         */
 
-  }, [embeddings])
+  }, [cells])
 }
 
 type SingleCellProps = {
-  metadata: SeuratMetadata[];
-  embeddings: SeuratEmbedding[];
+  cells: SeuratCellMap;
   scDataset: SingleCellExpression;
 }
 
 function SingleCell(props: SingleCellProps) {
-  const { metadata, embeddings, scDataset } = props
+  const { cells, scDataset } = props
       , svgRef = useRef<SVGSVGElement>(null)
-      , dimensions = useAxes(svgRef, 800, 800, embeddings)
+      , dimensions = useAxes(svgRef, 800, 800, cells)
       , [ transcript, setTranscript ] = useState('cah6')
 
   useEmbeddingsByTranscript(
     svgRef,
     dimensions,
-    embeddings,
+    cells,
     scDataset,
     transcript
   )
@@ -513,14 +364,11 @@ function SingleCell(props: SingleCellProps) {
 }
 
 export default function SingleCellLoader() {
-  const { embeddings, metadata, scDataset } = useSeuratData()
-
-  if (embeddings === null || metadata === null || scDataset === null) return null
+  const { cells, scDataset } = useSeuratData()
 
   return h(SingleCell, {
     scDataset,
-    embeddings,
-    metadata,
+    cells,
   })
 }
 
