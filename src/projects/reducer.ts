@@ -1,3 +1,5 @@
+import * as R from 'ramda'
+
 import {
   ProjectSource,
   DredgeConfig,
@@ -68,10 +70,13 @@ const reducer = createReducer(initial(), builder => {
   builder.addCase(actions.loadProject.fulfilled, (state, action) => {
     const project = action.meta.arg.source
 
-    state[project.key] = {
-      loaded: true,
-      failed: false,
-      ...action.payload,
+    return {
+      ...state,
+      [project.key]: {
+        loaded: true,
+        failed: false,
+        ...action.payload,
+      },
     }
   })
 })

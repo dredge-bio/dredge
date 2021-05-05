@@ -164,6 +164,7 @@ export const loadProjectConfig = createAsyncAction<
               log('OK')
             }
           ))
+        await delay(0)
       }
     } else if (configJson.type === 'SingleCell') {
       const labels = singleCellLabels
@@ -196,6 +197,7 @@ export const loadProjectConfig = createAsyncAction<
               }
             }
           ))
+        await delay(0)
       }
     } else {
         const message = 'Project type must be either `Bulk` or `SingleCell`'
@@ -463,15 +465,17 @@ export const loadProject = createAsyncAction<
 
   const makeLog = makeResourceLog.bind(null, project)
 
+  let loadedProject: BulkProject | SingleCellProject
+
   if (config.type === 'Bulk') {
-    return await loadBulkProject(
+    loadedProject = await loadBulkProject(
       args.source,
       config,
       projectStatusLog,
       makeLog
     )
   } else if (config.type === 'SingleCell') {
-    return await loadSingleCellProject(
+    loadedProject = await loadSingleCellProject(
       args.source,
       config,
       projectStatusLog,
@@ -480,6 +484,10 @@ export const loadProject = createAsyncAction<
   } else {
     throw Error()
   }
+
+  await delay(0)
+
+  return loadedProject
 })
 
 async function buildTranscriptCorpus(transcripts: string[], transcriptAliases: Record<string, string[]>) {
