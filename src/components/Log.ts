@@ -1,6 +1,6 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
-import LoadingIcon from './LoadingIcon'
+import { LoadingIcon } from './Icons'
 import * as React from 'react'
 
 import { useAppSelector } from '../hooks'
