@@ -6,3 +6,9 @@ export type Config = {
     url: string,
   }>;
 }
+
+export type TranscriptData = {
+  transcripts: string[];
+  transcriptCorpus: Record<string, string>;
+  transcriptAliases: ([alias: string, transcript: string])[];
+}

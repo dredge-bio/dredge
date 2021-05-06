@@ -227,6 +227,20 @@ export const loadProjectConfig = createAsyncAction<
   }
 })
 
+async function buildIndexMap(items: string[], pauseEvery=100) {
+  const indices: Record<string, number> = {}
+
+  let idx = 0
+
+  for (const item of items) {
+    indices[item] = idx;
+    idx++;
+    if (idx % pauseEvery === 0) await delay(0)
+  }
+
+  return indices
+}
+
 async function loadBulkProject(
   source: ProjectSource,
   config: BulkConfiguration,
@@ -297,26 +311,8 @@ async function loadBulkProject(
 
   const { corpus, transcriptAliases } = await buildTranscriptCorpus(transcripts, aliases || {})
 
-  const transcriptIndices: Record<string, number> = {}
-      , replicateIndices: Record<string, number> = {}
-
-  {
-    let i = 0
-    for (const t of transcripts) {
-      transcriptIndices[t] = i;
-      i++
-      if (i % 100 === 0) await delay(0)
-    }
-  }
-
-  {
-    let i = 0
-    for (const r of replicates) {
-      replicateIndices[r] = i;
-      i++
-      if (i % 100 === 0) await delay(0)
-    }
-  }
+  const transcriptIndices = await buildIndexMap(transcripts)
+      , replicateIndices = await buildIndexMap(replicates)
 
   projectStatusLog('Finished building transcript corpus')
 
@@ -417,6 +413,8 @@ async function loadSingleCellProject(
     })
   }
 
+  const { corpus, transcriptAliases } = await buildTranscriptCorpus(Object.keys(transcripts), transcripts)
+
   return {
     type: 'SingleCell',
     source,
@@ -424,7 +422,9 @@ async function loadSingleCellProject(
     data: {
       cells: cellMap,
       expressionData,
-      transcripts: new Map(Object.entries(transcripts)),
+      transcripts: Object.keys(transcripts),
+      transcriptCorpus: corpus,
+      transcriptAliases,
       readme,
     }
   }

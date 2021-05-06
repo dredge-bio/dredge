@@ -1,4 +1,4 @@
-import { Config } from '../types'
+import { Config, TranscriptData } from '../types'
 
 export type SeuratCell = {
   cellID: string;
@@ -23,10 +23,9 @@ export type SingleCellProjectConfig = Config & {
   seuratMetadata: string;
 }
 
-export type SingleCellProjectData = {
+export type SingleCellProjectData = TranscriptData & {
   readme: string | null;
   cells: SeuratCellMap;
-  transcripts: Map<string, string[]>;
   expressionData: DataView;
   // clusters: SeuratCluster[]
 }
