@@ -1,4 +1,5 @@
 import { Config } from '../types'
+import { ProjectSource, TableSortOrder } from '../../types'
 
 export type BulkProjectConfig = Config & {
   type: "Bulk"
@@ -58,56 +59,4 @@ export interface BulkPairwiseComparison extends Map<string, BulkDifferentialExpr
   minPValue: number;
   fcSorted: Array<BulkDifferentialExpression>;
   ataSorted: Array<BulkDifferentialExpression>;
-}
-
-export type BulkTableSortPath =
-  'label' |
-  'pValue' |
-  'logATA' |
-  'logFC' |
-  'treatmentA_AbundanceMean' |
-  'treatmentA_AbundanceMedian' |
-  'treatmentB_AbundanceMean' |
-  'treatmentB_AbundanceMedian'
-
-export type BulkDisplayedTranscriptSource =
-  'all' |
-  'selectedBin' |
-  'hoveredBin' |
-  'brushed' |
-  'watched'
-
-export interface BulkViewState {
-  source: ProjectSource;
-  loading: boolean;
-  pairwiseData: PairwiseComparison | null;
-  sortedTranscripts: Array<DifferentialExpression>;
-  pValueThreshold: number;
-
-  focusedTranscript: string | null;
-  hoveredTranscript: string | null;
-  hoveredTreatment: string | null;
-
-  savedTranscripts: Set<string>;
-
-  comparedTreatments: [string, string] | null;
-
-  brushedArea: [
-    minLogATA: number,
-    maxLogFC: number,
-    maxLogATA: number,
-    minLogFC: number
-  ] | null;
-
-  hoveredBinTranscripts: Set<string> | null;
-  selectedBinTranscripts: Set<string> | null;
-
-  displayedTranscripts: null | {
-    source: DisplayedTranscriptsSource,
-    transcripts: Array<DifferentialExpression>,
-  },
-
-  order: SortOrder;
-
-  sortPath: SortPath;
 }
