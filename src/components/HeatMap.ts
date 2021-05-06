@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import * as d3 from 'd3'
 import * as R from 'ramda'
 
-import { useView, useViewProject } from '../view'
+import { useView } from '../view'
 import { useAbundances } from '../projects'
 
 const SQUARE_WIDTH = 20
@@ -22,8 +22,8 @@ type HeatMapProps = {
 }
 
 export default function HeatMap(props: HeatMapProps) {
-  const view = useView()
-      , project = useViewProject()
+  const view = useView('Bulk')
+      , { project } = view
       , { hoveredTreatment } = view
       , { transcript } = props
       , { grid, treatments } = project.data
@@ -31,7 +31,7 @@ export default function HeatMap(props: HeatMapProps) {
   const {
     abundancesForTreatmentTranscript,
     colorScaleForTranscript,
-  } = useAbundances(view.source)
+  } = useAbundances(view.project)
 
   if (!grid) return null
   if (!grid.length) return null

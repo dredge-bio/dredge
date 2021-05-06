@@ -10,7 +10,7 @@ import SingleCell from './SC'
 export default function Main() {
   const project = useAppSelector(state => state.projects.global)
 
-  if (!project.loaded || project.failed) {
+  if ('loaded' in project || 'failed' in project) {
     return (
       h(Box, { p: 3 }, [
         h(Log, {

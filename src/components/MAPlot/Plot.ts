@@ -3,7 +3,7 @@ import throttle from 'throttleit'
 import * as d3 from 'd3'
 import * as React from 'react'
 
-import { ViewState, DredgeConfig } from '../../types'
+import { BulkViewState, BulkProjectConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
 import { useAppDispatch } from '../../hooks'
 import { actions as viewActions, useComparedTreatmentLabels } from '../../view'
@@ -34,14 +34,14 @@ type PlotProps = {
   height: number;
   onBrush: (extent: [number, number, number, number] | null) => void;
   persistBrush: (extent: [number, number, number, number] | null) => void;
-} & Pick<ViewState,
+} & Pick<BulkViewState,
   'pairwiseData' |
   'pValueThreshold' |
   'hoveredTranscript' |
   'savedTranscripts' |
   'displayedTranscripts' |
   'brushedArea'
-> & Pick<DredgeConfig,
+> & Pick<BulkProjectConfig,
   'abundanceLimits'
 >
 

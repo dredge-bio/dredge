@@ -4,10 +4,14 @@ import * as R from 'ramda'
 import * as d3 from 'd3'
 
 import {
-  DifferentialExpression,
-  PairwiseComparison,
+  BulkDifferentialExpression,
+  BulkPairwiseComparison,
   TreatmentName,
-  DredgeState
+  DredgeState,
+  SingleCellProject,
+  BulkProject,
+  LoadedProject,
+  ProjectType,
 } from './types'
 
 
@@ -23,7 +27,7 @@ export interface Bin {
   fcMax: number;
   cpmMin: number;
   cpmMax: number;
-  transcripts: Array<DifferentialExpression>;
+  transcripts: Array<BulkDifferentialExpression>;
 }
 
 type BinDimension = [
@@ -94,11 +98,11 @@ function getBins(
 }
 
 function binIndexByTranscript(
-  sortedTranscripts: Array<DifferentialExpression>,
+  sortedTranscripts: Array<BulkDifferentialExpression>,
   field: 'logFC' | 'logATA',
   bins: Array<BinDimension>
 ) {
-  const binByTranscript: Map<DifferentialExpression, number> = new Map()
+  const binByTranscript: Map<BulkDifferentialExpression, number> = new Map()
 
   const leftOut = R.takeWhile(
     de => {
@@ -113,7 +117,7 @@ function binIndexByTranscript(
   let idx = leftOut.length
 
   bins.forEach(([ min, max ], i) => {
-    const inBin = (transcript: DifferentialExpression) => {
+    const inBin = (transcript: BulkDifferentialExpression) => {
       const val = transcript[field]
 
       if (val === null) return false
@@ -134,8 +138,8 @@ function binIndexByTranscript(
 }
 
 export function getPlotBins(
-  data: PairwiseComparison,
-  filter: (de: DifferentialExpression) => boolean,
+  data: BulkPairwiseComparison,
+  filter: (de: BulkDifferentialExpression) => boolean,
   xScale: d3.ScaleLinear<number, number>,
   yScale: d3.ScaleLinear<number, number>,
   unit=5
@@ -166,19 +170,26 @@ export function getPlotBins(
   return R.flatten(bins)
 }
 
-export function projectForView(state: DredgeState) {
-  const view = state.view?.default
+export function projectForView(state: DredgeState): LoadedProject;
+export function projectForView(state: DredgeState, projectType: 'Bulk'): BulkProject;
+export function projectForView(state: DredgeState, projectType: 'SingleCell'): SingleCellProject;
+export function projectForView(state: DredgeState, projectType?: ProjectType): LoadedProject {
+  const { view } = state
 
   const err = new Error('No project for view')
 
   if (view == null) {
-    throw err
+    throw new Error('No active view')
   }
 
-  const project = state.projects[view.source.key]
+  const { project } = view.default
 
-  if (project === null || !project.loaded || project.failed) {
-    throw err;
+  if (projectType === 'Bulk' && project.type === 'Bulk') {
+    return project
+  } else if (projectType === 'SingleCell' && project.type === 'SingleCell') {
+    return project
+  } else {
+    throw new Error(`Asked for project type ${projectType}, but view's project is of type ${project.type}`)
   }
 
   return project

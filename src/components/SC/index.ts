@@ -13,7 +13,7 @@ const { useEffect, useMemo, useRef, useState } = React
 import { useProject } from '../../projects/hooks'
 
 function useSeuratData() {
-  const project = useProject({ key: 'global' }, true)
+  const project = useProject('global', 'SingleCell')
 
   const ret = useMemo(() => {
     if (project.type !== 'SingleCell') {

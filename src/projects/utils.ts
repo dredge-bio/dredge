@@ -3,34 +3,29 @@ import * as R from 'ramda'
 
 import {
   Project,
-  LoadedProject
+  LoadedProject,
+  BulkProject,
+  SingleCellProject,
 } from '../types'
 
-function ensureProjectLoaded(project: Project) {
-  if (!project.loaded || project.failed) {
-    throw new Error(`Project is not yet loaded`)
-  }
+function memoizeForProject<P extends LoadedProject>() {
+  return function memoized<T, U extends object>(
+    cache: WeakMap<U, T>,
+    getCacheKey: (project: P) => U,
+    makeCache: (project: P) => T
+  ) {
+    return (project: P) => {
+      const cacheKey = getCacheKey(project)
+          , cached = cache.get(cacheKey)
 
-  return project
-}
+      if (cached) return cached
 
-function memoizeForProject<T, U extends object>(
-  cache: WeakMap<U, T>,
-  getCacheKey: (project: LoadedProject) => U,
-  makeCache: (project: LoadedProject) => T
-) {
-  return (project: Project) => {
-    const loadedProject = ensureProjectLoaded(project)
-        , cacheKey = getCacheKey(loadedProject)
-        , cached = cache.get(cacheKey)
+      const fn = makeCache(project)
 
-    if (cached) return cached
+      cache.set(cacheKey, fn)
 
-    const fn = makeCache(loadedProject)
-
-    cache.set(cacheKey, fn)
-
-    return fn
+      return fn
+    }
   }
 }
 
@@ -40,7 +35,7 @@ const abundanceLookupCache: WeakMap<
 > = new WeakMap()
 
 // FIXME: Should this be indexed by the canonical transcript label?
-export const getAbundanceLookup = memoizeForProject(
+export const getAbundanceLookup = memoizeForProject<BulkProject>()(
   abundanceLookupCache,
   project => project.data.abundances,
   project => {
@@ -85,7 +80,7 @@ const colorScaleLookupCache: WeakMap<
   (transcriptID: string) => d3.ScaleLinear<number, string>
 > = new WeakMap()
 
-export const getColorScaleLookup = memoizeForProject(
+export const getColorScaleLookup = memoizeForProject<BulkProject>()(
   colorScaleLookupCache,
   project => project.data.abundances,
   project => {
@@ -124,7 +119,8 @@ const transcriptLookupCache: WeakMap<
   (transcriptID: string) => string | null
 > = new WeakMap()
 
-export const getTranscriptLookup = memoizeForProject(
+// FIXME: make this work for any loaded project
+export const getTranscriptLookup = memoizeForProject<BulkProject>()(
   transcriptLookupCache,
   project => project.data.transcriptCorpus,
   project => {
@@ -148,7 +144,8 @@ const searchTranscriptsCache: WeakMap<
   (transcriptID: string, limit: number) => TranscriptSearchResult[]
 > = new WeakMap()
 
-export const getSearchTranscripts = memoizeForProject(
+// FIXME: make this work for any loaded project
+export const getSearchTranscripts = memoizeForProject<BulkProject>()(
   searchTranscriptsCache,
   project => project.data.transcriptAliases,
   project => {

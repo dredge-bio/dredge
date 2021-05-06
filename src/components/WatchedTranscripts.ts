@@ -4,7 +4,7 @@ import * as React from 'react'
 import { Flex, Box, Button } from 'rebass'
 import { unwrapResult } from '@reduxjs/toolkit'
 
-import { useView, useViewProject, actions as viewActions } from '../view'
+import { useView, actions as viewActions } from '../view'
 import { useAppDispatch } from '../hooks'
 import { getSearchTranscripts } from '../projects'
 import { readFile } from '../utils'
@@ -104,8 +104,9 @@ type SearchProps = {
   onSelect: (transcriptID: string) => void;
 }
 
+// FIXME: make this work for any loaded project
 function Search(props: SearchProps) {
-  const project = useViewProject()
+  const { project } = useView('Bulk')
       , searchTranscripts = getSearchTranscripts(project)
       , ref = useRef<HTMLInputElement>()
       , { onSelect } = props
@@ -180,8 +181,9 @@ type WatchedTranscriptsState = {
 }
 
 
+// FIXME: Make this generic across any view
 export default function WatchedTranscripts() {
-  const view = useView()
+  const view = useView('Bulk')
       , dispatch = useAppDispatch()
 
   const {
@@ -356,7 +358,7 @@ export default function WatchedTranscripts() {
           h(Button, {
             disabled: savedTranscripts.size === 0,
             onClick() {
-              dispatch(viewActions.exportSavedTranscripts())
+              dispatch(viewActions.exportSavedTranscripts({ view }))
             },
           }, 'Export'),
         ]),

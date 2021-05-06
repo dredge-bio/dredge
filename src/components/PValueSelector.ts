@@ -8,7 +8,7 @@ import { Flex, Button } from 'rebass'
 import { useView } from '../view'
 import { formatNumber } from '../utils'
 import { useSized } from '../hooks'
-import { DifferentialExpression } from '../types'
+import { BulkDifferentialExpression } from '../types'
 
 import { Reset } from './Icons'
 
@@ -107,7 +107,7 @@ type PValueSelectorProps = {
 }
 
 function usePValueHistogram() {
-  const view = useView()
+  const view = useView('Bulk')
       , { pairwiseData } = view
 
   if (!pairwiseData) return null
@@ -126,7 +126,7 @@ function usePValueHistogram() {
 
   logScale = logScale.range([ticks.length, 0])
 
-  const histogram = d3.histogram<DifferentialExpression, number>()
+  const histogram = d3.histogram<BulkDifferentialExpression, number>()
     .value(x => x.pValue || 1)
     .domain([0, 1])
     .thresholds(ticks)
@@ -146,7 +146,7 @@ function usePValueHistogram() {
 }
 
 export default function PValueSelector(props: PValueSelectorProps) {
-  const view = useView()
+  const view = useView('Bulk')
       , histogram = usePValueHistogram()
       , { onChange } = props
       , { comparedTreatments, pValueThreshold } = view
@@ -248,7 +248,7 @@ type PValueBrushProps = {
 }
 
 function PValueBrush(props: PValueBrushProps) {
-  const view = useView()
+  const view = useView('Bulk')
       , [ outerRef, rect ] = useSized()
       , svgRef = useRef<SVGSVGElement>()
       , brushStart = useRef(0)

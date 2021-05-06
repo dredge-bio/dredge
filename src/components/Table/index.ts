@@ -10,7 +10,7 @@ import {
   useComparedTreatmentLabels,
   actions as viewActions
 } from '../../view'
-import { SortPath } from '../../types'
+import { BulkTableSortPath } from '../../types'
 
 import TranscriptRow from './Row'
 
@@ -147,7 +147,7 @@ type DimensionState = null | {
 }
 
 export default function _Table() {
-  const view = useView()
+  const view = useView('Bulk')
       , dispatch = useAppDispatch()
       , [ dimensions, setDimensions ] = useState<DimensionState>(null)
 
@@ -262,7 +262,8 @@ export default function _Table() {
             clickable: true,
             onClick: () => {
               dispatch(viewActions.updateSortForTreatments({
-                sortPath: sortPath as SortPath,
+                view,
+                sortPath: sortPath as BulkTableSortPath,
                 order: (R.equals(view.sortPath, sortPath) && order === 'asc')
                   ? 'desc'
                   : 'asc',

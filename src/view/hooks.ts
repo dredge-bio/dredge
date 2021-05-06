@@ -7,20 +7,33 @@ import { useOptions } from 'org-shell'
 import { useAppSelector } from '../hooks'
 import { useProject } from '../projects'
 
-export function useView() {
+import {
+  ProjectType,
+  BulkViewState,
+  SingleCellViewState,
+} from '../types'
+
+export function useView(): BulkViewState | SingleCellViewState;
+export function useView(projectType: 'Bulk'): BulkViewState;
+export function useView(projectType: 'SingleCell'): SingleCellViewState;
+export function useView(projectType?: ProjectType): (BulkViewState | SingleCellViewState) {
   const view = useAppSelector(state => state.view && state.view.default)
 
   if (view === null) {
     throw new Error('No view is loaded')
   }
 
-  return view
-}
+  if (typeof projectType === undefined) {
+    return view as BulkViewState | SingleCellViewState
+  }
 
-export function useViewProject() {
-  const view = useView()
-
-  return useProject(view.source, true)
+  if (projectType === 'Bulk' && view.project.type === 'Bulk') {
+    return view as BulkViewState
+  } else if (projectType === 'SingleCell' && view.project.type === 'SingleCell') {
+    return view as SingleCellViewState
+  } else {
+    throw new Error()
+  }
 }
 
 function nullFallback<T extends t.Mixed>(codec: T) {
@@ -139,8 +152,7 @@ export function useViewOptions(): [
 }
 
 export function useComparedTreatmentLabels() {
-  const { comparedTreatments } = useView()
-      , project = useViewProject()
+  const { comparedTreatments, project } = useView('Bulk')
 
   let treatmentALabel: string | null = null
     , treatmentBLabel: string | null = null

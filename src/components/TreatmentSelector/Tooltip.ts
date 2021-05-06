@@ -1,7 +1,7 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
 
-import { useViewProject } from '../../view'
+import { useView } from '../../view'
 
 export type TooltipPosition = 'top' | 'bottom'
 
@@ -38,7 +38,7 @@ const TooltipContainer = styled.div<TooltipPositionProps>`
 
 export default function Tooltip(props: TooltipProps) {
   const { position, treatment } = props
-      , project = useViewProject()
+      , { project } = useView('Bulk')
       , { treatments } = project.data
 
   if (!treatment) return null
