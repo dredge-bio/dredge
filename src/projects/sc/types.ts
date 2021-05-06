@@ -24,6 +24,7 @@ export type SingleCellProjectConfig = Config & {
 }
 
 export type SingleCellProjectData = {
+  readme: string | null;
   cells: SeuratCellMap;
   transcripts: Map<string, string[]>;
   expressionData: DataView;

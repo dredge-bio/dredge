@@ -16,16 +16,6 @@ export type ReplicateLabel = string;
 export type TranscriptName = string;
 export type TreatmentName = string;
 
-
-
-interface LocalProjectSource {
-  key: 'local'
-}
-
-interface GlobalProjectSource {
-  key: 'global'
-}
-
 export interface Resource extends ORGShellResource<{
   dispatch: AppDispatch,
   getState: () => AppState,
@@ -34,8 +24,7 @@ export interface Resource extends ORGShellResource<{
   absoluteDimensions?: boolean;
 }
 
-export type ProjectSource = LocalProjectSource | GlobalProjectSource;
-
+export type ProjectSource = 'local' | 'global'
 
 
 export type TableSortOrder = 'asc' | 'desc'
@@ -58,6 +47,12 @@ export interface LogEntry {
   }>
 }
 
+export type ProjectType = 'SingleCell' | 'Bulk'
+
+type ProjectBase = {
+  source: ProjectSource,
+}
+
 export type UnloadedProject = { loaded: false } & (
   {
     type: 'SingleCell',
@@ -69,13 +64,13 @@ export type UnloadedProject = { loaded: false } & (
   }
 )
 
-export type SingleCellProject = {
+export type SingleCellProject = ProjectBase & {
   type: 'SingleCell',
   config: SingleCellProjectConfig,
   data: SingleCellProjectData,
 }
 
-export type BulkProject = {
+export type BulkProject = ProjectBase & {
     type: 'Bulk',
     config: BulkProjectConfig,
     data: BulkProjectData,
@@ -85,9 +80,7 @@ export type BulkProject = {
     watchedTranscripts: Set<string>,
 }
 
-export type LoadedProject = { loaded: true, failed: false } & (
-  BulkProject | SingleCellProject
-)
+export type LoadedProject = BulkProject | SingleCellProject
 
 type UnloadedProjectWithoutConfig = {
   loaded: false;
@@ -104,3 +97,6 @@ export type Project =
   FailedProject |
   LoadedProject
 
+export * from './projects/bulk/types'
+export * from './projects/sc/types'
+export * from './view/types'
