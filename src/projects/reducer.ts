@@ -2,7 +2,7 @@ import * as R from 'ramda'
 
 import {
   ProjectSource,
-  DredgeConfig,
+  BulkProjectConfig,
   Project
 } from '../types'
 
@@ -10,7 +10,7 @@ import { createReducer } from '@reduxjs/toolkit'
 
 import * as actions from './actions'
 
-type ProjectState = Record<ProjectSource['key'], Project>
+type ProjectState = Record<ProjectSource, Project>
 
 function initial(): ProjectState {
   return {
@@ -23,8 +23,9 @@ function initial(): ProjectState {
     },
   }
 }
-function defaultLocalConfig(): DredgeConfig {
+function defaultLocalConfig(): BulkProjectConfig {
   return {
+    type: 'Bulk',
     label: '',
     readme: './about.md',
     transcriptHyperlink: [
@@ -49,9 +50,9 @@ function defaultLocalConfig(): DredgeConfig {
 
 const reducer = createReducer(initial(), builder => {
   builder.addCase(actions.loadProjectConfig.rejected, (state, action) => {
-    const project = action.meta.arg.source
+    const { source } = action.meta.arg
 
-    state[project.key] = {
+    state[source] = {
       loaded: true,
       failed: true,
     }
@@ -59,24 +60,20 @@ const reducer = createReducer(initial(), builder => {
 
   builder.addCase(actions.loadProjectConfig.fulfilled, (state, action) => {
     const { config } = action.payload
-        , project = action.meta.arg.source
+        , { source } = action.meta.arg
 
-    state[project.key] = {
+    state[source] = {
       loaded: false,
       config,
     }
   })
 
   builder.addCase(actions.loadProject.fulfilled, (state, action) => {
-    const project = action.meta.arg.source
+    const { source } = action.meta.arg
 
     return {
       ...state,
-      [project.key]: {
-        loaded: true,
-        failed: false,
-        ...action.payload,
-      },
+      [source]: action.payload
     }
   })
 })

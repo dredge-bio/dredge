@@ -4,7 +4,7 @@ import * as React from 'react'
 import * as d3 from 'd3'
 
 import { TreatmentName } from '../../types'
-import { useView, useViewProject, actions as viewActions } from '../../view'
+import { useView, actions as viewActions } from '../../view'
 import { getColorScaleLookup, getAbundanceLookup } from '../../projects'
 import { useAppDispatch } from '../../hooks'
 
@@ -64,8 +64,8 @@ const SelectorWrapper = styled.div`
 `
 
 export default function TreatmentSelector(props: SelectorProps) {
-  const project = useViewProject()
-      , view = useView()
+  const view = useView('Bulk')
+      , { project } = view
       , svgRef = useRef<SVGSVGElement>()
       , dispatch = useAppDispatch()
       , { svg, treatments } = project.data

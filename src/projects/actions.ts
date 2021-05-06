@@ -63,13 +63,17 @@ type Configuration = BulkConfiguration | SingleCellConfiguration
 
 
 export const loadProjectConfig = createAsyncAction<
-  { source: ProjectSource },
-  { config: Configuration }
+  {
+    source: ProjectSource
+  },
+  {
+    config: Configuration
+  }
 >('load-project-config', async (args, { dispatch, getState }) => {
   const { source } = args
-      , project = getState().projects[source.key]
+      , project = getState().projects[source]
 
-  if ('config' in project) {
+  if (project && 'config' in project) {
     return { config: project.config }
   }
 
@@ -316,7 +320,7 @@ async function loadBulkProject(
 
   projectStatusLog('Finished building transcript corpus')
 
-  const watchedTranscripts = source.key === 'local'
+  const watchedTranscripts = source === 'local'
     ? new Set([] as string[])
     : new Set(await getGlobalWatchedTranscripts())
 
@@ -324,6 +328,7 @@ async function loadBulkProject(
 
   return {
     type: 'Bulk',
+    source,
     config,
     data: {
       treatments,
@@ -354,6 +359,7 @@ async function loadSingleCellProject(
     metadata,
     expressionData,
     transcripts,
+    readme,
   ] = await Promise.all([
     singleCellFields.embeddings.validateFromURL(
       config.seuratEmbeddings, makeLog),
@@ -366,6 +372,10 @@ async function loadSingleCellProject(
 
     bulkFields.aliases.validateFromURL(
       config.transcripts, makeLog),
+
+    bulkFields.readme.validateFromURL(
+      config.readme, makeLog),
+
   ])
 
   if (
@@ -409,11 +419,13 @@ async function loadSingleCellProject(
 
   return {
     type: 'SingleCell',
+    source,
     config,
     data: {
       cells: cellMap,
       expressionData,
       transcripts: new Map(Object.entries(transcripts)),
+      readme,
     }
   }
 }
@@ -422,13 +434,15 @@ export const loadProject = createAsyncAction<
   { source: ProjectSource },
   (BulkProject | SingleCellProject)
 >('load-project', async (args, { dispatch, getState }) => {
-  const project = args.source
-      , projectState = getState().projects[args.source.key]
+  const { source } = args
+      , project = getState().projects[source]
 
-  if (projectState.loaded && !projectState.failed) {
-    const { loaded, failed, ...rest } = projectState
+  if (!project) {
+    throw new Error()
+  }
 
-    return rest
+  if (!('loaded' in project)) {
+    return project
   }
 
   const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
@@ -456,14 +470,14 @@ export const loadProject = createAsyncAction<
 
   projectStatusLog('Loading project')
 
-  if (!('config' in projectState)) {
+  if (!('config' in project)) {
     projectStatusLog('No configuration present')
     throw new Error()
   }
 
-  const { config } = projectState
+  const { config } = project
 
-  const makeLog = makeResourceLog.bind(null, project)
+  const makeLog = makeResourceLog.bind(null, source)
 
   let loadedProject: BulkProject | SingleCellProject
 

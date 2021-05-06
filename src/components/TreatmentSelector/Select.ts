@@ -2,7 +2,7 @@ import h from 'react-hyperscript'
 import * as React from 'react'
 
 import { TreatmentName } from '../../types'
-import { useViewProject } from '../../view'
+import { useView } from '../../view'
 
 const { useState, useEffect } = React
 
@@ -18,7 +18,7 @@ const BLANK_KEY = '___blank'
 export default function TreatmentListSelector(props: SelectorProps) {
   const { selectedTreatment, onSelectTreatment, blankLabel, disabled } = props
       , [ selectedTreatmentState, setSelectedTreatmentState ] = useState(selectedTreatment || BLANK_KEY)
-      , project = useViewProject()
+      , { project } = useView('Bulk')
       , { treatments } = project.data
 
   useEffect(() => {

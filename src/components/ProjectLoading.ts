@@ -12,6 +12,8 @@ import {
   ProjectSource
 } from '../types'
 
+import { useAppSelector } from '../hooks'
+
 const { useState } = React
 
 /*
@@ -46,41 +48,45 @@ function selector(state: DredgeState) {
 module.exports = function makeProjectLoading(promptLocal=false) {
   return (Component: React.ComponentType) => {
     const ProjectLoading = (props: any) => {
-      const { view, projects } = useSelector(selector)
+      const { view, projects } = useAppSelector(state => ({
+        view: state.view,
+        projects: state.projects,
+      }))
 
       let source: ProjectSource
 
       if (view) {
-        source = view.default.source
+        source = view.default.project.source
       } else {
-        source = { key: 'global' }
+        source = 'global'
       }
 
-      const project = projects[source.key]!
+      const project = projects[source]!
 
       // Always prompt to continue if this is a local project
       const [ mustContinue, setMustContinue ] = useState(
-        project.loaded &&
+        source === 'local' &&
         promptLocal &&
-        source.key === 'local'
+        'loaded' in project &&
+        project.loaded
       )
 
       const showLog = (
         mustContinue ||
-        project.loaded === false ||
-        project.failed === true
+        ('loaded' in project && !project.loaded) ||
+        ('failed' in project && project.failed)
       )
 
       const failedGlobal = (
-        project.config === null &&
-        source.key === 'global'
+        source === 'global' &&
+        ('failed' in project && project.failed)
       )
 
       if (showLog) {
         return (
           h(Box, { px: 3, py: 2 }, [
             h(Log, {
-              loadingProject: source.key,
+              loadingProject: source,
             }),
 
             !failedGlobal ? null : (
@@ -108,7 +114,7 @@ module.exports = function makeProjectLoading(promptLocal=false) {
               ])
             ),
 
-            !(mustContinue && !project.failed) ? null : h(Box, { mt: 4 }, [
+            !(mustContinue && ('failed' in project && !project.failed)) ? null : h(Box, { mt: 4 }, [
               h(Button, {
                 onClick() {
                   setMustContinue(false)

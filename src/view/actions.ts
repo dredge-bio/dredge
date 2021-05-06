@@ -10,11 +10,13 @@ import { createAction, createAsyncAction } from '../actions'
 import {
   TreatmentName,
   TranscriptName,
-  PairwiseComparison,
-  DifferentialExpression,
-  DisplayedTranscriptsSource,
-  SortPath,
-  SortOrder
+  BulkPairwiseComparison,
+  BulkDifferentialExpression,
+  BulkDisplayedTranscriptsSource,
+  BulkTableSortPath,
+  TableSortOrder,
+  BulkViewState,
+  SingleCellViewState,
 } from '../types'
 
 
@@ -25,16 +27,17 @@ import { projectForView } from '../utils'
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
 export const setPairwiseComparison = createAsyncAction<
   {
+    view: BulkViewState,
     treatmentAKey: string,
     treatmentBKey: string,
   },
   {
-    pairwiseData: PairwiseComparison,
+    pairwiseData: BulkPairwiseComparison,
     resort: boolean,
   }
 >('set-pairwise-comparison', async (arg, { getState }) => {
-  const { treatmentAKey, treatmentBKey } = arg
-    , project = projectForView(getState())
+  const { treatmentAKey, treatmentBKey, view } = arg
+    , { project } = view
 
   const cacheKey = [treatmentAKey, treatmentBKey].toString()
       , cached = project.pairwiseComparisonCache[cacheKey]
@@ -95,7 +98,7 @@ export const setPairwiseComparison = createAsyncAction<
   const getCanonicalTranscriptLabel = getTranscriptLookup(project)
       , abundancesForTreatmentTranscript = getAbundanceLookup(project)
 
-  const pairwiseMap: Map<TranscriptName, DifferentialExpression> = new Map(text
+  const pairwiseMap: Map<TranscriptName, BulkDifferentialExpression> = new Map(text
     .trim()
     .split('\n')
     .slice(1) // Skip header
@@ -145,7 +148,7 @@ export const setPairwiseComparison = createAsyncAction<
       }]
     }))
 
-  const pairwiseData: PairwiseComparison = Object.assign(pairwiseMap, {
+  const pairwiseData: BulkPairwiseComparison = Object.assign(pairwiseMap, {
     minPValue,
     fcSorted: R.sortBy(x => x.logFC || 0, Array.from(pairwiseMap.values())),
     ataSorted: R.sortBy(x => x.logATA || 0, Array.from(pairwiseMap.values())),
@@ -159,13 +162,15 @@ export const setPairwiseComparison = createAsyncAction<
 
 
 export const getDefaultPairwiseComparison = createAsyncAction<
-  void,
+  {
+    view: BulkViewState,
+  },
   {
     treatmentA: TreatmentName;
     treatmentB: TreatmentName;
   }
->('get-default-pairwise-comparison', async (_, { getState }) => {
-  const project = projectForView(getState())
+>('get-default-pairwise-comparison', async (args, { getState }) => {
+  const { view: { project } } = args
       , { treatments } = project.data
       , [ treatmentA, treatmentB ] = Array.from(treatments.keys())
 
@@ -182,29 +187,24 @@ export const getDefaultPairwiseComparison = createAsyncAction<
 
 export const updateSortForTreatments = createAsyncAction<
   {
-    sortPath: SortPath | void,
-    order: SortOrder | void
+    view: BulkViewState,
+    sortPath: BulkTableSortPath | void,
+    order: TableSortOrder | void
   },
   {
-    sortedTranscripts: Array<DifferentialExpression>,
+    sortedTranscripts: Array<BulkDifferentialExpression>,
     resort: boolean,
   }
 >('update-sort-for-treatments', async (args, { getState }) => {
-  const { sortPath, order } = args
-      , view = getState().view?.default
-
-  if (view == null) {
-    throw new Error('Can\'t update sort for null view')
-  }
-
-  const { pairwiseData } = view
+  const { sortPath, order, view } = args
+      , { pairwiseData } = view
       , resolvedSortPath = sortPath || view.sortPath
       , resolvedOrder = order || view.order
 
   const getter =
     resolvedSortPath === 'label'
-      ? (d: DifferentialExpression) => d.label.toLowerCase()
-      : (d: DifferentialExpression) => d[resolvedSortPath]
+      ? (d: BulkDifferentialExpression) => d.label.toLowerCase()
+      : (d: BulkDifferentialExpression) => d[resolvedSortPath]
 
   const comparator = (resolvedOrder === 'asc' ? R.ascend : R.descend)(R.identity)
 
@@ -236,18 +236,16 @@ function withinBounds(min: number, max: number, value: number | null) {
 }
 
 export const updateDisplayedTranscripts = createAsyncAction<
-  void,
   {
-    displayedTranscripts: Array<DifferentialExpression>,
-    source: DisplayedTranscriptsSource
+    view: BulkViewState,
+  },
+  {
+    displayedTranscripts: Array<BulkDifferentialExpression>,
+    source: BulkDisplayedTranscriptsSource
   }
->('update-displayed-transcripts', async (_, { getState }) => {
-  const view = getState().view?.default
-      , project = projectForView(getState())
-
-  if (view == null) {
-    throw new Error('Can\'t run on null view')
-  }
+>('update-displayed-transcripts', async (args, { getState }) => {
+  const { view } = args
+      , { project } = view
 
   const {
     sortedTranscripts,
@@ -268,12 +266,12 @@ export const updateDisplayedTranscripts = createAsyncAction<
 
   let listedTranscripts: Set<TranscriptName> = new Set()
 
-  let source: DisplayedTranscriptsSource = 'all'
+  let source: BulkDisplayedTranscriptsSource = 'all'
 
   if (pairwiseData && brushedArea) {
     const [ minLogATA, maxLogFC, maxLogATA, minLogFC ] = brushedArea
 
-    const ok = (de: DifferentialExpression) => {
+    const ok = (de: BulkDifferentialExpression) => {
       const { logFC, logATA, pValue } = de
 
       return (
@@ -308,12 +306,12 @@ export const updateDisplayedTranscripts = createAsyncAction<
 
   const comparator = (order === 'asc' ? R.ascend : R.descend)(R.identity)
 
-  const alphaSort = R.sort((a: DifferentialExpression, b: DifferentialExpression) =>
+  const alphaSort = R.sort((a: BulkDifferentialExpression, b: BulkDifferentialExpression) =>
     comparator(a.label.toLowerCase(), b.label.toLowerCase()))
 
   const getCanonicalTranscriptLabel = getTranscriptLookup(project)
 
-  const extraTranscripts: Array<DifferentialExpression> = Array.from(listedTranscripts)
+  const extraTranscripts: Array<BulkDifferentialExpression> = Array.from(listedTranscripts)
     .filter(name => !pairwiseData.has(name))
     .map(name => ({
       // FIXME
@@ -374,6 +372,7 @@ type ImportedTranscript = [
   canonicalName: string,
 ]
 
+// FIXME: Make this generic across projects
 export const importSavedTranscripts = createAsyncAction<
   {
     text: string
@@ -396,7 +395,7 @@ export const importSavedTranscripts = createAsyncAction<
   }
 
   const transcriptsInFile = rows.map(row => row[0])
-      , project = projectForView(getState())
+      , project = projectForView(getState(), 'Bulk')
       , getCanonicalTranscriptLabel = getTranscriptLookup(project)
       , newWatchedTranscripts = []
       , imported: Array<ImportedTranscript> = []
@@ -430,17 +429,15 @@ export const importSavedTranscripts = createAsyncAction<
 })
 
 
+// FIXME: Make this generic across projects
 export const exportSavedTranscripts = createAsyncAction<
-  void,
+  {
+    view: BulkViewState,
+  },
   void
->('export-saved-transcripts', async (_, { getState }) => {
-  const view = getState().view?.default
-
-  if (view == null) {
-    throw new Error('Can\'t call from null view')
-  }
-
-  const { comparedTreatments, displayedTranscripts } = view
+>('export-saved-transcripts', async (args, { getState }) => {
+  const { view } = args
+      , { comparedTreatments, displayedTranscripts } = view
 
   if (comparedTreatments === null || displayedTranscripts === null) {
     return

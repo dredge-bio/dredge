@@ -1,6 +1,5 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
-import * as R from 'ramda'
 import * as React from 'react'
 import { unwrapResult } from '@reduxjs/toolkit'
 
@@ -43,17 +42,18 @@ export default function View() {
   const dispatch = useAppDispatch()
       , [ viewOptions, updateViewOptions ] = useViewOptions()
       , { treatmentA, treatmentB, pValue, brushed } = viewOptions
-      , view = useView()
+      , view = useView('Bulk')
 
   useEffect(() => {
     dispatch(viewActions.updateSortForTreatments({
+      view,
       sortPath: view.sortPath,
       order: view.order,
     }))
   }, [view.pairwiseData])
 
   useEffect(() => {
-    dispatch(viewActions.updateDisplayedTranscripts())
+    dispatch(viewActions.updateDisplayedTranscripts({ view }))
   }, [
     view.sortedTranscripts,
     view.order,
@@ -73,7 +73,7 @@ export default function View() {
 
   useEffect(() => {
     if (!treatmentA || !treatmentB) {
-      dispatch(viewActions.getDefaultPairwiseComparison())
+      dispatch(viewActions.getDefaultPairwiseComparison({ view }))
         .then(unwrapResult)
         .then(({ treatmentA, treatmentB}) => {
           updateViewOptions({
@@ -83,6 +83,7 @@ export default function View() {
         })
     } else {
       dispatch(viewActions.setPairwiseComparison({
+        view,
         treatmentAKey: treatmentA,
         treatmentBKey: treatmentB,
       }))
@@ -138,7 +139,7 @@ export default function View() {
             updateViewOptions({
               brushed,
             })
-          }
+          },
         })
       ),
 

@@ -1,11 +1,14 @@
-"use strict";
-
 import * as R from 'ramda';
+import { Draft } from 'immer'
 
 import {
   ProjectSource,
-  ViewState,
-  TranscriptName
+  BulkViewState,
+  SingleCellViewState,
+  TranscriptName,
+  BulkProject,
+  SingleCellProject,
+  LoadedProject,
 } from '../types'
 
 import { createReducer } from '@reduxjs/toolkit'
@@ -13,9 +16,9 @@ import { createReducer } from '@reduxjs/toolkit'
 import * as viewActions from './actions'
 import { actions as projectActions } from '../projects'
 
-function blankView(source: ProjectSource): ViewState {
+function blankBulkView(project: BulkProject): BulkViewState {
   return {
-    source,
+    project,
 
     loading: true,
 
@@ -40,17 +43,60 @@ function blankView(source: ProjectSource): ViewState {
   }
 }
 
-type MultiViewState = null | { default: ViewState }
+function blankSingleCellView(project: SingleCellProject): SingleCellViewState {
+  return {
+    project,
+
+    loading: true,
+    focusedTranscript: null,
+    hoveredTranscript: null,
+    hoveredTreatment: null,
+
+    savedTranscripts: new Set(),
+  }
+}
+
+function blankView(project: LoadedProject) {
+  if (project.type === 'Bulk') {
+    return blankBulkView(project)
+  } else if (project.type === 'SingleCell') {
+    return blankSingleCellView(project)
+  } else {
+    throw new Error()
+  }
+}
+
+type MultiViewState = null | {
+  default: BulkViewState | SingleCellViewState
+}
+
+function isSingleCellView(view: Draft<MultiViewState>): view is Draft<{ default: SingleCellViewState }> {
+  if (view?.default.project.type !== 'SingleCell') {
+    throw new Error()
+  }
+
+  return true
+}
+
+function isBulkView(view: Draft<MultiViewState>): view is Draft<{ default: BulkViewState }> {
+  if (view?.default.project.type !== 'Bulk') {
+    throw new Error()
+  }
+
+  return true
+}
+
 
 const reducer = createReducer(null as MultiViewState, builder => {
   builder
     .addCase(projectActions.loadProject.fulfilled, (state, action) => {
       return {
-        default: blankView(action.meta.arg.source),
+        default: blankView(action.payload)
       }
     })
     .addCase(viewActions.setPairwiseComparison.pending, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
+
       const { treatmentAKey, treatmentBKey } = action.meta.arg
 
       state.default = {
@@ -62,7 +108,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
       }
     })
     .addCase(viewActions.setPairwiseComparison.fulfilled, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       /*
        FIXME: Put in project reducer
@@ -84,7 +130,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
       }
     })
     .addCase(viewActions.updateSortForTreatments.fulfilled, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { sortPath: newSortPath, order: newOrder } = action.meta.arg
           , { sortedTranscripts } = action.payload
@@ -99,7 +145,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
       }
     })
     .addCase(viewActions.updateDisplayedTranscripts.fulfilled, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { source, displayedTranscripts } = action.payload
 
@@ -111,7 +157,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
       state.default.hoveredTranscript = null
     })
     .addCase(viewActions.setSavedTranscripts.fulfilled, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { transcriptNames } = action.meta.arg
           , { default: { brushedArea, focusedTranscript, savedTranscripts, hoveredTranscript }} = state
@@ -159,21 +205,21 @@ const reducer = createReducer(null as MultiViewState, builder => {
         state.default.hoveredTranscript = nextHoveredTranscript;
     })
     .addCase(viewActions.setHoveredBinTranscripts, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { transcripts } = action.payload
 
       state.default.hoveredBinTranscripts = transcripts
     })
     .addCase(viewActions.setSelectedBinTranscripts, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { transcripts } = action.payload
 
       state.default.selectedBinTranscripts = transcripts
     })
     .addCase(viewActions.setBrushedArea, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { coords } = action.payload
 
@@ -201,7 +247,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
       state.default.focusedTranscript = transcript
     })
     .addCase(viewActions.setPValueThreshold, (state, action) => {
-      if (!state) return
+      if (!isBulkView(state)) return state
 
       const { threshold } = action.payload
 

@@ -6,6 +6,7 @@ import { useOptions } from 'org-shell'
 
 import { useAppSelector, useAppDispatch } from '../../hooks'
 import { projectForView } from '../../utils'
+import { useView, useComparedTreatmentLabels } from '../../view/hooks'
 
 import Plot from './Plot'
 
@@ -29,29 +30,21 @@ type OuterProps = {
 export default function Wrapper(props: OuterProps) {
   const [ opts, updateOpts ] = useOptions()
       , dispatch = useAppDispatch()
+      , view = useView('Bulk')
+      , [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
   const passedProps = useAppSelector(state => {
-    const view = state.view?.default
-        , project = projectForView(state)
+    const { project } = view
         , { abundanceLimits } = project.config
-
-    if (view == null) return null
 
     let treatmentA: string | undefined
       , treatmentB: string | undefined
-      , treatmentALabel: string | undefined
-      , treatmentBLabel: string | undefined
 
     const { comparedTreatments } = view
 
     if (comparedTreatments) {
-      const labelForTreatment = (treatment: string) =>
-        project.data.treatments.get(treatment)?.label || treatment
-
       treatmentA = comparedTreatments[0]
       treatmentB = comparedTreatments[1]
-      treatmentALabel = labelForTreatment(treatmentA)
-      treatmentBLabel = labelForTreatment(treatmentB)
     }
 
     const viewProps = R.pick([

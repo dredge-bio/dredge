@@ -134,7 +134,7 @@ function LogEntry({ project, timestamp, log }: LogItem) {
   return (
     h('tr', [
       h('td', { key: 5 }, new Date(timestamp).toLocaleTimeString()),
-      h('td', { key: 6 }, project ? project.key : null),
+      h('td', { key: 6 }, project),
       ...children,
     ])
   )
@@ -154,13 +154,12 @@ export default function Log() {
 
     const globalProject = state.projects.global
 
-    if (globalProject.loaded) {
+    if ('failed' in globalProject) {
+      failedProject = true
+    } else if ('loaded' in globalProject) {
+    } else {
       loadingProject = false
       initializing = false
-
-      if (globalProject.failed) {
-        failedProject = true
-      }
     }
 
     return {

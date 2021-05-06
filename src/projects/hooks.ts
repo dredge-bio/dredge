@@ -1,7 +1,9 @@
 import {
   ProjectSource,
-  Project,
-  LoadedProject
+  ProjectType,
+  LoadedProject,
+  SingleCellProject,
+  BulkProject,
 } from '../types'
 
 import {
@@ -15,34 +17,33 @@ import {
   useAppSelector
 } from '../hooks'
 
-export function useProject(source: ProjectSource, requireLoaded: false): Project;
-export function useProject(source: ProjectSource, requireLoaded: true): LoadedProject;
-export function useProject(source: ProjectSource, requireLoaded: boolean): Project | LoadedProject {
-  const project = useAppSelector(state => state.projects[source.key])
+export function useProject(source: ProjectSource, type: 'SingleCell'): SingleCellProject;
+export function useProject(source: ProjectSource, type: 'Bulk'): BulkProject;
+export function useProject(source: ProjectSource, type: ProjectType): LoadedProject {
+  const project = useAppSelector(state => state.projects[source])
 
-  if (requireLoaded) {
-    if (!project.loaded || project.failed) {
-      throw new Error(`Project ${source.key} is not yet loaded`)
-    }
-
-    return project
+  if (!project || 'failed' in project || 'loaded' in project) {
+    throw new Error(`Project ${source} is not yet loaded`)
   }
 
-  return project
+  if (type === 'SingleCell' && project.type === 'SingleCell') {
+    return project
+  } else if (type === 'Bulk' && project.type === 'Bulk') {
+    return project
+  } else {
+    throw new Error(
+      `Requested project type is ${type}, but project ${source} is of type ${project.type}`)
+  }
 }
 
-export function useAbundances(source: ProjectSource={ key: 'global' }) {
-  const project = useProject(source, true)
-
+export function useAbundances(project: BulkProject) {
   return {
     abundancesForTreatmentTranscript: getAbundanceLookup(project),
     colorScaleForTranscript: getColorScaleLookup(project),
   }
 }
 
-export function useTranscripts(source: ProjectSource={ key: 'global' }) {
-  const project = useProject(source, true)
-
+export function useTranscripts(project: BulkProject) {
   const { transcripts } = project.data
 
   return {

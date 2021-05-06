@@ -137,21 +137,16 @@ export default function Header(props: HeaderProps) {
     , headerText = ''
 
   if (view) {
-    const project = projects[view.source.key]
+    const project = view.project
 
-    if (project && project.loaded && !project.failed) {
-      projectLabel = project.config.label
-      headerText = projectLabel
-      hasReadme = !!project.config.readme
-    }
+    projectLabel = project.config.label
+    headerText = projectLabel
+    hasReadme = !!project.config.readme
   }
 
   if (!headerText) {
     headerText = 'DrEdGE: Differential Expression Gene Explorer'
   }
-
-  // FIXME: is this a typo?
-  const hasProjectReadme = view && view.source && projects
 
   return (
     h(HeaderContainer, {
@@ -166,7 +161,7 @@ export default function Header(props: HeaderProps) {
           },
         }, [
           headerText,
-          (!view || view.source.key !== 'local') ? null : (
+          (!view || view.project.source !== 'local') ? null : (
             h(Button, {
               ml: 2,
               onClick() {

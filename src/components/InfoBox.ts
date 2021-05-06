@@ -5,7 +5,7 @@ import * as React from 'react'
 import { Flex, Box } from 'rebass'
 
 import { getColorScaleLookup, getTranscriptLookup } from '../projects'
-import { useView, useViewProject, useViewOptions } from '../view'
+import { useView, useViewOptions } from '../view'
 
 import HeatMap from './HeatMap'
 import TreatmentSelector from './TreatmentSelector'
@@ -109,8 +109,8 @@ function ColorLegend(props: {
 }
 
 export default function InfoBox() {
-  const view = useView()
-      , project = useViewProject()
+  const view = useView('Bulk')
+      , { project } = view
       , colorScaleForTranscript = getColorScaleLookup(project)
       , getCanonicalTranscriptLabel = getTranscriptLookup(project)
       , [ , updateOpts ] = useViewOptions()

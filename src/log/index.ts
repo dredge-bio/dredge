@@ -63,6 +63,6 @@ export const reducer = createReducer(initialState(), builder => {
       return state.filter(
         log => (
           log.project &&
-          log.project.key === project.key))
+          log.project === project))
     })
 })

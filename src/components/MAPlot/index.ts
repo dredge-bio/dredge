@@ -16,7 +16,7 @@ export default function PlotContainer(props: PlotContainerProps) {
     const view = state.view!.default
 
     return {
-      key: view.source.key,
+      key: view.project.source,
       isLoading: view.loading,
     }
   })
