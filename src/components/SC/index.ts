@@ -7,10 +7,9 @@ import { useDimensions } from '../MAPlot/hooks'
 
 import SingleCellExpression from '../../single-cell'
 import { SeuratCell, SeuratCellMap } from '../../projects/sc/types'
+import { useProject } from '../../projects/hooks'
 
 const { useEffect, useMemo, useRef, useState } = React
-
-import { useProject } from '../../projects/hooks'
 
 function useSeuratData() {
   const project = useProject('global', 'SingleCell')
@@ -22,7 +21,7 @@ function useSeuratData() {
 
     const { transcripts, cells, expressionData } = project.data
 
-    const scDataset = new SingleCellExpression([...transcripts.keys()], [...cells.keys()], expressionData)
+    const scDataset = new SingleCellExpression(transcripts, [...cells.keys()], expressionData)
 
     return {
       scDataset,

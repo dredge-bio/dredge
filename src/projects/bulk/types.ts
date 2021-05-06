@@ -1,4 +1,4 @@
-import { Config } from '../types'
+import { Config, TranscriptData } from '../types'
 import { ProjectSource, TableSortOrder } from '../../types'
 
 export type BulkProjectConfig = Config & {
@@ -23,18 +23,13 @@ export interface BulkTreatment {
 
 export type BulkTreatmentMap = Map<string, BulkTreatment>
 
-export type BulkProjectData = {
+export type BulkProjectData = TranscriptData & {
   treatments: BulkTreatmentMap,
 
-  // From the abundance matrix
-  transcripts: string[],
   replicates: string[],
   abundances: number[][],
   transcriptIndices: Record<string, number>,
   replicateIndices: Record<string, number>,
-
-  transcriptCorpus: Record<string, string>;
-  transcriptAliases: ([alias: string, transcript: string])[],
 
   svg: string | null;
   grid: (string | null)[][],
