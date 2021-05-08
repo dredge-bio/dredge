@@ -1,6 +1,7 @@
 import h from 'react-hyperscript'
 import * as d3 from 'd3'
 import * as React from 'react'
+import throttle from 'throttleit'
 
 import padding from '../MAPlot/padding'
 import { useDimensions } from '../MAPlot/hooks'
@@ -108,7 +109,8 @@ function useEmbeddingsByTranscript(
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
   scDataset: SingleCellExpression,
-  transcriptName: string
+  transcriptName: string,
+  onCellHover: (cell: SeuratCell | null) => void
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
@@ -118,6 +120,8 @@ function useEmbeddingsByTranscript(
 
     const expressionsByCell = new Map(
       expressions.map(({ cell, expression }) => [cell, expression]))
+
+    const tree = d3.quadtree([...cells.values()], d => d.umap1, d => d.umap2)
 
     const colorScale = d3.scaleLinear<number, string>()
       .domain([0, d3.max(expressions, d => d.expression) || 1])
@@ -129,6 +133,17 @@ function useEmbeddingsByTranscript(
       .select('canvas')
 
     const ctx = canvas.node()!.getContext('2d')!
+
+    canvas.on('mousemove', throttle((e: MouseEvent) => {
+      const { offsetX, offsetY } = e
+          , { xScale, yScale } = dimensions
+
+      const umap1 = xScale.invert(offsetX)
+          , umap2 = yScale.invert(offsetY)
+          , nearestCell = tree.find(umap1, umap2, .5)
+
+      onCellHover(nearestCell || null)
+    }, 20))
 
     ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
 
@@ -253,13 +268,15 @@ function SingleCell(props: SingleCellProps) {
       , svgRef = useRef<SVGSVGElement>(null)
       , dimensions = useAxes(svgRef, 800, 800, cells)
       , [ transcript, setTranscript ] = useState('cah6')
+      , [ cellHover, setCellHover ] = useState<SeuratCell | null>(null)
 
   useEmbeddingsByTranscript(
     svgRef,
     dimensions,
     cells,
     scDataset,
-    transcript
+    transcript,
+    setCellHover,
   )
 
   return (
