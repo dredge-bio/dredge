@@ -121,7 +121,9 @@ function useEmbeddingsByTranscript(
 
     const colorScale = d3.scaleLinear<number, string>()
       .domain([0, d3.max(expressions, d => d.expression) || 1])
-      .range(['#ddd', 'red'])
+      // FIXME: I don't know how to set the range to a color without getting
+      // a TS warning
+      .range(['#ddd', 'red'] as unknown as [number, number])
 
     const canvas: d3.Selection<HTMLCanvasElement, unknown, null, undefined> = d3.select(svgEl)
       .select('canvas')
@@ -270,9 +272,6 @@ function SingleCell(props: SingleCellProps) {
       viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
       ref: svgRef,
     }, [
-      h('defs', [
-      ]),
-
       // X Axis label
       h('text', {
         dx: padding.l,
@@ -318,7 +317,7 @@ function SingleCell(props: SingleCellProps) {
         }),
         h('g.y-axis'),
 
-        h('g', { clipPath: 'url(#visible-plot)' }, [
+        h('g', [
           h('g.umap', [
             React.createElement('foreignObject', {
               x: 0,
@@ -326,10 +325,13 @@ function SingleCell(props: SingleCellProps) {
               width: dimensions.plotWidth,
               height: dimensions.plotHeight,
             }, [
-              React.createElement('xhtml:body', {
-                margin: '0px',
-                padding: '0px',
-                backgroundColor: 'transparent',
+              h('div', {
+                key: 'plot',
+                style: {
+                  margin: '0px',
+                  padding: '0px',
+                  backgroundColor: 'transparent',
+                },
                 width: dimensions.plotWidth + 'px',
                 height: dimensions.plotHeight + 'px',
               }, [
