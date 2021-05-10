@@ -1,3 +1,4 @@
+import { SingleCellProjectData, SeuratCell } from '../types'
 
 const RECORD_SIZE = 6
     , VERSION_OFFSET = 0x00
@@ -5,31 +6,24 @@ const RECORD_SIZE = 6
     , FLOATS_START = 0x04
 
 export default class SingleCellExpression {
-  transcripts: string[];
-  cells: string[];
-  expressions: DataView;
+  projectData: SingleCellProjectData;
 
-  offsets: [number, number][];
-
-  transcriptIdxsByLabel: Map<string, number>;
+  _offsets: [number, number][];
+  _transcriptIdxsByLabel: Map<string, number>;
+  _cellsArr: SeuratCell[];
 
   constructor(
-    transcripts: string[],
-    cells: string[],
-    expressions: DataView
+    projectData: SingleCellProjectData,
   ) {
-    this.transcripts = transcripts;
-    this.cells = cells;
-    this.expressions = expressions;
-
-    this.offsets = this.buildOffsets()
-
-    this.transcriptIdxsByLabel = new Map(
-      transcripts.map((label, i) => [label, i]))
+    this.projectData = projectData;
+    this._offsets = this.buildOffsets()
+    this._transcriptIdxsByLabel = new Map(
+      projectData.transcripts.map((label, i) => [label, i]))
+    this._cellsArr = [...this.projectData.cells.values()]
   }
 
   buildOffsets() {
-    const view = this.expressions
+    const view = this.projectData.expressionData
         , offsetStarts = [] as number[]
         , offsets = [] as [number, number][]
 
@@ -74,14 +68,14 @@ export default class SingleCellExpression {
   getExpressionsForTranscript(transcript: number | string) {
     const transcriptIdx = typeof transcript === 'number'
       ? transcript
-      : this.transcriptIdxsByLabel.get(transcript)
+      : this._transcriptIdxsByLabel.get(transcript)
 
     if (transcriptIdx === undefined) {
       throw new Error(`Transcript ${transcript} does not exist in expression data`)
     }
 
-    const termini = this.offsets[transcriptIdx]
-        , view = this.expressions
+    const termini = this._offsets[transcriptIdx]
+        , view = this.projectData.expressionData
 
     if (!termini) {
       throw new Error(`Transcript index ${transcriptIdx} does not exist in expression data`)
@@ -89,17 +83,14 @@ export default class SingleCellExpression {
 
     const [ start, end ] = termini
 
-    const expressions = [] as { cell: string, expression: number }[]
+    const expressions = new Map() as Map<SeuratCell, number>
 
     for (let i = start; i < end; i += RECORD_SIZE) {
-      const cellID = view.getUint16(i + 2, true)
-          , expressionID = view.getUint16(i + 4, true)
-          , expression = view.getFloat32(FLOATS_START + expressionID * 4, true)
+      const cellIdx = view.getUint16(i + 2, true)
+          , expressionIdx = view.getUint16(i + 4, true)
+          , expression = view.getFloat32(FLOATS_START + expressionIdx * 4, true)
 
-      expressions.push({
-        cell: this.cells[cellID]!,
-        expression,
-      })
+      expressions.set(this._cellsArr[cellIdx]!, expression)
     }
 
     return expressions

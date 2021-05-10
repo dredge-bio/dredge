@@ -22,7 +22,7 @@ function useSeuratData() {
 
     const { transcripts, cells, expressionData } = project.data
 
-    const scDataset = new SingleCellExpression(transcripts, [...cells.keys()], expressionData)
+    const scDataset = new SingleCellExpression(project.data)
 
     return {
       scDataset,
@@ -116,15 +116,12 @@ function useEmbeddingsByTranscript(
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
 
-    const expressions = scDataset.getExpressionsForTranscript(transcriptName)
-
-    const expressionsByCell = new Map(
-      expressions.map(({ cell, expression }) => [cell, expression]))
+    const expressionsByCell = scDataset.getExpressionsForTranscript(transcriptName)
 
     const tree = d3.quadtree([...cells.values()], d => d.umap1, d => d.umap2)
 
     const colorScale = d3.scaleLinear<number, string>()
-      .domain([0, d3.max(expressions, d => d.expression) || 1])
+      .domain([0, d3.max(expressionsByCell.values()) || 1])
       // FIXME: I don't know how to set the range to a color without getting
       // a TS warning
       .range(['#ddd', 'red'] as unknown as [number, number])
@@ -150,8 +147,8 @@ function useEmbeddingsByTranscript(
     // Sort embeddings so that they are drawn in order of transcript expression
     // level from lowest to highest
     const sortedCells = [...cells.values()].sort((a, b) => {
-      const levelA = expressionsByCell.get(a.cellID) || 0
-          , levelB = expressionsByCell.get(b.cellID) || 0
+      const levelA = expressionsByCell.get(a) || 0
+          , levelB = expressionsByCell.get(b) || 0
 
       if (levelA === levelB) return 0
 
@@ -160,11 +157,12 @@ function useEmbeddingsByTranscript(
         : -1
     })
 
-    sortedCells.forEach(({ cellID, umap1, umap2 }) => {
-      const x = xScale(umap1)
+    sortedCells.forEach(cell => {
+      const { umap1, umap2 } = cell
+          , x = xScale(umap1)
           , y = yScale(umap2)
-          , r = expressionsByCell.has(cellID) ? 1.75 : 1
-          , fill = colorScale(expressionsByCell.get(cellID) || 0)
+          , r = expressionsByCell.has(cell) ? 1.75 : 1
+          , fill = colorScale(expressionsByCell.get(cell) || 0)
 
       ctx.beginPath();
       ctx.arc(x, y, r, 0, 2 * Math.PI, true);
@@ -184,7 +182,7 @@ function useEmbeddings(
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
 
-    const clusters: Map<number, {
+    const clusters: Map<string, {
       cells: SeuratCell[],
       points: [number, number ][],
     }> = new Map()
