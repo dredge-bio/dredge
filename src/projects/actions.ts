@@ -354,6 +354,7 @@ async function loadSingleCellProject(
     embeddings,
     metadata,
     expressionData,
+    differentialExpressions,
     transcripts,
     readme,
   ] = await Promise.all([
@@ -365,6 +366,9 @@ async function loadSingleCellProject(
 
     singleCellFields.expressionData.validateFromURL(
       config.expressionData, makeLog),
+
+    singleCellFields.differentialExpressions.validateFromURL(
+      config.differentialExpressions, makeLog),
 
     bulkFields.aliases.validateFromURL(
       config.transcripts, makeLog),
@@ -378,6 +382,7 @@ async function loadSingleCellProject(
     embeddings === null ||
     metadata === null ||
     expressionData === null ||
+    differentialExpressions === null ||
     transcripts === null
   ) {
     projectStatusLog('Could not load project.')
@@ -422,6 +427,7 @@ async function loadSingleCellProject(
     data: {
       cells: cellMap,
       expressionData,
+      differentialExpressions,
       transcripts: Object.keys(transcripts),
       transcriptCorpus: corpus,
       transcriptAliases,

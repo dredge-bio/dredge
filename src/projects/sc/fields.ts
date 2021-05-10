@@ -7,7 +7,7 @@ import { ProjectField } from '../fields'
 type SeuratMetadata = {
   cellID: string;
   replicateID: string;
-  clusterID: number;
+  clusterID: string;
 }
 
 type SeuratEmbedding = {
@@ -73,6 +73,22 @@ export const embeddings = new ProjectField({
   processValidated: noopPromise,
 })
 
+export const differentialExpressions = new ProjectField({
+  label: 'Cluster diffential expressions',
+  required: true,
+  cached: false,
+  decoder: t.array(t.type({
+    clusterID: t.string,
+    transcriptID: t.string,
+    pValue: t.number,
+    logFC: t.number,
+    pctExpressedCluster: t.number,
+    pctExpressedOther: t.number,
+  })),
+  processValidated: noopPromise,
+})
+
+
 const seuratMetadataCodec = new t.Type<SeuratMetadata>(
   'seuratMetadata',
   (u): u is SeuratMetadata => {
@@ -100,7 +116,7 @@ const seuratMetadataCodec = new t.Type<SeuratMetadata>(
       return t.success({
         cellID,
         replicateID,
-        clusterID: parseInt(clusterID),
+        clusterID,
       })
     } catch (e) {
       return t.failure(u, c)

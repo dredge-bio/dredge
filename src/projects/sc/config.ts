@@ -10,6 +10,7 @@ export const singleCellConfiguration = t.type({
   seuratMetadata: URLString,
   transcripts: URLString,
   expressionData: URLString,
+  differentialExpressions: URLString,
 
   // Optional
   readme: fromNullable(URLString, ''),
