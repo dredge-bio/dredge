@@ -104,21 +104,108 @@ function useAxes(
   return dimensions
 }
 
-function useEmbeddingsByTranscript(
+function useInteractionLayer(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
-  scDataset: SingleCellExpression,
-  transcriptName: string,
-  onCellHover: (cell: SeuratCell | null) => void
+  onCellHover: (cell: SeuratCell | null) => void,
+  onBrush: (clusters: Set<string>) => void,
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
-
-    const expressionsByCell = scDataset.getExpressionsForTranscript(transcriptName)
+        , [ x0, x1 ] = xScale.domain().map(xScale)
+        , [ y0, y1 ] = yScale.domain().map(yScale)
 
     const tree = d3.quadtree([...cells.values()], d => d.umap1, d => d.umap2)
+
+    const brush = d3.brush()
+      .extent([[x0!, y1!], [x1!, y0!]])
+      .on('end', (e: d3.D3BrushEvent<unknown>) => {
+        if (!e.sourceEvent) return
+        if (!e.selection) return
+
+        const extent = e.selection as [[number, number], [number, number]]
+            , [ umap1Min, umap1Max ] = extent.map(x => x[0]).map(xScale.invert) as [ number, number ]
+            , [ umap2Max, umap2Min ] = extent.map(x => x[1]).map(yScale.invert) as [ number, number ]
+            , brushedClusters: Set<string> = new Set()
+
+        tree.visit((node, xMin, yMin, xMax, yMax) => {
+          if (node.length === undefined) {
+            let curNode = node
+
+            while (true) {
+              const cell = curNode.data
+
+              const inRect = (
+                cell.umap1 >= umap1Min &&
+                cell.umap1 <= umap1Max &&
+                cell.umap2 >= umap2Min &&
+                cell.umap2 <= umap2Max
+              )
+
+              if (inRect) {
+                brushedClusters.add(cell.clusterID)
+              }
+
+              if (node.next) {
+                curNode = node.next
+              } else {
+                break;
+              }
+            }
+          }
+
+          const stopTraversing = (
+            xMin > umap1Max ||
+            xMax < umap1Min ||
+            yMin > umap2Max ||
+            yMax < umap2Min
+          )
+
+          return stopTraversing
+        })
+
+        onBrush(brushedClusters)
+      })
+
+    const brushSel = d3.select(svgEl)
+      .select('.interaction-layer')
+      .append('g')
+
+    brushSel.call(brush)
+
+
+
+    const interactionLayer = d3.select(svgEl)
+      .select('.interaction-layer rect')
+
+    interactionLayer.on('mousemove', throttle((e: MouseEvent) => {
+      const [ x, y ] = d3.pointer(e)
+          , { xScale, yScale } = dimensions
+
+      const umap1 = xScale.invert(x)
+          , umap2 = yScale.invert(y)
+          , nearestCell = tree.find(umap1, umap2, .5)
+
+      onCellHover(nearestCell || null)
+    }, 20))
+  }, [dimensions])
+}
+
+
+function useEmbeddingsByTranscript(
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  dimensions: ReturnType<typeof useDimensions>,
+  cells: SeuratCellMap,
+  scDataset: SingleCellExpression,
+  transcriptName: string,
+) {
+  useEffect(() => {
+    const canvasEl = canvasRef.current!
+        , { xScale, yScale } = dimensions
+
+    const expressionsByCell = scDataset.getExpressionsForTranscript(transcriptName)
 
     const colorScale = d3.scaleLinear<number, string>()
       .domain([0, d3.max(expressionsByCell.values()) || 1])
@@ -126,21 +213,7 @@ function useEmbeddingsByTranscript(
       // a TS warning
       .range(['#ddd', 'red'] as unknown as [number, number])
 
-    const canvas: d3.Selection<HTMLCanvasElement, unknown, null, undefined> = d3.select(svgEl)
-      .select('canvas')
-
-    const ctx = canvas.node()!.getContext('2d')!
-
-    canvas.on('mousemove', throttle((e: MouseEvent) => {
-      const { offsetX, offsetY } = e
-          , { xScale, yScale } = dimensions
-
-      const umap1 = xScale.invert(offsetX)
-          , umap2 = yScale.invert(offsetY)
-          , nearestCell = tree.find(umap1, umap2, .5)
-
-      onCellHover(nearestCell || null)
-    }, 20))
+    const ctx = canvasEl.getContext('2d')!
 
     ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
 
@@ -264,117 +337,121 @@ type SingleCellProps = {
 function SingleCell(props: SingleCellProps) {
   const { cells, scDataset } = props
       , svgRef = useRef<SVGSVGElement>(null)
+      , canvasRef = useRef<HTMLCanvasElement>(null)
       , dimensions = useAxes(svgRef, 800, 800, cells)
       , [ transcript, setTranscript ] = useState('cah6')
-      , [ cellHover, setCellHover ] = useState<SeuratCell | null>(null)
+      , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
+      , [ brushedClusters, setBrushedClusters ] = useState<Set<string> | null>(null)
 
   useEmbeddingsByTranscript(
-    svgRef,
+    canvasRef,
     dimensions,
     cells,
     scDataset,
     transcript,
-    setCellHover,
+  )
+
+  useInteractionLayer(
+    svgRef,
+    dimensions,
+    cells,
+    setHoveredCell,
+    setBrushedClusters,
   )
 
   return (
-    h('svg', {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      height: dimensions.height,
-      width: dimensions.width,
-      viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
-      ref: svgRef,
+    h('div', {
+      style: {
+        position: 'relative',
+      },
     }, [
-      // X Axis label
-      h('text', {
-        dx: padding.l,
-        dy: padding.t,
-        x: dimensions.plotWidth / 2,
-        y: dimensions.plotHeight + (dimensions.padding.b / 2) + 6, // extra pixels to bump it down from axis
+      h('canvas', {
+        ref: canvasRef,
         style: {
-          fontWeight: 'bold',
-          textAnchor: 'middle',
-          dominantBaseline: 'central',
+          position: 'absolute',
+          left: padding.l,
+          top: padding.t,
+          backgroundColor: '#f9f9f9',
         },
-      }, 'UMAP_1'),
-
-      // Y Axis label
-      h('text', {
         x: 0,
-        y: (dimensions.plotHeight / 2) + dimensions.padding.t,
-        transform: `
-          rotate(-90, 0, ${dimensions.plotHeight / 2 + dimensions.padding.t})
-          translate(0, ${dimensions.padding.l / 2 - 6})
-        `,
+        y: 0,
+        width: dimensions.plotWidth,
+        height: dimensions.plotHeight,
+      }),
+
+      h('svg', {
         style: {
-          fontWeight: 'bold',
-          textAnchor: 'middle',
-          dominantBaseline: 'central',
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
         },
-      }, 'UMAP_2'),
-
-      h('g', {
-        transform: `translate(${padding.l}, ${padding.t})`,
+        height: dimensions.height,
+        width: dimensions.width,
+        viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
+        ref: svgRef,
       }, [
-        h('rect', {
-          fill: '#f9f9f9',
-          stroke: '#ccc',
+        // X Axis label
+        h('text', {
+          dx: padding.l,
+          dy: padding.t,
+          x: dimensions.plotWidth / 2,
+          y: dimensions.plotHeight + (dimensions.padding.b / 2) + 6, // extra pixels to bump it down from axis
+          style: {
+            fontWeight: 'bold',
+            textAnchor: 'middle',
+            dominantBaseline: 'central',
+          },
+        }, 'UMAP_1'),
+
+        // Y Axis label
+        h('text', {
           x: 0,
-          y: 0,
-          width: dimensions.plotWidth,
-          height: dimensions.plotHeight,
-        }),
+          y: (dimensions.plotHeight / 2) + dimensions.padding.t,
+          transform: `
+            rotate(-90, 0, ${dimensions.plotHeight / 2 + dimensions.padding.t})
+            translate(0, ${dimensions.padding.l / 2 - 6})
+          `,
+          style: {
+            fontWeight: 'bold',
+            textAnchor: 'middle',
+            dominantBaseline: 'central',
+          },
+        }, 'UMAP_2'),
 
-        h('g.x-axis', {
-          transform: `translate(0, ${dimensions.plotHeight})`,
-        }),
-        h('g.y-axis'),
+        h('g', {
+          transform: `translate(${padding.l}, ${padding.t})`,
+        }, [
 
-        h('g', [
-          h('g.umap', [
-            React.createElement('foreignObject', {
-              x: 0,
-              y: 0,
-              width: dimensions.plotWidth,
-              height: dimensions.plotHeight,
-            }, [
-              h('div', {
-                key: 'plot',
-                style: {
-                  margin: '0px',
-                  padding: '0px',
-                  backgroundColor: 'transparent',
-                },
-                width: dimensions.plotWidth + 'px',
-                height: dimensions.plotHeight + 'px',
-              }, [
-                h('canvas', {
-                  x: 0,
-                  y: 0,
-                  width: dimensions.plotWidth,
-                  height: dimensions.plotHeight,
-                }),
-              ]),
-            ]),
+          h('g.x-axis', {
+            transform: `translate(0, ${dimensions.plotHeight})`,
+          }),
+          h('g.y-axis'),
+
+          h('g.interaction-layer', [
+             h('rect', {
+               fill: 'transparent',
+                x: 0,
+                y: 0,
+                width: dimensions.plotWidth,
+                height: dimensions.plotHeight,
+             }),
           ]),
         ]),
+
+        // Transcript label
+        h('text', {
+          dx: 0,
+          dy: padding.t / 2,
+          x: dimensions.width / 2,
+          y: 0,
+          style: {
+            fontWeight: 'bold',
+            textAnchor: 'middle',
+            dominantBaseline: 'central',
+          },
+        }, transcript),
+
       ]),
-
-      // Transcript label
-      h('text', {
-        dx: 0,
-        dy: padding.t / 2,
-        x: dimensions.width / 2,
-        y: 0,
-        style: {
-          fontWeight: 'bold',
-          textAnchor: 'middle',
-          dominantBaseline: 'central',
-        },
-      }, transcript),
-
     ])
   )
 }
