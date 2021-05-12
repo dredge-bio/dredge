@@ -9,6 +9,7 @@ import { useDimensions } from '../MAPlot/hooks'
 import SingleCellExpression from '../../single-cell'
 import { SeuratCell, SeuratCellMap } from '../../projects/sc/types'
 import { useProject } from '../../projects/hooks'
+import { useSized } from '../../hooks'
 
 const { useEffect, useMemo, useRef, useState } = React
 
@@ -330,15 +331,17 @@ function useEmbeddings(
 }
 
 type SingleCellProps = {
+  height: number,
+  width: number,
   cells: SeuratCellMap;
   scDataset: SingleCellExpression;
 }
 
 function SingleCell(props: SingleCellProps) {
-  const { cells, scDataset } = props
+  const { cells, scDataset, width, height } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
-      , dimensions = useAxes(svgRef, 800, 800, cells)
+      , dimensions = useAxes(svgRef, width, height, cells)
       , [ transcript, setTranscript ] = useState('cah6')
       , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
       , [ brushedClusters, setBrushedClusters ] = useState<Set<string> | null>(null)
@@ -458,10 +461,22 @@ function SingleCell(props: SingleCellProps) {
 
 export default function SingleCellLoader() {
   const { cells, scDataset } = useSeuratData()
+      , [ ref, rect ] = useSized()
 
-  return h(SingleCell, {
-    scDataset,
-    cells,
-  })
+  return (
+    h('div', {
+      ref,
+      style: {
+        height: '100%',
+      }
+    }, [
+      rect && h(SingleCell, {
+        scDataset,
+        cells,
+        height: rect.height,
+        width: rect.width,
+      })
+    ])
+  )
 }
 

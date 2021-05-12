@@ -43,9 +43,6 @@ export default function View() {
       h(GridArea, {
         column: '1 / span 10',
         row: '1 / span 12',
-        style: {
-          backgroundColor: 'blue',
-        },
       }, [
         h(UMAP)
       ]),
