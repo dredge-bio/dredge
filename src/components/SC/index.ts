@@ -7,6 +7,7 @@ import { useAppDispatch } from '../../hooks'
 import { actions as viewActions } from '../../view'
 
 import UMAP from './UMAP'
+import Table from '../Table/SingleCell'
 
 const { useEffect } = React
 
@@ -36,15 +37,27 @@ export default function View() {
   const dispatch = useAppDispatch()
       , view = useView('SingleCell')
 
-
   return (
     h(ViewerContainer, [
 
       h(GridArea, {
-        column: '1 / span 10',
+        column: '1 / span 12',
         row: '1 / span 12',
+        style: {
+          border: '1px solid darkgreen',
+        },
       }, [
-        h(UMAP)
+        h(UMAP),
+      ]),
+
+      h(GridArea, {
+        column: '13 / span 12',
+        row: '1 / span 12',
+        style: {
+          border: '1px solid darkgreen',
+        },
+      }, [
+        h(Table),
       ]),
 
     ])
