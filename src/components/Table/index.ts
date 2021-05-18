@@ -12,59 +12,19 @@ import {
 } from '../../view'
 import { BulkTableSortPath } from '../../types'
 
+import {
+  TableWrapper,
+  TableHeaderCell,
+  TableHeaderWrapper,
+  TableHeaderRow,
+  TableBodyWrapper
+} from './Elements'
+
 import TranscriptRow from './Row'
 
 const { useEffect, useState } = React
 
-const TableWrapper = styled.div`
-  position: relative;
-  height: 100%;
-  border: 1px solid #ccc;
-
-  & table {
-    table-layout: fixed;
-    border-collapse: collapse;
-    background-color: white;
-  }
-
-  & * {
-    font-family: SourceSansPro;
-    font-size: 14px;
-  }
-
-  & th {
-    text-align: left;
-  }
-
-  .transcript-row: {
-    position: relative;
-  }
-
-  .transcript-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .transcript-save-marker {
-    display: inline-block;
-    width: calc(100% - 4px);
-    text-align: center;
-    line-height: 1.66em
-    font-weight: bold;
-
-    text-decoration: none;
-  }
-
-  .transcript-save-mraker:hover {
-    background-color: #f0f0f0;
-    border: 2px solid currentcolor;
-    border-radius: 4px;
-    line-height: calc(1.66em - 4px);
-  }
-`
-
-const HEADER_HEIGHT = 84;
-
+/*
 const FIELDS = [
   { sortPath: '', label: '' },
   { sortPath: 'label', label: 'Transcript' },
@@ -76,7 +36,9 @@ const FIELDS = [
   { sortPath: 'treatmentB_AbundanceMean', label: 'Mean' },
   { sortPath: 'treatmentB_AbundanceMedian', label: 'Median' },
 ]
+*/
 
+/*
 function calcColumnWidths(width: number) {
   const widths = [
     // Pairwise information (logATA, logFC, p-value)
@@ -94,50 +56,8 @@ function calcColumnWidths(width: number) {
     ...widths,
   ]
 }
+*/
 
-const TableHeaderWrapper = styled.div`
-  height: ${HEADER_HEIGHT}px;
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #ccc;
-`
-
-const TableHeaderRow = styled.div`
-  position: relative;
-  height: ${HEADER_HEIGHT / 3}px;
-  line-height: ${HEADER_HEIGHT / 3}px;
-`
-
-const TableBodyWrapper = styled.div<{
-  tableWidthSet: boolean;
-}>`
-  width: 100%;
-  height: calc(100% - ${HEADER_HEIGHT}px);
-  background-color: white;
-  overflow-y: ${props => props.tableWidthSet ? 'unset' : 'scroll'};
-
-  & .transcript-row:hover {
-    background-color: #e6e6e6;
-  }
-
-  & :hover {
-    cursor: pointer;
-  }
-`
-
-const TableHeaderCell = styled.span<{
-  left: number;
-  clickable?: boolean;
-  css?: CSSObject;
-}>`
-  position: absolute;
-  font-weight: bold;
-  user-select: none;
-  top: 0;
-  bottom: 0;
-  left: ${props => props.left}px;
-  ${props => props.clickable ? 'cursor: pointer;' : ''}
-  ${props => props.css}
-`
 
 type DimensionState = null | {
   height: number;
@@ -151,6 +71,7 @@ export default function _Table() {
       , dispatch = useAppDispatch()
       , [ dimensions, setDimensions ] = useState<DimensionState>(null)
 
+    /*
   const ref = useResizeCallback(el => {
     const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
 
@@ -167,6 +88,7 @@ export default function _Table() {
       columnWidths: calcColumnWidths(dims.width),
     })
   })
+  */
 
   useEffect(() => {
     const cb = () => {
@@ -178,6 +100,7 @@ export default function _Table() {
     }
   }, [])
 
+  /*
   const {
     savedTranscripts,
     focusedTranscript,
@@ -210,6 +133,7 @@ export default function _Table() {
       }))
     },
   }
+  */
 
   return (
     h(TableWrapper, { ref }, [
@@ -293,14 +217,18 @@ export default function _Table() {
           overscanCount: 10,
           height: dimensions.height,
           itemCount: displayedTranscripts.transcripts.length,
+          /*
           itemData: {
             focusedTranscript,
             displayedTranscripts,
             savedTranscripts,
             pValueThreshold,
+            */
             columnWidths: dimensions.columnWidths,
+            /*
             ...handlers,
           },
+          */
           itemSize: 24,
           width: dimensions.widthWithScrollbar,
           children: TranscriptRow,
