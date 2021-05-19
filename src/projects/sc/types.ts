@@ -40,3 +40,8 @@ export type SingleCellProjectData = TranscriptData & {
   differentialExpressions: ClusterDGE[];
   // clusters: SeuratCluster[]
 }
+
+export type TranscriptWithClusterDGE = {
+  transcript: string;
+  dgeByCluster: Map<string, ClusterDGE>;
+}

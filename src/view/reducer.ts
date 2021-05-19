@@ -55,6 +55,7 @@ function blankSingleCellView(project: SingleCellProject): SingleCellViewState {
     savedTranscripts: new Set(),
 
     selectedClusters: null,
+    displayedTranscriptsWithClusters: [],
   }
 }
 
@@ -261,6 +262,13 @@ const reducer = createReducer(null as MultiViewState, builder => {
       const { clusters } = action.payload
 
       state.default.selectedClusters = clusters
+    })
+    .addCase(viewActions.updateDisplayedSingleCellTranscripts.fulfilled, (state, action) => {
+      if (!isSingleCellView(state)) return state
+
+      const { displayedTranscripts } = action.payload
+
+      state.default.displayedTranscriptsWithClusters = displayedTranscripts
     })
 })
 
