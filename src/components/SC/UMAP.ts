@@ -110,7 +110,7 @@ function useInteractionLayer(
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
   onCellHover: (cell: SeuratCell | null) => void,
-  onBrush: (clusters: Set<string>) => void,
+  onBrush: (clusters: Set<string> | null) => void,
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
@@ -124,7 +124,11 @@ function useInteractionLayer(
       .extent([[x0!, y1!], [x1!, y0!]])
       .on('end', (e: d3.D3BrushEvent<unknown>) => {
         if (!e.sourceEvent) return
-        if (!e.selection) return
+
+        if (!e.selection) {
+          onBrush(null)
+          return
+        }
 
         const extent = e.selection as [[number, number], [number, number]]
             , [ umap1Min, umap1Max ] = extent.map(x => x[0]).map(xScale.invert) as [ number, number ]

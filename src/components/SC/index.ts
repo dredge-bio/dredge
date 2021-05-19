@@ -49,7 +49,7 @@ export default function View() {
       }, [
         h(UMAP, {
           onBrushClusters(clusters) {
-            console.log(clusters)
+            dispatch(viewActions.setSelectedClusters({ clusters }))
           }
         }),
       ]),
