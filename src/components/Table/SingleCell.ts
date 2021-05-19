@@ -20,6 +20,20 @@ type TableData = {
 const Table = makeGenericTable<SingleCellViewState, TableData>()
 
 function getColumns(width: number, view: SingleCellViewState): TableColumn<SingleCellViewState, TableData>[] {
+  const { selectedClusters } = view
+
+  const clusterRows = [...(selectedClusters || [])].map(clusterName => ({
+    key: `cluster-${clusterName}`,
+    label: clusterName,
+    width: 120,
+    sort: null,
+    borderLeft: true,
+    renderRow(data: TableData, index: number) {
+      return 'a'
+    }
+  }))
+
+
   return [
     {
       key: 'transcript',
@@ -33,30 +47,7 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
       }
     },
 
-    {
-      key: 'logFC',
-      label: 'logFC',
-      width: 100,
-      sort: null,
-      borderLeft: true,
-      renderRow(data: TableData, index: number) {
-        return (
-          2
-        )
-      }
-    },
-
-    {
-      key: 'pvalue',
-      label: 'p-value',
-      width: 100,
-      sort: null,
-      renderRow(data: TableData, index: number) {
-        return (
-          2
-        )
-      }
-    },
+    ...clusterRows,
   ]
 }
 

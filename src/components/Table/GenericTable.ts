@@ -26,7 +26,7 @@ import {
 
 import TranscriptRow from './Row'
 
-const { useState } = React
+const { useState, useEffect } = React
 
 const DEFAULT_ROW_HEIGHT = 28
 
@@ -103,7 +103,7 @@ function TableRow<T, U>(props: RowProps<T, U>) {
   return (
     React.createElement('div', {
       style,
-    }, columns.map(column => (
+    }, (columns || []).map(column => (
       React.createElement(TableCell, {
         key: column.key,
         left: column.left,
@@ -138,7 +138,13 @@ export default function makeTable<T, U>() {
         widthWithScrollbar: tableEl.offsetWidth,
       }
 
-      const columns = getColumns(dims.width, props.context)
+      setDimensions({ ...dims })
+    })
+
+    useEffect(() => {
+      if (!dimensions) return
+
+      const columns = getColumns(dimensions.width, props.context)
 
       const columnsWithWidths = columns.map((column, i, columns) => ({
         ...column,
@@ -146,8 +152,7 @@ export default function makeTable<T, U>() {
       }))
 
       setColumns(columnsWithWidths)
-      setDimensions({ ...dims })
-    })
+    }, [ dimensions, context  ])
 
     const additionalRows = renderHeaderRows && columns &&
       renderHeaderRows(columns, context) || []
