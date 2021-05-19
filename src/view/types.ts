@@ -66,4 +66,5 @@ export type BulkViewState = BaseView & TranscriptsView & {
 
 export type SingleCellViewState = BaseView & TranscriptsView & {
   project: SingleCellProject;
+  selectedClusters: Set<string> | null;
 }

@@ -548,3 +548,7 @@ export const setPValueThreshold = createAction(
     }
   }
 )
+
+export const setSelectedClusters = createAction<
+  { clusters: Set<string> | null }
+>('set-selected-clusters')

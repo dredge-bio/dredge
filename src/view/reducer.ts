@@ -53,6 +53,8 @@ function blankSingleCellView(project: SingleCellProject): SingleCellViewState {
     hoveredTreatment: null,
 
     savedTranscripts: new Set(),
+
+    selectedClusters: null,
   }
 }
 
@@ -252,6 +254,13 @@ const reducer = createReducer(null as MultiViewState, builder => {
       const { threshold } = action.payload
 
       state.default.pValueThreshold = threshold
+    })
+    .addCase(viewActions.setSelectedClusters, (state, action) => {
+      if (!isSingleCellView(state)) return state
+
+      const { clusters } = action.payload
+
+      state.default.selectedClusters = clusters
     })
 })
 
