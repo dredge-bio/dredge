@@ -36,6 +36,33 @@ function useSeuratData() {
   return ret
 }
 
+function drawUMAP(
+  cells: SeuratCell[],
+  color: (cell: SeuratCell) => string,
+  radius: (cell: SeuratCell) => number,
+  dimensions: ReturnType<typeof useDimensions>,
+  canvasEl: HTMLCanvasElement
+) {
+  const { xScale, yScale } = dimensions
+      , ctx = canvasEl.getContext('2d')!
+
+  ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
+
+  cells.forEach(cell => {
+    const { umap1, umap2 } = cell
+        , x = xScale(umap1)
+        , y = yScale(umap2)
+        , r = radius(cell)
+        , fill = color(cell)
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI, true);
+    ctx.fillStyle = fill;
+    ctx.closePath();
+    ctx.fill();
+  })
+}
+
 
 function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
@@ -218,10 +245,6 @@ function useEmbeddingsByTranscript(
       // a TS warning
       .range(['#ddd', 'red'] as unknown as [number, number])
 
-    const ctx = canvasEl.getContext('2d')!
-
-    ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
-
     // Sort embeddings so that they are drawn in order of transcript expression
     // level from lowest to highest
     const sortedCells = [...cells.values()].sort((a, b) => {
@@ -235,19 +258,12 @@ function useEmbeddingsByTranscript(
         : -1
     })
 
-    sortedCells.forEach(cell => {
-      const { umap1, umap2 } = cell
-          , x = xScale(umap1)
-          , y = yScale(umap2)
-          , r = expressionsByCell.has(cell) ? 1.75 : 1
-          , fill = colorScale(expressionsByCell.get(cell) || 0)
-
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 2 * Math.PI, true);
-      ctx.fillStyle = fill;
-      ctx.closePath();
-      ctx.fill();
-    })
+    drawUMAP(
+      sortedCells,
+      cell => colorScale(expressionsByCell.get(cell) || 0),
+      cell => expressionsByCell.has(cell) ? 1.75 : 1,
+      dimensions,
+      canvasEl)
   })
 }
 
