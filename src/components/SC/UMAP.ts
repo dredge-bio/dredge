@@ -335,16 +335,16 @@ type SingleCellProps = {
   width: number,
   cells: SeuratCellMap;
   scDataset: SingleCellExpression;
+  onBrushClusters: (clusters: Set<string> | null) => void;
 }
 
 function SingleCell(props: SingleCellProps) {
-  const { cells, scDataset, width, height } = props
+  const { cells, scDataset, width, height, onBrushClusters } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
       , dimensions = useAxes(svgRef, width, height, cells)
       , [ transcript, setTranscript ] = useState('cah6')
       , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
-      , [ brushedClusters, setBrushedClusters ] = useState<Set<string> | null>(null)
 
   useEmbeddingsByTranscript(
     canvasRef,
@@ -359,7 +359,7 @@ function SingleCell(props: SingleCellProps) {
     dimensions,
     cells,
     setHoveredCell,
-    setBrushedClusters,
+    onBrushClusters,
   )
 
   return (
@@ -459,8 +459,13 @@ function SingleCell(props: SingleCellProps) {
   )
 }
 
-export default function SingleCellLoader() {
-  const { cells, scDataset } = useSeuratData()
+type OuterProps = {
+  onBrushClusters: (clusters: Set<string> | null) => void
+}
+
+export default function SingleCellLoader(props: OuterProps) {
+  const { onBrushClusters } = props
+      , { cells, scDataset } = useSeuratData()
       , [ ref, rect ] = useSized()
 
   return (
@@ -471,6 +476,7 @@ export default function SingleCellLoader() {
       }
     }, [
       rect && h(SingleCell, {
+        onBrushClusters,
         scDataset,
         cells,
         height: rect.height,
