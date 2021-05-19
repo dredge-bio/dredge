@@ -47,7 +47,11 @@ export default function View() {
           border: '1px solid darkgreen',
         },
       }, [
-        h(UMAP),
+        h(UMAP, {
+          onBrushClusters(clusters) {
+            console.log(clusters)
+          }
+        }),
       ]),
 
       h(GridArea, {
