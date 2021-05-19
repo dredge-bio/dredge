@@ -6,6 +6,7 @@ import makeGenericTable, { TableColumn } from './GenericTable'
 import { useView, useComparedTreatmentLabels } from '../../view/hooks'
 import { useAppDispatch } from '../../hooks'
 import { actions as viewActions } from '../../view'
+import { formatNumber } from '../../utils'
 
 import {
   BulkViewState,
@@ -44,8 +45,11 @@ function sortFor(val: string) {
   }
 }
 
-function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewState>[] {
+function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewState, TableData>[] {
   const labelWidth = width - MARKER_WIDTH - 3 * PAIRWISE_NUM_WIDTHS - 4 * ABUNDANCE_WIDTHS
+
+  const getItem = (data: TableData, index: number) =>
+    data.displayedTranscripts!.transcripts[index]!
 
   return [
     {
@@ -53,6 +57,30 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: '',
       width: MARKER_WIDTH,
       sort: null,
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+            , saved = data.savedTranscripts.has(datum.name)
+
+        return (
+          h('a', {
+            className: 'transcript-save-marker',
+            href: '',
+            style: {
+              color: saved ? 'orangered' : 'blue',
+            },
+            onClick(e: React.MouseEvent) {
+              e.preventDefault()
+
+              if (saved) {
+                data.removeSavedTranscript(datum.name)
+              } else {
+                data.addSavedTranscript(datum.name)
+              }
+
+            },
+          }, saved ? '×' : '<')
+        )
+      }
     },
 
     {
@@ -60,6 +88,13 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'Transcript',
       width: labelWidth,
       sort: sortFor('label'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return (
+          h('div.transcript-label', datum.label)
+        )
+      },
     },
 
     {
@@ -67,6 +102,11 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'P-Value',
       width: PAIRWISE_NUM_WIDTHS,
       sort: sortFor('pValue'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.pValue, 3)
+      },
     },
 
     {
@@ -74,13 +114,23 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'logATA',
       width: PAIRWISE_NUM_WIDTHS,
       sort: sortFor('logATA'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.logATA)
+      },
     },
 
     {
       key: 'logfc',
       label: 'logFC',
       width: PAIRWISE_NUM_WIDTHS,
-      sort: sortFor('logATA'),
+      sort: sortFor('logFC'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.logFC)
+      },
     },
 
     {
@@ -88,6 +138,11 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'Mean',
       width: ABUNDANCE_WIDTHS,
       sort: sortFor('treatmentA_AbundanceMean'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.treatmentA_AbundanceMean)
+      },
     },
 
     {
@@ -95,6 +150,11 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'Median',
       width: ABUNDANCE_WIDTHS,
       sort: sortFor('treatmentA_AbundanceMedian'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.treatmentA_AbundanceMedian)
+      },
     },
 
     {
@@ -102,6 +162,11 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'Mean',
       width: ABUNDANCE_WIDTHS,
       sort: sortFor('treatmentB_AbundanceMean'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.treatmentB_AbundanceMean)
+      },
     },
 
     {
@@ -109,6 +174,11 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
       label: 'Median',
       width: ABUNDANCE_WIDTHS,
       sort: sortFor('treatmentB_AbundanceMedian'),
+      renderRow(data: TableData, index: number) {
+        const datum = getItem(data, index)
+
+        return formatNumber(datum.treatmentB_AbundanceMedian)
+      },
     },
   ]
 }
@@ -159,6 +229,7 @@ export default function BulkTable() {
       sortOrder: view.order,
       context: view,
       getColumns,
+      itemCount: displayedTranscripts?.transcripts.length || 0,
       itemData: {
         focusedTranscript,
         displayedTranscripts,

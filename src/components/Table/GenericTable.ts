@@ -36,7 +36,7 @@ type DimensionState = null | {
   widthWithScrollbar: number;
 }
 
-export type TableColumn<T> = {
+export type TableColumn<T, U> = {
   key: string;
   label: string | ((context: T) => string);
   width: number;
@@ -45,30 +45,67 @@ export type TableColumn<T> = {
     key: string;
     active: (context: T) => boolean;
   };
+  renderRow: (data: U, index: number) => React.ReactNode;
 }
 
 type TableData<T, U> = {
   context: T;
-  getColumns: (totalWidth: number, context: T) => TableColumn<T>[];
+  getColumns: (totalWidth: number, context: T) => TableColumn<T, U>[];
+  itemCount: number,
   itemData: U;
   sortOrder: TableSortOrder;
   updateSort: (sortPath: string, order: TableSortOrder) => void;
 
   rowHeight?: number;
   renderHeaderRows?: (columWidths: number[], context: T) => React.ReactNode[];
+
 }
 
-function columnWidths<T>(columns: TableColumn<T>[] | null) {
+function columnWidths<T, U>(columns: TableColumn<T, U>[] | null) {
   if (columns === null) return null
 
   return columns.map(column => column.width)
 }
 
+type RowProps<T, U> = {
+  data: {
+    data: U;
+    columns: TableColumn<T, U>[];
+  },
+  index: number;
+  style: React.CSSProperties;
+}
+
+
+function TableRow<T, U>(props: RowProps<T, U>) {
+  const {
+    style,
+    data: { data, columns },
+    index,
+  } = props
+
+  return (
+    React.createElement('div', {
+      style,
+    }, columns.map(column =>
+      column.renderRow(data, index)
+    ))
+  )
+}
+
 export default function makeTable<T, U>() {
   return function Table(props: TableData<T, U>) {
-    const { getColumns, context, renderHeaderRows, rowHeight=DEFAULT_ROW_HEIGHT } = props
-        , [ dimensions, setDimensions ] = useState<DimensionState>(null)
-        , [ columns, setColumns ] = useState<TableColumn<T>[] | null>(null)
+    const {
+      getColumns,
+      context,
+      renderHeaderRows,
+      rowHeight=DEFAULT_ROW_HEIGHT,
+      itemData,
+      itemCount,
+    } = props
+
+    const [ dimensions, setDimensions ] = useState<DimensionState>(null)
+        , [ columns, setColumns ] = useState<TableColumn<T, U>[] | null>(null)
 
     const ref = useResizeCallback(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
@@ -153,7 +190,21 @@ export default function makeTable<T, U>() {
           numRows: additionalRows.length + 1,
           className: 'table-scroll',
           tableWidthSet: dimensions !== null,
-        }),
+        }, [
+          dimensions && React.createElement(List, {
+            itemCount,
+            itemData: {
+              data: itemData,
+              columns,
+            },
+            itemSize: 24,
+
+            height: dimensions.height,
+            width: dimensions.widthWithScrollbar,
+
+            children: TableRow,
+          })
+        ]),
 
         h('div.borders', {
         }, columns && widths && columns.map((col, i) =>
