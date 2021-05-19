@@ -57,23 +57,39 @@ type TableData<T, U> = {
   updateSort: (sortPath: string, order: TableSortOrder) => void;
 
   rowHeight?: number;
-  renderHeaderRows?: (columWidths: number[], context: T) => React.ReactNode[];
+  renderHeaderRows?: (
+    columns: (TableColumn<T, U> & { left: number })[],
+    context: T
+  ) => React.ReactNode[];
 
-}
-
-function columnWidths<T, U>(columns: TableColumn<T, U>[] | null) {
-  if (columns === null) return null
-
-  return columns.map(column => column.width)
 }
 
 type RowProps<T, U> = {
   data: {
     data: U;
-    columns: TableColumn<T, U>[];
+    columns: (TableColumn<T, U> & { left: number })[];
   },
   index: number;
   style: React.CSSProperties;
+}
+
+type CellProps = React.PropsWithChildren<{
+  left: number;
+  width: number;
+}>
+
+function TableCell(props: CellProps) {
+  const { children, left, width } = props
+
+  return (
+    React.createElement('div', {
+      style: {
+        position: 'absolute',
+        left,
+        width,
+      },
+    }, children)
+  )
 }
 
 
@@ -87,9 +103,13 @@ function TableRow<T, U>(props: RowProps<T, U>) {
   return (
     React.createElement('div', {
       style,
-    }, columns.map(column =>
-      column.renderRow(data, index)
-    ))
+    }, columns.map(column => (
+      React.createElement(TableCell, {
+        key: column.key,
+        left: column.left,
+        width: column.width,
+      }, column.renderRow(data, index))
+    )))
   )
 }
 
@@ -105,7 +125,7 @@ export default function makeTable<T, U>() {
     } = props
 
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
-        , [ columns, setColumns ] = useState<TableColumn<T, U>[] | null>(null)
+        , [ columns, setColumns ] = useState<(TableColumn<T, U> & { left: number })[] | null>(null)
 
     const ref = useResizeCallback(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
@@ -118,14 +138,19 @@ export default function makeTable<T, U>() {
         widthWithScrollbar: tableEl.offsetWidth,
       }
 
-      setColumns(getColumns(dims.width, props.context))
+      const columns = getColumns(dims.width, props.context)
+
+      const columnsWithWidths = columns.map((column, i, columns) => ({
+        ...column,
+        left: R.sum(columns.slice(0, i).map(col => col.width)),
+      }))
+
+      setColumns(columnsWithWidths)
       setDimensions({ ...dims })
     })
 
-    const widths = columnWidths(columns)
-
-    const additionalRows = renderHeaderRows && widths &&
-      renderHeaderRows(widths, context) || []
+    const additionalRows = renderHeaderRows && columns &&
+      renderHeaderRows(columns, context) || []
 
     return (
       h(TableWrapper, { ref }, [
@@ -144,10 +169,10 @@ export default function makeTable<T, U>() {
           h(TableHeaderRow, {
             rowHeight,
             key: 'column-headers',
-          }, columns && widths && columns.map((col, i) =>
+          }, columns && columns.map((col, i) =>
               h(TableHeaderCell, {
                 key: col.key,
-                left: R.sum(widths.slice(0, i + 1)),
+                left: col.left,
                 clickable: col.sort !== null,
                 onClick: () => {
                   if (!col.sort) return
@@ -207,12 +232,12 @@ export default function makeTable<T, U>() {
         ]),
 
         h('div.borders', {
-        }, columns && widths && columns.map((col, i) =>
+        }, columns && columns.map((col, i) =>
           !col.borderLeft ? null : (
             h('span', {
               style: {
                 position: 'absolute',
-                left: R.sum(widths.slice(0, i + 1)) - 8,
+                left: col.left - 8,
                 top: 0,
                 bottom: 0,
                 borderLeft: '1px solid #ccc',
