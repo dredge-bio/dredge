@@ -19,21 +19,19 @@ type TableData = {
 
 const Table = makeGenericTable<SingleCellViewState, TableData>()
 
-function getColumns(width: number, view: SingleCellViewState): TableColumn<SingleCellViewState>[] {
+function getColumns(width: number, view: SingleCellViewState): TableColumn<SingleCellViewState, TableData>[] {
   return [
-    {
-      key: 'marker',
-      label: '',
-      width: 28,
-      sort: null,
-    },
-
     {
       key: 'transcript',
       label: 'Transcript',
       width: 100,
       sort: null,
       borderLeft: true,
+      renderRow(data: TableData, index: number) {
+        return (
+          1
+        )
+      }
     },
 
     {
@@ -42,6 +40,11 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
       width: 100,
       sort: null,
       borderLeft: true,
+      renderRow(data: TableData, index: number) {
+        return (
+          2
+        )
+      }
     },
 
     {
@@ -49,6 +52,11 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
       label: 'p-value',
       width: 100,
       sort: null,
+      renderRow(data: TableData, index: number) {
+        return (
+          2
+        )
+      }
     },
   ]
 }
@@ -65,7 +73,8 @@ export default function SingleCellTable() {
       sortOrder: 'asc' as TableSortOrder,
       context: view,
       getColumns,
-      itemData: {}
+      itemData: {},
+      itemCount: 3000,
     })
   )
 }
