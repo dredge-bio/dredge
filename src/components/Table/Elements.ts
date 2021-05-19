@@ -80,9 +80,11 @@ export const TableBodyWrapper = styled.div<{
     background-color: #e6e6e6;
   }
 
+  /*
   & :hover {
     cursor: pointer;
   }
+  */
 `
 
 export const TableHeaderCell = styled.span<{

@@ -24,9 +24,8 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
     {
       key: 'transcript',
       label: 'Transcript',
-      width: 100,
+      width: 180,
       sort: null,
-      borderLeft: true,
       renderRow(data: TableData, index: number) {
         return (
           1
