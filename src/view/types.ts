@@ -5,6 +5,7 @@ import {
   BulkDifferentialExpression,
   BulkProject,
   SingleCellProject,
+  TranscriptWithClusterDGE,
 } from '../types'
 
 export type BulkTableSortPath =
@@ -67,4 +68,7 @@ export type BulkViewState = BaseView & TranscriptsView & {
 export type SingleCellViewState = BaseView & TranscriptsView & {
   project: SingleCellProject;
   selectedClusters: Set<string> | null;
+
+  // FIXME: make nullable?
+  displayedTranscriptsWithClusters: TranscriptWithClusterDGE[];
 }

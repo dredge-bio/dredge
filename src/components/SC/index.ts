@@ -37,6 +37,12 @@ export default function View() {
   const dispatch = useAppDispatch()
       , view = useView('SingleCell')
 
+  useEffect(() => {
+    dispatch(viewActions.updateDisplayedSingleCellTranscripts({ view }))
+  }, [
+    view.selectedClusters
+  ])
+
   return (
     h(ViewerContainer, [
 
