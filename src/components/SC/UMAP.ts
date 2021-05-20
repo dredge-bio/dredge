@@ -1,6 +1,8 @@
 import h from 'react-hyperscript'
 import * as d3 from 'd3'
 import * as React from 'react'
+import * as R from 'ramda'
+import styled from 'styled-components'
 import throttle from 'throttleit'
 
 import padding from '../MAPlot/padding'
@@ -139,6 +141,8 @@ function useInteractionLayer(
   onCellHover: (cell: SeuratCell | null) => void,
   onBrush: (clusters: Set<string> | null) => void,
 ) {
+  const prevHoveredCluster = useRef<string | null>(null)
+
   useEffect(() => {
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
@@ -147,6 +151,7 @@ function useInteractionLayer(
 
     const tree = d3.quadtree([...cells.values()], d => d.umap1, d => d.umap2)
 
+    /*
     const brush = d3.brush()
       .extent([[x0!, y1!], [x1!, y0!]])
       .on('end', (e: d3.D3BrushEvent<unknown>) => {
@@ -206,23 +211,30 @@ function useInteractionLayer(
       .append('g')
 
     brushSel.call(brush)
-
-
+    */
 
     const interactionLayer = d3.select(svgEl)
       .select('.interaction-layer rect')
 
-    interactionLayer.on('mousemove', throttle((e: MouseEvent) => {
+    const xTick = (xScale.domain()[1]! - xScale.domain()[0]!) / 200
+        , yTick = (yScale.domain()[1]! - yScale.domain()[0]!) / 200
+
+    interactionLayer.on('mousemove', (e: MouseEvent) => {
       const [ x, y ] = d3.pointer(e)
-          , { xScale, yScale } = dimensions
-
-      const umap1 = xScale.invert(x)
+          , umap1 = xScale.invert(x)
           , umap2 = yScale.invert(y)
-          , nearestCell = tree.find(umap1, umap2, .5)
 
-      onCellHover(nearestCell || null)
-    }, 20))
-  }, [dimensions])
+      const nearestCell = findNearestCell(
+        dimensions,
+        tree,
+        prevHoveredCluster.current,
+        umap1,
+        umap2)
+
+      prevHoveredCluster.current = nearestCell && nearestCell.clusterID
+      onCellHover(nearestCell)
+    })
+  }, [ dimensions ])
 }
 
 
@@ -264,7 +276,7 @@ function useEmbeddingsByTranscript(
       cell => expressionsByCell.has(cell) ? 1.75 : 1,
       dimensions,
       canvasEl)
-  })
+  }, [ dimensions, cells, transcriptName ])
 }
 
 function useEmbeddings(
@@ -358,13 +370,90 @@ type SingleCellProps = {
   onBrushClusters: (clusters: Set<string> | null) => void;
 }
 
+function findNearestCell(
+  dimensions: ReturnType<typeof useDimensions>,
+  tree: d3.Quadtree<SeuratCell>,
+  prevCluster: string | null,
+  umap1: number,
+  umap2: number,
+) {
+  const { xScale, yScale } = dimensions
+      , xTick = (xScale.domain()[1]! - xScale.domain()[0]!) / 200
+      , yTick = (yScale.domain()[1]! - yScale.domain()[0]!) / 200
+
+  const points: [[number, number], number][] = [
+    [[umap1, umap2], 3],
+    [[umap1 + xTick, umap2], 2],
+    [[umap1 - xTick, umap2], 2],
+    [[umap1, umap2 + yTick], 2],
+    [[umap1, umap2 - yTick], 2],
+    [[umap1 + xTick * 2, umap2], 1],
+    [[umap1 - xTick * 2, umap2], 1],
+    [[umap1, umap2 + yTick * 2], 1],
+    [[umap1, umap2 - yTick * 2], 1],
+  ]
+
+  const nearestCellCount: Map<SeuratCell, number> = new Map()
+      , nearestClusterCount: Map<string, number> = new Map()
+
+  points.forEach(([[ x, y ], weight]) => {
+    const nearestCell = tree.find(x, y, .2)
+
+    if (!nearestCell) return
+
+    const prevCellCount = nearestCellCount.get(nearestCell) || 0
+        , prevClusterCount = nearestClusterCount.get(nearestCell.clusterID) || 0
+
+    nearestCellCount.set(nearestCell, prevCellCount + weight)
+    nearestClusterCount.set(nearestCell.clusterID, prevClusterCount + weight)
+  })
+
+  // Don't change the cluster if any of the candidates are from the one
+  // that's already hovered
+
+  let consensusNearestCluster: string | null = null
+
+  if (prevCluster && nearestClusterCount.has(prevCluster)) {
+    consensusNearestCluster = prevCluster
+  } else {
+    consensusNearestCluster = R.head(R.sortBy(
+      cluster => nearestClusterCount.get(cluster)!,
+      [...nearestClusterCount.keys()])) || null
+  }
+
+  if (consensusNearestCluster) {
+    const nearbyInCluster = [...nearestCellCount.keys()]
+      .filter(cell => cell.clusterID === consensusNearestCluster)
+
+    const consensusNearest = R.head(R.sortBy(
+      cell => nearestCellCount.get(cell)!,
+      nearbyInCluster
+    ))
+
+    return consensusNearest || null
+  } else {
+    return null
+  }
+}
+
+const Container = styled.div`
+  position: relative;
+
+  & g[data-hovering-cluster="true"] :hover {
+    cursor: pointer;
+  }
+`
+
+
 function SingleCell(props: SingleCellProps) {
   const { cells, scDataset, width, height, onBrushClusters } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
+      , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
       , dimensions = useAxes(svgRef, width, height, cells)
       , [ transcript, setTranscript ] = useState('cah6')
       , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
+      , hoveredCluster = useRef<string | null>(null)
 
   useEmbeddingsByTranscript(
     canvasRef,
@@ -378,16 +467,38 @@ function SingleCell(props: SingleCellProps) {
     svgRef,
     dimensions,
     cells,
-    setHoveredCell,
+    cell => {
+      const canvasEl = overlayCanvasRef.current
+
+      if (!canvasEl) return
+      if (hoveredCluster.current === (cell && cell.clusterID)) return
+
+      setHoveredCell(cell)
+
+      let drawCells: SeuratCell[]
+
+      if (cell === null) {
+        drawCells = []
+      } else {
+        // drawCells = [cell]
+        drawCells = [...cells.values()].filter(x => x.clusterID === cell.clusterID)
+      }
+
+      drawUMAP(
+        drawCells,
+        () => 'limegreen',
+        () => 2,
+        dimensions,
+        canvasEl)
+
+      hoveredCluster.current = cell && cell.clusterID
+
+    },
     onBrushClusters,
   )
 
   return (
-    h('div', {
-      style: {
-        position: 'relative',
-      },
-    }, [
+    h(Container, [
       h('canvas', {
         ref: canvasRef,
         style: {
@@ -395,6 +506,20 @@ function SingleCell(props: SingleCellProps) {
           left: padding.l,
           top: padding.t,
           backgroundColor: '#f9f9f9',
+        },
+        x: 0,
+        y: 0,
+        width: dimensions.plotWidth,
+        height: dimensions.plotHeight,
+      }),
+
+      h('canvas', {
+        ref: overlayCanvasRef,
+        style: {
+          position: 'absolute',
+          left: padding.l,
+          top: padding.t,
+          backgroundColor: 'transparent',
         },
         x: 0,
         y: 0,
@@ -450,7 +575,9 @@ function SingleCell(props: SingleCellProps) {
           }),
           h('g.y-axis'),
 
-          h('g.interaction-layer', [
+          h('g.interaction-layer', {
+            ['data-hovering-cluster']: !!hoveredCell,
+          }, [
              h('rect', {
                fill: 'transparent',
                 x: 0,
