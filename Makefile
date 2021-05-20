@@ -50,9 +50,16 @@ zip: $(VERSIONED_ZIPFILE)
 serve: node_modules | dist
 	./build --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
 
-.PHONY: check
-check:
+.PHONY: check_types
+check_types:
 	tsc --noEmit -p .
+
+.PHONY: lint
+lint:
+	eslint src/
+
+.PHONY: check
+check: check_types lint
 
 .PHONY: watch
 watch: serve
