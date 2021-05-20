@@ -2,7 +2,7 @@ import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as React from 'react'
 
-import { useViewOptions, useView } from '../../view'
+import { useView } from '../../view'
 import { useAppDispatch } from '../../hooks'
 import { actions as viewActions } from '../../view'
 
@@ -40,7 +40,7 @@ export default function View() {
   useEffect(() => {
     dispatch(viewActions.updateDisplayedSingleCellTranscripts({ view }))
   }, [
-    view.selectedClusters
+    view.selectedClusters,
   ])
 
   return (
@@ -56,7 +56,7 @@ export default function View() {
         h(UMAP, {
           onBrushClusters(clusters) {
             dispatch(viewActions.setSelectedClusters({ clusters }))
-          }
+          },
         }),
       ]),
 

@@ -1,5 +1,3 @@
-"use strict";
-
 import * as R from 'ramda'
 import * as d3 from 'd3'
 
@@ -11,7 +9,7 @@ import {
   SingleCellProject,
   BulkProject,
   LoadedProject,
-  ProjectType,
+  ProjectType
 } from './types'
 
 
@@ -176,8 +174,6 @@ export function projectForView(state: DredgeState, projectType: 'SingleCell'): S
 export function projectForView(state: DredgeState, projectType?: ProjectType): LoadedProject {
   const { view } = state
 
-  const err = new Error('No project for view')
-
   if (view == null) {
     throw new Error('No active view')
   }
@@ -191,8 +187,6 @@ export function projectForView(state: DredgeState, projectType?: ProjectType): L
   } else {
     throw new Error(`Asked for project type ${projectType}, but view's project is of type ${project.type}`)
   }
-
-  return project
 }
 
 export function getDefaultGrid(treatments: Array<TreatmentName>) {

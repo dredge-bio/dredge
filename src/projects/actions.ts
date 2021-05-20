@@ -16,13 +16,11 @@ import { delay, fetchResource, getDefaultGrid } from '../utils'
 import {
   ProjectSource,
   LogStatus,
-  LoadedProject,
   BulkProject,
   SingleCellProject
 } from '../types'
 
 import {
-  BulkTreatment,
   BulkTreatmentMap
 } from './bulk/types'
 
@@ -245,7 +243,7 @@ async function loadBulkProject(
   source: ProjectSource,
   config: BulkConfiguration,
   projectStatusLog: (message: string) => void,
-  makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void,
+  makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void
 ): Promise<BulkProject> {
   // Load treatments before anything else
   const treatments = await bulkFields.treatments.validateFromURL(
@@ -432,7 +430,7 @@ async function loadSingleCellProject(
       transcriptCorpus: corpus,
       transcriptAliases,
       readme,
-    }
+    },
   }
 }
 

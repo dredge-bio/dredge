@@ -5,12 +5,11 @@ import { withFallback, withValidate } from 'io-ts-types'
 import { useOptions } from 'org-shell'
 
 import { useAppSelector } from '../hooks'
-import { useProject } from '../projects'
 
 import {
   ProjectType,
   BulkViewState,
-  SingleCellViewState,
+  SingleCellViewState
 } from '../types'
 
 export function useView(): BulkViewState | SingleCellViewState;

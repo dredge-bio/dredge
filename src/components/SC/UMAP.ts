@@ -3,7 +3,6 @@ import * as d3 from 'd3'
 import * as React from 'react'
 import * as R from 'ramda'
 import styled from 'styled-components'
-import throttle from 'throttleit'
 
 import padding from '../MAPlot/padding'
 import { useDimensions } from '../MAPlot/hooks'
@@ -70,7 +69,7 @@ function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
   width: number,
   height: number,
-  cells: SeuratCellMap,
+  cells: SeuratCellMap
 ) {
   const umap1Extent = useMemo(
     () => d3.extent(cells.values(), x => x.umap1) as [number, number],
@@ -138,20 +137,20 @@ function useInteractionLayer(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
-  onCellHover: (cell: SeuratCell | null) => void,
-  onBrush: (clusters: Set<string> | null) => void,
+  onCellHover: (cell: SeuratCell | null) => void
+  // onBrush: (clusters: Set<string> | null) => void
 ) {
   const prevHoveredCluster = useRef<string | null>(null)
 
   useEffect(() => {
     const svgEl = svgRef.current
         , { xScale, yScale } = dimensions
-        , [ x0, x1 ] = xScale.domain().map(xScale)
-        , [ y0, y1 ] = yScale.domain().map(yScale)
 
     const tree = d3.quadtree([...cells.values()], d => d.umap1, d => d.umap2)
 
     /*
+    const [ x0, x1 ] = xScale.domain().map(xScale)
+        , [ y0, y1 ] = yScale.domain().map(yScale)
     const brush = d3.brush()
       .extent([[x0!, y1!], [x1!, y0!]])
       .on('end', (e: d3.D3BrushEvent<unknown>) => {
@@ -216,9 +215,6 @@ function useInteractionLayer(
     const interactionLayer = d3.select(svgEl)
       .select('.interaction-layer rect')
 
-    const xTick = (xScale.domain()[1]! - xScale.domain()[0]!) / 200
-        , yTick = (yScale.domain()[1]! - yScale.domain()[0]!) / 200
-
     interactionLayer.on('mousemove', (e: MouseEvent) => {
       const [ x, y ] = d3.pointer(e)
           , umap1 = xScale.invert(x)
@@ -243,13 +239,11 @@ function useEmbeddingsByTranscript(
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
   scDataset: SingleCellExpression,
-  transcriptName: string,
+  transcriptName: string
 ) {
   useEffect(() => {
     const canvasEl = canvasRef.current!
-        , { xScale, yScale } = dimensions
-
-    const expressionsByCell = scDataset.getExpressionsForTranscript(transcriptName)
+        , expressionsByCell = scDataset.getExpressionsForTranscript(transcriptName)
 
     const colorScale = d3.scaleLinear<number, string>()
       .domain([0, d3.max(expressionsByCell.values()) || 1])
@@ -282,7 +276,7 @@ function useEmbeddingsByTranscript(
 function useEmbeddings(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
-  cells: SeuratCellMap,
+  cells: SeuratCellMap
 ) {
   useEffect(() => {
     const svgEl = svgRef.current
@@ -375,7 +369,7 @@ function findNearestCell(
   tree: d3.Quadtree<SeuratCell>,
   prevCluster: string | null,
   umap1: number,
-  umap2: number,
+  umap2: number
 ) {
   const { xScale, yScale } = dimensions
       , xTick = (xScale.domain()[1]! - xScale.domain()[0]!) / 200
@@ -460,7 +454,7 @@ function SingleCell(props: SingleCellProps) {
     dimensions,
     cells,
     scDataset,
-    transcript,
+    transcript
   )
 
   useInteractionLayer(
@@ -493,8 +487,8 @@ function SingleCell(props: SingleCellProps) {
 
       hoveredCluster.current = cell && cell.clusterID
 
-    },
-    onBrushClusters,
+    }
+    // onBrushClusters
   )
 
   return (
@@ -620,7 +614,7 @@ export default function SingleCellLoader(props: OuterProps) {
       ref,
       style: {
         height: '100%',
-      }
+      },
     }, [
       rect && h(SingleCell, {
         onBrushClusters,
@@ -628,7 +622,7 @@ export default function SingleCellLoader(props: OuterProps) {
         cells,
         height: rect.height,
         width: rect.width,
-      })
+      }),
     ])
   )
 }

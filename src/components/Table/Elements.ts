@@ -1,7 +1,5 @@
 import styled, { CSSObject } from 'styled-components'
 
-const HEADER_ROW_HEIGHT = 28;
-
 export const TableWrapper = styled.div`
   position: relative;
   height: 100%;

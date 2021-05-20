@@ -13,7 +13,7 @@ export default class SingleCellExpression {
   _cellsArr: SeuratCell[];
 
   constructor(
-    projectData: SingleCellProjectData,
+    projectData: SingleCellProjectData
   ) {
     this.projectData = projectData;
     this._offsets = this.buildOffsets()

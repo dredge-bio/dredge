@@ -2,10 +2,8 @@ import * as d3 from 'd3'
 import * as R from 'ramda'
 
 import {
-  Project,
   LoadedProject,
-  BulkProject,
-  SingleCellProject,
+  BulkProject
 } from '../types'
 
 function memoizeForProject<P extends LoadedProject>() {

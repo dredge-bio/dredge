@@ -18,7 +18,7 @@ import {
   BulkViewState,
   SingleCellViewState,
   ClusterDGE,
-  TranscriptWithClusterDGE,
+  TranscriptWithClusterDGE
 } from '../types'
 
 
@@ -37,8 +37,8 @@ export const setPairwiseComparison = createAsyncAction<
     pairwiseData: BulkPairwiseComparison,
     resort: boolean,
   }
->('set-pairwise-comparison', async (arg, { getState }) => {
-  const { treatmentAKey, treatmentBKey, view } = arg
+>('set-pairwise-comparison', async args => {
+  const { treatmentAKey, treatmentBKey, view } = args
     , { project } = view
 
   const cacheKey = [treatmentAKey, treatmentBKey].toString()
@@ -171,7 +171,7 @@ export const getDefaultPairwiseComparison = createAsyncAction<
     treatmentA: TreatmentName;
     treatmentB: TreatmentName;
   }
->('get-default-pairwise-comparison', async (args, { getState }) => {
+>('get-default-pairwise-comparison', async args => {
   const { view: { project } } = args
       , { treatments } = project.data
       , [ treatmentA, treatmentB ] = Array.from(treatments.keys())
@@ -197,7 +197,7 @@ export const updateSortForTreatments = createAsyncAction<
     sortedTranscripts: Array<BulkDifferentialExpression>,
     resort: boolean,
   }
->('update-sort-for-treatments', async (args, { getState }) => {
+>('update-sort-for-treatments', async args  => {
   const { sortPath, order, view } = args
       , { pairwiseData } = view
       , resolvedSortPath = sortPath || view.sortPath
@@ -245,7 +245,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
     displayedTranscripts: Array<BulkDifferentialExpression>,
     source: BulkDisplayedTranscriptsSource
   }
->('update-displayed-transcripts', async (args, { getState }) => {
+>('update-displayed-transcripts', async args => {
   const { view } = args
       , { project } = view
 
@@ -355,7 +355,7 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
   {
     displayedTranscripts: TranscriptWithClusterDGE[]
   }
->('update-displayed-sc-transcripts', async (args, { getState }) => {
+>('update-displayed-sc-transcripts', async args => {
   const { selectedClusters, project } = args.view
 
   if (!selectedClusters) {
@@ -378,7 +378,7 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
 
   const displayedTranscripts = [...dgesByTranscript].map(([ transcript, clusters ]) => ({
     transcript,
-    dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ]))
+    dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ])),
   }))
 
   return {
@@ -393,8 +393,8 @@ function getGlobalWatchedGenesKey() {
 export const setSavedTranscripts = createAsyncAction<
   { transcriptNames: Array<TranscriptName> },
   { resort: boolean }
->('set-saved-transcripts', async (arg, { getState }) => {
-  const { transcriptNames } = arg
+>('set-saved-transcripts', async (args, { getState }) => {
+  const { transcriptNames } = args
 
   if (R.path(['view', 'source', 'key'], getState()) === 'global') {
     const key = getGlobalWatchedGenesKey()
@@ -421,8 +421,8 @@ export const importSavedTranscripts = createAsyncAction<
     imported: Array<ImportedTranscript>,
     skipped: Array<string>,
   }
->('import-saved-transcripts', async (arg, { getState }) => {
-  const { text } = arg
+>('import-saved-transcripts', async (args, { getState }) => {
+  const { text } = args
       , { view } = getState()
 
   if (view === null) {
@@ -475,7 +475,7 @@ export const exportSavedTranscripts = createAsyncAction<
     view: BulkViewState,
   },
   void
->('export-saved-transcripts', async (args, { getState }) => {
+>('export-saved-transcripts', async args => {
   const { view } = args
       , { comparedTreatments, displayedTranscripts } = view
 

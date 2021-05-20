@@ -157,6 +157,7 @@ export default function Log() {
     if ('failed' in globalProject) {
       failedProject = true
     } else if ('loaded' in globalProject) {
+      // FIXME ?
     } else {
       loadingProject = false
       initializing = false

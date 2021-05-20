@@ -1,7 +1,7 @@
 import h from 'react-hyperscript'
 import { Box } from 'rebass'
 
-import { useAppDispatch, useAppSelector } from '../hooks'
+import { useAppSelector } from '../hooks'
 
 import Log from './Log'
 import View from './View'
@@ -25,7 +25,6 @@ export default function Main() {
   } else if (project.type === 'SingleCell') {
     return h(SingleCell)
   } else {
+    throw new Error('unknown project type')
   }
-
-  return null
 }
