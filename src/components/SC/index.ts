@@ -7,7 +7,7 @@ import { useAppDispatch } from '../../hooks'
 import { actions as viewActions } from '../../view'
 
 import UMAP from './UMAP'
-import Table from '../Table/SingleCell'
+import { SingleCellTranscriptTable } from '../Table'
 
 const { useEffect } = React
 
@@ -67,7 +67,7 @@ export default function View() {
           border: '1px solid darkgreen',
         },
       }, [
-        h(Table),
+        h(SingleCellTranscriptTable),
       ]),
 
     ])

@@ -9,7 +9,7 @@ import { actions as viewActions } from '../view'
 
 import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
-import Table from './Table'
+import { BulkTranscriptTable } from './Table'
 import InfoBox from './InfoBox'
 import PValueSelector from './PValueSelector'
 import WatchedTranscripts from './WatchedTranscripts'
@@ -173,7 +173,7 @@ export default function View() {
               maxHeight: 'calc(100% - 84px)',
             },
           }, [
-            h(Table),
+            h(BulkTranscriptTable),
           ]),
         ]),
       ]),
