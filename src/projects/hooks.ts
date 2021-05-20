@@ -3,7 +3,7 @@ import {
   ProjectType,
   LoadedProject,
   SingleCellProject,
-  BulkProject,
+  BulkProject
 } from '../types'
 
 import {

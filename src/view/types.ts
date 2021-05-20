@@ -1,11 +1,10 @@
 import {
-  ProjectSource,
   TableSortOrder,
   BulkPairwiseComparison,
   BulkDifferentialExpression,
   BulkProject,
   SingleCellProject,
-  TranscriptWithClusterDGE,
+  TranscriptWithClusterDGE
 } from '../types'
 
 export type BulkTableSortPath =

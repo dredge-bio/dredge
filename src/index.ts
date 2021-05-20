@@ -13,7 +13,6 @@ import theme from './theme'
 import Application from './components/Application'
 import SingleCell from './components/SC'
 
-import View from './components/View'
 import Main from './components/Main'
 
 import { Resource } from './types'
@@ -34,7 +33,7 @@ function loadProject(/* title: string */) {
 
     if (project && 'config' in project) {
       await dispatch(projectActions.loadProject({
-        source: 'global'
+        source: 'global',
       }))
       /*
       dispatch(Action.LoadProject(ProjectSource.Global))

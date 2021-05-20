@@ -1,5 +1,4 @@
 import { Config, TranscriptData } from '../types'
-import { ProjectSource, TableSortOrder } from '../../types'
 
 export type BulkProjectConfig = Config & {
   type: "Bulk"

@@ -1,5 +1,3 @@
-import * as R from 'ramda'
-
 import {
   ProjectSource,
   BulkProjectConfig,
@@ -73,7 +71,7 @@ const reducer = createReducer(initial(), builder => {
 
     return {
       ...state,
-      [source]: action.payload
+      [source]: action.payload,
     }
   })
 })

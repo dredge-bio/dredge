@@ -127,9 +127,8 @@ export default function Header(props: HeaderProps) {
   const { onRequestResize, isLocalFile } = props
       , navigateTo = useNavigation()
 
-  const { view, projects } = useAppSelector(state => ({
+  const { view } = useAppSelector(state => ({
     view: state.view?.default,
-    projects: state.projects,
   }))
 
   let projectLabel = ''

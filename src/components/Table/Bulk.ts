@@ -11,7 +11,7 @@ import { formatNumber } from '../../utils'
 import {
   BulkViewState,
   BulkDifferentialExpression,
-  BulkDisplayedTranscriptsSource,
+  BulkDisplayedTranscriptsSource
 } from '../../types'
 
 type TranscriptCallback<AllowNull extends boolean> =
@@ -41,11 +41,11 @@ const PAIRWISE_NUM_WIDTHS = 64
 function sortFor(val: string) {
   return {
     key: val,
-    active: (x: BulkViewState) => x.sortPath === val
+    active: (x: BulkViewState) => x.sortPath === val,
   }
 }
 
-function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewState, TableData>[] {
+function getColumns(width: number): TableColumn<BulkViewState, TableData>[] {
   const labelWidth = width - MARKER_WIDTH - 3 * PAIRWISE_NUM_WIDTHS - 4 * ABUNDANCE_WIDTHS
 
   const getItem = (data: TableData, index: number) =>
@@ -80,7 +80,7 @@ function getColumns(width: number, view: BulkViewState): TableColumn<BulkViewSta
             },
           }, saved ? '×' : '<')
         )
-      }
+      },
     },
 
     {
@@ -192,11 +192,8 @@ export default function BulkTable() {
     savedTranscripts,
     focusedTranscript,
     displayedTranscripts,
-    order,
     pValueThreshold,
   } = view
-
-  const [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
   const handlers = {
     setHoveredTranscript(transcript: string | null) {
@@ -225,6 +222,9 @@ export default function BulkTable() {
   return (
     h(Table, {
       updateSort(key, order) {
+        // FIXME
+        key;
+        order;
       },
       sortOrder: view.order,
       context: view,
@@ -236,7 +236,7 @@ export default function BulkTable() {
         savedTranscripts,
         pValueThreshold,
         ...handlers,
-      }
+      },
     })
   )
 }

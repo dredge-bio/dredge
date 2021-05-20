@@ -2,13 +2,12 @@ import * as R from 'ramda';
 import { Draft } from 'immer'
 
 import {
-  ProjectSource,
   BulkViewState,
   SingleCellViewState,
   TranscriptName,
   BulkProject,
   SingleCellProject,
-  LoadedProject,
+  LoadedProject
 } from '../types'
 
 import { createReducer } from '@reduxjs/toolkit'
@@ -94,7 +93,7 @@ const reducer = createReducer(null as MultiViewState, builder => {
   builder
     .addCase(projectActions.loadProject.fulfilled, (state, action) => {
       return {
-        default: blankView(action.payload)
+        default: blankView(action.payload),
       }
     })
     .addCase(viewActions.setPairwiseComparison.pending, (state, action) => {

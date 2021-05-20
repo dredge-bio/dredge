@@ -5,7 +5,6 @@ import styled from 'styled-components'
 import { useOptions } from 'org-shell'
 
 import { useAppSelector, useAppDispatch } from '../../hooks'
-import { projectForView } from '../../utils'
 import { useView, useComparedTreatmentLabels } from '../../view/hooks'
 
 import Plot from './Plot'
@@ -33,7 +32,7 @@ export default function Wrapper(props: OuterProps) {
       , view = useView('Bulk')
       , [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
-  const passedProps = useAppSelector(state => {
+  const passedProps = useAppSelector(() => {
     const { project } = view
         , { abundanceLimits } = project.config
 

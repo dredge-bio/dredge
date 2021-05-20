@@ -1,17 +1,12 @@
 import h from 'react-hyperscript'
-import * as React from 'react'
-import * as R from 'ramda'
 
 import makeGenericTable, { TableColumn } from './GenericTable'
-import { useView, useComparedTreatmentLabels } from '../../view/hooks'
+import { useView } from '../../view/hooks'
 import { useAppDispatch } from '../../hooks'
-import { actions as viewActions } from '../../view'
 
 import {
   TableSortOrder,
   SingleCellViewState,
-  BulkDifferentialExpression,
-  BulkDisplayedTranscriptsSource,
 } from '../../types'
 
 type TableData = {
@@ -21,7 +16,7 @@ type TableData = {
 const Table = makeGenericTable<SingleCellViewState, TableData>()
 
 function getColumns(width: number, view: SingleCellViewState): TableColumn<SingleCellViewState, TableData>[] {
-  const { selectedClusters, displayedTranscriptsWithClusters } = view
+  const { selectedClusters } = view
 
   const getItem = (data: TableData, index: number) =>
     data.displayedTranscripts[index]!
@@ -38,7 +33,7 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
       const dge = item.dgeByCluster.get(clusterName)
 
       return dge ? dge.logFC : null
-    }
+    },
   }))
 
 
@@ -58,7 +53,7 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
             },
           }, item.transcript.split('|', 2)[1]!)
         )
-      }
+      },
     },
 
     ...clusterRows,
@@ -67,7 +62,6 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
 
 export default function SingleCellTable() {
   const view = useView('SingleCell')
-      , dispatch = useAppDispatch()
 
   const displayedTranscripts = view.displayedTranscriptsWithClusters
 
@@ -75,6 +69,9 @@ export default function SingleCellTable() {
     h(Table, {
       rowHeight: 40,
       updateSort(key, order) {
+        // FIXME
+        key;
+        order;
       },
       sortOrder: 'asc' as TableSortOrder,
       context: view,

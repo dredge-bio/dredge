@@ -1,19 +1,12 @@
 import h from 'react-hyperscript'
-import styled, { CSSObject } from 'styled-components'
 import * as R from 'ramda'
 import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
 
-import { useAppDispatch, useResizeCallback } from '../../hooks'
-import {
-  useView,
-  useComparedTreatmentLabels,
-  actions as viewActions
-} from '../../view'
+import { useResizeCallback } from '../../hooks'
 
 import {
-  BulkTableSortPath,
-  TableSortOrder,
+  TableSortOrder
 } from '../../types'
 
 import {
@@ -172,7 +165,7 @@ export default function makeTable<T, U>() {
           h(TableHeaderRow, {
             rowHeight,
             key: 'column-headers',
-          }, columns && columns.map((col, i) =>
+          }, columns && columns.map(col =>
               h(TableHeaderCell, {
                 key: col.key,
                 left: col.left,
@@ -207,7 +200,7 @@ export default function makeTable<T, U>() {
                       },
                     }, props.sortOrder === 'asc' ? ' ▾' : ' ▴')
                   )
-                })()
+                })(),
               ])
            )),
 
@@ -231,11 +224,11 @@ export default function makeTable<T, U>() {
             width: dimensions.widthWithScrollbar,
 
             children: TableRow,
-          })
+          }),
         ]),
 
         h('div.borders', {
-        }, columns && columns.map((col, i) =>
+        }, columns && columns.map(col =>
           !col.borderLeft ? null : (
             h('span', {
               style: {
