@@ -24,8 +24,6 @@ import {
   TableBodyWrapper
 } from './Elements'
 
-import TranscriptRow from './Row'
-
 const { useState, useEffect } = React
 
 const DEFAULT_ROW_HEIGHT = 28
