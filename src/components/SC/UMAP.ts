@@ -10,6 +10,7 @@ import { useDimensions } from '../MAPlot/hooks'
 import SingleCellExpression from '../../single-cell'
 import { useProject } from '../../projects/hooks'
 import { useSized } from '../../hooks'
+import { useView } from '../../view/hooks'
 
 import {
   SeuratCell,
@@ -207,38 +208,48 @@ function useEmbeddingsByTranscript(
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
   scDataset: SingleCellExpression,
-  transcriptName: string
+  transcript: string | null
 ) {
   useEffect(() => {
     const canvasEl = canvasRef.current!
-        , expressionsByCell = scDataset.getExpressionsForTranscript(transcriptName)
 
-    const colorScale = d3.scaleLinear<number, string>()
-      .domain([0, d3.max(expressionsByCell.values()) || 1])
-      // FIXME: I don't know how to set the range to a color without getting
-      // a TS warning
-      .range(['#ddd', 'red'] as unknown as [number, number])
+    if (transcript !== null) {
+      const expressionsByCell = scDataset.getExpressionsForTranscript(transcript)
 
-    // Sort embeddings so that they are drawn in order of transcript expression
-    // level from lowest to highest
-    const sortedCells = [...cells.values()].sort((a, b) => {
-      const levelA = expressionsByCell.get(a) || 0
-          , levelB = expressionsByCell.get(b) || 0
+      const colorScale = d3.scaleLinear<number, string>()
+        .domain([0, d3.max(expressionsByCell.values()) || 1])
+        // FIXME: I don't know how to set the range to a color without getting
+        // a TS warning
+        .range(['#ddd', 'red'] as unknown as [number, number])
 
-      if (levelA === levelB) return 0
+      // Sort embeddings so that they are drawn in order of transcript expression
+      // level from lowest to highest
+      const sortedCells = [...cells.values()].sort((a, b) => {
+        const levelA = expressionsByCell.get(a) || 0
+            , levelB = expressionsByCell.get(b) || 0
 
-      return levelA > levelB
-        ? 1
-        : -1
-    })
+        if (levelA === levelB) return 0
 
-    drawUMAP(
-      sortedCells,
-      cell => colorScale(expressionsByCell.get(cell) || 0),
-      cell => expressionsByCell.has(cell) ? 1.75 : 1,
-      dimensions,
-      canvasEl)
-  }, [ dimensions, cells, transcriptName ])
+        return levelA > levelB
+          ? 1
+          : -1
+      })
+
+      drawUMAP(
+        sortedCells,
+        cell => colorScale(expressionsByCell.get(cell) || 0),
+        cell => expressionsByCell.has(cell) ? 1.75 : 1,
+        dimensions,
+        canvasEl)
+    } else {
+      drawUMAP(
+        [...cells.values()],
+        () => '#ddd',
+        () => 1,
+        dimensions,
+        canvasEl)
+    }
+  }, [ dimensions, cells, transcript ])
 }
 
 function useEmbeddings(
@@ -410,11 +421,12 @@ const Container = styled.div`
 
 function SingleCell(props: SingleCellProps) {
   const { cells, clusters, scDataset, width, height, onClusterClick } = props
+      , view = useView('SingleCell')
+      , { hoveredTranscript } = view
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
       , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
       , dimensions = useAxes(svgRef, width, height, cells)
-      , [ transcript, setTranscript ] = useState('cah6')
       , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
       , hoveredCluster = useRef<string | null>(null)
 
@@ -423,7 +435,7 @@ function SingleCell(props: SingleCellProps) {
     dimensions,
     cells,
     scDataset,
-    transcript
+    hoveredTranscript
   )
 
   useInteractionLayer(
@@ -559,7 +571,7 @@ function SingleCell(props: SingleCellProps) {
         ]),
 
         // Transcript label
-        h('text', {
+        hoveredTranscript && h('text', {
           dx: 0,
           dy: padding.t / 2,
           x: dimensions.width / 2,
@@ -569,7 +581,7 @@ function SingleCell(props: SingleCellProps) {
             textAnchor: 'middle',
             dominantBaseline: 'central',
           },
-        }, transcript),
+        }, hoveredTranscript),
 
       ]),
     ])

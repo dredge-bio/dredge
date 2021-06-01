@@ -47,6 +47,9 @@ type TableData<T, U> = {
   sortOrder: TableSortOrder;
   updateSort: (sortPath: string, order: TableSortOrder) => void;
 
+  onRowEnter?: (data: U, index: number) => void;
+  onRowLeave?: (data: U, index: number) => void;
+
   rowHeight?: number;
   renderHeaderRows?: (
     columns: (TableColumn<T, U> & { left: number })[],
@@ -59,6 +62,8 @@ type RowProps<T, U> = {
   data: {
     data: U;
     columns: (TableColumn<T, U> & { left: number })[];
+    onRowEnter?: (data: U, index: number) => void;
+    onRowLeave?: (data: U, index: number) => void;
   },
   index: number;
   style: React.CSSProperties;
@@ -87,12 +92,19 @@ function TableCell(props: CellProps) {
 function TableRow<T, U>(props: RowProps<T, U>) {
   const {
     style,
-    data: { data, columns },
+    data: {
+      data,
+      columns,
+      onRowEnter,
+      onRowLeave,
+    },
     index,
   } = props
 
   return (
     React.createElement('div', {
+      onMouseEnter: onRowEnter && (() => onRowEnter(data, index)),
+      onMouseLeave: onRowLeave && (() => onRowLeave(data, index)),
       style,
     }, (columns || []).map(column => (
       React.createElement(TableCell, {
@@ -113,6 +125,8 @@ export default function makeTable<T, U>() {
       rowHeight=DEFAULT_ROW_HEIGHT,
       itemData,
       itemCount,
+      onRowEnter,
+      onRowLeave,
     } = props
 
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
@@ -215,6 +229,8 @@ export default function makeTable<T, U>() {
           dimensions && React.createElement(List, {
             itemCount,
             itemData: {
+              onRowEnter,
+              onRowLeave,
               data: itemData,
               columns,
             },

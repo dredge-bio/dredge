@@ -3,6 +3,7 @@ import h from 'react-hyperscript'
 import makeGenericTable, { TableColumn } from './GenericTable'
 import { useView } from '../../view/hooks'
 import { useAppDispatch } from '../../hooks'
+import { actions as viewActions } from '../../view'
 
 import {
   TableSortOrder,
@@ -62,6 +63,7 @@ function getColumns(width: number, view: SingleCellViewState): TableColumn<Singl
 
 export default function SingleCellTable() {
   const view = useView('SingleCell')
+      , dispatch = useAppDispatch()
 
   const displayedTranscripts = view.displayedTranscriptsWithClusters
 
@@ -72,6 +74,13 @@ export default function SingleCellTable() {
         // FIXME
         key;
         order;
+      },
+      onRowEnter(data, index) {
+        const { transcript } = data.displayedTranscripts[index]!
+
+        dispatch(viewActions.setHoveredTranscript({
+          transcript: transcript.split('|', 2)[1]!
+        }))
       },
       sortOrder: 'asc' as TableSortOrder,
       context: view,
