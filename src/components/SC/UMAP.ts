@@ -8,7 +8,7 @@ import padding from '../MAPlot/padding'
 import { useDimensions } from '../MAPlot/hooks'
 
 import SingleCellExpression from '../../single-cell'
-import { SeuratCell, SeuratCellMap } from '../../projects/sc/types'
+import { SeuratCell, SeuratCellMap, SeuratClusterMap } from '../../projects/sc/types'
 import { useProject } from '../../projects/hooks'
 import { useSized } from '../../hooks'
 
@@ -22,7 +22,7 @@ function useSeuratData() {
       throw new Error()
     }
 
-    const { transcripts, cells, expressionData } = project.data
+    const { transcripts, cells, clusters, expressionData } = project.data
 
     const scDataset = new SingleCellExpression(project.data)
 
@@ -30,6 +30,7 @@ function useSeuratData() {
       scDataset,
       transcripts,
       cells,
+      clusters,
       expressionData,
     }
   }, [project])
@@ -303,6 +304,7 @@ type SingleCellProps = {
   height: number,
   width: number,
   cells: SeuratCellMap;
+  clusters: SeuratClusterMap;
   scDataset: SingleCellExpression;
   onClusterClick: (cluster: string | null, e: MouseEvent) => void;
 }
@@ -383,7 +385,7 @@ const Container = styled.div`
 
 
 function SingleCell(props: SingleCellProps) {
-  const { cells, scDataset, width, height, onClusterClick } = props
+  const { cells, clusters, scDataset, width, height, onClusterClick } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
       , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -417,8 +419,7 @@ function SingleCell(props: SingleCellProps) {
       if (cell === null) {
         drawCells = []
       } else {
-        // drawCells = [cell]
-        drawCells = [...cells.values()].filter(x => x.clusterID === cell.clusterID)
+        drawCells = clusters.get(cell.clusterID)!.cells
       }
 
       drawUMAP(
@@ -550,7 +551,7 @@ type OuterProps = {
 
 export default function SingleCellLoader(props: OuterProps) {
   const { onClusterClick } = props
-      , { cells, scDataset } = useSeuratData()
+      , { cells, scDataset, clusters } = useSeuratData()
       , [ ref, rect ] = useSized()
 
   return (
@@ -564,6 +565,7 @@ export default function SingleCellLoader(props: OuterProps) {
         onClusterClick,
         scDataset,
         cells,
+        clusters,
         height: rect.height,
         width: rect.width,
       }),
