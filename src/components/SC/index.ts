@@ -9,7 +9,7 @@ import { actions as viewActions } from '../../view'
 import UMAP from './UMAP'
 import { SingleCellTranscriptTable } from '../Table'
 
-const { useEffect } = React
+const { useEffect, useRef } = React
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -36,12 +36,15 @@ const GridArea = styled.div<GridAreaProps>`
 export default function View() {
   const dispatch = useAppDispatch()
       , view = useView('SingleCell')
+      , currentlySelectedCluster = useRef<Set<string> | null>(null)
 
   useEffect(() => {
     dispatch(viewActions.updateDisplayedSingleCellTranscripts({ view }))
   }, [
     view.selectedClusters,
   ])
+
+  currentlySelectedCluster.current = view.selectedClusters
 
   return (
     h(ViewerContainer, [
@@ -54,8 +57,32 @@ export default function View() {
         },
       }, [
         h(UMAP, {
-          onBrushClusters(clusters) {
-            dispatch(viewActions.setSelectedClusters({ clusters }))
+          onClusterClick(cluster, e) {
+            const currentlySelected = currentlySelectedCluster.current
+
+            let nextSelected: Set<string> | null = null
+
+            if (e.shiftKey || e.ctrlKey) {
+              if (cluster === null) return
+
+              if (currentlySelected !== null) {
+                nextSelected = new Set([...currentlySelected])
+              } else {
+                nextSelected = new Set()
+              }
+
+              if (nextSelected.has(cluster)) {
+                nextSelected.delete(cluster)
+              } else {
+                nextSelected.add(cluster)
+              }
+            } else {
+              nextSelected = cluster === null ? null : new Set([cluster])
+            }
+
+            dispatch(viewActions.setSelectedClusters({
+              clusters: nextSelected,
+            }))
           },
         }),
       ]),

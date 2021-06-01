@@ -137,8 +137,8 @@ function useInteractionLayer(
   svgRef: React.RefObject<SVGSVGElement>,
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
-  onCellHover: (cell: SeuratCell | null) => void
-  // onBrush: (clusters: Set<string> | null) => void
+  onCellHover: (cell: SeuratCell | null) => void,
+  onClusterClick: (cluster: string | null, e: MouseEvent) => void
 ) {
   const prevHoveredCluster = useRef<string | null>(null)
 
@@ -147,70 +147,6 @@ function useInteractionLayer(
         , { xScale, yScale } = dimensions
 
     const tree = d3.quadtree([...cells.values()], d => d.umap1, d => d.umap2)
-
-    /*
-    const [ x0, x1 ] = xScale.domain().map(xScale)
-        , [ y0, y1 ] = yScale.domain().map(yScale)
-    const brush = d3.brush()
-      .extent([[x0!, y1!], [x1!, y0!]])
-      .on('end', (e: d3.D3BrushEvent<unknown>) => {
-        if (!e.sourceEvent) return
-
-        if (!e.selection) {
-          onBrush(null)
-          return
-        }
-
-        const extent = e.selection as [[number, number], [number, number]]
-            , [ umap1Min, umap1Max ] = extent.map(x => x[0]).map(xScale.invert) as [ number, number ]
-            , [ umap2Max, umap2Min ] = extent.map(x => x[1]).map(yScale.invert) as [ number, number ]
-            , brushedClusters: Set<string> = new Set()
-
-        tree.visit((node, xMin, yMin, xMax, yMax) => {
-          if (node.length === undefined) {
-            let curNode = node
-
-            while (true) {
-              const cell = curNode.data
-
-              const inRect = (
-                cell.umap1 >= umap1Min &&
-                cell.umap1 <= umap1Max &&
-                cell.umap2 >= umap2Min &&
-                cell.umap2 <= umap2Max
-              )
-
-              if (inRect) {
-                brushedClusters.add(cell.clusterID)
-              }
-
-              if (node.next) {
-                curNode = node.next
-              } else {
-                break;
-              }
-            }
-          }
-
-          const stopTraversing = (
-            xMin > umap1Max ||
-            xMax < umap1Min ||
-            yMin > umap2Max ||
-            yMax < umap2Min
-          )
-
-          return stopTraversing
-        })
-
-        onBrush(brushedClusters)
-      })
-
-    const brushSel = d3.select(svgEl)
-      .select('.interaction-layer')
-      .append('g')
-
-    brushSel.call(brush)
-    */
 
     const interactionLayer = d3.select(svgEl)
       .select('.interaction-layer rect')
@@ -228,8 +164,15 @@ function useInteractionLayer(
         umap2)
 
       prevHoveredCluster.current = nearestCell && nearestCell.clusterID
+
       onCellHover(nearestCell)
     })
+
+  interactionLayer.on('click', (e: MouseEvent) => {
+    const cluster = prevHoveredCluster.current
+
+    onClusterClick(cluster, e)
+  })
   }, [ dimensions ])
 }
 
@@ -361,7 +304,7 @@ type SingleCellProps = {
   width: number,
   cells: SeuratCellMap;
   scDataset: SingleCellExpression;
-  onBrushClusters: (clusters: Set<string> | null) => void;
+  onClusterClick: (cluster: string | null, e: MouseEvent) => void;
 }
 
 function findNearestCell(
@@ -440,7 +383,7 @@ const Container = styled.div`
 
 
 function SingleCell(props: SingleCellProps) {
-  const { cells, scDataset, width, height, onBrushClusters } = props
+  const { cells, scDataset, width, height, onClusterClick } = props
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
       , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -486,9 +429,10 @@ function SingleCell(props: SingleCellProps) {
         canvasEl)
 
       hoveredCluster.current = cell && cell.clusterID
-
+    },
+    (cluster, e) => {
+      onClusterClick(cluster, e)
     }
-    // onBrushClusters
   )
 
   return (
@@ -601,11 +545,11 @@ function SingleCell(props: SingleCellProps) {
 }
 
 type OuterProps = {
-  onBrushClusters: (clusters: Set<string> | null) => void
+  onClusterClick: (cluster: string | null, e: MouseEvent) => void
 }
 
 export default function SingleCellLoader(props: OuterProps) {
-  const { onBrushClusters } = props
+  const { onClusterClick } = props
       , { cells, scDataset } = useSeuratData()
       , [ ref, rect ] = useSized()
 
@@ -617,7 +561,7 @@ export default function SingleCellLoader(props: OuterProps) {
       },
     }, [
       rect && h(SingleCell, {
-        onBrushClusters,
+        onClusterClick,
         scDataset,
         cells,
         height: rect.height,
