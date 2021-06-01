@@ -8,9 +8,15 @@ import padding from '../MAPlot/padding'
 import { useDimensions } from '../MAPlot/hooks'
 
 import SingleCellExpression from '../../single-cell'
-import { SeuratCell, SeuratCellMap, SeuratClusterMap } from '../../projects/sc/types'
 import { useProject } from '../../projects/hooks'
 import { useSized } from '../../hooks'
+
+import {
+  SeuratCell,
+  SeuratCellMap,
+  SeuratClusterMap,
+  SeuratCluster,
+} from '../../types'
 
 const { useEffect, useMemo, useRef, useState } = React
 
@@ -63,6 +69,24 @@ function drawUMAP(
     ctx.closePath();
     ctx.fill();
   })
+}
+
+function drawClusterLabel(
+  cluster: SeuratCluster,
+  dimensions: ReturnType<typeof useDimensions>,
+  canvasEl: HTMLCanvasElement
+) {
+  const { xScale, yScale } = dimensions
+
+  const ctx = canvasEl.getContext('2d')!
+
+  ctx.font = '36px sans-serif'
+  ctx.fillStyle = 'black'
+
+  ctx.fillText(
+    cluster.label,
+    xScale(cluster.midpoint[0]),
+    yScale(cluster.midpoint[1]))
 }
 
 
@@ -428,6 +452,13 @@ function SingleCell(props: SingleCellProps) {
         () => 2,
         dimensions,
         canvasEl)
+
+      if (cell) {
+        drawClusterLabel(
+          clusters.get(cell.clusterID)!,
+          dimensions,
+          canvasEl)
+      }
 
       hoveredCluster.current = cell && cell.clusterID
     },
