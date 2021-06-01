@@ -17,7 +17,9 @@ import {
   ProjectSource,
   LogStatus,
   BulkProject,
-  SingleCellProject
+  SingleCellProject,
+  SeuratCell,
+  SeuratClusterMap
 } from '../types'
 
 import {
@@ -342,6 +344,39 @@ async function loadBulkProject(
   }
 }
 
+function mean(vals: number[]) {
+  return vals.reduce((a, b) => a + b) / vals.length
+}
+
+function getClusters(cellMap: SeuratCellMap) {
+  const cellsByCluster = new Map() as Map<string, SeuratCell[]>
+      , clusterMap = new Map() as SeuratClusterMap
+
+  for (const cell of cellMap.values()) {
+    const { clusterID } = cell
+
+    if (!cellsByCluster.has(clusterID)) {
+      cellsByCluster.set(clusterID, [])
+    }
+
+    cellsByCluster.get(clusterID)!.push(cell)
+  }
+
+  for (const [ clusterID, cells ] of cellsByCluster) {
+    clusterMap.set(clusterID, {
+      id: clusterID,
+      label: clusterID,
+      cells,
+      midpoint: [
+        mean(cells.map(x => x.umap1)),
+        mean(cells.map(x => x.umap2)),
+      ],
+    })
+  }
+
+  return clusterMap
+}
+
 async function loadSingleCellProject(
   source: ProjectSource,
   config: SingleCellConfiguration,
@@ -418,12 +453,17 @@ async function loadSingleCellProject(
 
   const { corpus, transcriptAliases } = await buildTranscriptCorpus(Object.keys(transcripts), transcripts)
 
+  projectStatusLog('Indexing clusters...')
+
+  const clusters = await getClusters(cellMap)
+
   return {
     type: 'SingleCell',
     source,
     config,
     data: {
       cells: cellMap,
+      clusters,
       expressionData,
       differentialExpressions,
       transcripts: Object.keys(transcripts),

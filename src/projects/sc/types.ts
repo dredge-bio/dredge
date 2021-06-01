@@ -9,8 +9,10 @@ export type SeuratCell = {
 }
 
 export type SeuratCluster = {
-  clusterID: string;
-  clusterLabel: string;
+  id: string;
+  label: string;
+  cells: Array<SeuratCell>;
+  midpoint: [number, number];
 }
 
 export type ClusterDGE = {
@@ -23,6 +25,8 @@ export type ClusterDGE = {
 }
 
 export type SeuratCellMap = Map<string, SeuratCell>
+
+export type SeuratClusterMap = Map<string, SeuratCluster>
 
 export type SingleCellProjectConfig = Config & {
   type: "SingleCell"
@@ -38,7 +42,7 @@ export type SingleCellProjectData = TranscriptData & {
   cells: SeuratCellMap;
   expressionData: DataView;
   differentialExpressions: ClusterDGE[];
-  // clusters: SeuratCluster[]
+  clusters: SeuratClusterMap;
 }
 
 export type TranscriptWithClusterDGE = {
