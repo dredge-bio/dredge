@@ -207,6 +207,7 @@ function useEmbeddingsByTranscript(
   canvasRef: React.RefObject<HTMLCanvasElement>,
   dimensions: ReturnType<typeof useDimensions>,
   cells: SeuratCellMap,
+  clusters: SeuratClusterMap,
   scDataset: SingleCellExpression,
   transcript: string | null
 ) {
@@ -244,8 +245,8 @@ function useEmbeddingsByTranscript(
     } else {
       drawUMAP(
         [...cells.values()],
-        () => '#ddd',
-        () => 1,
+        cell => clusters.get(cell.clusterID)!.color,
+        () => 1.25,
         dimensions,
         canvasEl)
     }
@@ -434,6 +435,7 @@ function SingleCell(props: SingleCellProps) {
     canvasRef,
     dimensions,
     cells,
+    clusters,
     scDataset,
     hoveredTranscript
   )

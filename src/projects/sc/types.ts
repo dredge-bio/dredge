@@ -13,6 +13,7 @@ export type SeuratCluster = {
   label: string;
   cells: Array<SeuratCell>;
   midpoint: [number, number];
+  color: string,
 }
 
 export type ClusterDGE = {

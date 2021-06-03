@@ -1,5 +1,6 @@
 import * as tPromise from 'io-ts-promise'
 import * as t from 'io-ts'
+import * as d3 from 'd3'
 import { fold, Either } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { BulkConfiguration, bulkConfiguration } from './bulk/config'
@@ -19,6 +20,7 @@ import {
   BulkProject,
   SingleCellProject,
   SeuratCell,
+  SeuratCluster,
   SeuratClusterMap
 } from '../types'
 
@@ -348,9 +350,52 @@ function mean(vals: number[]) {
   return vals.reduce((a, b) => a + b) / vals.length
 }
 
+function colorClusters(
+  clusters: Map<string, Omit<SeuratCluster, 'color'>>,
+  bounds: [number, number, number, number],
+) {
+  const clustersWithColors = new Map() as SeuratClusterMap
+
+  const tree = d3.quadtree(
+    [...clusters.values()],
+    d => d.midpoint[0],
+    d => d.midpoint[1])
+
+  const [ umap1Min, umap2Min, umap1Max, umap2Max ] = bounds
+      , center = [ mean([umap1Min, umap1Max]), mean([umap2Min, umap2Max]) ] as [number, number]
+
+  let colorIndex = 0
+
+  const colorScale = d3.schemeCategory10
+
+  while (tree.data().length) {
+    const cluster = tree.find(center[0], center[1])
+
+    // This should never happen!
+    if (!cluster) {
+      throw new Error('Could not locate cluster given center point. Do all clusters have UMAP values?')
+    }
+
+    clustersWithColors.set(cluster.id, {
+      ...cluster,
+      color: colorScale[colorIndex % colorScale.length]!
+    })
+
+    tree.remove(cluster)
+
+    colorIndex += 1
+  }
+
+  return clustersWithColors
+}
+
 function getClusters(cellMap: SeuratCellMap) {
   const cellsByCluster = new Map() as Map<string, SeuratCell[]>
-      , clusterMap = new Map() as SeuratClusterMap
+
+  let umap1Min = Infinity
+    , umap2Min = Infinity
+    , umap1Max = -Infinity
+    , umap2Max = -Infinity
 
   for (const cell of cellMap.values()) {
     const { clusterID } = cell
@@ -359,22 +404,28 @@ function getClusters(cellMap: SeuratCellMap) {
       cellsByCluster.set(clusterID, [])
     }
 
+    if (cell.umap1 < umap1Min) umap1Min = cell.umap1
+    if (cell.umap2 < umap2Min) umap2Min = cell.umap2
+    if (cell.umap1 > umap1Max) umap1Max = cell.umap1
+    if (cell.umap2 > umap2Max) umap2Max = cell.umap2
+
     cellsByCluster.get(clusterID)!.push(cell)
   }
 
-  for (const [ clusterID, cells ] of cellsByCluster) {
-    clusterMap.set(clusterID, {
+  const clustersWithoutColor = new Map([...cellsByCluster].map(([ clusterID, cells ]) => [
+    clusterID, {
       id: clusterID,
       label: clusterID,
       cells,
       midpoint: [
         mean(cells.map(x => x.umap1)),
         mean(cells.map(x => x.umap2)),
-      ],
-    })
-  }
+      ] as [number, number],
+    }
+  ]))
 
-  return clusterMap
+
+  return colorClusters(clustersWithoutColor, [umap1Min, umap1Max, umap2Min, umap2Max])
 }
 
 async function loadSingleCellProject(
