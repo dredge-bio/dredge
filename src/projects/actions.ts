@@ -352,7 +352,7 @@ function mean(vals: number[]) {
 
 function colorClusters(
   clusters: Map<string, Omit<SeuratCluster, 'color'>>,
-  bounds: [number, number, number, number],
+  bounds: [number, number, number, number]
 ) {
   const clustersWithColors = new Map() as SeuratClusterMap
 
@@ -378,7 +378,7 @@ function colorClusters(
 
     clustersWithColors.set(cluster.id, {
       ...cluster,
-      color: colorScale[colorIndex % colorScale.length]!
+      color: colorScale[colorIndex % colorScale.length]!,
     })
 
     tree.remove(cluster)
@@ -421,7 +421,7 @@ function getClusters(cellMap: SeuratCellMap) {
         mean(cells.map(x => x.umap1)),
         mean(cells.map(x => x.umap2)),
       ] as [number, number],
-    }
+    },
   ]))
 
 

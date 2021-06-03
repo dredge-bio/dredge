@@ -78,7 +78,7 @@ const brushedCodec = new t.Type<
 const viewOptionsObject = t.type({
   treatmentA: nullFallback(t.string),
   treatmentB: nullFallback(t.string),
-  pValue: withValidate(t.number, (input, context) => {
+  pValue: withValidate(t.number, input => {
     let val: number | null = null
 
     if (typeof input === 'number') {

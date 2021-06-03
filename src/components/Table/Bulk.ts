@@ -1,9 +1,8 @@
 import h from 'react-hyperscript'
 import * as React from 'react'
-import * as R from 'ramda'
 
 import makeGenericTable, { TableColumn } from './GenericTable'
-import { useView, useComparedTreatmentLabels } from '../../view/hooks'
+import { useView } from '../../view/hooks'
 import { useAppDispatch } from '../../hooks'
 import { actions as viewActions } from '../../view'
 import { formatNumber } from '../../utils'

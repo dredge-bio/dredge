@@ -16,7 +16,7 @@ import {
   SeuratCell,
   SeuratCellMap,
   SeuratClusterMap,
-  SeuratCluster,
+  SeuratCluster
 } from '../../types'
 
 const { useEffect, useMemo, useRef, useState } = React

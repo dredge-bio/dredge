@@ -2,13 +2,10 @@ import { Route } from 'org-shell'
 import { Box, Button } from 'rebass'
 import h from 'react-hyperscript'
 import * as React from 'react'
-import * as R from 'ramda'
-import { useSelector } from 'react-redux'
 import Log from './Log'
 import Link from './Link'
 
 import {
-  DredgeState,
   ProjectSource
 } from '../types'
 
@@ -39,11 +36,6 @@ function Code(props: any) {
     ...props,
   })
 }
-
-function selector(state: DredgeState) {
-  return R.pick(['view', 'projects'], state)
-}
-
 
 module.exports = function makeProjectLoading(promptLocal=false) {
   return (Component: React.ComponentType) => {

@@ -8,7 +8,7 @@ import { actions as viewActions } from '../../view'
 import {
   SingleCellSortPath,
   TableSortOrder,
-  SingleCellViewState,
+  SingleCellViewState
 } from '../../types'
 
 type TableData = {
@@ -28,7 +28,7 @@ function sortFor(
     active: (view: SingleCellViewState) =>
       typeof view.sortPath === 'object' &&
       view.sortPath.cluster === clusterKey &&
-      view.sortPath.value === valueType
+      view.sortPath.value === valueType,
   }
 }
 
@@ -68,7 +68,7 @@ function getColumns(width: number, view: SingleCellViewState) {
 
         return dge ? dge.pValue : null
       },
-    } as Column
+    } as Column,
   ])
 
 
