@@ -250,6 +250,14 @@ function useEmbeddingsByTranscript(
         dimensions,
         canvasEl)
     }
+
+    for (const cluster of clusters.values()) {
+      drawClusterLabel(
+        cluster,
+        dimensions,
+        canvasEl)
+    }
+
   }, [ dimensions, cells, transcript ])
 }
 
