@@ -55,6 +55,9 @@ function blankSingleCellView(project: SingleCellProject): SingleCellViewState {
 
     selectedClusters: null,
     displayedTranscriptsWithClusters: [],
+
+    order: 'asc',
+    sortPath: 'transcript',
   }
 }
 

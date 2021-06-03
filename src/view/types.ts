@@ -60,9 +60,12 @@ export type BulkViewState = BaseView & TranscriptsView & {
   },
 
   order: TableSortOrder;
-
   sortPath: BulkTableSortPath;
 }
+
+export type SingleCellSortPath =
+  'transcript' |
+  { cluster: string, value: 'p-value' | 'logFC' }
 
 export type SingleCellViewState = BaseView & TranscriptsView & {
   project: SingleCellProject;
@@ -70,4 +73,6 @@ export type SingleCellViewState = BaseView & TranscriptsView & {
 
   // FIXME: make nullable?
   displayedTranscriptsWithClusters: TranscriptWithClusterDGE[];
+  order: TableSortOrder;
+  sortPath: SingleCellSortPath;
 }

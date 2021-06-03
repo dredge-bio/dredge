@@ -27,43 +27,43 @@ type DimensionState = null | {
   widthWithScrollbar: number;
 }
 
-export type TableColumn<T, U> = {
+export type TableColumn<Context, ItemData, SortPath> = {
   key: string;
-  label: string | ((context: T) => string);
+  label: string | ((context: Context) => string);
   width: number;
   borderLeft?: boolean;
   sort: null | {
-    key: string;
-    active: (context: T) => boolean;
+    key: SortPath;
+    active: (context: Context) => boolean;
   };
-  renderRow: (data: U, index: number) => React.ReactNode;
+  renderRow: (data: ItemData, index: number) => React.ReactNode;
 }
 
-type TableData<T, U> = {
-  context: T;
-  getColumns: (totalWidth: number, context: T) => TableColumn<T, U>[];
+type TableData<Context, ItemData, SortPath> = {
+  context: Context;
+  getColumns: (totalWidth: number, context: Context) => TableColumn<Context, ItemData, SortPath>[];
   itemCount: number,
-  itemData: U;
+  itemData: ItemData;
   sortOrder: TableSortOrder;
-  updateSort: (sortPath: string, order: TableSortOrder) => void;
+  updateSort: (sortPath: SortPath, order: TableSortOrder) => void;
 
-  onRowEnter?: (data: U, index: number) => void;
-  onRowLeave?: (data: U, index: number) => void;
+  onRowEnter?: (data: ItemData, index: number) => void;
+  onRowLeave?: (data: ItemData, index: number) => void;
 
   rowHeight?: number;
   renderHeaderRows?: (
-    columns: (TableColumn<T, U> & { left: number })[],
-    context: T
+    columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[],
+    context: Context
   ) => React.ReactNode[];
 
 }
 
-type RowProps<T, U> = {
+type RowProps<Context, ItemData, SortPath> = {
   data: {
-    data: U;
-    columns: (TableColumn<T, U> & { left: number })[];
-    onRowEnter?: (data: U, index: number) => void;
-    onRowLeave?: (data: U, index: number) => void;
+    data: ItemData;
+    columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
+    onRowEnter?: (data: ItemData, index: number) => void;
+    onRowLeave?: (data: ItemData, index: number) => void;
   },
   index: number;
   style: React.CSSProperties;
@@ -89,7 +89,7 @@ function TableCell(props: CellProps) {
 }
 
 
-function TableRow<T, U>(props: RowProps<T, U>) {
+function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData, SortPath>) {
   const {
     style,
     data: {
@@ -116,8 +116,8 @@ function TableRow<T, U>(props: RowProps<T, U>) {
   )
 }
 
-export default function makeTable<T, U>() {
-  return function Table(props: TableData<T, U>) {
+export default function makeTable<Context, ItemData, SortPath>() {
+  return function Table(props: TableData<Context, ItemData, SortPath>) {
     const {
       getColumns,
       context,
@@ -130,7 +130,7 @@ export default function makeTable<T, U>() {
     } = props
 
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
-        , [ columns, setColumns ] = useState<(TableColumn<T, U> & { left: number })[] | null>(null)
+        , [ columns, setColumns ] = useState<(TableColumn<Context, ItemData, SortPath> & { left: number })[] | null>(null)
 
     const ref = useResizeCallback(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement

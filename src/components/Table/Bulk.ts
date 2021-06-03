@@ -11,7 +11,8 @@ import { formatNumber } from '../../utils'
 import {
   BulkViewState,
   BulkDifferentialExpression,
-  BulkDisplayedTranscriptsSource
+  BulkDisplayedTranscriptsSource,
+  BulkTableSortPath
 } from '../../types'
 
 type TranscriptCallback<AllowNull extends boolean> =
@@ -32,20 +33,20 @@ type TableData = {
   setFocusedTranscript: TranscriptCallback<true>;
 }
 
-const Table = makeGenericTable<BulkViewState, TableData>()
+const Table = makeGenericTable<BulkViewState, TableData, BulkTableSortPath>()
 
 const PAIRWISE_NUM_WIDTHS = 64
     , ABUNDANCE_WIDTHS = 88
     , MARKER_WIDTH = 28
 
-function sortFor(val: string) {
+function sortFor(val: BulkTableSortPath) {
   return {
     key: val,
     active: (x: BulkViewState) => x.sortPath === val,
   }
 }
 
-function getColumns(width: number): TableColumn<BulkViewState, TableData>[] {
+function getColumns(width: number): TableColumn<BulkViewState, TableData, BulkTableSortPath>[] {
   const labelWidth = width - MARKER_WIDTH - 3 * PAIRWISE_NUM_WIDTHS - 4 * ABUNDANCE_WIDTHS
 
   const getItem = (data: TableData, index: number) =>
