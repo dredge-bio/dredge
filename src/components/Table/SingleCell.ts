@@ -79,7 +79,12 @@ export default function SingleCellTable() {
         const { transcript } = data.displayedTranscripts[index]!
 
         dispatch(viewActions.setHoveredTranscript({
-          transcript: transcript.split('|', 2)[1]!
+          transcript: transcript.split('|', 2)[1]!,
+        }))
+      },
+      onRowLeave() {
+        dispatch(viewActions.setHoveredTranscript({
+          transcript: null,
         }))
       },
       sortOrder: 'asc' as TableSortOrder,
