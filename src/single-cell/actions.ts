@@ -1,13 +1,25 @@
+import {
+  createAction,
+  asyncActionCreatorWithConfig
+} from '@dredge/main'
+
+import {
+  SingleCellViewState,
+  ClusterDGE,
+  TranscriptWithClusterDGE
+} from './types'
+
+const createAsyncAction = asyncActionCreatorWithConfig<{
+  state: SingleCellViewState,
+}>()
 
 export const updateDisplayedSingleCellTranscripts = createAsyncAction<
-  {
-    view: SingleCellViewState,
-  },
+  {},
   {
     displayedTranscripts: TranscriptWithClusterDGE[]
   }
->('update-displayed-sc-transcripts', async args => {
-  const { selectedClusters, project } = args.view
+>('update-displayed-sc-transcripts', async (args, { getState }) => {
+  const { selectedClusters, project } = getState()
 
   if (!selectedClusters) {
     return {

@@ -10,6 +10,15 @@ type ThunkConfig = {
   state: DredgeState
 }
 
+export function asyncActionCreatorWithConfig<T>() {
+  return function createAsyncAction<Request, Response>(
+    actionName: string,
+    payloadCreator: AsyncThunkPayloadCreator<Response, Request, T>
+  ) {
+    return createAsyncThunk<Response, Request, T>(actionName, payloadCreator)
+  }
+}
+
 export function createAsyncAction<Request, Response>(
   actionName: string,
   payloadCreator: AsyncThunkPayloadCreator<Response, Request, ThunkConfig>

@@ -7,7 +7,7 @@ import { getTranscriptLookup, getAbundanceLookup } from '../projects'
 import {
   delay,
   createAction,
-  createAsyncAction
+  asyncActionCreatorWithConfig
 } from '@dredge/main'
 
 import { TableSortOrder } from '@dredge/shared'
@@ -18,17 +18,19 @@ import {
   BulkDisplayedTranscriptsSource,
   BulkTableSortPath,
   BulkViewState,
-  BulkProject
 } from './types'
 
 export * from '@dredge/shared/actions'
+
+const createAsyncAction = asyncActionCreatorWithConfig<{
+  state: BulkViewState,
+}>()
 
 
 // Load the table produced by the edgeR function `exactTest`:
 // <https://rdrr.io/bioc/edgeR/man/exactTest.html>
 export const setPairwiseComparison = createAsyncAction<
   {
-    view: BulkViewState,
     treatmentAKey: string,
     treatmentBKey: string,
   },
@@ -36,8 +38,9 @@ export const setPairwiseComparison = createAsyncAction<
     pairwiseData: BulkPairwiseComparison,
     resort: boolean,
   }
->('set-pairwise-comparison', async args => {
-  const { treatmentAKey, treatmentBKey, view } = args
+>('set-pairwise-comparison', async (args, { getState }) => {
+  const view = getState()
+    , { treatmentAKey, treatmentBKey, } = args
     , { project } = view
 
   const cacheKey = [treatmentAKey, treatmentBKey].toString()
@@ -163,15 +166,13 @@ export const setPairwiseComparison = createAsyncAction<
 
 
 export const getDefaultPairwiseComparison = createAsyncAction<
-  {
-    view: BulkViewState,
-  },
+  {},
   {
     treatmentA: string;
     treatmentB: string;
   }
->('get-default-pairwise-comparison', async args => {
-  const { view: { project } } = args
+>('get-default-pairwise-comparison', async (args, { getState }) => {
+  const { project } = getState()
       , { treatments } = project.data
       , [ treatmentA, treatmentB ] = Array.from(treatments.keys())
 
@@ -188,7 +189,6 @@ export const getDefaultPairwiseComparison = createAsyncAction<
 
 export const updateSortForTreatments = createAsyncAction<
   {
-    view: BulkViewState,
     sortPath: BulkTableSortPath | void,
     order: TableSortOrder | void
   },
@@ -196,8 +196,9 @@ export const updateSortForTreatments = createAsyncAction<
     sortedTranscripts: Array<BulkDifferentialExpression>,
     resort: boolean,
   }
->('update-sort-for-treatments', async args  => {
-  const { sortPath, order, view } = args
+>('update-sort-for-treatments', async (args, { getState }) => {
+  const view = getState()
+      , { sortPath, order } = args
       , { pairwiseData } = view
       , resolvedSortPath = sortPath || view.sortPath
       , resolvedOrder = order || view.order
@@ -237,18 +238,14 @@ function withinBounds(min: number, max: number, value: number | null) {
 }
 
 export const updateDisplayedTranscripts = createAsyncAction<
-  {
-    view: BulkViewState,
-  },
+  {},
   {
     displayedTranscripts: Array<BulkDifferentialExpression>,
     source: BulkDisplayedTranscriptsSource
   }
->('update-displayed-transcripts', async args => {
-  const { view } = args
-      , { project } = view
-
+>('update-displayed-transcripts', async (args, { getState }) => {
   const {
+    project,
     sortedTranscripts,
     savedTranscripts,
     pairwiseData,
@@ -258,7 +255,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
     selectedBinTranscripts,
     sortPath,
     order,
-  } = view
+  } = getState()
 
   if (pairwiseData === null) {
     throw new Error('Can\'t run without pairwise data')
@@ -386,16 +383,6 @@ export const setSelectedBinTranscripts = createAction(
   }
 )
 
-export const createView = createAction('create-bulk-view', (project: BulkProject) => {
-  return {
-    payload: {
-      project,
-      // FIXME: Make this a UUID
-      id: new Date().getTime().toString(),
-    },
-  }
-})
-
 type Coords = [number, number, number, number]
 
 export const setBrushedArea = createAction(
@@ -498,12 +485,10 @@ export const setSavedTranscripts = createAsyncAction<
 
 // FIXME: Make this generic across projects
 export const exportSavedTranscripts = createAsyncAction<
-  {
-    view: BulkViewState,
-  },
+  {},
   void
->('export-saved-transcripts', async args => {
-  const { view } = args
+>('export-saved-transcripts', async (args, { getState }) => {
+  const view = getState()
       , { comparedTreatments, displayedTranscripts } = view
 
   if (comparedTreatments === null || displayedTranscripts === null) {
