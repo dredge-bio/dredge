@@ -2,7 +2,7 @@ import * as t from 'io-ts'
 import * as d3 from 'd3'
 import { inflate } from 'pako'
 
-import { ProjectField } from '../fields'
+import { ProjectField } from '@dredge/main'
 
 type SeuratMetadata = {
   cellID: string;

@@ -2,7 +2,7 @@ import * as t from 'io-ts'
 import { withValidate, fromNullable } from 'io-ts-types'
 import { fold, either } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-import { URLString, TranscriptHyperlink } from '../config'
+import { URLString, TranscriptHyperlink } from '@dredge/shared'
 
 
 const PairwiseName = withValidate(t.string, (input, context) => {

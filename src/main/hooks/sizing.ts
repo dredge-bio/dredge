@@ -1,13 +1,6 @@
 import * as React from 'react'
-import { TypedUseSelectorHook, useSelector } from 'react-redux'
-
-import { useAppDispatch } from './store'
-import { DredgeState } from './types'
 
 const { useCallback, useState } = React
-
-export const useAppSelector: TypedUseSelectorHook<DredgeState> = useSelector
-export { useAppDispatch }
 
 type ResizeCallback = (node: HTMLElement) => void
 

@@ -6,16 +6,7 @@ import {
   BulkProject
 } from '../types'
 
-import {
-  getAbundanceLookup,
-  getColorScaleLookup,
-  getTranscriptLookup,
-  getSearchTranscripts
-} from './utils'
-
-import {
-  useAppSelector
-} from '../hooks'
+import { useAppSelector } from './store'
 
 export function useProject(source: ProjectSource, type: 'SingleCell'): SingleCellProject;
 export function useProject(source: ProjectSource, type: 'Bulk'): BulkProject;
@@ -33,22 +24,5 @@ export function useProject(source: ProjectSource, type: ProjectType): LoadedProj
   } else {
     throw new Error(
       `Requested project type is ${type}, but project ${source} is of type ${project.type}`)
-  }
-}
-
-export function useAbundances(project: BulkProject) {
-  return {
-    abundancesForTreatmentTranscript: getAbundanceLookup(project),
-    colorScaleForTranscript: getColorScaleLookup(project),
-  }
-}
-
-export function useTranscripts(project: BulkProject) {
-  const { transcripts } = project.data
-
-  return {
-    transcripts,
-    getCanonicalTranscriptLabel: getTranscriptLookup(project),
-    searchTranscripts: getSearchTranscripts(project),
   }
 }

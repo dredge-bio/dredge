@@ -1,4 +1,4 @@
-import { Config, TranscriptData } from '../types'
+import { Config, TranscriptData } from '@dredge/shared'
 
 export type BulkProjectConfig = Config & {
   type: "Bulk"
@@ -34,23 +34,4 @@ export type BulkProjectData = TranscriptData & {
   grid: (string | null)[][],
 
   readme: string | null;
-}
-
-export type BulkDifferentialExpression = {
-  name: string;
-  label: string,
-
-  treatmentA_AbundanceMean: number | null;
-  treatmentA_AbundanceMedian: number | null;
-  treatmentB_AbundanceMean: number | null;
-  treatmentB_AbundanceMedian: number | null;
-  pValue: number | null;
-  logFC: number | null;
-  logATA: number | null;
-}
-
-export interface BulkPairwiseComparison extends Map<string, BulkDifferentialExpression> {
-  minPValue: number;
-  fcSorted: Array<BulkDifferentialExpression>;
-  ataSorted: Array<BulkDifferentialExpression>;
 }

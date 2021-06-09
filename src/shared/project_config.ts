@@ -3,6 +3,21 @@ import { withValidate } from 'io-ts-types'
 import { fold } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 
+export type Config = {
+  label: string;
+  readme: string,
+  transcriptHyperlink: Array<{
+    label: string,
+    url: string,
+  }>;
+}
+
+export type TranscriptData = {
+  transcripts: string[];
+  transcriptCorpus: Record<string, string>;
+  transcriptAliases: ([alias: string, transcript: string])[];
+}
+
 export const URLString = withValidate(t.string, (input, context) => {
   if (typeof input === 'string') {
     return t.success(input)

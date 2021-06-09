@@ -34,6 +34,13 @@ FIRST_ZIP_VERSION := v1.2.1
 VERSION_TAGS := $(shell git tag | sed -ne '/$(FIRST_ZIP_VERSION)/,$$ p')
 VERSION_ZIPFILES := $(patsubst v%,dist/dredge-%.zip,$(VERSION_TAGS))
 
+INTERNAL_MODULES = main \
+		   shared \
+		   bulk \
+		   single-cell
+INTERNAL_MODULE_DIR = node_modules/@dredge
+LINKED_INTERNAL_MODULES = $(patsubst %,$(INTERNAL_MODULE_DIR)/%,$(INTERNAL_MODULES))
+
 
 
 ###################
@@ -47,7 +54,7 @@ all: node_modules $(VERSIONED_JS_BUNDLE) $(MINIFIED_VERSIONED_JS_BUNDLE)
 zip: $(VERSIONED_ZIPFILE)
 
 .PHONY: serve
-serve: node_modules | dist
+serve: node_modules $(LINKED_INTERNAL_MODULES) | dist
 	./build --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
 
 .PHONY: check_types
@@ -91,7 +98,13 @@ dist:
 node_modules: package.json
 	npm ci
 
-$(VERSIONED_JS_BUNDLE): node_modules $(JS_FILES) | dist
+$(INTERNAL_MODULE_DIR):
+	mkdir -p $@
+
+$(INTERNAL_MODULE_DIR)/%: src/% | $(INTERNAL_MODULE_DIR)
+	ln -s ../../src/$* $@
+
+$(VERSIONED_JS_BUNDLE): $(LINKED_INTERNAL_MODULES) node_modules $(JS_FILES) | dist
 	./build --production -o $@ $(JS_ENTRY)
 
 $(MINIFIED_VERSIONED_JS_BUNDLE): node_modules $(JS_FILES) | dist

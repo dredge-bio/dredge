@@ -2,11 +2,11 @@ import * as t from 'io-ts'
 import * as d3 from 'd3'
 import { withValidate } from 'io-ts-types'
 
-import { delay } from '../../utils'
+import { delay } from '@dredge/main'
 
 import MarkdownIt from 'markdown-it'
 
-import { ProjectField } from '../fields'
+import { ProjectField } from '@dredge/main'
 import * as types from './types'
 
 export const treatments = new ProjectField({

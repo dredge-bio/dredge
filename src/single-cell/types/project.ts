@@ -1,4 +1,13 @@
-import { Config, TranscriptData } from '../types'
+import { Config, TranscriptData } from '@dredge/shared'
+
+export type SingleCellProjectConfig = Config & {
+  type: "SingleCell"
+  expressionData: string;
+  transcripts: string;
+  seuratEmbeddings: string;
+  seuratMetadata: string;
+  differentialExpressions: string;
+}
 
 export type SeuratCell = {
   cellID: string;
@@ -29,24 +38,10 @@ export type SeuratCellMap = Map<string, SeuratCell>
 
 export type SeuratClusterMap = Map<string, SeuratCluster>
 
-export type SingleCellProjectConfig = Config & {
-  type: "SingleCell"
-  expressionData: string;
-  transcripts: string;
-  seuratEmbeddings: string;
-  seuratMetadata: string;
-  differentialExpressions: string;
-}
-
 export type SingleCellProjectData = TranscriptData & {
   readme: string | null;
   cells: SeuratCellMap;
   expressionData: DataView;
   differentialExpressions: ClusterDGE[];
   clusters: SeuratClusterMap;
-}
-
-export type TranscriptWithClusterDGE = {
-  transcript: string;
-  dgeByCluster: Map<string, ClusterDGE>;
 }

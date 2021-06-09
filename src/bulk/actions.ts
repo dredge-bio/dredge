@@ -1,28 +1,27 @@
 import * as R from 'ramda'
 import * as d3 from 'd3'
 import { saveAs } from 'file-saver'
-import { delay } from '../utils'
 
 import { getTranscriptLookup, getAbundanceLookup } from '../projects'
 
-import { createAction, createAsyncAction } from '../actions'
+import {
+  delay,
+  createAction,
+  createAsyncAction
+} from '@dredge/main'
+
+import { TableSortOrder } from '@dredge/shared'
 
 import {
-  TreatmentName,
-  TranscriptName,
   BulkPairwiseComparison,
   BulkDifferentialExpression,
   BulkDisplayedTranscriptsSource,
   BulkTableSortPath,
-  TableSortOrder,
   BulkViewState,
-  SingleCellViewState,
-  ClusterDGE,
-  TranscriptWithClusterDGE
-} from '../types'
+  BulkProject
+} from './types'
 
-
-import { projectForView } from '../utils'
+export * from '@dredge/shared/actions'
 
 
 // Load the table produced by the edgeR function `exactTest`:
@@ -100,7 +99,7 @@ export const setPairwiseComparison = createAsyncAction<
   const getCanonicalTranscriptLabel = getTranscriptLookup(project)
       , abundancesForTreatmentTranscript = getAbundanceLookup(project)
 
-  const pairwiseMap: Map<TranscriptName, BulkDifferentialExpression> = new Map(text
+  const pairwiseMap: Map<string, BulkDifferentialExpression> = new Map(text
     .trim()
     .split('\n')
     .slice(1) // Skip header
@@ -168,8 +167,8 @@ export const getDefaultPairwiseComparison = createAsyncAction<
     view: BulkViewState,
   },
   {
-    treatmentA: TreatmentName;
-    treatmentB: TreatmentName;
+    treatmentA: string;
+    treatmentB: string;
   }
 >('get-default-pairwise-comparison', async args => {
   const { view: { project } } = args
@@ -266,7 +265,7 @@ export const updateDisplayedTranscripts = createAsyncAction<
   }
 
 
-  let listedTranscripts: Set<TranscriptName> = new Set()
+  let listedTranscripts: Set<string> = new Set()
 
   let source: BulkDisplayedTranscriptsSource = 'all'
 
@@ -348,64 +347,76 @@ export const updateDisplayedTranscripts = createAsyncAction<
   }
 })
 
-export const updateDisplayedSingleCellTranscripts = createAsyncAction<
-  {
-    view: SingleCellViewState,
-  },
-  {
-    displayedTranscripts: TranscriptWithClusterDGE[]
-  }
->('update-displayed-sc-transcripts', async args => {
-  const { selectedClusters, project } = args.view
+export const setPValueThreshold = createAction(
+  'set-p-value-threshold', (threshold: number) => {
+    if (threshold > 1) threshold = 1;
 
-  if (!selectedClusters) {
+    if (threshold < 0) threshold = 0;
+
     return {
-      displayedTranscripts: [],
+      payload: {
+        threshold,
+        resort: true,
+      },
     }
   }
+)
 
-  const dgesByTranscript: Map<string, Set<ClusterDGE>> = new Map()
-
-  project.data.differentialExpressions.forEach(dge => {
-    if (!selectedClusters.has(dge.clusterID)) return
-
-    if (!dgesByTranscript.has(dge.transcriptID)) {
-      dgesByTranscript.set(dge.transcriptID, new Set())
+// FIXME: The following two actions are identical, maybe merge them and add a discriminant
+export const setHoveredBinTranscripts = createAction(
+  'set-hovered-bin-transcripts', (transcripts: Set<string> | null) => {
+    return {
+      payload: {
+        transcripts,
+        resort: true,
+      },
     }
+  }
+)
 
-    dgesByTranscript.get(dge.transcriptID)!.add(dge)
-  })
 
-  const displayedTranscripts = [...dgesByTranscript].map(([ transcript, clusters ]) => ({
-    transcript,
-    dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ])),
-  }))
+export const setSelectedBinTranscripts = createAction(
+  'set-selected-bin-transcripts', (transcripts: Set<string> | null) => {
+    return {
+      payload: {
+        transcripts,
+        resort: true,
+      },
+    }
+  }
+)
 
+export const createView = createAction('create-bulk-view', (project: BulkProject) => {
   return {
-    displayedTranscripts,
+    payload: {
+      project,
+      // FIXME: Make this a UUID
+      id: new Date().getTime().toString(),
+    },
   }
 })
 
-function getGlobalWatchedGenesKey() {
-  return window.location.pathname + '-watched'
-}
+type Coords = [number, number, number, number]
 
-export const setSavedTranscripts = createAsyncAction<
-  { transcriptNames: Array<TranscriptName> },
-  { resort: boolean }
->('set-saved-transcripts', async (args, { getState }) => {
-  const { transcriptNames } = args
-
-  if (R.path(['view', 'source', 'key'], getState()) === 'global') {
-    const key = getGlobalWatchedGenesKey()
-        , savedTranscriptsStr = JSON.stringify([...transcriptNames])
-
-    localStorage.setItem(key, savedTranscriptsStr)
+export const setBrushedArea = createAction(
+  'set-brushed-area', (coords: Coords | null) => {
+    return {
+      payload: {
+        coords,
+        resort: true,
+      },
+    }
   }
+)
 
-  return { resort: true }
-})
+export const setHoveredTreatment = createAction<
+  { treatment: string | null }
+>('set-hovered-treatment')
 
+
+export const setFocusedTranscript = createAction<
+  { transcript: string | null }
+>('set-focused-transcript')
 
 type ImportedTranscript = [
   name: string,
@@ -415,19 +426,17 @@ type ImportedTranscript = [
 // FIXME: Make this generic across projects
 export const importSavedTranscripts = createAsyncAction<
   {
+    view: BulkViewState,
     text: string
   },
   {
     imported: Array<ImportedTranscript>,
     skipped: Array<string>,
   }
->('import-saved-transcripts', async (args, { getState }) => {
-  const { text } = args
-      , { view } = getState()
+>('import-saved-transcripts', async args => {
+  const { text, view } = args
+      , { project } = view
 
-  if (view === null) {
-    throw new Error('Can\'t import transcripts without active view')
-  }
   const rows = d3.tsvParseRows(text.trim())
 
   if (R.path([0, 0], rows) === 'Gene name') {
@@ -435,7 +444,6 @@ export const importSavedTranscripts = createAsyncAction<
   }
 
   const transcriptsInFile = rows.map(row => row[0])
-      , project = projectForView(getState(), 'Bulk')
       , getCanonicalTranscriptLabel = getTranscriptLookup(project)
       , newWatchedTranscripts = []
       , imported: Array<ImportedTranscript> = []
@@ -468,6 +476,25 @@ export const importSavedTranscripts = createAsyncAction<
   }
 })
 
+function getGlobalWatchedGenesKey() {
+  return window.location.pathname + '-watched'
+}
+
+export const setSavedTranscripts = createAsyncAction<
+  { transcriptNames: Array<string> },
+  { resort: boolean }
+>('set-saved-transcripts', async (args, { getState }) => {
+  const { transcriptNames } = args
+
+  if (R.path(['view', 'source', 'key'], getState()) === 'global') {
+    const key = getGlobalWatchedGenesKey()
+        , savedTranscriptsStr = JSON.stringify([...transcriptNames])
+
+    localStorage.setItem(key, savedTranscriptsStr)
+  }
+
+  return { resort: true }
+})
 
 // FIXME: Make this generic across projects
 export const exportSavedTranscripts = createAsyncAction<
@@ -518,77 +545,3 @@ export const exportSavedTranscripts = createAsyncAction<
 
   saveAs(blob, 'saved-transcripts.tsv')
 })
-
-
-// FIXME: The following two actions are identical, maybe merge them and add a discriminant
-export const setHoveredBinTranscripts = createAction(
-  'set-hovered-bin-transcripts', (transcripts: Set<TreatmentName> | null) => {
-    return {
-      payload: {
-        transcripts,
-        resort: true,
-      },
-    }
-  }
-)
-
-
-export const setSelectedBinTranscripts = createAction(
-  'set-selected-bin-transcripts', (transcripts: Set<TreatmentName> | null) => {
-    return {
-      payload: {
-        transcripts,
-        resort: true,
-      },
-    }
-  }
-)
-
-
-type Coords = [number, number, number, number]
-
-export const setBrushedArea = createAction(
-  'set-brushed-area', (coords: Coords | null) => {
-    return {
-      payload: {
-        coords,
-        resort: true,
-      },
-    }
-  }
-)
-
-
-export const setHoveredTranscript = createAction<
-  { transcript: TranscriptName | null }
->('set-hovered-transcript')
-
-
-export const setHoveredTreatment = createAction<
-  { treatment: TreatmentName | null }
->('set-hovered-treatment')
-
-
-export const setFocusedTranscript = createAction<
-  { transcript: TranscriptName | null }
->('set-focused-transcript')
-
-
-export const setPValueThreshold = createAction(
-  'set-p-value-threshold', (threshold: number) => {
-    if (threshold > 1) threshold = 1;
-
-    if (threshold < 0) threshold = 0;
-
-    return {
-      payload: {
-        threshold,
-        resort: true,
-      },
-    }
-  }
-)
-
-export const setSelectedClusters = createAction<
-  { clusters: Set<string> | null }
->('set-selected-clusters')

@@ -1,7 +1,7 @@
 import h from 'react-hyperscript'
 import { Box } from 'rebass'
 
-import { useAppSelector } from '../hooks'
+import { useAppSelector } from '@dredge/main'
 
 import Log from './Log'
 import View from './View'

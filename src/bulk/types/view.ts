@@ -1,11 +1,10 @@
 import {
-  TableSortOrder,
-  BulkPairwiseComparison,
-  BulkDifferentialExpression,
-  BulkProject,
-  SingleCellProject,
-  TranscriptWithClusterDGE
-} from '../types'
+  TranscriptView,
+  BaseView,
+  TableSortOrder
+} from '@dredge/shared'
+
+import { BulkProject } from '@dredge/main'
 
 export type BulkTableSortPath =
   'label' |
@@ -24,19 +23,27 @@ export type BulkDisplayedTranscriptsSource =
   'brushed' |
   'watched'
 
-export type TranscriptsView = {
-  focusedTranscript: string | null;
-  hoveredTranscript: string | null;
-  hoveredTreatment: string | null;
 
-  savedTranscripts: Set<string>;
+export type BulkDifferentialExpression = {
+  name: string;
+  label: string,
+
+  treatmentA_AbundanceMean: number | null;
+  treatmentA_AbundanceMedian: number | null;
+  treatmentB_AbundanceMean: number | null;
+  treatmentB_AbundanceMedian: number | null;
+  pValue: number | null;
+  logFC: number | null;
+  logATA: number | null;
 }
 
-export type BaseView = {
-  loading: boolean;
+export interface BulkPairwiseComparison extends Map<string, BulkDifferentialExpression> {
+  minPValue: number;
+  fcSorted: Array<BulkDifferentialExpression>;
+  ataSorted: Array<BulkDifferentialExpression>;
 }
 
-export type BulkViewState = BaseView & TranscriptsView & {
+export type BulkViewState = BaseView & TranscriptView & {
   project: BulkProject,
   pairwiseData: BulkPairwiseComparison | null;
   sortedTranscripts: Array<BulkDifferentialExpression>;
@@ -61,18 +68,4 @@ export type BulkViewState = BaseView & TranscriptsView & {
 
   order: TableSortOrder;
   sortPath: BulkTableSortPath;
-}
-
-export type SingleCellSortPath =
-  'transcript' |
-  { cluster: string, value: 'p-value' | 'logFC' }
-
-export type SingleCellViewState = BaseView & TranscriptsView & {
-  project: SingleCellProject;
-  selectedClusters: Set<string> | null;
-
-  // FIXME: make nullable?
-  displayedTranscriptsWithClusters: TranscriptWithClusterDGE[];
-  order: TableSortOrder;
-  sortPath: SingleCellSortPath;
 }
