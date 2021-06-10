@@ -5,9 +5,15 @@ import * as d3 from 'd3'
 import { debounce } from 'debounce'
 import { Flex, Button } from 'rebass'
 
-import { useView } from '../view'
-import { formatNumber } from '../utils'
-import { useSized } from '../hooks'
+import {
+  useView
+} from '../hooks'
+
+import {
+  formatNumber,
+  useSized
+} from '@dredge/main'
+
 import { BulkDifferentialExpression } from '../types'
 
 import { Reset } from './Icons'
@@ -107,7 +113,7 @@ type PValueSelectorProps = {
 }
 
 function usePValueHistogram() {
-  const view = useView('Bulk')
+  const view = useView()
       , { pairwiseData } = view
 
   if (!pairwiseData) return null
@@ -146,7 +152,7 @@ function usePValueHistogram() {
 }
 
 export default function PValueSelector(props: PValueSelectorProps) {
-  const view = useView('Bulk')
+  const view = useView()
       , histogram = usePValueHistogram()
       , { onChange } = props
       , { comparedTreatments, pValueThreshold } = view
@@ -248,7 +254,7 @@ type PValueBrushProps = {
 }
 
 function PValueBrush(props: PValueBrushProps) {
-  const view = useView('Bulk')
+  const view = useView()
       , [ outerRef, rect ] = useSized()
       , svgRef = useRef<SVGSVGElement>()
       , brushStart = useRef(0)

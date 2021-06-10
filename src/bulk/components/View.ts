@@ -2,14 +2,23 @@ import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as React from 'react'
 import { unwrapResult } from '@reduxjs/toolkit'
+import { Provider } from 'react-redux'
 
-import { useViewOptions, useView } from '../view'
-import { useAppDispatch } from '../hooks'
-import { actions as viewActions } from '../view'
+import { BulkProject } from '@dredge/main'
+
+import createStore from '../store'
+
+import {
+  useView,
+  useViewOptions,
+  useViewDispatch
+} from '../hooks'
+
+import * as viewActions from '../actions'
 
 import MAPlot from './MAPlot'
 import TreatmentSelector from './TreatmentSelector'
-import { BulkTranscriptTable } from './Table'
+import BulkTranscriptTable from './Table'
 import InfoBox from './InfoBox'
 import PValueSelector from './PValueSelector'
 import WatchedTranscripts from './WatchedTranscripts'
@@ -38,15 +47,29 @@ const GridArea = styled.div<GridAreaProps>`
   grid-row: ${ props => props.row };
 `
 
-export default function View() {
-  const dispatch = useAppDispatch()
+type BulkViewProps = {
+  project: BulkProject;
+}
+
+export default function BulkViewOuter(props: BulkViewProps) {
+  const { project } = props
+      , store = createStore(project)
+
+  return (
+    h(Provider, { store }, [
+      h(View),
+    ])
+  )
+}
+
+function View() {
+  const dispatch = useViewDispatch()
       , [ viewOptions, updateViewOptions ] = useViewOptions()
       , { treatmentA, treatmentB, pValue, brushed } = viewOptions
-      , view = useView('Bulk')
+      , view = useView()
 
   useEffect(() => {
     dispatch(viewActions.updateSortForTreatments({
-      view,
       sortPath: view.sortPath,
       order: view.order,
     }))
@@ -83,7 +106,6 @@ export default function View() {
         })
     } else {
       dispatch(viewActions.setPairwiseComparison({
-        view,
         treatmentAKey: treatmentA,
         treatmentBKey: treatmentB,
       }))

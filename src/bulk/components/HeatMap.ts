@@ -3,8 +3,10 @@ import styled from 'styled-components'
 import * as d3 from 'd3'
 import * as R from 'ramda'
 
-import { useView } from '../view'
-import { useAbundances } from '../projects'
+import {
+  useView,
+  useAbundances
+} from '../hooks'
 
 const SQUARE_WIDTH = 20
 
@@ -22,7 +24,7 @@ type HeatMapProps = {
 }
 
 export default function HeatMap(props: HeatMapProps) {
-  const view = useView('Bulk')
+  const view = useView()
       , { project } = view
       , { hoveredTreatment } = view
       , { transcript } = props

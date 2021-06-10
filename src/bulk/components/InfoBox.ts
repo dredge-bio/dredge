@@ -4,8 +4,12 @@ import * as d3 from 'd3'
 import * as React from 'react'
 import { Flex, Box } from 'rebass'
 
-import { getColorScaleLookup, getTranscriptLookup } from '../projects'
-import { useView, useViewOptions } from '../view'
+import {
+  useView,
+  useViewOptions,
+  useAbundances,
+  useTranscripts
+} from '../hooks'
 
 import HeatMap from './HeatMap'
 import TreatmentSelector from './TreatmentSelector'
@@ -109,10 +113,10 @@ function ColorLegend(props: {
 }
 
 export default function InfoBox() {
-  const view = useView('Bulk')
+  const view = useView()
       , { project } = view
-      , colorScaleForTranscript = getColorScaleLookup(project)
-      , getCanonicalTranscriptLabel = getTranscriptLookup(project)
+      , { colorScaleForTranscript } = useAbundances(project)
+      , { getCanonicalTranscriptLabel } = useTranscripts(project)
       , [ , updateOpts ] = useViewOptions()
       , [ , setHovered ] = useState(false)
       , { transcriptHyperlink } = project.config

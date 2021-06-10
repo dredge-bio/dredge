@@ -17,7 +17,7 @@ import {
   BulkDifferentialExpression,
   BulkDisplayedTranscriptsSource,
   BulkTableSortPath,
-  BulkViewState,
+  BulkViewState
 } from './types'
 
 export * from '@dredge/shared/actions'
@@ -40,7 +40,7 @@ export const setPairwiseComparison = createAsyncAction<
   }
 >('set-pairwise-comparison', async (args, { getState }) => {
   const view = getState()
-    , { treatmentAKey, treatmentBKey, } = args
+    , { treatmentAKey, treatmentBKey } = args
     , { project } = view
 
   const cacheKey = [treatmentAKey, treatmentBKey].toString()
