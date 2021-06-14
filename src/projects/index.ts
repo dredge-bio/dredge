@@ -1,19 +1,2 @@
-export {
-  default as reducer
-} from './reducer'
-
-
-export {
-  useProject,
-  useAbundances,
-  useTranscripts
-} from './hooks'
-
-export {
-  getAbundanceLookup,
-  getTranscriptLookup,
-  getColorScaleLookup,
-  getSearchTranscripts
-} from './utils'
-
+export { default as reducer } from './reducer'
 export * as actions from './actions'

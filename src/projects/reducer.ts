@@ -1,8 +1,9 @@
 import {
   ProjectSource,
-  BulkProjectConfig,
   Project
-} from '../types'
+} from '@dredge/main'
+
+import * as bulk from '@dredge/bulk'
 
 import { createReducer } from '@reduxjs/toolkit'
 
@@ -21,7 +22,7 @@ function initial(): ProjectState {
     },
   }
 }
-function defaultLocalConfig(): BulkProjectConfig {
+function defaultLocalConfig(): bulk.BulkProjectConfig {
   return {
     type: 'Bulk',
     label: '',

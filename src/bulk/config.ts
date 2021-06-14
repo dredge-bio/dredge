@@ -52,7 +52,7 @@ const AbundanceLimits = withValidate(coordTuple, (input, context) => {
   )
 })
 
-export const bulkConfiguration = t.type({
+export const configuration = t.type({
   type: t.literal('Bulk'),
   label: t.string,
   abundanceMeasures: URLString,
@@ -69,4 +69,4 @@ export const bulkConfiguration = t.type({
   grid: fromNullable(URLString, ''),
 })
 
-export type BulkConfiguration = t.TypeOf<typeof bulkConfiguration>
+export type BulkConfiguration = t.TypeOf<typeof configuration>

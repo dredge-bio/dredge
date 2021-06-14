@@ -1,8 +1,8 @@
 import * as t from 'io-ts'
 import { fromNullable } from 'io-ts-types'
-import { URLString, TranscriptHyperlink } from '../config'
+import { URLString, TranscriptHyperlink } from '@dredge/shared'
 
-export const singleCellConfiguration = t.type({
+export const configuration = t.type({
   type: t.literal('SingleCell'),
   label: t.string,
 
@@ -17,4 +17,4 @@ export const singleCellConfiguration = t.type({
   transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
 })
 
-export type SingleCellConfiguration = t.TypeOf<typeof singleCellConfiguration>
+export type SingleCellConfiguration = t.TypeOf<typeof configuration>

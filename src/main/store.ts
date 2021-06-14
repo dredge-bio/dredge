@@ -1,15 +1,13 @@
 import { useDispatch } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 
-import { reducer as logReducer } from './log'
-import { reducer as viewReducer } from './view'
-import { reducer as projectsReducer } from './projects'
+import { reducer as logReducer } from '@dredge/log'
+import { reducer as projectsReducer } from '@dredge/projects'
 
 
 const store = configureStore({
   reducer: {
     log: logReducer,
-    view: viewReducer,
     projects: projectsReducer,
   },
   middleware: getDefaultMiddleware =>

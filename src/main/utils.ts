@@ -62,3 +62,17 @@ export async function fetchResource(url: string, cache=true) {
 
   return resp
 }
+
+export async function buildIndexMap(items: string[], pauseEvery=100) {
+  const indices: Record<string, number> = {}
+
+  let idx = 0
+
+  for (const item of items) {
+    indices[item] = idx;
+    idx++;
+    if (idx % pauseEvery === 0) await delay(0)
+  }
+
+  return indices
+}

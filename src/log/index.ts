@@ -1,9 +1,10 @@
 import { createReducer } from '@reduxjs/toolkit'
 
-import { createAction } from '../actions'
-import { ProjectSource, LogStatus } from '../types'
+import { createAction, ProjectSource } from '@dredge/main'
 
 let id = 0
+
+export type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
 
 export interface StatusLogEntry {
   message: string,
@@ -17,6 +18,10 @@ export interface ResourceLogEntry {
 }
 
 type LogEntry = StatusLogEntry | ResourceLogEntry
+
+export type CreateFieldLogger =
+  (label: string, url: string) =>
+    (status: LogStatus, message?: string) => void
 
 export type Log = {
   project: ProjectSource | null,

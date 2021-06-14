@@ -36,6 +36,8 @@ VERSION_ZIPFILES := $(patsubst v%,dist/dredge-%.zip,$(VERSION_TAGS))
 
 INTERNAL_MODULES = main \
 		   shared \
+		   projects \
+		   log \
 		   bulk \
 		   single-cell
 INTERNAL_MODULE_DIR = node_modules/@dredge

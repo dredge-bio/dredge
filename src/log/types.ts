@@ -1,5 +1,4 @@
-export type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
-
+/*
 export interface LogEntry {
   key: string,
   label: string,
@@ -14,3 +13,4 @@ export interface LogEntry {
     status: LogStatus,
   }>
 }
+*/
