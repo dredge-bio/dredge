@@ -15,7 +15,7 @@ export type TranscriptWithClusterDGE = {
 
 export type SingleCellSortPath =
   'transcript' |
-  { cluster: string, value: 'p-value' | 'logFC' }
+  { cluster: string, value: 'pValue' | 'logFC' }
 
 export type SingleCellViewState = BaseView & TranscriptView & {
   project: SingleCellProject;
