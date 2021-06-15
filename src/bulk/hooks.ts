@@ -10,10 +10,10 @@ import {
 
 import {
   getAbundanceLookup,
-  getColorScaleLookup,
-  getTranscriptLookup,
-  getSearchTranscripts
+  getColorScaleLookup
 } from './utils'
+
+export { useTranscripts } from '@dredge/shared'
 
 export const useViewDispatch = () => useDispatch<BulkStoreDispatch>()
 
@@ -27,16 +27,6 @@ export function useAbundances(project: BulkProject) {
   return {
     abundancesForTreatmentTranscript: getAbundanceLookup(project),
     colorScaleForTranscript: getColorScaleLookup(project),
-  }
-}
-
-export function useTranscripts(project: BulkProject) {
-  const { transcripts } = project.data
-
-  return {
-    transcripts,
-    getCanonicalTranscriptLabel: getTranscriptLookup(project),
-    searchTranscripts: getSearchTranscripts(project),
   }
 }
 

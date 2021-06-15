@@ -5,14 +5,16 @@ import {
   asyncActionCreatorWithConfig
 } from '@dredge/main'
 
-import { TableSortOrder } from '@dredge/shared'
-
 import {
   SingleCellViewState,
   ClusterDGE,
   TranscriptWithClusterDGE,
-  SingleCellSortPath
+  SingleCellSortPath,
+  TableSortOrder
 } from './types'
+
+import { getTranscriptLookup } from './utils'
+
 
 export * from '@dredge/shared/actions'
 

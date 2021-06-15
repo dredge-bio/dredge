@@ -12,6 +12,8 @@ import SingleCellExpression from './expressions'
 const { useMemo } = React
 
 
+export { useTranscripts } from '@dredge/shared'
+
 export const useViewDispatch = () => useDispatch<SingleCellStoreDispatch>()
 
 export const useViewSelector: TypedUseSelectorHook<SingleCellStoreState> = useSelector

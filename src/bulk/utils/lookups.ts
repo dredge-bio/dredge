@@ -4,6 +4,11 @@ import * as R from 'ramda'
 import { memoizeForProject } from '@dredge/shared'
 import { BulkProject } from '@dredge/main'
 
+export {
+  getTranscriptLookup,
+  getSearchTranscripts
+} from '@dredge/shared'
+
 const abundanceLookupCache: WeakMap<
   object,
   (treamentID: string, transcriptName: string) => number[]
@@ -86,62 +91,5 @@ export const getColorScaleLookup = memoizeForProject<BulkProject>()(
     colorScaleLookupCache.set(abundances, fn)
 
     return fn
-  }
-)
-
-const transcriptLookupCache: WeakMap<
-  object,
-  (transcriptID: string) => string | null
-> = new WeakMap()
-
-// FIXME: make this work for any loaded project
-export const getTranscriptLookup = memoizeForProject<BulkProject>()(
-  transcriptLookupCache,
-  project => project.data.transcriptCorpus,
-  project => {
-    const { transcriptCorpus } = project.data
-
-    const fn = function getCanonicalTranscriptLabel(transcriptName: string) {
-      return transcriptCorpus[transcriptName] || null
-    }
-
-    return fn
-  }
-)
-
-type TranscriptSearchResult = {
-  alias: string;
-  canonical: string;
-}
-
-const searchTranscriptsCache: WeakMap<
-  object,
-  (transcriptID: string, limit: number) => TranscriptSearchResult[]
-> = new WeakMap()
-
-// FIXME: make this work for any loaded project
-export const getSearchTranscripts = memoizeForProject<BulkProject>()(
-  searchTranscriptsCache,
-  project => project.data.transcriptAliases,
-  project => {
-    const { transcriptAliases } = project.data
-
-    function searchTranscripts (name: string, limit=20) {
-      const results: TranscriptSearchResult[] = []
-
-      for (const x of transcriptAliases) {
-        if (x[0].startsWith(name)) {
-          results.push({
-            alias: x[0], canonical: x[1],
-          })
-
-          if (results.length === limit) break;
-        }
-      }
-
-      return results
-    }
-
-    return searchTranscripts
   }
 )

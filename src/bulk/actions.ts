@@ -10,9 +10,8 @@ import {
   asyncActionCreatorWithConfig
 } from '@dredge/main'
 
-import { TableSortOrder } from '@dredge/shared'
-
 import {
+  TableSortOrder,
   BulkPairwiseComparison,
   BulkDifferentialExpression,
   BulkDisplayedTranscriptsSource,

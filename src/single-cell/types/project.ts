@@ -1,4 +1,6 @@
-import { Config, TranscriptData } from '@dredge/shared'
+import { Config, TranscriptData, TableSortOrder } from '@dredge/shared'
+
+export { TableSortOrder }
 
 export type SingleCellProjectConfig = Config & {
   type: "SingleCell"

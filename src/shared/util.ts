@@ -51,3 +51,58 @@ export async function buildTranscriptCorpus(transcripts: string[], transcriptAli
     transcriptAliases: corpusVals,
   }
 }
+
+const transcriptLookupCache: WeakMap<
+  object,
+  (transcriptID: string) => string | null
+> = new WeakMap()
+
+export const getTranscriptLookup = memoizeForProject<LoadedProject>()(
+  transcriptLookupCache,
+  project => project.data.transcriptCorpus,
+  project => {
+    const { transcriptCorpus } = project.data
+
+    const fn = function getCanonicalTranscriptLabel(transcriptName: string) {
+      return transcriptCorpus[transcriptName] || null
+    }
+
+    return fn
+  }
+)
+
+type TranscriptSearchResult = {
+  alias: string;
+  canonical: string;
+}
+
+const searchTranscriptsCache: WeakMap<
+  object,
+  (transcriptID: string, limit: number) => TranscriptSearchResult[]
+> = new WeakMap()
+
+export const getSearchTranscripts = memoizeForProject<LoadedProject>()(
+  searchTranscriptsCache,
+  project => project.data.transcriptAliases,
+  project => {
+    const { transcriptAliases } = project.data
+
+    function searchTranscripts (name: string, limit=20) {
+      const results: TranscriptSearchResult[] = []
+
+      for (const x of transcriptAliases) {
+        if (x[0].startsWith(name)) {
+          results.push({
+            alias: x[0], canonical: x[1],
+          })
+
+          if (results.length === limit) break;
+        }
+      }
+
+      return results
+    }
+
+    return searchTranscripts
+  }
+)

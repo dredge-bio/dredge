@@ -6,6 +6,8 @@ import {
 
 import { BulkProject } from '@dredge/main'
 
+export { TableSortOrder }
+
 export type BulkTableSortPath =
   'label' |
   'pValue' |
