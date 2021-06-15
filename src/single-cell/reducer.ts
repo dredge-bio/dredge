@@ -37,6 +37,11 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
 
       state.displayedTranscriptsWithClusters = displayedTranscripts
     })
+    .addCase(viewActions.setHoveredTranscript, (state, action) => {
+      const { transcript } = action.payload
+
+      state.hoveredTranscript = transcript
+    })
 })
 
 export default createViewReducer;
