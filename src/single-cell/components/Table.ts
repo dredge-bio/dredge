@@ -2,8 +2,7 @@ import h from 'react-hyperscript'
 
 import {
   makeGenericTable,
-  TableColumn,
-  TableSortOrder
+  TableColumn
 } from '@dredge/shared'
 
 import { useView, useViewDispatch } from '../hooks'
@@ -125,7 +124,7 @@ export default function SingleCellTable() {
           transcript: null,
         }))
       },
-      sortOrder: 'asc' as TableSortOrder,
+      sortOrder: view.order,
       context: view,
       getColumns,
       itemData: {
