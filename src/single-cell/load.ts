@@ -191,6 +191,15 @@ export async function loadProject(
 
   const { corpus, transcriptAliases } = await buildTranscriptCorpus(Object.keys(transcripts), transcripts)
 
+  differentialExpressions.forEach(dge => {
+    const realTranscriptID = corpus[dge.transcriptID]
+    if (!realTranscriptID) {
+      projectStatusLog(`Transcript ${dge.transcriptID} was referenced in differential expression file, but is not a valid transcript`)
+      throw new Error()
+    }
+    dge.transcriptID = realTranscriptID
+  })
+
   projectStatusLog('Indexing clusters...')
 
   const clusters = await getClusters(cellMap)
