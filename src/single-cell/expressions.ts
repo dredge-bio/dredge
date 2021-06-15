@@ -1,4 +1,4 @@
-import { SingleCellProjectData, SeuratCell } from '../types'
+import { SingleCellProjectData, SeuratCell } from './types'
 
 const RECORD_SIZE = 6
     , VERSION_OFFSET = 0x00

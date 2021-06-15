@@ -29,8 +29,8 @@ function sortTranscripts(
 ) {
   let getter: (d: TranscriptWithClusterDGE) => (string | number | null)
 
-  if (typeof sortPath === 'string') {
-    getter = d => d.transcript
+  if (sortPath === 'transcript') {
+    getter = d => d.transcript.label.toLowerCase()
   } else {
     getter = d => {
       const dge = d.dgeByCluster.get(sortPath.cluster)
@@ -68,7 +68,8 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
     }
   }
 
-  const dgesByTranscript: Map<string, Set<ClusterDGE>> = new Map()
+  const getCanonicalTranscriptLabel = getTranscriptLookup(project)
+      , dgesByTranscript: Map<string, Set<ClusterDGE>> = new Map()
 
   project.data.differentialExpressions.forEach(dge => {
     if (!selectedClusters.has(dge.clusterID)) return
@@ -81,7 +82,10 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
   })
 
   const displayedTranscripts = [...dgesByTranscript].map(([ transcript, clusters ]) => ({
-    transcript,
+    transcript: {
+      id: transcript,
+      label: getCanonicalTranscriptLabel(transcript) || transcript,
+    },
     dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ])),
   }))
 

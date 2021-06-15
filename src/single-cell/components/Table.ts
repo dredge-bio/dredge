@@ -24,7 +24,7 @@ type Column = TableColumn<SingleCellViewState, TableData, SingleCellSortPath>
 
 function sortFor(
   clusterKey: string,
-  valueType: 'p-value' | 'logFC'
+  valueType: 'pValue' | 'logFC'
 ) {
   return {
     key: { cluster: clusterKey, value: valueType },
@@ -62,7 +62,7 @@ function getColumns(width: number, view: SingleCellViewState) {
       key: `cluster-${clusterName}-pvalue`,
       label: 'p',
       width: 80,
-      sort: sortFor(clusterName, 'p-value'),
+      sort: sortFor(clusterName, 'pValue'),
       borderLeft: false,
       renderRow(data: TableData, index: number) {
         const item = getItem(data, index)
@@ -92,7 +92,7 @@ function getColumns(width: number, view: SingleCellViewState) {
             style: {
               paddingLeft: '4px',
             },
-          }, item.transcript.split('|', 2)[1]!)
+          }, item.transcript.label)
         )
       },
     } as Column,
@@ -119,7 +119,7 @@ export default function SingleCellTable() {
         const { transcript } = data.displayedTranscripts[index]!
 
         dispatch(viewActions.setHoveredTranscript({
-          transcript: transcript.split('|', 2)[1]!,
+          transcript: transcript.id,
         }))
       },
       onRowLeave() {

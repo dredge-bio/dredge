@@ -9,7 +9,10 @@ import { SingleCellProject } from '@dredge/main'
 import { ClusterDGE } from './project'
 
 export type TranscriptWithClusterDGE = {
-  transcript: string;
+  transcript: {
+    id: string;
+    label: string;
+  };
   dgeByCluster: Map<string, ClusterDGE>;
 }
 
