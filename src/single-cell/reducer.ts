@@ -1,5 +1,3 @@
-import * as R from 'ramda'
-import { Draft } from 'immer'
 import { createReducer } from '@reduxjs/toolkit'
 
 import { SingleCellViewState } from './types'

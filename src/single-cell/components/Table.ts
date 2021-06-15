@@ -1,15 +1,18 @@
 import h from 'react-hyperscript'
 
-import makeGenericTable, { TableColumn } from './GenericTable'
-import { useView } from '../../view/hooks'
-import { useAppDispatch } from '../../hooks'
-import { actions as viewActions } from '../../view'
+import {
+  makeGenericTable,
+  TableColumn,
+  TableSortOrder
+} from '@dredge/shared'
+
+import { useView, useViewDispatch } from '../hooks'
+import * as viewActions from '../actions'
 
 import {
   SingleCellSortPath,
-  TableSortOrder,
   SingleCellViewState
-} from '../../types'
+} from '../types'
 
 type TableData = {
   displayedTranscripts: SingleCellViewState["displayedTranscriptsWithClusters"]
@@ -99,8 +102,8 @@ function getColumns(width: number, view: SingleCellViewState) {
 }
 
 export default function SingleCellTable() {
-  const view = useView('SingleCell')
-      , dispatch = useAppDispatch()
+  const view = useView()
+      , dispatch = useViewDispatch()
 
   const displayedTranscripts = view.displayedTranscriptsWithClusters
 

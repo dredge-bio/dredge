@@ -1,15 +1,18 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as React from 'react'
+import { Provider } from 'react-redux'
 
-import { useView } from '../../view'
-import { useAppDispatch } from '../../hooks'
-import { actions as viewActions } from '../../view'
+import { SingleCellProject } from '@dredge/main'
+
+import { useView, useViewDispatch } from '../hooks'
+import * as viewActions from '../actions'
+import createStore from '../store'
 
 import UMAP from './UMAP'
-import { SingleCellTranscriptTable } from '../Table'
+import SingleCellTranscriptTable from './Table'
 
-const { useEffect, useRef } = React
+const { useEffect, useRef, useMemo } = React
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -33,9 +36,25 @@ const GridArea = styled.div<GridAreaProps>`
   grid-row: ${ props => props.row };
 `
 
-export default function View() {
-  const dispatch = useAppDispatch()
-      , view = useView('SingleCell')
+type ViewProps = {
+  project: SingleCellProject;
+}
+
+export default function ViewOuter(props: ViewProps) {
+  const { project } = props
+
+  const store = useMemo(() => createStore(project), [ project ])
+
+  return (
+    h(Provider, { store }, [
+      h(View),
+    ])
+  )
+}
+
+function View() {
+  const dispatch = useViewDispatch()
+      , view = useView()
       , currentlySelectedCluster = useRef<Set<string> | null>(null)
 
   useEffect(() => {

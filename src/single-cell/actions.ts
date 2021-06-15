@@ -9,6 +9,8 @@ import {
   TranscriptWithClusterDGE
 } from './types'
 
+export * from '@dredge/shared/actions'
+
 const createAsyncAction = asyncActionCreatorWithConfig<{
   state: SingleCellViewState,
 }>()

@@ -4,25 +4,24 @@ import * as React from 'react'
 import * as R from 'ramda'
 import styled from 'styled-components'
 
-import padding from '../MAPlot/padding'
-import { useDimensions } from '../MAPlot/hooks'
+import padding from '@dredge/bulk/components/MAPlot/padding'
+import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
+import { useSized } from '@dredge/main'
 
-import SingleCellExpression from '../../single-cell'
-import { useProject } from '../../projects/hooks'
-import { useSized } from '../../hooks'
-import { useView } from '../../view/hooks'
+import SingleCellExpression from '../expressions'
+import { useView } from '../hooks'
 
 import {
   SeuratCell,
   SeuratCellMap,
   SeuratClusterMap,
   SeuratCluster
-} from '../../types'
+} from '../types'
 
 const { useEffect, useMemo, useRef, useState } = React
 
 function useSeuratData() {
-  const project = useProject('global', 'SingleCell')
+  const { project } = useView()
 
   const ret = useMemo(() => {
     if (project.type !== 'SingleCell') {
@@ -430,7 +429,7 @@ const Container = styled.div`
 
 function SingleCell(props: SingleCellProps) {
   const { cells, clusters, scDataset, width, height, onClusterClick } = props
-      , view = useView('SingleCell')
+      , view = useView()
       , { hoveredTranscript } = view
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)

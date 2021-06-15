@@ -23,7 +23,7 @@ import InfoBox from './InfoBox'
 import PValueSelector from './PValueSelector'
 import WatchedTranscripts from './WatchedTranscripts'
 
-const { useEffect } = React
+const { useEffect, useMemo } = React
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -53,7 +53,8 @@ type BulkViewProps = {
 
 export default function BulkViewOuter(props: BulkViewProps) {
   const { project } = props
-      , store = createStore(project)
+
+  const store = useMemo(() => createStore(project), [ project ])
 
   return (
     h(Provider, { store }, [

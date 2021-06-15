@@ -11,8 +11,7 @@ import createStore from './store'
 import { AppDispatch, AppState } from './store'
 import theme from './theme'
 
-import Application from './components/Application'
-import Main from './components/Main'
+import { Application, Main } from './components'
 
 import { Resource } from './types'
 
