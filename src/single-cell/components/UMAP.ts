@@ -9,7 +9,7 @@ import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
 import { useSized } from '@dredge/main'
 
 import SingleCellExpression from '../expressions'
-import { useView } from '../hooks'
+import { useView, useSeuratDataset } from '../hooks'
 
 import {
   SeuratCell,
@@ -19,30 +19,6 @@ import {
 } from '../types'
 
 const { useEffect, useMemo, useRef, useState } = React
-
-function useSeuratData() {
-  const { project } = useView()
-
-  const ret = useMemo(() => {
-    if (project.type !== 'SingleCell') {
-      throw new Error()
-    }
-
-    const { transcripts, cells, clusters, expressionData } = project.data
-
-    const scDataset = new SingleCellExpression(project.data)
-
-    return {
-      scDataset,
-      transcripts,
-      cells,
-      clusters,
-      expressionData,
-    }
-  }, [project])
-
-  return ret
-}
 
 function drawUMAP(
   cells: SeuratCell[],
@@ -603,7 +579,8 @@ type OuterProps = {
 
 export default function SingleCellLoader(props: OuterProps) {
   const { onClusterClick } = props
-      , { cells, scDataset, clusters } = useSeuratData()
+      , { cells, clusters } = useView().project.data
+      , scDataset = useSeuratDataset()
       , [ ref, rect ] = useSized()
 
   return (
