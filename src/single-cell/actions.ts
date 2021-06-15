@@ -97,3 +97,10 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
 export const setSelectedClusters = createAction<
   { clusters: Set<string> | null }
 >('set-selected-clusters')
+
+export const setViewSort = createAction<
+  {
+    path: SingleCellSortPath,
+    order: TableSortOrder,
+  }
+>('update-sc-sort-path')

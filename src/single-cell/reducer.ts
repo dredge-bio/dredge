@@ -42,6 +42,12 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
 
       state.hoveredTranscript = transcript
     })
+    .addCase(viewActions.setViewSort, (state, action) => {
+      const { path, order } = action.payload
+
+      state.sortPath = path
+      state.order = order
+    })
 })
 
 export default createViewReducer;

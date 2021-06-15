@@ -110,10 +110,8 @@ export default function SingleCellTable() {
   return (
     h(Table, {
       rowHeight: 40,
-      updateSort(key, order) {
-        // FIXME
-        key;
-        order;
+      updateSort(path, order) {
+        dispatch(viewActions.setViewSort({ path, order }))
       },
       onRowEnter(data, index) {
         const { transcript } = data.displayedTranscripts[index]!

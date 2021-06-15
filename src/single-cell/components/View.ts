@@ -61,6 +61,8 @@ function View() {
     dispatch(viewActions.updateDisplayedSingleCellTranscripts({ view }))
   }, [
     view.selectedClusters,
+    view.sortPath,
+    view.order,
   ])
 
   currentlySelectedCluster.current = view.selectedClusters
