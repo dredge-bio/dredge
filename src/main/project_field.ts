@@ -2,8 +2,9 @@ import * as t from 'io-ts'
 import { fold } from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 
-import { fetchResource } from '../utils'
-import * as types from '../types'
+import { fetchResource } from './utils'
+
+import { LogStatus } from '@dredge/log'
 
 import { PathReporter } from 'io-ts/PathReporter'
 
@@ -45,7 +46,7 @@ export class ProjectField<Validated, Processed=Validated, ProcessingContext=void
 
   async validateFromURL(
     url: string,
-    makeLog: (label: string, url: string) => (status: types.LogStatus, message?: string) => void,
+    makeLog: (label: string, url: string) => (status: LogStatus, message?: string) => void,
     context: ProcessingContext
   ) {
     const fullURL = new URL(url, window.location.toString()).href

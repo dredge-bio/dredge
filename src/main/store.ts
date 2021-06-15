@@ -5,26 +5,28 @@ import { reducer as logReducer } from '@dredge/log'
 import { reducer as projectsReducer } from '@dredge/projects'
 
 
-const store = configureStore({
-  reducer: {
-    log: logReducer,
-    projects: projectsReducer,
-  },
-  middleware: getDefaultMiddleware =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-      immutableCheck: false,
-    }),
-})
 
-export type AppDispatch = typeof store.dispatch
+export default function createStore() {
+  return configureStore({
+    reducer: {
+      log: logReducer,
+      projects: projectsReducer,
+    },
+    middleware: getDefaultMiddleware =>
+      getDefaultMiddleware({
+        serializableCheck: false,
+        immutableCheck: false,
+      }),
+  })
+}
+
+export type AppStore = ReturnType<typeof createStore>
+
+export type AppDispatch = AppStore["dispatch"]
 export const useAppDispatch = () => useDispatch<AppDispatch>()
 
-export type AppState = ReturnType<typeof store.getState>
+export type AppState = ReturnType<AppStore["getState"]>
 
-export default function _createStore() {
-  return store
-}
 
 
 /*

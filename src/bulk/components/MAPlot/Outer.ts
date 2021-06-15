@@ -4,8 +4,7 @@ import * as R from 'ramda'
 import styled from 'styled-components'
 import { useOptions } from 'org-shell'
 
-import { useAppSelector, useAppDispatch } from '../../hooks'
-import { useView, useComparedTreatmentLabels } from '../../view/hooks'
+import { useView, useViewDispatch, useComparedTreatmentLabels } from '../../hooks'
 
 import Plot from './Plot'
 
@@ -28,46 +27,40 @@ type OuterProps = {
 
 export default function Wrapper(props: OuterProps) {
   const [ opts, updateOpts ] = useOptions()
-      , dispatch = useAppDispatch()
-      , view = useView('Bulk')
+      , dispatch = useViewDispatch()
+      , view = useView()
       , [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
-  const passedProps = useAppSelector(() => {
-    const { project } = view
-        , { abundanceLimits } = project.config
+  const { project } = view
+      , { abundanceLimits } = project.config
 
-    let treatmentA: string | undefined
-      , treatmentB: string | undefined
+  let treatmentA: string | undefined
+    , treatmentB: string | undefined
 
-    const { comparedTreatments } = view
+  const { comparedTreatments } = view
 
-    if (comparedTreatments) {
-      treatmentA = comparedTreatments[0]
-      treatmentB = comparedTreatments[1]
-    }
+  if (comparedTreatments) {
+    treatmentA = comparedTreatments[0]
+    treatmentB = comparedTreatments[1]
+  }
 
-    const viewProps = R.pick([
-      'loading',
-      'brushedArea',
-      'savedTranscripts',
-      'pairwiseData',
-      'pValueThreshold',
-      'hoveredTranscript',
-      'displayedTranscripts',
-    ], view)
+  const viewProps = R.pick([
+    'loading',
+    'brushedArea',
+    'savedTranscripts',
+    'pairwiseData',
+    'pValueThreshold',
+    'hoveredTranscript',
+    'displayedTranscripts',
+  ], view)
 
-    return {
-      abundanceLimits,
-      treatmentA,
-      treatmentB,
-      treatmentALabel,
-      treatmentBLabel,
-      ...viewProps,
-    }
-  })
-
-  if (passedProps === null) {
-    return null
+  const passedProps = {
+    abundanceLimits,
+    treatmentA,
+    treatmentB,
+    treatmentALabel,
+    treatmentBLabel,
+    ...viewProps,
   }
 
   return (

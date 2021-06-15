@@ -2,7 +2,7 @@ import h from 'react-hyperscript'
 import styled from 'styled-components'
 import { Box } from 'rebass'
 
-import { useView } from '../view'
+import { useProject } from '../hooks'
 
 
 const DocumentationContainer = styled(Box)`
@@ -20,7 +20,7 @@ const DocumentationContainer = styled(Box)`
 `
 
 export default function AboutProject() {
-  const { project } = useView()
+  const project = useProject('global')
 
   return (
     h(DocumentationContainer, {

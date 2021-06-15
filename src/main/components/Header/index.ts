@@ -4,7 +4,7 @@ import { Route, useNavigation } from 'org-shell'
 import { Flex, Box, Button } from 'rebass'
 import * as AriaMenuButton from 'react-aria-menubutton'
 
-import { version } from '../../../package.json'
+import { version } from '../../../../package.json'
 import { useAppSelector } from '../../hooks'
 
 interface HeaderProps {

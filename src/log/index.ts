@@ -2,6 +2,8 @@ import { createReducer } from '@reduxjs/toolkit'
 
 import { createAction, ProjectSource } from '@dredge/main'
 
+export * from './components'
+
 let id = 0
 
 export type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'

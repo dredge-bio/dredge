@@ -2,7 +2,7 @@ import * as R from 'ramda'
 import * as d3 from 'd3'
 import { saveAs } from 'file-saver'
 
-import { getTranscriptLookup, getAbundanceLookup } from '../projects'
+import { getTranscriptLookup, getAbundanceLookup } from './utils'
 
 import {
   delay,
@@ -413,15 +413,15 @@ type ImportedTranscript = [
 // FIXME: Make this generic across projects
 export const importSavedTranscripts = createAsyncAction<
   {
-    view: BulkViewState,
     text: string
   },
   {
     imported: Array<ImportedTranscript>,
     skipped: Array<string>,
   }
->('import-saved-transcripts', async args => {
-  const { text, view } = args
+>('import-saved-transcripts', async (args, { getState }) => {
+  const view = getState()
+      , { text } = args
       , { project } = view
 
   const rows = d3.tsvParseRows(text.trim())

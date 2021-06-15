@@ -1,29 +1,35 @@
 import h from 'react-hyperscript'
 import { Box } from 'rebass'
 
-import { useAppSelector } from '@dredge/main'
+import { useAppSelector } from '../hooks'
 
-import Log from './Log'
-import View from './View'
-import SingleCell from './SC'
+import { LogViewer } from '@dredge/log'
+import { View as BulkView } from '@dredge/bulk'
+import { View as SingleCellView } from '@dredge/single-cell'
 
-export default function Main() {
+export function Main() {
   const project = useAppSelector(state => state.projects.global)
 
   if ('loaded' in project || 'failed' in project) {
     return (
       h(Box, { p: 3 }, [
-        h(Log, {
+        h(LogViewer, {
           source: { key: 'global' },
         }),
       ])
     )
   }
 
+  project
+
   if (project.type === 'Bulk') {
-    return h(View)
+    return (
+      h(BulkView, { project })
+    )
   } else if (project.type === 'SingleCell') {
-    return h(SingleCell)
+    return (
+      h(SingleCellView, { project })
+    )
   } else {
     throw new Error('unknown project type')
   }

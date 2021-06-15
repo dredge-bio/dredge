@@ -7,7 +7,7 @@ import { useResource } from 'org-shell'
 
 import { Resource } from '../types'
 
-import Log from './Log'
+import { LogViewer } from '@dredge/log'
 import Header from './Header'
 import LocalFileMessage from './LocalFileMessage'
 
@@ -122,14 +122,14 @@ function Main(props: React.PropsWithChildren<{}>) {
     return children as unknown as React.ReactElement
   } else {
     return h(Box, { p: 3 }, [
-      h(Log, {
+      h(LogViewer, {
         source: { key: 'global' },
       }),
     ])
   }
 }
 
-export default class Application extends React.Component<any, ApplicationState> {
+export class Application extends React.Component<any, ApplicationState> {
   constructor(props: any) {
     super(props);
 

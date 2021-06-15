@@ -3,10 +3,8 @@ import styled from 'styled-components'
 import * as React from 'react'
 import * as d3 from 'd3'
 
-import { TreatmentName } from '../../types'
-import { useView, actions as viewActions } from '../../view'
-import { getColorScaleLookup, getAbundanceLookup } from '../../projects'
-import { useAppDispatch } from '../../hooks'
+import  * as viewActions from '../../actions'
+import { useView, useViewDispatch, useAbundances } from '../../hooks'
 
 import TreatmentSelect from './Select'
 import Tooltip from './Tooltip'
@@ -14,8 +12,8 @@ import Tooltip from './Tooltip'
 const { useEffect, useRef, useCallback, useState } = React
 
 type SelectorProps = {
-  selectedTreatment?: TreatmentName | null;
-  onSelectTreatment: (treatment: TreatmentName, bottom?: boolean) => void;
+  selectedTreatment?: string | null;
+  onSelectTreatment: (treatment: string, bottom?: boolean) => void;
   tooltipPos: 'bottom' | 'top';
   heatMap?: boolean;
   useSelectBackup?: boolean;
@@ -64,13 +62,12 @@ const SelectorWrapper = styled.div`
 `
 
 export default function TreatmentSelector(props: SelectorProps) {
-  const view = useView('Bulk')
+  const view = useView()
       , { project } = view
       , svgRef = useRef<SVGSVGElement>()
-      , dispatch = useAppDispatch()
+      , dispatch = useViewDispatch()
       , { svg, treatments } = project.data
-      , colorScaleForTranscript = getColorScaleLookup(project)
-      , abundancesForTreatmentTranscript = getAbundanceLookup(project)
+      , { colorScaleForTranscript, abundancesForTreatmentTranscript } = useAbundances(project)
 
   const {
     heatMap,

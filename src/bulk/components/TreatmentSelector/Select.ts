@@ -1,16 +1,15 @@
 import h from 'react-hyperscript'
 import * as React from 'react'
 
-import { TreatmentName } from '../../types'
-import { useView } from '../../view'
+import { useView } from '../../hooks'
 
 const { useState, useEffect } = React
 
 type SelectorProps = {
   disabled?: boolean;
   blankLabel?: string;
-  selectedTreatment: TreatmentName | null;
-  onSelectTreatment: (treatment: TreatmentName) => void;
+  selectedTreatment: string | null;
+  onSelectTreatment: (treatment: string) => void;
 }
 
 const BLANK_KEY = '___blank'
@@ -18,7 +17,7 @@ const BLANK_KEY = '___blank'
 export default function TreatmentListSelector(props: SelectorProps) {
   const { selectedTreatment, onSelectTreatment, blankLabel, disabled } = props
       , [ selectedTreatmentState, setSelectedTreatmentState ] = useState(selectedTreatment || BLANK_KEY)
-      , { project } = useView('Bulk')
+      , { project } = useView()
       , { treatments } = project.data
 
   useEffect(() => {

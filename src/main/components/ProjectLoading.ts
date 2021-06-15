@@ -2,7 +2,7 @@ import { Route } from 'org-shell'
 import { Box, Button } from 'rebass'
 import h from 'react-hyperscript'
 import * as React from 'react'
-import Log from './Log'
+import { LogViewer } from '@dredge/log'
 import Link from './Link'
 
 import {
@@ -77,7 +77,7 @@ module.exports = function makeProjectLoading(promptLocal=false) {
       if (showLog) {
         return (
           h(Box, { px: 3, py: 2 }, [
-            h(Log, {
+            h(LogViewer, {
               loadingProject: source,
             }),
 

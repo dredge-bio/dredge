@@ -1,7 +1,7 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
 import { Button, Flex } from 'rebass'
-import { MagnifyingGlass, Target, Reset } from '../Icons'
+import { MagnifyingGlass, Target, Reset } from '@dredge/main'
 import * as d3 from 'd3'
 import * as React from 'react'
 

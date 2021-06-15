@@ -11,12 +11,11 @@ import {
 
 import {
   formatNumber,
-  useSized
+  useSized,
+  Reset
 } from '@dredge/main'
 
 import { BulkDifferentialExpression } from '../types'
-
-import { Reset } from './Icons'
 
 const { useRef, useState, useEffect } = React
 

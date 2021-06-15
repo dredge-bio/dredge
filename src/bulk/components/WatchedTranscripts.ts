@@ -4,12 +4,9 @@ import * as React from 'react'
 import { Flex, Box, Button } from 'rebass'
 import { unwrapResult } from '@reduxjs/toolkit'
 
-import { useView, actions as viewActions } from '../view'
-import { useAppDispatch } from '../hooks'
-import { getSearchTranscripts } from '../projects'
-import { readFile } from '../utils'
-
-import FileInput from './util/FileInput'
+import * as viewActions from '../actions'
+import { useView, useViewDispatch, useTranscripts } from '../hooks'
+import { readFile, FileInput } from '@dredge/main'
 
 const { useRef, useState, useEffect } = React
 
@@ -106,8 +103,8 @@ type SearchProps = {
 
 // FIXME: make this work for any loaded project
 function Search(props: SearchProps) {
-  const { project } = useView('Bulk')
-      , searchTranscripts = getSearchTranscripts(project)
+  const { project } = useView()
+      , { searchTranscripts } = useTranscripts(project)
       , ref = useRef<HTMLInputElement>()
       , { onSelect } = props
 
@@ -183,8 +180,8 @@ type WatchedTranscriptsState = {
 
 // FIXME: Make this generic across any view
 export default function WatchedTranscripts() {
-  const view = useView('Bulk')
-      , dispatch = useAppDispatch()
+  const view = useView()
+      , dispatch = useViewDispatch()
 
   const {
     savedTranscripts,

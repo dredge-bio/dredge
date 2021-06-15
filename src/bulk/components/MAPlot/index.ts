@@ -2,7 +2,8 @@ import h from 'react-hyperscript'
 import LoadingIndicator from './Loading'
 import PlotWrapper from './Outer'
 
-import { useAppSelector, useSized } from '../../hooks'
+import { useView } from '../../hooks'
+import { useSized } from '@dredge/main'
 
 type PlotContainerProps = {
   onBrush: (extend: [number, number, number, number] | null) => void
@@ -11,15 +12,9 @@ type PlotContainerProps = {
 
 export default function PlotContainer(props: PlotContainerProps) {
   const [ ref, rect ] = useSized()
-
-  const { isLoading, key } = useAppSelector(state => {
-    const view = state.view!.default
-
-    return {
-      key: view.project.source,
-      isLoading: view.loading,
-    }
-  })
+      , view = useView()
+      , key = view.project.source
+      , isLoading = view.loading
 
   return (
     h('div', {

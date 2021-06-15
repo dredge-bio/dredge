@@ -5,8 +5,8 @@ import * as React from 'react'
 
 import { BulkViewState, BulkProjectConfig } from '../../types'
 import { getPlotBins, Bin } from '../../utils'
-import { useAppDispatch } from '../../hooks'
-import { actions as viewActions, useComparedTreatmentLabels } from '../../view'
+import { useViewDispatch, useComparedTreatmentLabels } from '../../hooks'
+import * as viewActions from '../../actions'
 
 import padding from './padding'
 import { PlotDimensions, useDimensions } from './hooks'
@@ -56,7 +56,7 @@ function useBrush(
     brushedArea,
   }: PlotProps
 ) {
-  const dispatch = useAppDispatch()
+  const dispatch = useViewDispatch()
       , resetBrushRef = useRef<() => void>()
 
   useEffect(() => {

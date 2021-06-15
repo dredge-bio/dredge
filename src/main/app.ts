@@ -6,13 +6,12 @@ import { render } from 'react-dom'
 import { ThemeProvider } from 'styled-components'
 import { enableMapSet } from 'immer'
 
-import { actions as projectActions } from './projects'
+import { actions as projectActions } from '@dredge/projects'
 import createStore from './store'
 import { AppDispatch, AppState } from './store'
 import theme from './theme'
-import Application from './components/Application'
-import SingleCell from './components/SC'
 
+import Application from './components/Application'
 import Main from './components/Main'
 
 import { Resource } from './types'
@@ -70,12 +69,6 @@ const resources: Record<string, Resource> = {
     Component: require('./components/Help'),
   },
   */
-
-  'sc-test': {
-    name: 'sc-test',
-    makeTitle: () => 'UMAP drawing test',
-    Component: SingleCell,
-  },
 
   'home': {
     name: 'home',

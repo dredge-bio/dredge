@@ -1,11 +1,13 @@
 import h from 'react-hyperscript'
 import styled from 'styled-components'
-import { LoadingIcon } from './Icons'
 import * as React from 'react'
 
-import { useAppSelector } from '../hooks'
+import {
+  LoadingIcon,
+  useAppSelector
+} from '@dredge/main'
 
-import { Log as LogItem } from '../log'
+import { Log as LogItem } from '../'
 
 const IconWrapper = styled.span`
   svg {
@@ -140,7 +142,7 @@ function LogEntry({ project, timestamp, log }: LogItem) {
   )
 }
 
-export default function Log() {
+export function LogViewer() {
   let label = 'Log'
 
   const {

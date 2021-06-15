@@ -1,18 +1,17 @@
 import h from 'react-hyperscript'
 import * as React from 'react'
 
-import makeGenericTable, { TableColumn } from './GenericTable'
-import { useView } from '../../view/hooks'
-import { useAppDispatch } from '../../hooks'
-import { actions as viewActions } from '../../view'
-import { formatNumber } from '../../utils'
+import { makeGenericTable, TableColumn } from '@dredge/shared'
+import { useView, useViewDispatch } from '../hooks'
+import * as viewActions from '../actions'
+import { formatNumber } from '@dredge/main'
 
 import {
   BulkViewState,
   BulkDifferentialExpression,
   BulkDisplayedTranscriptsSource,
   BulkTableSortPath
-} from '../../types'
+} from '../types'
 
 type TranscriptCallback<AllowNull extends boolean> =
   (transcript: AllowNull extends true ? (string | null) : string) => void
@@ -185,8 +184,8 @@ function getColumns(width: number): TableColumn<BulkViewState, TableData, BulkTa
 
 
 export default function BulkTable() {
-  const view = useView('Bulk')
-      , dispatch = useAppDispatch()
+  const view = useView()
+      , dispatch = useViewDispatch()
 
   const {
     savedTranscripts,

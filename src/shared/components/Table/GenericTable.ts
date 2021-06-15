@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
 
-import { useResizeCallback } from '../../hooks'
+import { useResizeCallback } from '@dredge/main'
 
 import {
   TableSortOrder
@@ -116,7 +116,7 @@ function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData
   )
 }
 
-export default function makeTable<Context, ItemData, SortPath>() {
+export function makeGenericTable<Context, ItemData, SortPath>() {
   return function Table(props: TableData<Context, ItemData, SortPath>) {
     const {
       getColumns,

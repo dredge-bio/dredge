@@ -5,7 +5,7 @@ type FileInputProps = Omit<ButtonProps, 'onChange'> & {
   onChange: (files: FileList | null) => void
 }
 
-export default function FileInput(props: FileInputProps) {
+export function FileInput(props: FileInputProps) {
   const { onChange, ...rest } = props
 
   function handleClick() {
