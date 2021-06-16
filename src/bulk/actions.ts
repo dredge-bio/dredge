@@ -400,10 +400,6 @@ export const setHoveredTreatment = createAction<
 >('set-hovered-treatment')
 
 
-export const setFocusedTranscript = createAction<
-  { transcript: string | null }
->('set-focused-transcript')
-
 type ImportedTranscript = [
   name: string,
   canonicalName: string,

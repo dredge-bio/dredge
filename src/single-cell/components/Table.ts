@@ -1,4 +1,5 @@
 import h from 'react-hyperscript'
+import styled from 'styled-components'
 
 import {
   makeGenericTable,
@@ -15,9 +16,18 @@ import {
 
 type TableData = {
   displayedTranscripts: SingleCellViewState["displayedTranscriptsWithClusters"]
+  focusedTranscript: SingleCellViewState["focusedTranscript"]
 }
 
-const Table = makeGenericTable<SingleCellViewState, TableData, SingleCellSortPath>()
+const TableComponent = makeGenericTable<SingleCellViewState, TableData, SingleCellSortPath>()
+
+const Table = styled(TableComponent)`
+
+  .sc-table-row:hover,
+  .sc-table-row__focused {
+    background: #f0f0f0;
+  }
+`
 
 type Column = TableColumn<SingleCellViewState, TableData, SingleCellSortPath>
 
@@ -41,6 +51,10 @@ function getColumns(width: number, view: SingleCellViewState) {
     data.displayedTranscripts[index]!
 
   const displayClusters = [...(selectedClusters || [])]
+
+  if (!displayClusters.length) {
+    return []
+  }
 
   const clusterColumns: Column[] = displayClusters.flatMap(clusterName => [
     {
@@ -104,33 +118,81 @@ export default function SingleCellTable() {
   const view = useView()
       , dispatch = useViewDispatch()
 
-  const displayedTranscripts = view.displayedTranscriptsWithClusters
+  const { focusedTranscript } = view
+      , displayedTranscripts = view.displayedTranscriptsWithClusters
 
   return (
-    h(Table, {
-      rowHeight: 40,
-      updateSort(path, order) {
-        dispatch(viewActions.setViewSort({ path, order }))
+    h('div', {
+      style: {
+        height: '100%',
+        position: 'relative',
       },
-      onRowEnter(data, index) {
-        const { transcript } = data.displayedTranscripts[index]!
+    }, [
+      h(Table, {
+        rowHeight: 40,
+        updateSort(path, order) {
+          dispatch(viewActions.setViewSort({ path, order }))
+        },
+        rowClassName(data, index) {
+          const { transcript } = data.displayedTranscripts[index]!
 
-        dispatch(viewActions.setHoveredTranscript({
-          transcript: transcript.id,
-        }))
-      },
-      onRowLeave() {
-        dispatch(viewActions.setHoveredTranscript({
-          transcript: null,
-        }))
-      },
-      sortOrder: view.order,
-      context: view,
-      getColumns,
-      itemData: {
-        displayedTranscripts,
-      },
-      itemCount: displayedTranscripts.length,
-    })
+          let className = 'sc-table-row'
+
+          if (transcript.id === data.focusedTranscript) {
+            className += ' sc-table-row__focused'
+          }
+
+          return className
+        },
+        onRowClick(data, index) {
+          const { transcript } = data.displayedTranscripts[index]!
+
+          dispatch(viewActions.setFocusedTranscript({
+            transcript: data.focusedTranscript === transcript.id
+              ? null
+              : transcript.id,
+          }))
+        },
+        onRowEnter(data, index) {
+          const { transcript } = data.displayedTranscripts[index]!
+
+          dispatch(viewActions.setHoveredTranscript({
+            transcript: transcript.id,
+          }))
+        },
+        onRowLeave() {
+          dispatch(viewActions.setHoveredTranscript({
+            transcript: null,
+          }))
+        },
+        sortOrder: view.order,
+        context: view,
+        getColumns,
+        itemData: {
+          displayedTranscripts,
+          focusedTranscript,
+        },
+        itemCount: displayedTranscripts.length,
+      }),
+
+      displayedTranscripts.length > 0 ? null : (
+        h('div', {
+          style: {
+            position: 'absolute',
+            top: '20%',
+            left: 0,
+            right: 0,
+
+            color: '#666',
+            lineHeight: '150%',
+            textAlign: 'center',
+          },
+        }, [
+          'Select a cluster to populate transcript table',
+          h('br'),
+          'Select multiple clusters by holding control or shift while clicking',
+        ])
+      ),
+    ])
   )
 }

@@ -40,6 +40,8 @@ export type TableColumn<Context, ItemData, SortPath> = {
 }
 
 type TableData<Context, ItemData, SortPath> = {
+  className?: string;
+
   context: Context;
   getColumns: (totalWidth: number, context: Context) => TableColumn<Context, ItemData, SortPath>[];
   itemCount: number,
@@ -47,6 +49,8 @@ type TableData<Context, ItemData, SortPath> = {
   sortOrder: TableSortOrder;
   updateSort: (sortPath: SortPath, order: TableSortOrder) => void;
 
+  rowClassName?: string | ((data: ItemData, index: number) => string);
+  onRowClick?: (data: ItemData, index: number) => void;
   onRowEnter?: (data: ItemData, index: number) => void;
   onRowLeave?: (data: ItemData, index: number) => void;
 
@@ -62,6 +66,8 @@ type RowProps<Context, ItemData, SortPath> = {
   data: {
     data: ItemData;
     columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
+    rowClassName?: string | ((data: ItemData, index: number) => string);
+    onRowClick?: (data: ItemData, index: number) => void;
     onRowEnter?: (data: ItemData, index: number) => void;
     onRowLeave?: (data: ItemData, index: number) => void;
   },
@@ -95,14 +101,26 @@ function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData
     data: {
       data,
       columns,
+      rowClassName,
+      onRowClick,
       onRowEnter,
       onRowLeave,
     },
     index,
   } = props
 
+  let className: undefined | string
+
+  if (typeof rowClassName === 'string') {
+    className = rowClassName
+  } else if (rowClassName) {
+    className = rowClassName(data, index)
+  }
+
   return (
     React.createElement('div', {
+      className,
+      onClick: onRowClick && (() => onRowClick(data, index)),
       onMouseEnter: onRowEnter && (() => onRowEnter(data, index)),
       onMouseLeave: onRowLeave && (() => onRowLeave(data, index)),
       style,
@@ -119,12 +137,15 @@ function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData
 export function makeGenericTable<Context, ItemData, SortPath>() {
   return function Table(props: TableData<Context, ItemData, SortPath>) {
     const {
+      className,
       getColumns,
       context,
       renderHeaderRows,
       rowHeight=DEFAULT_ROW_HEIGHT,
       itemData,
       itemCount,
+      rowClassName,
+      onRowClick,
       onRowEnter,
       onRowLeave,
     } = props
@@ -163,7 +184,10 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       renderHeaderRows(columns, context) || []
 
     return (
-      h(TableWrapper, { ref }, [
+      h(TableWrapper, {
+        className,
+        ref,
+      }, [
 
         h(TableHeaderWrapper, {
           rowHeight,
@@ -229,8 +253,10 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           dimensions && React.createElement(List, {
             itemCount,
             itemData: {
+              onRowClick,
               onRowEnter,
               onRowLeave,
+              rowClassName,
               data: itemData,
               columns,
             },

@@ -35,12 +35,29 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
     .addCase(viewActions.updateDisplayedSingleCellTranscripts.fulfilled, (state, action) => {
       const { displayedTranscripts } = action.payload
 
+      let nextFocusedTranscript = null
+
+      if (state.focusedTranscript) {
+        const keepFocusedTranscript = displayedTranscripts.some(
+          x => x.transcript.id === state.focusedTranscript)
+
+        if (keepFocusedTranscript) {
+          nextFocusedTranscript = state.focusedTranscript
+        }
+      }
+
       state.displayedTranscriptsWithClusters = displayedTranscripts
+      state.focusedTranscript = nextFocusedTranscript
     })
     .addCase(viewActions.setHoveredTranscript, (state, action) => {
       const { transcript } = action.payload
 
       state.hoveredTranscript = transcript
+    })
+    .addCase(viewActions.setFocusedTranscript, (state, action) => {
+      const { transcript } = action.payload
+
+      state.focusedTranscript = transcript
     })
     .addCase(viewActions.setViewSort, (state, action) => {
       const { path, order } = action.payload

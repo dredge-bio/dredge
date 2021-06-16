@@ -406,7 +406,7 @@ const Container = styled.div`
 function SingleCell(props: SingleCellProps) {
   const { cells, clusters, scDataset, width, height, onClusterClick } = props
       , view = useView()
-      , { hoveredTranscript } = view
+      , { hoveredTranscript, focusedTranscript } = view
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
       , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -420,7 +420,7 @@ function SingleCell(props: SingleCellProps) {
     cells,
     clusters,
     scDataset,
-    hoveredTranscript
+    hoveredTranscript || focusedTranscript
   )
 
   useInteractionLayer(
@@ -556,7 +556,7 @@ function SingleCell(props: SingleCellProps) {
         ]),
 
         // Transcript label
-        hoveredTranscript && h('text', {
+        (hoveredTranscript || focusedTranscript) && h('text', {
           dx: 0,
           dy: padding.t / 2,
           x: dimensions.width / 2,
@@ -566,7 +566,7 @@ function SingleCell(props: SingleCellProps) {
             textAnchor: 'middle',
             dominantBaseline: 'central',
           },
-        }, hoveredTranscript),
+        }, hoveredTranscript || focusedTranscript),
 
       ]),
     ])
