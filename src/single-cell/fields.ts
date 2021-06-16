@@ -1,4 +1,5 @@
 import * as t from 'io-ts'
+import { fromNullable } from 'io-ts-types'
 import * as d3 from 'd3'
 import { inflate } from 'pako'
 
@@ -180,5 +181,23 @@ export const transcripts = new ProjectField({
   processValidated: noopPromise,
   processResponse: resp => {
     return resp.text()
+  },
+})
+
+export const transcriptImages = new ProjectField({
+  label: 'Transcript images',
+  required: false,
+  cached: false,
+  decoder: t.array(t.type({
+    transcript: t.string,
+    filename: t.string,
+    title: fromNullable(
+      t.union([t.string, t.null]),
+      null),
+  })),
+  processValidated: noopPromise,
+  processResponse: resp => {
+    console.log(resp)
+    return resp.json()
   },
 })

@@ -15,6 +15,7 @@ export const configuration = t.type({
   // Optional
   readme: fromNullable(URLString, ''),
   transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
+  transcriptImages: fromNullable(URLString, ''),
 })
 
 export type SingleCellConfiguration = t.TypeOf<typeof configuration>

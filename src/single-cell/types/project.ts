@@ -36,9 +36,17 @@ export type ClusterDGE = {
   pctExpressedOther: number,
 }
 
+export type TranscriptImage = {
+  transcriptID: string;
+  filename: string;
+  title: string | null;
+}
+
 export type SeuratCellMap = Map<string, SeuratCell>
 
 export type SeuratClusterMap = Map<string, SeuratCluster>
+
+export type TranscriptImageMap = Map<string, TranscriptImage[]>
 
 export type SingleCellProjectData = TranscriptData & {
   readme: string | null;
@@ -46,4 +54,5 @@ export type SingleCellProjectData = TranscriptData & {
   expressionData: DataView;
   differentialExpressions: ClusterDGE[];
   clusters: SeuratClusterMap;
+  transcriptImages: TranscriptImageMap;
 }

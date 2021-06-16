@@ -20,13 +20,15 @@ import {
   SeuratCell,
   SeuratCellMap,
   SeuratCluster,
-  SeuratClusterMap
+  SeuratClusterMap,
+  TranscriptImageMap
 } from './types'
 
 export const labels: Map<keyof SingleCellConfiguration, string> = new Map([
   ['label', 'Project label'],
   ['readme', 'Project documentation'],
   ['transcriptHyperlink', 'Transcript hyperlink'],
+  ['transcriptImages', 'Transcript images'],
   ['seuratEmbeddings', 'Seurat UMAP embedding coordinates'],
   ['seuratMetadata', 'Seurat cell metadata'],
   ['transcripts', 'List of transcripts'],
@@ -127,6 +129,7 @@ export async function loadProject(
     expressionData,
     differentialExpressions,
     transcripts,
+    transcriptImages,
     readme,
   ] = await Promise.all([
     singleCellFields.embeddings.validateFromURL(
@@ -144,9 +147,11 @@ export async function loadProject(
     commonFields.aliases.validateFromURL(
       config.transcripts, makeLog),
 
+    singleCellFields.transcriptImages.validateFromURL(
+      config.transcriptImages, makeLog),
+
     commonFields.readme.validateFromURL(
       config.readme, makeLog),
-
   ])
 
   if (
@@ -204,6 +209,26 @@ export async function loadProject(
 
   const clusters = await getClusters(cellMap)
 
+  const transcriptImageMap: TranscriptImageMap = new Map()
+
+  if (transcriptImages) {
+    transcriptImages.forEach(obj => {
+      const transcriptID = corpus[obj.transcript]
+
+      if (!transcriptID) return;
+
+      if (!transcriptImageMap.has(transcriptID)) {
+        transcriptImageMap.set(transcriptID, [])
+      }
+
+      transcriptImageMap.get(transcriptID)!.push({
+        transcriptID,
+        filename: obj.filename,
+        title: obj.title,
+      })
+    })
+  }
+
   return {
     type: 'SingleCell',
     source,
@@ -216,6 +241,7 @@ export async function loadProject(
       transcripts: Object.keys(transcripts),
       transcriptCorpus: corpus,
       transcriptAliases,
+      transcriptImages: transcriptImageMap,
       readme,
     },
   }
