@@ -11,6 +11,7 @@ import createStore from '../store'
 
 import UMAP from './UMAP'
 import SingleCellTranscriptTable from './Table'
+import TranscriptInfo from './TranscriptInfo'
 
 const { useEffect, useRef, useMemo } = React
 
@@ -110,12 +111,22 @@ function View() {
 
       h(GridArea, {
         column: '13 / span 12',
-        row: '1 / span 12',
+        row: '1 / span 8',
         style: {
           border: '1px solid darkgreen',
         },
       }, [
         h(SingleCellTranscriptTable),
+      ]),
+
+      h(GridArea, {
+        column: '13 / span 12',
+        row: '9 / span 4',
+        style: {
+          border: '1px solid darkgreen',
+        },
+      }, [
+        h(TranscriptInfo),
       ]),
 
     ])
