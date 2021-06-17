@@ -2,7 +2,7 @@
   "name": "sophie-genes",
   "author": "Patrick Golden",
   "license": "AGPL-3.0-or-later",
-  "version": "7.4.1",
+  "version": "8.0.0-0",
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.0",
