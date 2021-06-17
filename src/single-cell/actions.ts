@@ -9,6 +9,7 @@ import {
   SingleCellViewState,
   ClusterDGE,
   TranscriptWithClusterDGE,
+  TranscriptImageMap,
   SingleCellSortPath,
   TableSortOrder
 } from './types'
@@ -24,6 +25,7 @@ const createAsyncAction = asyncActionCreatorWithConfig<{
 
 function sortTranscripts(
   transcripts: TranscriptWithClusterDGE[],
+  transcriptImages: TranscriptImageMap,
   sortPath: SingleCellSortPath,
   sortOrder: TableSortOrder
 ) {
@@ -31,6 +33,8 @@ function sortTranscripts(
 
   if (sortPath === 'transcript') {
     getter = d => d.transcript.label.toLowerCase()
+  } else if (sortPath === 'hasInsitu') {
+    getter = d => transcriptImages.has(d.transcript.id) ? 0 : 1
   } else {
     getter = d => {
       const dge = d.dgeByCluster.get(sortPath.cluster)
@@ -61,6 +65,7 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
   }
 >('update-displayed-sc-transcripts', async (args, { getState }) => {
   const { selectedClusters, project, sortPath, order } = getState()
+      , { transcriptImages } = project.data
 
   if (!selectedClusters) {
     return {
@@ -90,7 +95,7 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
   }))
 
   return {
-    displayedTranscripts: sortTranscripts(displayedTranscripts, sortPath, order),
+    displayedTranscripts: sortTranscripts(displayedTranscripts, transcriptImages, sortPath, order),
   }
 })
 

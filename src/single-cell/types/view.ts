@@ -18,6 +18,7 @@ export type TranscriptWithClusterDGE = {
 
 export type SingleCellSortPath =
   'transcript' |
+  'hasInsitu' |
   { cluster: string, value: 'pValue' | 'logFC' }
 
 export type SingleCellViewState = BaseView & TranscriptView & {

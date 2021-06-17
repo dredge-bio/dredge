@@ -6,17 +6,21 @@ import {
   TableColumn
 } from '@dredge/shared'
 
+import { formatNumber } from '@dredge/main'
+
 import { useView, useViewDispatch } from '../hooks'
 import * as viewActions from '../actions'
 
 import {
   SingleCellSortPath,
-  SingleCellViewState
+  SingleCellViewState,
+  TranscriptImageMap
 } from '../types'
 
 type TableData = {
-  displayedTranscripts: SingleCellViewState["displayedTranscriptsWithClusters"]
-  focusedTranscript: SingleCellViewState["focusedTranscript"]
+  displayedTranscripts: SingleCellViewState["displayedTranscriptsWithClusters"];
+  focusedTranscript: SingleCellViewState["focusedTranscript"];
+  transcriptImages: TranscriptImageMap;
 }
 
 const TableComponent = makeGenericTable<SingleCellViewState, TableData, SingleCellSortPath>()
@@ -68,7 +72,13 @@ function getColumns(width: number, view: SingleCellViewState) {
 
         const dge = item.dgeByCluster.get(clusterName)
 
-        return dge ? dge.logFC : null
+        return (
+          h('span', {
+            style: {
+              display: 'inline-block',
+            },
+          }, dge ? formatNumber(dge.logFC) : null)
+        )
       },
     },
     {
@@ -82,13 +92,38 @@ function getColumns(width: number, view: SingleCellViewState) {
 
         const dge = item.dgeByCluster.get(clusterName)
 
-        return dge ? dge.pValue : null
+        return dge ? formatNumber(dge.pValue) : null
       },
     } as Column,
   ])
 
 
   return [
+    {
+      key: 'insitu',
+      label: '📷',
+      width: 42,
+      sort: {
+        key: 'hasInsitu',
+        active: view => view.sortPath === 'hasInsitu',
+      },
+      renderRow(data: TableData, index: number) {
+        const item = getItem(data, index)
+            , hasInsitu = data.transcriptImages.has(item.transcript.id)
+
+        return (
+          h('span', {
+            style: {
+              fontSize: '20px',
+              marginLeft: '10px',
+              display: 'inline-block',
+              color: 'blue',
+            },
+          }, hasInsitu ? '•' : null)
+        )
+      },
+    } as Column,
+
     {
       key: 'transcript',
       label: 'Transcript',
@@ -117,8 +152,8 @@ function getColumns(width: number, view: SingleCellViewState) {
 export default function SingleCellTable() {
   const view = useView()
       , dispatch = useViewDispatch()
-
-  const { focusedTranscript } = view
+      , { focusedTranscript, project } = view
+      , { transcriptImages } = project.data
       , displayedTranscripts = view.displayedTranscriptsWithClusters
 
   return (
@@ -169,6 +204,7 @@ export default function SingleCellTable() {
         context: view,
         getColumns,
         itemData: {
+          transcriptImages,
           displayedTranscripts,
           focusedTranscript,
         },
