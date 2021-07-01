@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import * as React from 'react'
 import * as R from 'ramda'
 import styled from 'styled-components'
+import throttle from 'throttleit'
 
 import padding from '@dredge/bulk/components/MAPlot/padding'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
@@ -18,7 +19,7 @@ import {
   SeuratCluster
 } from '../types'
 
-const { useEffect, useMemo, useRef, useState } = React
+const { useEffect, useCallback, useMemo, useRef, useState } = React
 
 function drawUMAP(
   cells: SeuratCell[],
@@ -189,49 +190,51 @@ function useEmbeddingsByTranscript(
   useEffect(() => {
     const canvasEl = canvasRef.current!
 
-    if (transcript !== null) {
-      const expressionsByCell = scDataset.getExpressionsForTranscript(transcript)
+    window.requestAnimationFrame(() => {
+      if (transcript !== null) {
+        const expressionsByCell = scDataset.getExpressionsForTranscript(transcript)
 
-      const colorScale = d3.scaleLinear<number, string>()
-        .domain([0, d3.max(expressionsByCell.values()) || 1])
-        // FIXME: I don't know how to set the range to a color without getting
-        // a TS warning
-        .range(['#ddd', 'red'] as unknown as [number, number])
+        const colorScale = d3.scaleLinear<number, string>()
+          .domain([0, d3.max(expressionsByCell.values()) || 1])
+          // FIXME: I don't know how to set the range to a color without getting
+          // a TS warning
+          .range(['#ddd', 'red'] as unknown as [number, number])
 
-      // Sort embeddings so that they are drawn in order of transcript expression
-      // level from lowest to highest
-      const sortedCells = [...cells.values()].sort((a, b) => {
-        const levelA = expressionsByCell.get(a) || 0
-            , levelB = expressionsByCell.get(b) || 0
+        // Sort embeddings so that they are drawn in order of transcript expression
+        // level from lowest to highest
+        const sortedCells = [...cells.values()].sort((a, b) => {
+          const levelA = expressionsByCell.get(a) || 0
+              , levelB = expressionsByCell.get(b) || 0
 
-        if (levelA === levelB) return 0
+          if (levelA === levelB) return 0
 
-        return levelA > levelB
-          ? 1
-          : -1
-      })
+          return levelA > levelB
+            ? 1
+            : -1
+        })
 
-      drawUMAP(
-        sortedCells,
-        cell => colorScale(expressionsByCell.get(cell) || 0),
-        cell => expressionsByCell.has(cell) ? 1.75 : 1,
-        dimensions,
-        canvasEl)
-    } else {
-      drawUMAP(
-        [...cells.values()],
-        cell => clusters.get(cell.clusterID)!.color,
-        () => 1.25,
-        dimensions,
-        canvasEl)
-    }
+        drawUMAP(
+          sortedCells,
+          cell => colorScale(expressionsByCell.get(cell) || 0),
+          cell => expressionsByCell.has(cell) ? 1.75 : 1,
+          dimensions,
+          canvasEl)
+      } else {
+        drawUMAP(
+          [...cells.values()],
+          cell => clusters.get(cell.clusterID)!.color,
+          () => 1.25,
+          dimensions,
+          canvasEl)
+      }
 
-    for (const cluster of clusters.values()) {
-      drawClusterLabel(
-        cluster,
-        dimensions,
-        canvasEl)
-    }
+      for (const cluster of clusters.values()) {
+        drawClusterLabel(
+          cluster,
+          dimensions,
+          canvasEl)
+      }
+    })
 
   }, [ dimensions, cells, transcript ])
 }
@@ -413,6 +416,15 @@ function SingleCell(props: SingleCellProps) {
       , dimensions = useAxes(svgRef, width, height, cells)
       , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
       , hoveredCluster = useRef<string | null>(null)
+      , [ showTranscript, setShowTranscript ] = useState<string | null>(null)
+
+  const throttledSetTranscript = useCallback(throttle((transcript: string | null) => {
+      setShowTranscript(transcript)
+  }, 150), [])
+
+  useEffect(() => {
+    throttledSetTranscript(hoveredTranscript || focusedTranscript)
+  }, [ hoveredTranscript, focusedTranscript ])
 
   useEmbeddingsByTranscript(
     canvasRef,
@@ -420,7 +432,7 @@ function SingleCell(props: SingleCellProps) {
     cells,
     clusters,
     scDataset,
-    hoveredTranscript || focusedTranscript
+    showTranscript
   )
 
   useInteractionLayer(
@@ -556,7 +568,7 @@ function SingleCell(props: SingleCellProps) {
         ]),
 
         // Transcript label
-        (hoveredTranscript || focusedTranscript) && h('text', {
+        (showTranscript) && h('text', {
           dx: 0,
           dy: padding.t / 2,
           x: dimensions.width / 2,
@@ -566,7 +578,7 @@ function SingleCell(props: SingleCellProps) {
             textAnchor: 'middle',
             dominantBaseline: 'central',
           },
-        }, hoveredTranscript || focusedTranscript),
+        }, showTranscript),
 
       ]),
     ])
