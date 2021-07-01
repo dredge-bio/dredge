@@ -194,15 +194,29 @@ function useEmbeddingsByTranscript(
       if (transcript !== null) {
         const expressionsByCell = scDataset.getExpressionsForTranscript(transcript)
 
+
+        let sortedCells = [] as SeuratCell[]
+          , maxExpression = 0
+
+        cells.forEach(cell => {
+          const level = expressionsByCell.get(cell)
+
+          if (level === undefined) return
+
+          if (level > maxExpression) maxExpression = level
+
+          sortedCells.push(cell)
+        })
+
         const colorScale = d3.scaleLinear<number, string>()
-          .domain([0, d3.max(expressionsByCell.values()) || 1])
+          .domain([0, maxExpression])
           // FIXME: I don't know how to set the range to a color without getting
           // a TS warning
           .range(['#ddd', 'red'] as unknown as [number, number])
 
         // Sort embeddings so that they are drawn in order of transcript expression
         // level from lowest to highest
-        const sortedCells = [...cells.values()].sort((a, b) => {
+        sortedCells = sortedCells.sort((a, b) => {
           const levelA = expressionsByCell.get(a) || 0
               , levelB = expressionsByCell.get(b) || 0
 
@@ -412,6 +426,7 @@ function SingleCell(props: SingleCellProps) {
       , { hoveredTranscript, focusedTranscript } = view
       , svgRef = useRef<SVGSVGElement>(null)
       , canvasRef = useRef<HTMLCanvasElement>(null)
+      , bgCanvasRef = useRef<HTMLCanvasElement>(null)
       , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
       , dimensions = useAxes(svgRef, width, height, cells)
       , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
@@ -421,6 +436,17 @@ function SingleCell(props: SingleCellProps) {
   const throttledSetTranscript = useCallback(throttle((transcript: string | null) => {
       setShowTranscript(transcript)
   }, 150), [])
+
+  useEffect(() => {
+    if (bgCanvasRef.current === null) return
+
+    drawUMAP(
+      [...cells.values()],
+      () => '#ddd',
+      () => 1,
+      dimensions,
+      bgCanvasRef.current)
+  }, [ bgCanvasRef.current ])
 
   useEffect(() => {
     throttledSetTranscript(hoveredTranscript || focusedTranscript)
@@ -479,12 +505,26 @@ function SingleCell(props: SingleCellProps) {
   return (
     h(Container, [
       h('canvas', {
-        ref: canvasRef,
+        ref: bgCanvasRef,
         style: {
           position: 'absolute',
           left: padding.l,
           top: padding.t,
           backgroundColor: '#f9f9f9',
+        },
+        x: 0,
+        y: 0,
+        width: dimensions.plotWidth,
+        height: dimensions.plotHeight,
+      }),
+
+      h('canvas', {
+        ref: canvasRef,
+        style: {
+          position: 'absolute',
+          left: padding.l,
+          top: padding.t,
+          backgroundColor: 'transparent',
         },
         x: 0,
         y: 0,
