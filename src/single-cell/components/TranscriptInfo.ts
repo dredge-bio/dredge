@@ -1,8 +1,14 @@
 import h from 'react-hyperscript'
 import { useEffect, useRef, useState } from 'react'
 
+import { count } from '@dredge/main'
+
 import { useView } from '../hooks'
 import { TranscriptImage } from '../types'
+
+type TranscriptImageWithElement = TranscriptImage & {
+  element: HTMLImageElement;
+}
 
 function loadImage(filename: string): Promise<HTMLImageElement | null> {
   return new Promise(resolve => {
@@ -15,12 +21,54 @@ function loadImage(filename: string): Promise<HTMLImageElement | null> {
   })
 }
 
+function getImageCornerColors(element: HTMLImageElement) {
+  const canvas = document.createElement('canvas')
+      , width = element.naturalWidth
+      , height = element.naturalHeight
+
+  canvas.width = width
+  canvas.height = height
+
+  const ctx = canvas.getContext('2d')
+
+  ctx!.drawImage(element, 0, 0)
+
+  const cornerPoints = [
+    [10, 10],
+    [width - 10, 10],
+    [width - 10, height - 10],
+    [10, height - 10],
+  ] as [ number, number ][]
+
+  return cornerPoints.map(
+    ([ x, y ]) => {
+      const pixel = ctx!.getImageData(x, y, 1, 1)
+          , data = pixel.data
+
+      return `rgb(${data[0]}, ${data[1]}, ${data[2]})`
+    })
+}
+
+function getTranscriptBG(elements: HTMLImageElement[]) {
+  if (elements.length === 0) return null
+
+  const cornerColors = elements.map(getImageCornerColors).flat()
+      , colorCounts = count(cornerColors)
+      , [ topColor, topColorCount ] = [...colorCounts].sort((a, b) => a[1] - b[1])[0]!
+
+  // Return a color if at least half of the matched colors are the same
+  return topColorCount >= (elements.length * 2)
+    ? topColor
+    : null
+}
+
 export default function TranscriptInfo() {
   const { hoveredTranscript, focusedTranscript, project } = useView()
       , { transcriptImages } = project.data
       , showTranscript = hoveredTranscript || focusedTranscript
       , [ loading, setLoading ] = useState(false)
       , imgContainerRef = useRef<HTMLDivElement>()
+      , [ bgColor, setBGColor ] = useState<string | null>(null)
 
   const currentImages = useRef({
     images: null as TranscriptImage[] | null,
@@ -38,6 +86,7 @@ export default function TranscriptInfo() {
 
     if (images === null) {
       setLoading(false)
+      setBGColor(null)
       return
     }
 
@@ -49,6 +98,7 @@ export default function TranscriptInfo() {
 
       if (showLoading) {
         setLoading(true)
+        setBGColor(null)
       }
     }, 10)
 
@@ -63,6 +113,7 @@ export default function TranscriptInfo() {
       currentImages.current.loaded = true
 
       const failures: TranscriptImage[] = []
+          , successes: TranscriptImageWithElement[] = []
 
       setLoading(false)
 
@@ -70,13 +121,26 @@ export default function TranscriptInfo() {
         if (element === null) {
           failures.push(image)
         } else {
-          if (images === currentImages.current.images && imgContainerRef.current) {
-            imgContainerRef.current.appendChild(element)
-          }
-
+          successes.push({ ...image, element })
         }
       })
+
+      // Bail out if a new set of images is being rendered
+      const container = imgContainerRef.current
+
+      if (container == undefined) return;
+      if (images !== currentImages.current.images) return;
+
+      const bgColor = getTranscriptBG(successes.map(x => x.element))
+
+      setBGColor(bgColor)
+
+      successes.forEach(({ element }) => {
+        container.appendChild(element)
+      })
+
     }
+
 
     loadImages()
 
@@ -86,7 +150,7 @@ export default function TranscriptInfo() {
     h('div', {
       style: {
         position: 'relative',
-        background: '#999',
+        background: bgColor || '#bbb',
         height: '100%',
       },
     }, [
@@ -99,7 +163,6 @@ export default function TranscriptInfo() {
           bottom: 0,
           left: 0,
           right: 0,
-          background: '#999',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
@@ -111,13 +174,25 @@ export default function TranscriptInfo() {
       !loading ? null : h('div', {
         style: {
           position: 'absolute',
-          top: '50%',
+          top: 0,
+          bottom: 0,
           left: 0,
           right: 0,
-          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         },
       }, [
-        'loading',
+        h('span', {
+          style: {
+            padding: '16px 32px',
+            backgroundColor: 'white',
+            border: '2px solid #ccc',
+            fontWeight: 'bold',
+          },
+        }, [
+          'loading',
+        ]),
       ]),
 
     ])

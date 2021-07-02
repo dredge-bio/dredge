@@ -4,6 +4,17 @@ export async function delay(time: number) {
   })
 }
 
+export function count<T>(items: T[]) {
+  const counts: Map<T, number> = new Map()
+
+  items.forEach(item => {
+    const prevCount = counts.get(item) || 0
+    counts.set(item, prevCount + 1)
+  })
+
+  return counts
+}
+
 export function findParent(selector: string, el: HTMLElement) {
   return el.closest(selector)
 }
