@@ -112,7 +112,7 @@ const seuratMetadataCodec = new t.Type<SeuratMetadata>(
     try {
       const cellID = assertString(u[0])
           , replicateID = assertString(u[1])
-          , clusterID = assertString(u[5])
+          , clusterID = assertString(u[2])
 
       return t.success({
         cellID,
@@ -135,7 +135,24 @@ export const metadata = new ProjectField({
   decoder: t.array(seuratMetadataCodec),
   processResponse: async resp => {
     const text = await resp.text()
-    return d3.csvParseRows(text).slice(1)
+        , rows = d3.csvParseRows(text)
+        , header = rows.shift()
+
+    if (header === undefined) {
+      throw new Error('CSV file has no data')
+    }
+
+    if (header[0] !== '' || header[1] !== 'orig.ident') {
+      throw new Error('Not a valid seurat metadata file. First header column should be blank, and second should be `orig.ident`')
+    }
+
+    const clusterIDX = header.indexOf('X__dredge_cluster')
+
+    if (clusterIDX === -1) {
+      throw new Error('No column in seurat metadata named X__dredge_cluster. Please check file')
+    }
+
+    return rows.map(row => [row[0], row[1], row[clusterIDX]])
   },
   processValidated: noopPromise,
 })
