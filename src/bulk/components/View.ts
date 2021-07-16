@@ -99,7 +99,7 @@ function View() {
     if (!treatmentA || !treatmentB) {
       dispatch(viewActions.getDefaultPairwiseComparison({ view }))
         .then(unwrapResult)
-        .then(({ treatmentA, treatmentB}) => {
+        .then(({ treatmentA, treatmentB }) => {
           updateViewOptions({
             treatmentA,
             treatmentB,

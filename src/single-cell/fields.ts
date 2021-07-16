@@ -214,7 +214,6 @@ export const transcriptImages = new ProjectField({
   })),
   processValidated: noopPromise,
   processResponse: resp => {
-    console.log(resp)
     return resp.json()
   },
 })
