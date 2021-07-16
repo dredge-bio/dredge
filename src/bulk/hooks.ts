@@ -1,7 +1,7 @@
 import { BulkProject } from '@dredge/main'
 import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux'
-import { useOptions } from 'org-shell'
-import { validateOptions, viewOptionsObject, ViewOptions } from './options'
+import { optionsCodec } from './options'
+import { makeUseViewOptions } from '@dredge/shared'
 
 import {
   BulkStoreDispatch,
@@ -46,38 +46,4 @@ export function useComparedTreatmentLabels() {
   return [ treatmentALabel, treatmentBLabel ]
 }
 
-const defaultOptions = validateOptions({})
-
-export function useViewOptions(): [
-  ViewOptions,
-  (newOptions: Partial<ViewOptions>) => void
-]{
-  const [ options, setOptions ] = useOptions()
-
-  const validatedOptions = validateOptions(options)
-
-  const setValidatedOptions = (newOptions: Partial<ViewOptions>) => {
-    setOptions(prevOptions => {
-      const next = {
-        ...validateOptions(prevOptions),
-        ...newOptions,
-      }
-
-      const validated = viewOptionsObject.encode(next)
-
-      for (const k in validated) {
-        const key = k as keyof ViewOptions
-
-        if (validated[key] === defaultOptions[key]) {
-          delete validated[key]
-        }
-      }
-
-      return Object.keys(validated).length === 0
-        ? null
-        : validated
-    })
-  }
-
-  return [ validatedOptions, setValidatedOptions ]
-}
+export const useViewOptions = makeUseViewOptions(optionsCodec)

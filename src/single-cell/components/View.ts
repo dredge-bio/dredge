@@ -5,7 +5,7 @@ import { Provider } from 'react-redux'
 
 import { SingleCellProject } from '@dredge/main'
 
-import { useView, useViewDispatch } from '../hooks'
+import { useView, useViewDispatch, useViewOptions } from '../hooks'
 import * as viewActions from '../actions'
 import createStore from '../store'
 
@@ -57,6 +57,13 @@ function View() {
   const dispatch = useViewDispatch()
       , view = useView()
       , currentlySelectedCluster = useRef<Set<string> | null>(null)
+      , [ options, updateOptions ] = useViewOptions()
+
+  useEffect(() => {
+    dispatch(viewActions.setSelectedClusters({
+      clusters: options.selectedClusters,
+    }))
+  }, [options.selectedClusters])
 
   useEffect(() => {
     dispatch(viewActions.updateDisplayedSingleCellTranscripts({ view }))
@@ -102,9 +109,9 @@ function View() {
               nextSelected = cluster === null ? null : new Set([cluster])
             }
 
-            dispatch(viewActions.setSelectedClusters({
-              clusters: nextSelected,
-            }))
+            updateOptions({
+              selectedClusters: nextSelected,
+            })
           },
         }),
       ]),

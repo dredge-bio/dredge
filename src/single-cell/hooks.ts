@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux'
+import { makeUseViewOptions } from '@dredge/shared'
 
 import {
   SingleCellStoreDispatch,
@@ -8,6 +9,7 @@ import {
 } from './store'
 
 import SingleCellExpression from './expressions'
+import { optionsCodec } from './options'
 
 const { useMemo } = React
 
@@ -31,3 +33,5 @@ export function useSeuratDataset() {
 
   return scDataset
 }
+
+export const useViewOptions = makeUseViewOptions(optionsCodec)

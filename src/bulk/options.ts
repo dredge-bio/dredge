@@ -1,6 +1,4 @@
 import * as t from 'io-ts'
-import { fold } from 'fp-ts/Either'
-import { pipe } from 'fp-ts/function'
 import { withFallback, withValidate } from 'io-ts-types'
 
 function nullFallback<T extends t.Mixed>(codec: T) {
@@ -42,8 +40,7 @@ const brushedCodec = new t.Type<
 )
 
 
-
-export const viewOptionsObject = t.type({
+export const optionsCodec = t.type({
   treatmentA: nullFallback(t.string),
   treatmentB: nullFallback(t.string),
   pValue: withValidate(t.number, input => {
@@ -69,15 +66,3 @@ export const viewOptionsObject = t.type({
   }),
   brushed: nullFallback(brushedCodec),
 })
-
-export type ViewOptions = t.TypeOf<typeof viewOptionsObject>
-
-export function validateOptions(options: Object) {
-  return pipe(
-    viewOptionsObject.decode(options),
-    fold(
-      () => {
-        throw new Error()
-      },
-      value => value))
-}
