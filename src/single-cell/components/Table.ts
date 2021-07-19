@@ -64,7 +64,7 @@ function getColumns(width: number, view: SingleCellViewState) {
     {
       key: `cluster-${clusterName}`,
       label: clusterName,
-      width: 120,
+      width: 72,
       sort: sortFor(clusterName, 'logFC'),
       borderLeft: true,
       renderRow(data: TableData, index: number) {
@@ -84,7 +84,7 @@ function getColumns(width: number, view: SingleCellViewState) {
     {
       key: `cluster-${clusterName}-pvalue`,
       label: 'p',
-      width: 80,
+      width: 60,
       sort: sortFor(clusterName, 'pValue'),
       borderLeft: false,
       renderRow(data: TableData, index: number) {
