@@ -17,7 +17,7 @@ import {
   TableBodyWrapper
 } from './Elements'
 
-const { useState, useEffect } = React
+const { useRef, useState, useEffect } = React
 
 const DEFAULT_ROW_HEIGHT = 28
 
@@ -152,6 +152,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
         , [ columns, setColumns ] = useState<(TableColumn<Context, ItemData, SortPath> & { left: number })[] | null>(null)
+        , [ headerOffsetLeft, setHeaderOffsetLeft ] = useState(0)
+        , [ headerWidth, setHeaderWidth ] = useState<string | number>('100%')
 
     const ref = useResizeCallback(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
@@ -167,6 +169,20 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       setDimensions({ ...dims })
     })
 
+    const listRef = useRef<HTMLDivElement>()
+
+    useEffect(() => {
+      const el = listRef.current
+
+      if (!el) return
+
+      const scrollEl = el.parentNode! as HTMLDivElement
+
+      scrollEl.addEventListener('scroll', () => {
+        setHeaderOffsetLeft(scrollEl.scrollLeft)
+      })
+    }, [listRef.current])
+
     useEffect(() => {
       if (!dimensions) return
 
@@ -180,6 +196,21 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       setColumns(columnsWithWidths)
     }, [ dimensions, context  ])
 
+    useEffect(() => {
+      if (!dimensions || !columns) {
+        setHeaderWidth('100%')
+        return
+      }
+
+      let headerWidth = R.sum(columns.map(col => col.width))
+
+      if (dimensions.widthWithScrollbar > headerWidth) {
+        headerWidth = dimensions.widthWithScrollbar
+      }
+
+      setHeaderWidth(headerWidth)
+    }, [ dimensions, columns ])
+
     const additionalRows = renderHeaderRows && columns &&
       renderHeaderRows(columns, context) || []
 
@@ -192,6 +223,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
         h(TableHeaderWrapper, {
           rowHeight,
           numRows: additionalRows.length + 1,
+          offsetLeft: headerOffsetLeft,
+          totalWidth: headerWidth,
         }, [
           ...additionalRows.map((node, i) =>
             React.createElement(TableHeaderRow, {
@@ -251,6 +284,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           tableWidthSet: dimensions !== null,
         }, [
           dimensions && React.createElement(List, {
+            innerRef: listRef,
             itemCount,
             itemData: {
               onRowClick,
@@ -275,7 +309,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             h('span', {
               style: {
                 position: 'absolute',
-                left: col.left - 8,
+                left: col.left - 8 - headerOffsetLeft,
                 top: 0,
                 bottom: 0,
                 borderLeft: '1px solid #ccc',

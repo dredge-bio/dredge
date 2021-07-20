@@ -4,6 +4,7 @@ export const TableWrapper = styled.div`
   position: relative;
   height: 100%;
   border: 1px solid #ccc;
+  overflow-x: hidden;
 
   & table {
     table-layout: fixed;
@@ -49,8 +50,12 @@ export const TableWrapper = styled.div`
 
 export const TableHeaderWrapper = styled.div<{
   rowHeight: number;
-  numRows: number
+  numRows: number;
+  offsetLeft: number;
+  totalWidth: number | string;
 }>`
+  width: ${props => typeof props.totalWidth === 'string' ? props.totalWidth : `${props.totalWidth}px`};
+  transform: translateX(-${props => props.offsetLeft}px);
   height: ${props => props.numRows * props.rowHeight}px;
   background-color: #f0f0f0;
   border-bottom: 1px solid #ccc;
