@@ -63,7 +63,7 @@ function getColumns(width: number, view: SingleCellViewState) {
   const clusterColumns: Column[] = displayClusters.flatMap(clusterName => [
     {
       key: `cluster-${clusterName}`,
-      label: clusterName,
+      label: 'logFC',
       width: 72,
       sort: sortFor(clusterName, 'logFC'),
       borderLeft: true,
@@ -164,7 +164,39 @@ export default function SingleCellTable() {
       },
     }, [
       h(Table, {
-        rowHeight: 40,
+        rowHeight: 30,
+        renderHeaderRows(columns, context) {
+          const { selectedClusters } = context
+              , clusterMap = context.project.data.clusters
+
+          if (selectedClusters === null) {
+            return [
+              null,
+            ]
+          }
+
+          const selectedClustersArr = [...selectedClusters]
+
+          const clusterColumns = columns.slice(2)
+            .filter((col, i) => i % 2 === 0)
+            .map((col, i) => ({
+              ...col,
+              cluster: clusterMap.get(selectedClustersArr[i]!),
+            }))
+
+          return [
+            h('div', clusterColumns.map(column =>
+              column.cluster && h('div', {
+                key: column.cluster.id,
+                style: {
+                  fontWeight: 'bold',
+                  position: 'absolute',
+                  left: column.left,
+                },
+              }, column.cluster.label)
+            )),
+          ]
+        },
         updateSort(path, order) {
           dispatch(viewActions.setViewSort({ path, order }))
         },
