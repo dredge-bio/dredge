@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
 
-import { useResizeCallback } from '@dredge/main'
+import { useResizeCallback, shallowEquals } from '@dredge/main'
 
 import {
   TableSortOrder
@@ -17,7 +17,7 @@ import {
   TableBodyWrapper
 } from './Elements'
 
-const { useRef, useState, useEffect } = React
+const { useRef, useState, useEffect, memo } = React
 
 const DEFAULT_ROW_HEIGHT = 28
 
@@ -95,7 +95,8 @@ function TableCell(props: CellProps) {
 }
 
 
-function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData, SortPath>) {
+/* eslint-disable-next-line */
+const TableRow = memo(function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData, SortPath>) {
   const {
     style,
     data: {
@@ -132,7 +133,29 @@ function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData
       }, column.renderRow(data, index))
     )))
   )
-}
+}, (prevProps, nextProps) => {
+  let oldClassName: string = ''
+    , newClassName: string = ''
+
+  if (typeof prevProps.data.rowClassName === 'string') {
+    oldClassName = prevProps.data.rowClassName
+  } else if (typeof prevProps.data.rowClassName === 'function') {
+    oldClassName = prevProps.data.rowClassName(prevProps.data.data, prevProps.index)
+  }
+
+  if (typeof nextProps.data.rowClassName === 'string') {
+    newClassName = nextProps.data.rowClassName
+  } else if (typeof nextProps.data.rowClassName === 'function') {
+    newClassName = nextProps.data.rowClassName(nextProps.data.data, nextProps.index)
+  }
+
+  return (
+    prevProps.index === nextProps.index &&
+    R.equals(prevProps.data.columns.map(x => x.key), nextProps.data.columns.map(x => x.key)) &&
+    shallowEquals(prevProps.data.data, nextProps.data.data) &&
+    oldClassName === newClassName
+  )
+})
 
 export function makeGenericTable<Context, ItemData, SortPath>() {
   return function Table(props: TableData<Context, ItemData, SortPath>) {

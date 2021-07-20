@@ -15,6 +15,28 @@ export function count<T>(items: T[]) {
   return counts
 }
 
+export function shallowEquals(a: unknown, b: unknown) {
+  if (typeof a === 'object' && typeof b === 'object') {
+    if (a === null) return a === b
+    if (b === null) return b === a
+
+    const keys = [...Object.keys(a), ...Object.keys(b)]
+
+    const aa = a as Record<string, unknown>
+        , bb = b as Record<string, unknown>
+
+    for (const key of keys) {
+      if (aa[key] !== bb[key]) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  return a === b
+}
+
 export function findParent(selector: string, el: HTMLElement) {
   return el.closest(selector)
 }
