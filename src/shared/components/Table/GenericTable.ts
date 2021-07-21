@@ -319,7 +319,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             },
             itemSize: 24,
 
-            height: dimensions.height,
+            height: dimensions.height - additionalRows.length * rowHeight - 1,
             width: dimensions.widthWithScrollbar,
 
             children: TableRow,
