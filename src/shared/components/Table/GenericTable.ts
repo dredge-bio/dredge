@@ -308,6 +308,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
         }, [
           dimensions && React.createElement(List, {
             innerRef: listRef,
+            overscanCount: 50,
             itemCount,
             itemData: {
               onRowClick,
