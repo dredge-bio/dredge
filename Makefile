@@ -59,6 +59,10 @@ zip: $(VERSIONED_ZIPFILE)
 serve: node_modules $(LINKED_INTERNAL_MODULES) | dist
 	./build --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
 
+.PHONY: serve-prod
+serve-prod: node_modules $(LINKED_INTERNAL_MODULES) | dist
+	./build --production --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
+
 .PHONY: check_types
 check_types:
 	tsc --noEmit -p .
@@ -72,6 +76,9 @@ check: check_types lint
 
 .PHONY: watch
 watch: serve
+
+.PHONY: watch-prod
+watch-prod: serve-prod
 
 .PHONY: test
 test:
