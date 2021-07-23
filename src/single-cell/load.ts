@@ -41,53 +41,32 @@ function mean(vals: number[]) {
 
 function colorClusters(
   clusterLevels: string[],
-  clusters: Map<string, Omit<SeuratCluster, 'color'>>,
-  bounds: [number, number, number, number]
+  clusters: Map<string, Omit<SeuratCluster, 'color'>>
 ) {
-  const clustersWithColors = new Map() as SeuratClusterMap
-
-  const tree = d3.quadtree(
-    [...clusters.values()],
-    d => d.midpoint[0],
-    d => d.midpoint[1])
-
-  const [ umap1Min, umap2Min, umap1Max, umap2Max ] = bounds
-      , center = [ mean([umap1Min, umap1Max]), mean([umap2Min, umap2Max]) ] as [number, number]
-
-  let colorIndex = 0
-
-  const colorScale = d3.schemeCategory10
-
-  while (tree.data().length) {
-    const cluster = tree.find(center[0], center[1])
-
-    // This should never happen!
-    if (!cluster) {
-      throw new Error('Could not locate cluster given center point. Do all clusters have UMAP values?')
-    }
-
-    clustersWithColors.set(cluster.id, {
-      ...cluster,
-      color: colorScale[colorIndex % colorScale.length]!,
-    })
-
-    tree.remove(cluster)
-
-    colorIndex += 1
-  }
-
   const orderedClusterMap: SeuratClusterMap = new Map()
+      , hueScale = d3.scaleLinear().domain([0, clusters.size - 1]).range([30, 360])
+      , C = 62
+      , L = 65
+
+  let idx = 0
 
   clusterLevels.forEach(clusterID => {
-    const clusterWithColors = clustersWithColors.get(clusterID)
+    const cluster = clusters.get(clusterID)
 
     // This is a cluster defined in clusterLevels without any cells assigned
     // to it. This probably should never happen? But we can just skip it if
     // it does.
-    if (!clusterWithColors) {
+    if (!cluster) {
       return
     }
-    orderedClusterMap.set(clusterID, clusterWithColors)
+    const hue = hueScale(idx)
+
+    orderedClusterMap.set(clusterID, {
+      ...cluster,
+      color: d3.hcl(hue, hue > 180 ? C + 14 : C, L).toString(),
+    })
+
+    idx += 1
   })
 
   return orderedClusterMap
@@ -132,7 +111,7 @@ function getClusters(clusterLevels: string[], cellMap: SeuratCellMap) {
     },
   ]))
 
-  return colorClusters(clusterLevels, clustersWithoutColor, [umap1Min, umap1Max, umap2Min, umap2Max])
+  return colorClusters(clusterLevels, clustersWithoutColor)
 }
 
 export async function loadProject(
