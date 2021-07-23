@@ -10,6 +10,7 @@ import * as viewActions from '../actions'
 import createStore from '../store'
 
 import UMAP from './UMAP'
+import HeatMap from './HeatMap'
 import SingleCellTranscriptTable from './Table'
 import TranscriptInfo from './TranscriptInfo'
 
@@ -85,6 +86,8 @@ function View() {
           border: '1px solid darkgreen',
         },
       }, [
+        h(HeatMap),
+        /*
         h(UMAP, {
           onClusterClick(cluster, e) {
             const currentlySelected = currentlySelectedCluster.current
@@ -114,6 +117,7 @@ function View() {
             })
           },
         }),
+        */
       ]),
 
       h(GridArea, {
