@@ -11,6 +11,22 @@ const transcripts = [
   'star',
 ]
 
+const PADDING_LEFT = 16
+    , PADDING_RIGHT = 16
+    , PADDING_TOP = 16
+    , CLUSTER_LEGEND_HEIGHT = 60
+    , CLUSTER_LEGEND_BAR_HEIGHT = 16
+    , GRID_GAP = 3
+    , CLUSTER_LEGEND_GAP = 10
+    , TEXT_GAP = 6
+    , TRANSCRIPT_LABEL_WIDTH = 144
+    , CLUSTERS_START_TOP = PADDING_TOP + CLUSTER_LEGEND_HEIGHT
+    , CLUSTERS_START_LEFT = PADDING_LEFT + TRANSCRIPT_LABEL_WIDTH + TEXT_GAP
+    , LEGEND_PADDING_TOP = 20
+    , LEGEND_TICKS = 1000
+    , LEGEND_WIDTH = 300
+    , CLUSTER_GRID_HEIGHT = 100
+
 function drawHeatmapWithBlocks(
   canvasEl: HTMLCanvasElement,
   clusterMap: SeuratClusterMap,
@@ -40,63 +56,93 @@ function drawHeatmapWithBlocks(
     .range([ '#ff00ff', 'black', 'yellow' ])
     .clamp(true)
 
-  const PADDING_LEFT = 160
-      , PADDING_RIGHT = 16
-
-
-  const w = (rect.width - PADDING_LEFT - PADDING_RIGHT) / clusters.length
-      , h = 200 / transcripts.length
+  const w = (rect.width - CLUSTERS_START_LEFT - PADDING_RIGHT) / clusters.length
+      , h = CLUSTER_GRID_HEIGHT / transcripts.length
 
   // ctx.scale(.1, .1)
-  let prevClusterStart = PADDING_LEFT
-    , clustersDrawn = false
+  let clustersDrawn = false
 
   Array.from(zScoresByTranscript).forEach(([ transcript, zScoresByCluster ], transcriptIdx) => {
     if (transcriptIdx > 0) {
       clustersDrawn = true
     }
 
+    // Draw the transcript labels
     ctx.fillStyle = 'black'
     ctx.textAlign = 'end'
     ctx.textBaseline = 'middle'
     ctx.font = '24px sans-serif'
-    ctx.fillText(transcript, PADDING_LEFT - 8, 100 + transcriptIdx * h + h / 2)
+    ctx.fillText(
+      transcript,
+      CLUSTERS_START_LEFT - TEXT_GAP + GRID_GAP,
+      CLUSTERS_START_TOP + transcriptIdx * h + h / 2,
+      TRANSCRIPT_LABEL_WIDTH)
 
     Array.from(zScoresByCluster).forEach(([ clusterID, zScoresByCell ], clusterIdx) => {
+      const cluster = clusterMap.get(clusterID)!
+          , clusterStart = CLUSTERS_START_LEFT + w * clusterIdx
+
       if (!clustersDrawn) {
-        const cluster = clusterMap.get(clusterID)!
-            , clusterStart = prevClusterStart
-            , clusterWidth = w
+        // Draw the cluster legend
+        const legendBarStartY = CLUSTERS_START_TOP - CLUSTER_LEGEND_GAP - CLUSTER_LEGEND_BAR_HEIGHT
 
+        // Draw the cluster bars
         ctx.fillStyle = cluster.color
-        ctx.fillRect(clusterStart, 80, clusterWidth, 16)
-        prevClusterStart += clusterWidth
+        ctx.fillRect(
+          clusterStart + GRID_GAP,
+          legendBarStartY,
+          w - GRID_GAP,
+          CLUSTER_LEGEND_BAR_HEIGHT)
 
+        // Draw the cluster label
         ctx.fillStyle = 'black'
         ctx.textBaseline = 'alphabetic'
         ctx.textAlign = 'center'
         ctx.font = '24px sans-serif'
-        ctx.fillText(cluster.label, clusterStart + clusterWidth / 2, 64, clusterWidth)
+        ctx.fillText(
+          cluster.label,
+          clusterStart + w / 2,
+          legendBarStartY - TEXT_GAP,
+          w)
       }
 
+      // Draw the cluster z score for this transcript
       const meanZScore = d3.mean(zScoresByCell)!
       ctx.fillStyle = colorScale(meanZScore)
-      ctx.fillRect(PADDING_LEFT + clusterIdx * w, 100 + transcriptIdx * h, w, h)
+      ctx.fillRect(
+        clusterStart + GRID_GAP,
+        CLUSTERS_START_TOP + transcriptIdx * h,
+        w - GRID_GAP,
+        h)
     })
   })
 
-  colorScale.ticks(300).forEach((num, i) => {
+  const legendTicks = [0, 1, 2]
+      , tickScale = d3.scaleLinear().range([CLUSTERS_START_LEFT, CLUSTERS_START_LEFT + LEGEND_WIDTH]).domain([-1, 2])
+      , ticks = colorScale.ticks(LEGEND_TICKS)
+      , tickWidth = Math.ceil(tickScale(ticks[1]!) - tickScale(ticks[0]!))
+
+  const legendTop = CLUSTERS_START_TOP + transcripts.length * h + LEGEND_PADDING_TOP
+
+  // Draw the colors on the color scale
+  colorScale.ticks(LEGEND_TICKS).forEach(num => {
     ctx.fillStyle = colorScale(num)
-    ctx.fillRect(PADDING_LEFT + i, 32 + (transcripts.length + 2) * h, 1, h)
+    ctx.fillRect(
+      tickScale(num),
+      legendTop,
+      tickWidth,
+      h)
   })
 
-  const legendTicks = [0, 1, 2]
-      , tickScale = d3.scaleLinear().range([PADDING_LEFT, PADDING_LEFT + 300]).domain([-1, 2])
-
+  // Draw a few ticks on the color scale
   legendTicks.forEach(val => {
     ctx.fillStyle = 'black'
     ctx.font = '24px sans-serif'
-    ctx.fillText(val.toString(), tickScale(val), 132 + (transcripts.length + 2) * h)
+    ctx.textBaseline = 'top'
+    ctx.fillText(
+      val.toString(),
+      tickScale(val),
+      legendTop + h + TEXT_GAP)
   })
 }
 
