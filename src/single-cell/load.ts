@@ -40,6 +40,7 @@ function mean(vals: number[]) {
 }
 
 function colorClusters(
+  clusterLevels: string[],
   clusters: Map<string, Omit<SeuratCluster, 'color'>>,
   bounds: [number, number, number, number]
 ) {
@@ -75,10 +76,24 @@ function colorClusters(
     colorIndex += 1
   }
 
-  return clustersWithColors
+  const orderedClusterMap: SeuratClusterMap = new Map()
+
+  clusterLevels.forEach(clusterID => {
+    const clusterWithColors = clustersWithColors.get(clusterID)
+
+    // This is a cluster defined in clusterLevels without any cells assigned
+    // to it. This probably should never happen? But we can just skip it if
+    // it does.
+    if (!clusterWithColors) {
+      return
+    }
+    orderedClusterMap.set(clusterID, clusterWithColors)
+  })
+
+  return orderedClusterMap
 }
 
-function getClusters(cellMap: SeuratCellMap) {
+function getClusters(clusterLevels: string[], cellMap: SeuratCellMap) {
   const cellsByCluster = new Map() as Map<string, SeuratCell[]>
 
   let umap1Min = Infinity
@@ -88,6 +103,10 @@ function getClusters(cellMap: SeuratCellMap) {
 
   for (const cell of cellMap.values()) {
     const { clusterID } = cell
+
+    if (!clusterLevels.includes(clusterID)) {
+      throw new Error(`Cell ${cell.cellID} has the cluster ${clusterID}, but this cluster is not in the defined cluster levels`)
+    }
 
     if (!cellsByCluster.has(clusterID)) {
       cellsByCluster.set(clusterID, [])
@@ -113,8 +132,7 @@ function getClusters(cellMap: SeuratCellMap) {
     },
   ]))
 
-
-  return colorClusters(clustersWithoutColor, [umap1Min, umap1Max, umap2Min, umap2Max])
+  return colorClusters(clusterLevels, clustersWithoutColor, [umap1Min, umap1Max, umap2Min, umap2Max])
 }
 
 export async function loadProject(
@@ -125,6 +143,7 @@ export async function loadProject(
 ): Promise<SingleCellProject> {
   const [
     embeddings,
+    clusterLevels,
     metadata,
     expressionData,
     differentialExpressions,
@@ -134,6 +153,9 @@ export async function loadProject(
   ] = await Promise.all([
     singleCellFields.embeddings.validateFromURL(
       config.seuratEmbeddings, makeLog),
+
+    singleCellFields.clusterLevels.validateFromURL(
+      config.clusterLevels, makeLog),
 
     singleCellFields.metadata.validateFromURL(
       config.seuratMetadata, makeLog),
@@ -156,6 +178,7 @@ export async function loadProject(
 
   if (
     embeddings === null ||
+    clusterLevels === null ||
     metadata === null ||
     expressionData === null ||
     differentialExpressions === null ||
@@ -207,7 +230,7 @@ export async function loadProject(
 
   projectStatusLog('Indexing clusters...')
 
-  const clusters = await getClusters(cellMap)
+  const clusters = await getClusters(clusterLevels, cellMap)
 
   const transcriptImageMap: TranscriptImageMap = new Map()
 

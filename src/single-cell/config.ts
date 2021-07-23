@@ -6,6 +6,7 @@ export const configuration = t.type({
   type: t.literal('SingleCell'),
   label: t.string,
 
+  clusterLevels: URLString,
   seuratEmbeddings: URLString,
   seuratMetadata: URLString,
   transcripts: URLString,

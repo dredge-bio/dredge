@@ -190,6 +190,17 @@ export const expressionData = new ProjectField({
   },
 })
 
+export const clusterLevels = new ProjectField({
+  label: 'Cluster levels',
+  required: true,
+  cached: false,
+  decoder: t.array(t.string),
+  processValidated: noopPromise,
+  processResponse: resp => {
+    return resp.json()
+  },
+})
+
 export const transcripts = new ProjectField({
   label: 'Transcripts',
   required: true,
