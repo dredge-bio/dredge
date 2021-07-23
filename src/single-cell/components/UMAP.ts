@@ -230,14 +230,14 @@ function useEmbeddingsByTranscript(
         drawUMAP(
           sortedCells,
           cell => colorScale(expressionsByCell.get(cell) || 0),
-          cell => expressionsByCell.has(cell) ? 1.75 : 1,
+          cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
           dimensions,
           canvasEl)
       } else {
         drawUMAP(
           [...cells.values()],
           cell => clusters.get(cell.clusterID)!.color,
-          () => 1.25,
+          () => 1.75,
           dimensions,
           canvasEl)
       }
