@@ -11,41 +11,19 @@ const transcripts = [
   'star',
 ]
 
-const showClusters = [
-  '0',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '10',
-  '11',
-  '12',
-  '13',
-  '14',
-  '15',
-  '16',
-  '17',
-  '18',
-  '19',
-  '20',
-]
-
 function drawHeatmapWithBlocks(
   canvasEl: HTMLCanvasElement,
-  clusters: SeuratClusterMap,
+  clusterMap: SeuratClusterMap,
   scDataset: ReturnType<typeof useSeuratDataset>,
   rect: { width: number, height: number }
 ) {
+    const clusters = [...clusterMap.keys()]
+
     const zScoresByTranscript = new Map(transcripts.map(transcript => {
       const zScoresForTranscript = scDataset.getScaledCountsForTranscript(transcript)
 
       const clusterMap: Map<string, number[]> = new Map(
-        showClusters.map(cluster => [ cluster, [] ]))
+        clusters.map(cluster => [ cluster, [] ]))
 
       zScoresForTranscript.forEach((zScore, cell) => {
         if (!clusterMap.has(cell.clusterID)) return
@@ -66,7 +44,7 @@ function drawHeatmapWithBlocks(
         , PADDING_RIGHT = 16
 
 
-    const w = (rect.width - PADDING_LEFT - PADDING_RIGHT) / showClusters.length
+    const w = (rect.width - PADDING_LEFT - PADDING_RIGHT) / clusters.length
         , h = 200 / transcripts.length
 
     // ctx.scale(.1, .1)
@@ -86,7 +64,7 @@ function drawHeatmapWithBlocks(
 
       Array.from(zScoresByCluster).forEach(([ clusterID, zScoresByCell ], clusterIdx) => {
         if (!clustersDrawn) {
-          const cluster = clusters.get(clusterID)!
+          const cluster = clusterMap.get(clusterID)!
               , clusterStart = prevClusterStart
               , clusterWidth = w
 
