@@ -41,7 +41,10 @@ export default class SingleCellExpression {
     let prevTranscriptID: number | null = null
 
     for (let i = expressionRecordsStart; i < view.byteLength; i += RECORD_SIZE) {
-      const transcriptID = view.getUint16(i, true)
+      // FIXME: I think the sparse matrix output by R is 1-indexed, hence the
+      // `+ 1` here. Maybe we should change that to 0? Or maybe just keep it
+      // this way.
+      const transcriptID = view.getUint16(i, true) + 1
 
       if (offsetStarts[transcriptID] == null) {
         offsetStarts[transcriptID] = i
