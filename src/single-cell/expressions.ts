@@ -1,3 +1,4 @@
+import * as d3 from 'd3'
 import { SingleCellProjectData, SeuratCell } from './types'
 
 const RECORD_SIZE = 6
@@ -65,7 +66,10 @@ export default class SingleCellExpression {
     return offsets
   }
 
-  getExpressionsForTranscript(transcript: number | string) {
+  getExpressionsForTranscript(
+    transcript: number | string,
+    includeZeros: boolean=false
+  ) {
     const transcriptIdx = typeof transcript === 'number'
       ? transcript
       : this._transcriptIdxsByLabel.get(transcript)
@@ -85,14 +89,40 @@ export default class SingleCellExpression {
 
     const expressions = new Map() as Map<SeuratCell, number>
 
+    const expressionsByCellIndex: number[] = []
+
     for (let i = start; i < end; i += RECORD_SIZE) {
       const cellIdx = view.getUint16(i + 2, true)
           , expressionIdx = view.getUint16(i + 4, true)
           , expression = view.getFloat32(FLOATS_START + expressionIdx * 4, true)
 
-      expressions.set(this._cellsArr[cellIdx]!, expression)
+      if (includeZeros) {
+        expressionsByCellIndex[cellIdx] = expression
+      } else {
+        expressions.set(this._cellsArr[cellIdx]!, expression)
+      }
+    }
+
+    if (includeZeros) {
+      this._cellsArr.forEach((cell, i) => {
+        expressions.set(cell, expressionsByCellIndex[i] || 0)
+      })
     }
 
     return expressions
+  }
+
+  getScaledCountsForTranscript(
+    transcript: number | string
+  ) {
+    const expressions = this.getExpressionsForTranscript(transcript, true)
+        , deviation = d3.deviation([...expressions.values()])!
+        , mean = d3.mean([...expressions.values()])!
+
+    return new Map([...expressions].map(([ cell, expression ]) => {
+      const zScore = (expression - mean) / deviation
+
+      return [ cell, zScore ]
+    }))
   }
 }
