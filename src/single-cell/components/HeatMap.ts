@@ -20,7 +20,7 @@ const PADDING_LEFT = 16
     , CLUSTER_LEGEND_GAP = 10
     , TEXT_GAP = 6
     , TRANSCRIPT_LABEL_WIDTH = 120
-    , LEGEND_PADDING_TOP = 20
+    , SCALE_PADDING_TOP = 16
     , SCALE_HEIGHT = 56
     , SCALE_LEGEND_HEIGHT = 10
     , SCALE_TICKS = 1000
@@ -62,9 +62,25 @@ type HeatMapCluster = {
 }
 
 type HeatMapData = {
-  clusters: HeatMapCluster[];
-  transcriptLabels: CanvasText[];
+  grid: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    clusters: HeatMapCluster[];
+  },
+  transcriptLabels: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    labels: CanvasText[];
+  },
   scale: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
     marks: CanvasRect[];
     labels: CanvasText[];
   };
@@ -113,26 +129,28 @@ function heatmapDimensions(
   const grid = {
     x: gridX,
     y: gridY,
-    w: (width - gridX - PADDING_RIGHT) / zScoresByCluster.size,
-    h: (height - gridY - SCALE_HEIGHT) / (transcripts.length + 1),
+    w: (width - gridX - PADDING_RIGHT - GRID_GAP),
+    squareW: (width - gridX - PADDING_RIGHT) / zScoresByCluster.size,
+    h: (height - gridY - SCALE_HEIGHT - SCALE_PADDING_TOP),
+    squareH: (height - gridY - SCALE_HEIGHT - SCALE_PADDING_TOP) / (transcripts.length + 1),
   }
 
   const clusters: HeatMapCluster[] = [...zScoresByCluster.values()].map((cluster, clusterIdx) => {
-    const clusterStartX = grid.x + clusterIdx * grid.w
+    const clusterStartX = grid.x + clusterIdx * grid.squareW
 
     const squares = Array.from(cluster.transcripts).map(([ transcript, zScores ], transcriptIdx) => ({
       transcript,
       x: clusterStartX + GRID_GAP,
-      y: grid.y + transcriptIdx * grid.h,
-      w: grid.w - GRID_GAP,
-      h: grid.h,
+      y: grid.y + transcriptIdx * grid.squareH,
+      w: grid.squareW - GRID_GAP,
+      h: grid.squareH,
       color: colorScale(d3.mean(zScores)!),
     }))
 
     const bar = {
       x: clusterStartX + GRID_GAP,
       y: grid.y - CLUSTER_LEGEND_GAP - CLUSTER_LEGEND_BAR_HEIGHT,
-      w: grid.w - GRID_GAP,
+      w: grid.squareW - GRID_GAP,
       h: CLUSTER_LEGEND_BAR_HEIGHT,
       color: cluster.cluster.color,
     }
@@ -143,7 +161,7 @@ function heatmapDimensions(
       font: '24px sans-serif',
       align: 'center' as CanvasTextAlign,
       baseline: 'alphabetic' as CanvasTextBaseline,
-      x: clusterStartX + grid.w / 2,
+      x: clusterStartX + grid.squareW / 2,
       y: bar.y - TEXT_GAP,
     }
 
@@ -169,7 +187,7 @@ function heatmapDimensions(
   })
 
   const tickScale = d3.scaleLinear()
-    .range([grid.x, grid.x + SCALE_WIDTH])
+    .range([grid.x + GRID_GAP, grid.x + GRID_GAP + SCALE_WIDTH])
     .domain(d3.extent(colorScale.domain()) as [ number, number ])
 
   const scaleTop = height - SCALE_HEIGHT
@@ -178,6 +196,10 @@ function heatmapDimensions(
       , scaleLabels = [ 0, 1, 2 ]
 
   const scale = {
+    x: grid.x + GRID_GAP,
+    y: scaleTop,
+    w: SCALE_WIDTH,
+    h: SCALE_HEIGHT,
     marks: ticks.map(num => ({
       color: colorScale(num),
       x: tickScale(num),
@@ -196,20 +218,32 @@ function heatmapDimensions(
     })),
   }
 
-  const transcriptLabels = transcripts.map((transcript, idx) => ({
+  const labels = transcripts.map((transcript, idx) => ({
     text: transcript,
     color: 'black',
     font: '24px sans-serif',
     align: 'right' as CanvasTextAlign,
     baseline: 'middle' as CanvasTextBaseline,
     x: grid.x - TEXT_GAP + GRID_GAP,
-    y: grid.y + idx * grid.h + grid.h / 2,
+    y: grid.y + idx * grid.squareH + grid.squareH / 2,
   }))
 
   return {
     scale,
-    clusters,
-    transcriptLabels,
+    grid: {
+      x: grid.x + GRID_GAP,
+      y: grid.y,
+      h: grid.h,
+      w: grid.w,
+      clusters,
+    },
+    transcriptLabels: {
+      x: PADDING_LEFT,
+      y: grid.y,
+      w: TRANSCRIPT_LABEL_WIDTH + GRID_GAP + TEXT_GAP,
+      h: grid.h,
+      labels,
+    },
   }
 }
 
@@ -241,7 +275,7 @@ function drawHeatmapWithBlocks(
 
   const ctx = canvasEl.getContext('2d')!
 
-  heatmap.clusters.forEach(cluster => {
+  heatmap.grid.clusters.forEach(cluster => {
     cluster.squares.forEach(square => {
       drawRect(ctx, square)
     })
@@ -250,7 +284,7 @@ function drawHeatmapWithBlocks(
     drawText(ctx, cluster.legend.label)
   })
 
-  heatmap.transcriptLabels.forEach(label => {
+  heatmap.transcriptLabels.labels.forEach(label => {
     drawText(ctx, label)
   })
 
@@ -262,6 +296,12 @@ function drawHeatmapWithBlocks(
     drawText(ctx, text)
   })
 
+  /*
+  ctx.strokeStyle = '1px black'
+  ctx.strokeRect(heatmap.scale.x, heatmap.scale.y, heatmap.scale.w, heatmap.scale.h)
+  ctx.strokeRect(heatmap.grid.x, heatmap.grid.y, heatmap.grid.w, heatmap.grid.h)
+  ctx.strokeRect(heatmap.transcriptLabels.x, heatmap.transcriptLabels.y, heatmap.transcriptLabels.w, heatmap.transcriptLabels.h)
+  */
 }
 
 export default function HeatMap() {
