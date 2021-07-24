@@ -81,13 +81,11 @@ function View() {
 
       h(GridArea, {
         column: '1 / span 12',
-        row: '1 / span 12',
+        row: '1 / span 8',
         style: {
           border: '1px solid darkgreen',
         },
       }, [
-        h(HeatMap),
-        /*
         h(UMAP, {
           onClusterClick(cluster, e) {
             const currentlySelected = currentlySelectedCluster.current
@@ -117,7 +115,16 @@ function View() {
             })
           },
         }),
-        */
+      ]),
+
+      h(GridArea, {
+        column: '1 / span 12',
+        row: '9 / span 4',
+        style: {
+          border: '1px solid darkgreen',
+        },
+      }, [
+        h(HeatMap),
       ]),
 
       h(GridArea, {
