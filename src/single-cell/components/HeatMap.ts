@@ -63,6 +63,14 @@ type HeatMapCluster = {
 
 type HeatMapData = {
   grid: {
+    squareW: number;
+    squareH: number;
+    getTranscriptSquare: (
+      transcript: string,
+      transcriptIdx: number,
+      clusterIdx: number,
+      zScores: number[]
+    ) => HeatMapSquare,
     x: number;
     y: number;
     w: number;
@@ -74,6 +82,10 @@ type HeatMapData = {
     y: number;
     w: number;
     h: number;
+    getTranscriptText: (
+      transcript: string,
+      transcriptIdx: number,
+    ) => CanvasText,
     labels: CanvasText[];
   },
   scale: {
@@ -86,10 +98,12 @@ type HeatMapData = {
   };
 }
 
-type ZScoreByCluster = Map<string, {
+type ClusterZScores = {
   cluster: SeuratCluster;
   transcripts: Map<string, number[]>;
-}>
+}
+
+type ZScoreByCluster = Map<string, ClusterZScores>
 
 function drawRect(
   ctx: CanvasRenderingContext2D,
@@ -135,17 +149,28 @@ function heatmapDimensions(
     squareH: (height - gridY - SCALE_HEIGHT - SCALE_PADDING_TOP) / (transcripts.length + 1),
   }
 
-  const clusters: HeatMapCluster[] = [...zScoresByCluster.values()].map((cluster, clusterIdx) => {
-    const clusterStartX = grid.x + clusterIdx * grid.squareW
+  const getClusterX = (clusterIdx: number) => grid.x + clusterIdx * grid.squareW
 
-    const squares = Array.from(cluster.transcripts).map(([ transcript, zScores ], transcriptIdx) => ({
-      transcript,
-      x: clusterStartX + GRID_GAP,
-      y: grid.y + transcriptIdx * grid.squareH,
-      w: grid.squareW - GRID_GAP,
-      h: grid.squareH,
-      color: colorScale(d3.mean(zScores)!),
-    }))
+  const getTranscriptSquare = (
+    transcript: string,
+    transcriptIdx: number,
+    clusterIdx: number,
+    zScores: number[]
+  ): HeatMapSquare => ({
+    transcript,
+    x: getClusterX(clusterIdx) + GRID_GAP,
+    y: grid.y + transcriptIdx * grid.squareH,
+    w: grid.squareW - GRID_GAP,
+    h: grid.squareH,
+    color: colorScale(d3.mean(zScores)!),
+  })
+
+  const clusters: HeatMapCluster[] = [...zScoresByCluster.values()].map((cluster, clusterIdx) => {
+    const clusterStartX = getClusterX(clusterIdx)
+
+    const squares = Array.from(cluster.transcripts).map(
+      ([ transcript, zScores ], transcriptIdx) =>
+        getTranscriptSquare(transcript, transcriptIdx, clusterIdx, zScores))
 
     const bar = {
       x: clusterStartX + GRID_GAP,
@@ -218,19 +243,28 @@ function heatmapDimensions(
     })),
   }
 
-  const labels = transcripts.map((transcript, idx) => ({
+  const getTranscriptText = (
+    transcript: string,
+    transcriptIdx: number
+  ): CanvasText => ({
     text: transcript,
     color: 'black',
     font: '24px sans-serif',
     align: 'right' as CanvasTextAlign,
     baseline: 'middle' as CanvasTextBaseline,
+    maxWidth: TRANSCRIPT_LABEL_WIDTH,
     x: grid.x - TEXT_GAP + GRID_GAP,
-    y: grid.y + idx * grid.squareH + grid.squareH / 2,
-  }))
+    y: grid.y + transcriptIdx * grid.squareH + grid.squareH / 2,
+  })
+
+  const labels = transcripts.map((transcript, idx) => getTranscriptText(transcript, idx))
 
   return {
     scale,
     grid: {
+      getTranscriptSquare,
+      squareW: grid.squareW,
+      squareH: grid.squareH,
       x: grid.x + GRID_GAP,
       y: grid.y,
       h: grid.h,
@@ -242,6 +276,7 @@ function heatmapDimensions(
       y: grid.y,
       w: TRANSCRIPT_LABEL_WIDTH + GRID_GAP + TEXT_GAP,
       h: grid.h,
+      getTranscriptText,
       labels,
     },
   }
@@ -302,22 +337,77 @@ function drawHeatmapWithBlocks(
   ctx.strokeRect(heatmap.grid.x, heatmap.grid.y, heatmap.grid.w, heatmap.grid.h)
   ctx.strokeRect(heatmap.transcriptLabels.x, heatmap.transcriptLabels.y, heatmap.transcriptLabels.w, heatmap.transcriptLabels.h)
   */
+
+  return function drawTranscriptRow(transcript: string | null) {
+    const { getTranscriptText } = heatmap.transcriptLabels
+        , { getTranscriptSquare } = heatmap.grid
+
+    const clearX = 0
+        , clearY = heatmap.transcriptLabels.y + heatmap.transcriptLabels.h - heatmap.grid.squareH
+        , clearW = rect.width
+        , clearH = heatmap.grid.squareH
+
+    ctx.clearRect(clearX, clearY, clearW, clearH)
+
+    if (transcript === null) return
+
+    // FIXME: This is a repeat of code fetching z-scores above
+    const zScoresForTranscript = scDataset.getScaledCountsForTranscript(transcript)
+        , zScores: ZScoreByCluster = new Map()
+
+    clusters.forEach(cluster => {
+      zScores.set(cluster.id, {
+        cluster,
+        transcripts: new Map([[ transcript, [] ]]),
+      })
+    })
+
+    zScoresForTranscript.forEach((zScore, cell) => {
+      if (!zScores.has(cell.clusterID)) return
+      zScores.get(cell.clusterID)!.transcripts.get(transcript)!.push(zScore)
+    })
+    // end of repeat code
+
+    const transcriptIdx = transcripts.length
+        , text = getTranscriptText(transcript, transcriptIdx)
+
+    const squares = Array.from(zScores.values()).map((clusterZScores, clusterIdx) => {
+      const transcriptZScores = clusterZScores.transcripts.get(transcript)!
+
+      return getTranscriptSquare(transcript, transcriptIdx, clusterIdx, transcriptZScores)
+    })
+
+    squares.forEach(square => {
+      drawRect(ctx, square)
+    })
+
+    drawText(ctx, text)
+  }
 }
 
 export default function HeatMap() {
   const scDataset = useSeuratDataset()
       , [ ref, rect ] = useSized()
       , canvasRef = useRef<HTMLCanvasElement | null>(null)
+      , drawTranscriptRowRef = useRef<((transcript: string | null) => void) | null>(null)
       , view = useView()
       , { clusters } = view.project.data
+
 
   useEffect(() => {
     const canvasEl = canvasRef.current
 
     if (canvasEl === null || rect === null) return
 
-    drawHeatmapWithBlocks(canvasEl, Array.from(clusters.values()), scDataset, rect)
+    const drawTranscriptRow = drawHeatmapWithBlocks(canvasEl, Array.from(clusters.values()), scDataset, rect)
+    drawTranscriptRowRef.current = drawTranscriptRow
   }, [ canvasRef.current ])
+
+  useEffect(() => {
+    const drawTranscriptRow = drawTranscriptRowRef.current
+    if (!drawTranscriptRow) return
+    drawTranscriptRow(view.hoveredTranscript)
+  }, [ view.hoveredTranscript ])
 
   return (
     h('div', {
