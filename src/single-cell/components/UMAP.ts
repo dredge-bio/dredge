@@ -208,11 +208,9 @@ function useEmbeddingsByTranscript(
           sortedCells.push(cell)
         })
 
-        const colorScale = d3.scaleLinear<number, string>()
+        const colorScale = d3.scaleLinear<string>()
           .domain([0, maxExpression])
-          // FIXME: I don't know how to set the range to a color without getting
-          // a TS warning
-          .range(['#ddd', 'red'] as unknown as [number, number])
+          .range(['#ddd', 'red'])
 
         // Sort embeddings so that they are drawn in order of transcript expression
         // level from lowest to highest
