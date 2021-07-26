@@ -125,15 +125,15 @@ if (window.location.protocol.startsWith('http')) {
       getState: store.getState,
     },
     resources,
+    /*
     onRouteChange(route, resource, { dispatch, getState }) {
-      /*
       dispatch(Action.SetTitle(
         resource.makeTitle
           ? resource.makeTitle(getState())
           : null
       ))
-      */
     },
+    */
   }, Application)
 } else {
   Shell = Application

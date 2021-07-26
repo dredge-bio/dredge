@@ -1,3 +1,4 @@
+/*
 import { Route } from 'org-shell'
 import { Box, Button } from 'rebass'
 import h from 'react-hyperscript'
@@ -12,18 +13,6 @@ import {
 import { useAppSelector } from '../hooks'
 
 const { useState } = React
-
-/*
-const h = require('react-hyperscript')
-    , R = require('ramda')
-    , React = require('react')
-    , { connect } = require('react-redux')
-    , { Box, Button } = require('rebass')
-    , Log = require('./Log')
-    , { ProjectSource } = require('../types')
-    , { Route, useResource, x } = require('org-shell')
-    , Link = require('./Link')
-  */
 
 function Code(props: any) {
   return h('code', {
@@ -123,3 +112,4 @@ module.exports = function makeProjectLoading(promptLocal=false) {
     return ProjectLoading
   }
 }
+*/
