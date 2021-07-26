@@ -9,16 +9,22 @@ import { createReducer } from '@reduxjs/toolkit'
 
 import * as actions from './actions'
 
-type ProjectState = Record<ProjectSource, Project>
+type ProjectState = {
+  active: ProjectSource;
+  directory: Record<ProjectSource, Project>;
+}
 
 function initial(): ProjectState {
   return {
-    global: {
-      loaded: false,
-    },
-    local: {
-      loaded: false,
-      config: defaultLocalConfig(),
+    active: 'global',
+    directory: {
+      global: {
+        loaded: false,
+      },
+      local: {
+        loaded: false,
+        config: defaultLocalConfig(),
+      },
     },
   }
 }
@@ -51,7 +57,7 @@ const reducer = createReducer(initial(), builder => {
   builder.addCase(actions.loadProjectConfig.rejected, (state, action) => {
     const { source } = action.meta.arg
 
-    state[source] = {
+    state.directory[source] = {
       loaded: true,
       failed: true,
     }
@@ -61,7 +67,7 @@ const reducer = createReducer(initial(), builder => {
     const { config } = action.payload
         , { source } = action.meta.arg
 
-    state[source] = {
+    state.directory[source] = {
       loaded: false,
       config,
     }
@@ -70,10 +76,9 @@ const reducer = createReducer(initial(), builder => {
   builder.addCase(actions.loadProject.fulfilled, (state, action) => {
     const { source } = action.meta.arg
 
-    return {
-      ...state,
-      [source]: action.payload,
-    }
+    state.directory[source] = action.payload
+    state.active = source
+
   })
 })
 

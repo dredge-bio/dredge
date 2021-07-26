@@ -127,17 +127,22 @@ export default function Header(props: HeaderProps) {
   const { onRequestResize, isLocalFile } = props
       , navigateTo = useNavigation()
 
-  const { view } = useAppSelector(state => ({
-    view: state.view?.default,
-  }))
+  const { project } = useAppSelector(state => {
+    const source = state.projects.active
+        , project = state.projects.directory[source]
+
+    return { project, source }
+  })
 
   let projectLabel = ''
     , hasReadme = false
     , headerText = ''
 
-  if (view) {
-    const project = view.project
-
+  if (
+    project &&
+    !('loaded' in project) &&
+    !('failed' in project)
+  ) {
     projectLabel = project.config.label
     headerText = projectLabel
     hasReadme = !!project.config.readme
@@ -160,6 +165,7 @@ export default function Header(props: HeaderProps) {
           },
         }, [
           headerText,
+          /*
           (!view || view.project.source !== 'local') ? null : (
             h(Button, {
               ml: 2,
@@ -168,6 +174,7 @@ export default function Header(props: HeaderProps) {
               },
             }, '‹ Return to editing')
           ),
+          */
         ]),
       ]),
 

@@ -32,7 +32,7 @@ export const loadProjectConfig = createAsyncAction<
   }
 >('load-project-config', async (args, { dispatch, getState }) => {
   const { source } = args
-      , project = getState().projects[source]
+      , project = getState().projects.directory[source]
 
   if (project && 'config' in project) {
     return { config: project.config }
@@ -196,7 +196,7 @@ export const loadProject = createAsyncAction<
   (BulkProject | SingleCellProject)
 >('load-project', async (args, { dispatch, getState }) => {
   const { source } = args
-      , project = getState().projects[source]
+      , project = getState().projects.directory[source]
 
   if (!project) {
     throw new Error()

@@ -23,16 +23,14 @@ function loadProject(/* title: string */) {
     __: any,
     { dispatch, getState }: { dispatch: AppDispatch, getState: () => AppState }
   ) => {
-    await dispatch(projectActions.loadProjectConfig({
-      source: 'global',
-    }))
+    const source = getState().projects.active
 
-    const project = getState().projects.global
+    await dispatch(projectActions.loadProjectConfig({ source }))
+
+    const project = getState().projects.directory[source]
 
     if (project && 'config' in project) {
-      await dispatch(projectActions.loadProject({
-        source: 'global',
-      }))
+      await dispatch(projectActions.loadProject({ source }))
       /*
       dispatch(Action.LoadProject(ProjectSource.Global))
         .then(() => {

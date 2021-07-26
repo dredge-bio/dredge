@@ -154,7 +154,7 @@ export function LogViewer() {
       , loadingProject = true
       , failedProject = false
 
-    const globalProject = state.projects.global
+    const globalProject = state.projects.directory.global
 
     if ('failed' in globalProject) {
       failedProject = true

@@ -8,7 +8,7 @@ import { View as BulkView } from '@dredge/bulk'
 import { View as SingleCellView } from '@dredge/single-cell'
 
 export function Main() {
-  const project = useAppSelector(state => state.projects.global)
+  const project = useAppSelector(state => state.projects.directory.global)
 
   if ('loaded' in project || 'failed' in project) {
     return (
