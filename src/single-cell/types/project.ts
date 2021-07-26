@@ -9,6 +9,8 @@ export type SingleCellProjectConfig = Config & {
   seuratEmbeddings: string;
   seuratMetadata: string;
   differentialExpressions: string;
+  clusterLevels: string;
+  transcriptImages: string;
 }
 
 export type SeuratCell = {

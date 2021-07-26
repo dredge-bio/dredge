@@ -33,6 +33,7 @@ export const labels: Map<keyof SingleCellConfiguration, string> = new Map([
   ['seuratMetadata', 'Seurat cell metadata'],
   ['transcripts', 'List of transcripts'],
   ['expressionData', 'Transcript expression data'],
+  ['clusterLevels', 'Seurat cluster levels'],
 ])
 
 function mean(vals: number[]) {
