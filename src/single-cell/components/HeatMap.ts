@@ -2,7 +2,7 @@ import h from 'react-hyperscript'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import { useEffect, useRef, useState } from 'react'
-import { useSized } from '@dredge/main'
+import { useSized, formatNumber } from '@dredge/main'
 import { useView, useSeuratDataset } from '../hooks'
 import { SeuratCluster } from '../types'
 
@@ -47,6 +47,7 @@ type CanvasRect = {
 type HeatMapSquare = CanvasRect & {
   cluster: SeuratCluster;
   transcript: string;
+  meanZScore: number;
 }
 
 type HeatMapCluster = {
@@ -168,15 +169,20 @@ function heatmapDimensions(
     cluster: SeuratCluster,
     clusterIdx: number,
     zScores: number[]
-  ): HeatMapSquare => ({
-    transcript,
-    cluster,
-    x: getClusterX(clusterIdx) + GRID_GAP,
-    y: grid.y + transcriptIdx * grid.squareH,
-    w: grid.squareW - GRID_GAP,
-    h: grid.squareH,
-    color: colorScale(d3.mean(zScores)!),
-  })
+  ): HeatMapSquare => {
+    const meanZScore = d3.mean(zScores)!
+
+    return {
+      transcript,
+      cluster,
+      meanZScore,
+      x: getClusterX(clusterIdx) + GRID_GAP,
+      y: grid.y + transcriptIdx * grid.squareH,
+      w: grid.squareW - GRID_GAP,
+      h: grid.squareH,
+      color: colorScale(meanZScore),
+    }
+  }
 
   const clusters: HeatMapCluster[] = [...zScoresByCluster.values()].map((cluster, clusterIdx) => {
     const clusterStartX = getClusterX(clusterIdx)
@@ -570,6 +576,7 @@ export default function HeatMap() {
               onMouseLeave() {
                 setHoveredSquare(null)
               },
+              title: `${square.transcript}: ${formatNumber(square.meanZScore)}`,
               style: {
                 position: 'absolute',
                 top: square.y,
