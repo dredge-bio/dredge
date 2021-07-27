@@ -5,21 +5,17 @@ import { useSized } from '@dredge/main'
 import { useView, useSeuratDataset } from '../hooks'
 import { SeuratCluster } from '../types'
 
-const transcripts = [
-  'ttc36',
-  'sap3',
-  'star',
-]
-
 const PADDING_LEFT = 16
     , PADDING_RIGHT = 16
     , PADDING_TOP = 16
     , CLUSTER_LEGEND_HEIGHT = 60
     , CLUSTER_LEGEND_BAR_HEIGHT = 16
+    , GRID_MAX_SQUARE_HEIGHT = 30
     , GRID_GAP = 3
     , CLUSTER_LEGEND_GAP = 10
     , TEXT_GAP = 6
     , TRANSCRIPT_LABEL_WIDTH = 120
+    , TRANSCRIPT_LABEL_DEFAULT_FONT_SIZE = 20
     , SCALE_PADDING_TOP = 16
     , SCALE_HEIGHT = 56
     , SCALE_LEGEND_HEIGHT = 10
@@ -149,6 +145,10 @@ function heatmapDimensions(
     squareH: (height - gridY - SCALE_HEIGHT - SCALE_PADDING_TOP) / (transcripts.length + 1),
   }
 
+  if (grid.squareH > GRID_MAX_SQUARE_HEIGHT) {
+    grid.squareH = GRID_MAX_SQUARE_HEIGHT
+  }
+
   const getClusterX = (clusterIdx: number) => grid.x + clusterIdx * grid.squareW
 
   const getTranscriptSquare = (
@@ -243,13 +243,19 @@ function heatmapDimensions(
     })),
   }
 
+  let fontSize = TRANSCRIPT_LABEL_DEFAULT_FONT_SIZE
+
+  if (grid.squareH + 2 < fontSize) {
+    fontSize = grid.squareH + 2
+  }
+
   const getTranscriptText = (
     transcript: string,
     transcriptIdx: number
   ): CanvasText => ({
     text: transcript,
     color: 'black',
-    font: '24px sans-serif',
+    font: `${fontSize}px SourceSansPro`,
     align: 'right' as CanvasTextAlign,
     baseline: 'middle' as CanvasTextBaseline,
     maxWidth: TRANSCRIPT_LABEL_WIDTH,
@@ -285,6 +291,7 @@ function heatmapDimensions(
 function drawHeatmapWithBlocks(
   canvasEl: HTMLCanvasElement,
   clusters: SeuratCluster[],
+  transcripts: string[],
   scDataset: ReturnType<typeof useSeuratDataset>,
   rect: { width: number, height: number }
 ) {
@@ -309,6 +316,8 @@ function drawHeatmapWithBlocks(
   const heatmap = heatmapDimensions(rect, transcripts, zScores)
 
   const ctx = canvasEl.getContext('2d')!
+
+  ctx.clearRect(0, 0, rect.width, rect.height)
 
   heatmap.grid.clusters.forEach(cluster => {
     cluster.squares.forEach(square => {
@@ -338,16 +347,12 @@ function drawHeatmapWithBlocks(
   ctx.strokeRect(heatmap.transcriptLabels.x, heatmap.transcriptLabels.y, heatmap.transcriptLabels.w, heatmap.transcriptLabels.h)
   */
 
-  return function drawTranscriptRow(transcript: string | null) {
-    const { getTranscriptText } = heatmap.transcriptLabels
+  return function drawTranscriptRow(canvasEl: HTMLCanvasElement, transcript: string | null) {
+    const ctx = canvasEl.getContext('2d')!
+        , { getTranscriptText } = heatmap.transcriptLabels
         , { getTranscriptSquare } = heatmap.grid
 
-    const clearX = 0
-        , clearY = heatmap.transcriptLabels.y + heatmap.transcriptLabels.h - heatmap.grid.squareH
-        , clearW = rect.width
-        , clearH = heatmap.grid.squareH
-
-    ctx.clearRect(clearX, clearY, clearW, clearH)
+    ctx.clearRect(0, 0, rect.width, rect.height)
 
     if (transcript === null) return
 
@@ -389,24 +394,42 @@ export default function HeatMap() {
   const scDataset = useSeuratDataset()
       , [ ref, rect ] = useSized()
       , canvasRef = useRef<HTMLCanvasElement | null>(null)
-      , drawTranscriptRowRef = useRef<((transcript: string | null) => void) | null>(null)
+      , hoverCanvasRef = useRef<HTMLCanvasElement | null>(null)
+      , drawTranscriptRowRef = useRef<((canvasEl: HTMLCanvasElement, transcript: string | null) => void) | null>(null)
       , view = useView()
       , { clusters } = view.project.data
 
 
   useEffect(() => {
     const canvasEl = canvasRef.current
+        , hoverCanvasEl = hoverCanvasRef.current
 
-    if (canvasEl === null || rect === null) return
+    if (canvasEl === null || hoverCanvasEl === null || rect === null) return
 
-    const drawTranscriptRow = drawHeatmapWithBlocks(canvasEl, Array.from(clusters.values()), scDataset, rect)
+    const drawTranscriptRow = drawHeatmapWithBlocks(
+      canvasEl,
+      Array.from(clusters.values()),
+      Array.from(view.selectedTranscripts),
+      scDataset,
+      rect)
+
+    drawTranscriptRow(hoverCanvasEl, null)
+
     drawTranscriptRowRef.current = drawTranscriptRow
-  }, [ canvasRef.current ])
+
+  // FIXME: add rect to effect dependencies
+  }, [ canvasRef.current, view.selectedTranscripts ])
 
   useEffect(() => {
+    const canvasEl = hoverCanvasRef.current
+
+    if (!canvasEl) return
+
     const drawTranscriptRow = drawTranscriptRowRef.current
+
     if (!drawTranscriptRow) return
-    drawTranscriptRow(view.hoveredTranscript)
+
+    drawTranscriptRow(canvasEl, view.hoveredTranscript)
   }, [ view.hoveredTranscript ])
 
   return (
@@ -415,10 +438,28 @@ export default function HeatMap() {
       style: {
         background: 'white',
         height: '100%',
+        position: 'relative',
       },
     }, [
       rect && h('canvas', {
         ref: canvasRef,
+        style: {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+        },
+        x: 0,
+        y: 0,
+        height: rect.height,
+        width: rect.width,
+      }),
+      rect && h('canvas', {
+        ref: hoverCanvasRef,
+        style: {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+        },
         x: 0,
         y: 0,
         height: rect.height,
