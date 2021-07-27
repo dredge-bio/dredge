@@ -9,8 +9,9 @@ import padding from '@dredge/bulk/components/MAPlot/padding'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
 import { useSized } from '@dredge/main'
 
+import * as viewActions from '../actions'
 import SingleCellExpression from '../expressions'
-import { useView, useSeuratDataset } from '../hooks'
+import { useView, useSeuratDataset, useViewDispatch } from '../hooks'
 
 import {
   SeuratCell,
@@ -143,6 +144,8 @@ function useInteractionLayer(
   onClusterClick: (cluster: string | null, e: MouseEvent) => void
 ) {
   const prevHoveredCluster = useRef<string | null>(null)
+      , dispatch = useViewDispatch()
+      , { project } = useView()
 
   useEffect(() => {
     const svgEl = svgRef.current
@@ -165,7 +168,19 @@ function useInteractionLayer(
         umap1,
         umap2)
 
-      prevHoveredCluster.current = nearestCell && nearestCell.clusterID
+      let nextCluster = null
+
+      if (nearestCell) {
+        nextCluster = nearestCell.clusterID
+      }
+
+      if (prevHoveredCluster.current !== nextCluster) {
+        dispatch(viewActions.setHoveredCluster({
+          cluster: nextCluster === null ? null : project.data.clusters.get(nextCluster)!,
+        }))
+      }
+
+      prevHoveredCluster.current = nextCluster
 
       onCellHover(nearestCell)
     })

@@ -446,10 +446,14 @@ export default function HeatMap() {
       , [ heatmap, setHeatmap ] = useState<HeatMapData | null>(null)
       , [ hoveredSquare, setHoveredSquare ] = useState<HeatMapSquare | null>(null)
       , hoveredGridTranscript = hoveredSquare && heatmap && heatmap.transcriptPositions.get(hoveredSquare.transcript)!
-      , hoveredGridCluster = hoveredSquare && heatmap && heatmap.clusterPositions.get(hoveredSquare.cluster)!
       , view = useView()
       , { clusters } = view.project.data
 
+  let hoveredGridCluster = hoveredSquare && heatmap && heatmap.clusterPositions.get(hoveredSquare.cluster)!
+
+  if (heatmap && !hoveredSquare && view.hoveredCluster) {
+    hoveredGridCluster = heatmap.clusterPositions.get(view.hoveredCluster)!
+  }
 
   useEffect(() => {
     const canvasEl = canvasRef.current

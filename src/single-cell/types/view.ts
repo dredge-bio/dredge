@@ -6,7 +6,7 @@ import {
 
 import { SingleCellProject } from '@dredge/main'
 
-import { ClusterDGE } from './project'
+import { ClusterDGE, SeuratCluster } from './project'
 
 export type TranscriptWithClusterDGE = {
   transcript: {
@@ -25,6 +25,7 @@ export type SingleCellViewState = BaseView & TranscriptView & {
   project: SingleCellProject;
   selectedClusters: Set<string> | null;
   selectedTranscripts: Set<string>;
+  hoveredCluster: SeuratCluster | null;
 
   // FIXME: make nullable?
   displayedTranscriptsWithClusters: TranscriptWithClusterDGE[];

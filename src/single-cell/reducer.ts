@@ -18,6 +18,7 @@ function blankView(project: SingleCellProject): SingleCellViewState {
     selectedTranscripts: new Set(),
     savedTranscripts: new Set(),
 
+    hoveredCluster: null,
     selectedClusters: null,
     displayedTranscriptsWithClusters: [],
 
@@ -28,6 +29,11 @@ function blankView(project: SingleCellProject): SingleCellViewState {
 
 const createViewReducer = (project: SingleCellProject) => createReducer(blankView(project), builder => {
   builder
+    .addCase(viewActions.setHoveredCluster, (state, action) => {
+      const { cluster } = action.payload
+
+      state.hoveredCluster = cluster
+    })
     .addCase(viewActions.setSelectedClusters, (state, action) => {
       const { clusters } = action.payload
 
