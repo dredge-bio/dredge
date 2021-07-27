@@ -1,6 +1,7 @@
 import h from 'react-hyperscript'
+import styled from 'styled-components'
 import * as d3 from 'd3'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSized } from '@dredge/main'
 import { useView, useSeuratDataset } from '../hooks'
 import { SeuratCluster } from '../types'
@@ -21,6 +22,8 @@ const PADDING_LEFT = 16
     , SCALE_LEGEND_HEIGHT = 10
     , SCALE_TICKS = 1000
     , SCALE_WIDTH = 300
+    , GRID_HOVER_OUTLINE_WIDTH = 3
+    , GRID_HOVER_OUTLINE_COLOR = 'black'
 
 type CanvasText = {
   text: string;
@@ -42,6 +45,7 @@ type CanvasRect = {
 }
 
 type HeatMapSquare = CanvasRect & {
+  cluster: SeuratCluster;
   transcript: string;
 }
 
@@ -58,12 +62,17 @@ type HeatMapCluster = {
 }
 
 type HeatMapData = {
+  clusterPositions: Map<SeuratCluster, CanvasRect>,
+  transcriptPositions: Map<string, CanvasRect>,
   grid: {
     squareW: number;
     squareH: number;
+
+    // FIXME: clusterIdx parameter is not necessary if we already have the cluster list
     getTranscriptSquare: (
       transcript: string,
       transcriptIdx: number,
+      cluster: SeuratCluster,
       clusterIdx: number,
       zScores: number[]
     ) => HeatMapSquare,
@@ -127,6 +136,8 @@ function heatmapDimensions(
   zScoresByCluster: ZScoreByCluster
 ): HeatMapData {
   const { height, width } = rect
+      , clusterPositions: Map<SeuratCluster, CanvasRect> = new Map()
+      , transcriptPositions: Map<string, CanvasRect> = new Map()
 
   const colorScale = d3.scaleLinear<string>()
     .domain([ -1, 1, 2 ])
@@ -154,10 +165,12 @@ function heatmapDimensions(
   const getTranscriptSquare = (
     transcript: string,
     transcriptIdx: number,
+    cluster: SeuratCluster,
     clusterIdx: number,
     zScores: number[]
   ): HeatMapSquare => ({
     transcript,
+    cluster,
     x: getClusterX(clusterIdx) + GRID_GAP,
     y: grid.y + transcriptIdx * grid.squareH,
     w: grid.squareW - GRID_GAP,
@@ -170,7 +183,7 @@ function heatmapDimensions(
 
     const squares = Array.from(cluster.transcripts).map(
       ([ transcript, zScores ], transcriptIdx) =>
-        getTranscriptSquare(transcript, transcriptIdx, clusterIdx, zScores))
+        getTranscriptSquare(transcript, transcriptIdx, cluster.cluster, clusterIdx, zScores))
 
     const bar = {
       x: clusterStartX + GRID_GAP,
@@ -197,6 +210,14 @@ function heatmapDimensions(
     if (lastSquare) {
       maxY = lastSquare.y + lastSquare.h
     }
+
+    clusterPositions.set(cluster.cluster, {
+      color: 'black',
+      x: bar.x,
+      y: bar.y,
+      w: bar.w,
+      h: maxY - bar.y,
+    })
 
     return {
       x: bar.x,
@@ -265,7 +286,24 @@ function heatmapDimensions(
 
   const labels = transcripts.map((transcript, idx) => getTranscriptText(transcript, idx))
 
+  labels.forEach((text, i) => {
+    const transcriptSquares = clusters.map(cluster => cluster.squares[i]!)
+        , finalTranscriptSquare = transcriptSquares.slice(-1)[0]!
+        , minX = transcriptSquares[0]!.x
+        , maxX = finalTranscriptSquare.x + finalTranscriptSquare.w
+
+    transcriptPositions.set(finalTranscriptSquare.transcript, {
+      color: 'black',
+      x: minX,
+      y: finalTranscriptSquare.y,
+      w: maxX - minX,
+      h: finalTranscriptSquare.h,
+    })
+  })
+
   return {
+    clusterPositions,
+    transcriptPositions,
     scale,
     grid: {
       getTranscriptSquare,
@@ -347,7 +385,7 @@ function drawHeatmapWithBlocks(
   ctx.strokeRect(heatmap.transcriptLabels.x, heatmap.transcriptLabels.y, heatmap.transcriptLabels.w, heatmap.transcriptLabels.h)
   */
 
-  return function drawTranscriptRow(canvasEl: HTMLCanvasElement, transcript: string | null) {
+  function drawTranscriptRow(canvasEl: HTMLCanvasElement, transcript: string | null) {
     const ctx = canvasEl.getContext('2d')!
         , { getTranscriptText } = heatmap.transcriptLabels
         , { getTranscriptSquare } = heatmap.grid
@@ -379,7 +417,7 @@ function drawHeatmapWithBlocks(
     const squares = Array.from(zScores.values()).map((clusterZScores, clusterIdx) => {
       const transcriptZScores = clusterZScores.transcripts.get(transcript)!
 
-      return getTranscriptSquare(transcript, transcriptIdx, clusterIdx, transcriptZScores)
+      return getTranscriptSquare(transcript, transcriptIdx, clusterZScores.cluster, clusterIdx, transcriptZScores)
     })
 
     squares.forEach(square => {
@@ -388,7 +426,16 @@ function drawHeatmapWithBlocks(
 
     drawText(ctx, text)
   }
+
+  return {
+    drawTranscriptRow,
+    heatmap,
+  }
 }
+
+const GridOverlayWrapper = styled.div`
+  position: absolute;
+`
 
 export default function HeatMap() {
   const scDataset = useSeuratDataset()
@@ -396,6 +443,10 @@ export default function HeatMap() {
       , canvasRef = useRef<HTMLCanvasElement | null>(null)
       , hoverCanvasRef = useRef<HTMLCanvasElement | null>(null)
       , drawTranscriptRowRef = useRef<((canvasEl: HTMLCanvasElement, transcript: string | null) => void) | null>(null)
+      , [ heatmap, setHeatmap ] = useState<HeatMapData | null>(null)
+      , [ hoveredSquare, setHoveredSquare ] = useState<HeatMapSquare | null>(null)
+      , hoveredGridTranscript = hoveredSquare && heatmap && heatmap.transcriptPositions.get(hoveredSquare.transcript)!
+      , hoveredGridCluster = hoveredSquare && heatmap && heatmap.clusterPositions.get(hoveredSquare.cluster)!
       , view = useView()
       , { clusters } = view.project.data
 
@@ -406,7 +457,7 @@ export default function HeatMap() {
 
     if (canvasEl === null || hoverCanvasEl === null || rect === null) return
 
-    const drawTranscriptRow = drawHeatmapWithBlocks(
+    const { drawTranscriptRow, heatmap } = drawHeatmapWithBlocks(
       canvasEl,
       Array.from(clusters.values()),
       Array.from(view.selectedTranscripts),
@@ -416,6 +467,8 @@ export default function HeatMap() {
     drawTranscriptRow(hoverCanvasEl, null)
 
     drawTranscriptRowRef.current = drawTranscriptRow
+
+    setHeatmap(heatmap)
 
   // FIXME: add rect to effect dependencies
   }, [ canvasRef.current, view.selectedTranscripts ])
@@ -465,6 +518,57 @@ export default function HeatMap() {
         height: rect.height,
         width: rect.width,
       }),
+
+      h(GridOverlayWrapper, [
+        hoveredGridTranscript && (
+          h('div', {
+            className: 'grid-overlay-transcript',
+            style: {
+              position: 'absolute',
+              left: hoveredGridTranscript.x - GRID_HOVER_OUTLINE_WIDTH,
+              width: hoveredGridTranscript.w + 2 * GRID_HOVER_OUTLINE_WIDTH,
+              top: hoveredGridTranscript.y - GRID_HOVER_OUTLINE_WIDTH,
+              height: hoveredGridTranscript.h + 2 * GRID_HOVER_OUTLINE_WIDTH,
+              border: `${GRID_HOVER_OUTLINE_WIDTH}px solid ${GRID_HOVER_OUTLINE_COLOR}`,
+            },
+          })
+        ),
+
+        hoveredGridCluster && (
+          h('div', {
+            className: 'grid-overlay-cluster',
+            style: {
+              position: 'absolute',
+              left: hoveredGridCluster.x - GRID_HOVER_OUTLINE_WIDTH,
+              width: hoveredGridCluster.w + 2 * GRID_HOVER_OUTLINE_WIDTH,
+              top: hoveredGridCluster.y - GRID_HOVER_OUTLINE_WIDTH,
+              height: hoveredGridCluster.h + 2 * GRID_HOVER_OUTLINE_WIDTH,
+              border: `${GRID_HOVER_OUTLINE_WIDTH}px solid ${GRID_HOVER_OUTLINE_COLOR}`,
+            },
+          })
+        ),
+
+        heatmap && h('div', heatmap.grid.clusters.flatMap(x => x.squares).map(
+          square => (
+            h('div', {
+              onMouseEnter() {
+                setHoveredSquare(square)
+              },
+              onMouseLeave() {
+                setHoveredSquare(null)
+              },
+              style: {
+                position: 'absolute',
+                top: square.y,
+                left: square.x - GRID_GAP,
+                width: square.w + 2 * GRID_GAP,
+                height: square.h,
+              },
+            })
+          )
+        )),
+
+      ]),
     ])
   )
 }
