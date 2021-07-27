@@ -24,6 +24,7 @@ export type SingleCellSortPath =
 export type SingleCellViewState = BaseView & TranscriptView & {
   project: SingleCellProject;
   selectedClusters: Set<string> | null;
+  selectedTranscripts: Set<string>;
 
   // FIXME: make nullable?
   displayedTranscriptsWithClusters: TranscriptWithClusterDGE[];

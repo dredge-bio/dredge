@@ -50,9 +50,9 @@ type TableData<Context, ItemData, SortPath> = {
   updateSort: (sortPath: SortPath, order: TableSortOrder) => void;
 
   rowClassName?: string | ((data: ItemData, index: number) => string);
-  onRowClick?: (data: ItemData, index: number) => void;
-  onRowEnter?: (data: ItemData, index: number) => void;
-  onRowLeave?: (data: ItemData, index: number) => void;
+  onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
+  onRowEnter?: (data: ItemData, index: number, event: MouseEvent) => void;
+  onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
 
   rowHeight?: number;
   renderHeaderRows?: (
@@ -67,9 +67,9 @@ type RowProps<Context, ItemData, SortPath> = {
     data: ItemData;
     columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
     rowClassName?: string | ((data: ItemData, index: number) => string);
-    onRowClick?: (data: ItemData, index: number) => void;
-    onRowEnter?: (data: ItemData, index: number) => void;
-    onRowLeave?: (data: ItemData, index: number) => void;
+    onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
+    onRowEnter?: (data: ItemData, index: number, event: MouseEvent) => void;
+    onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
   },
   index: number;
   style: React.CSSProperties;
@@ -121,9 +121,9 @@ const TableRow = memo(function TableRow<Context, ItemData, SortPath>(props: RowP
   return (
     React.createElement('div', {
       className,
-      onClick: onRowClick && (() => onRowClick(data, index)),
-      onMouseEnter: onRowEnter && (() => onRowEnter(data, index)),
-      onMouseLeave: onRowLeave && (() => onRowLeave(data, index)),
+      onClick: onRowClick && ((e: MouseEvent) => onRowClick(data, index, e)),
+      onMouseEnter: onRowEnter && ((e: MouseEvent) => onRowEnter(data, index, e)),
+      onMouseLeave: onRowLeave && ((e: MouseEvent) => onRowLeave(data, index, e)),
       style,
     }, (columns || []).map(column => (
       React.createElement(TableCell, {

@@ -20,6 +20,7 @@ import {
 type TableData = {
   displayedTranscripts: SingleCellViewState["displayedTranscriptsWithClusters"];
   focusedTranscript: SingleCellViewState["focusedTranscript"];
+  selectedTranscripts: SingleCellViewState["selectedTranscripts"];
   transcriptImages: TranscriptImageMap;
 }
 
@@ -152,7 +153,7 @@ function getColumns(width: number, view: SingleCellViewState) {
 export default function SingleCellTable() {
   const view = useView()
       , dispatch = useViewDispatch()
-      , { focusedTranscript, project } = view
+      , { selectedTranscripts, focusedTranscript, project } = view
       , { transcriptImages } = project.data
       , displayedTranscripts = view.displayedTranscriptsWithClusters
 
@@ -205,20 +206,45 @@ export default function SingleCellTable() {
 
           let className = 'sc-table-row'
 
-          if (transcript.id === data.focusedTranscript) {
+          if (data.selectedTranscripts.has(transcript.id)) {
             className += ' sc-table-row__focused'
           }
 
           return className
         },
-        onRowClick(data, index) {
-          const { transcript } = data.displayedTranscripts[index]!
+        onRowClick(data, index, e) {
+          const { ctrlKey } = e
+              , { selectedTranscripts } = data
+              , { transcript } = data.displayedTranscripts[index]!
 
-          dispatch(viewActions.setFocusedTranscript({
-            transcript: data.focusedTranscript === transcript.id
-              ? null
-              : transcript.id,
-          }))
+          let nextFocusedTranscript: string | null = transcript.id
+            , nextSelectedTranscripts = new Set(selectedTranscripts)
+
+          if (ctrlKey) {
+            if (selectedTranscripts.has(transcript.id)) {
+              nextSelectedTranscripts.delete(transcript.id)
+
+              const focusNext = Array.from(nextFocusedTranscript).slice(-1)[0]
+
+              if (focusNext) {
+                nextFocusedTranscript = focusNext
+              } else {
+                nextFocusedTranscript = null
+              }
+            } else {
+              nextSelectedTranscripts.add(transcript.id)
+            }
+          } else {
+            if (selectedTranscripts.has(transcript.id)) {
+              nextSelectedTranscripts = new Set()
+              nextFocusedTranscript = null
+            } else {
+              nextSelectedTranscripts = new Set([transcript.id])
+            }
+          }
+
+          dispatch(viewActions.setFocusedTranscript({ transcript: nextFocusedTranscript }))
+          dispatch(viewActions.setSelectedTranscripts({ transcripts: nextSelectedTranscripts }))
         },
         onRowEnter(data, index) {
           const { transcript } = data.displayedTranscripts[index]!
@@ -236,9 +262,10 @@ export default function SingleCellTable() {
         context: view,
         getColumns,
         itemData: {
-          transcriptImages,
           displayedTranscripts,
+          transcriptImages,
           focusedTranscript,
+          selectedTranscripts,
         },
         itemCount: displayedTranscripts.length,
       }),

@@ -103,6 +103,10 @@ export const setSelectedClusters = createAction<
   { clusters: Set<string> | null }
 >('set-selected-clusters')
 
+export const setSelectedTranscripts = createAction<
+  { transcripts: Set<string> }
+>('set-selected-transcripts')
+
 export const setViewSort = createAction<
   {
     path: SingleCellSortPath,

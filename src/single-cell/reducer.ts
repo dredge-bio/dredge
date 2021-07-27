@@ -15,6 +15,7 @@ function blankView(project: SingleCellProject): SingleCellViewState {
     hoveredTranscript: null,
     hoveredTreatment: null,
 
+    selectedTranscripts: new Set(),
     savedTranscripts: new Set(),
 
     selectedClusters: null,
@@ -31,6 +32,11 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
       const { clusters } = action.payload
 
       state.selectedClusters = clusters
+    })
+    .addCase(viewActions.setSelectedTranscripts, (state, action) => {
+      const { transcripts } = action.payload
+
+      state.selectedTranscripts = transcripts
     })
     .addCase(viewActions.updateDisplayedSingleCellTranscripts.fulfilled, (state, action) => {
       const { displayedTranscripts } = action.payload
