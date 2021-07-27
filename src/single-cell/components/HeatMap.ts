@@ -445,7 +445,6 @@ export default function HeatMap() {
       , drawTranscriptRowRef = useRef<((canvasEl: HTMLCanvasElement, transcript: string | null) => void) | null>(null)
       , [ heatmap, setHeatmap ] = useState<HeatMapData | null>(null)
       , [ hoveredSquare, setHoveredSquare ] = useState<HeatMapSquare | null>(null)
-      , hoveredGridTranscript = hoveredSquare && heatmap && heatmap.transcriptPositions.get(hoveredSquare.transcript)!
       , view = useView()
       , { clusters } = view.project.data
 
@@ -453,6 +452,12 @@ export default function HeatMap() {
 
   if (heatmap && !hoveredSquare && view.hoveredCluster) {
     hoveredGridCluster = heatmap.clusterPositions.get(view.hoveredCluster)!
+  }
+
+  let hoveredGridTranscript = hoveredSquare && heatmap && heatmap.transcriptPositions.get(hoveredSquare.transcript)!
+
+  if (heatmap && view.hoveredTranscript && heatmap.transcriptPositions.has(view.hoveredTranscript)) {
+    hoveredGridTranscript = heatmap.transcriptPositions.get(view.hoveredTranscript)!
   }
 
   useEffect(() => {
@@ -486,7 +491,11 @@ export default function HeatMap() {
 
     if (!drawTranscriptRow) return
 
-    drawTranscriptRow(canvasEl, view.hoveredTranscript)
+    if (heatmap && view.hoveredTranscript && heatmap.transcriptPositions.has(view.hoveredTranscript)) {
+      drawTranscriptRow(canvasEl, null)
+    } else {
+      drawTranscriptRow(canvasEl, view.hoveredTranscript)
+    }
   }, [ view.hoveredTranscript ])
 
   return (
