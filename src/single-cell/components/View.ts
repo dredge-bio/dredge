@@ -74,6 +74,17 @@ function View() {
     view.order,
   ])
 
+  // Set selected transcripts once from options
+  useEffect(() => {
+    const { selectedTranscripts } = options
+
+    if (selectedTranscripts.size) {
+      dispatch(viewActions.setSelectedTranscripts({
+        transcripts: selectedTranscripts,
+      }))
+    }
+  }, [])
+
   currentlySelectedCluster.current = view.selectedClusters
 
   return (

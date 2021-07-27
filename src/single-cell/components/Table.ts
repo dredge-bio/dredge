@@ -8,7 +8,7 @@ import {
 
 import { formatNumber } from '@dredge/main'
 
-import { useView, useViewDispatch } from '../hooks'
+import { useView, useViewDispatch, useViewOptions } from '../hooks'
 import * as viewActions from '../actions'
 
 import {
@@ -153,6 +153,7 @@ function getColumns(width: number, view: SingleCellViewState) {
 export default function SingleCellTable() {
   const view = useView()
       , dispatch = useViewDispatch()
+      , [ , setOptions ] = useViewOptions()
       , { selectedTranscripts, focusedTranscript, project } = view
       , { transcriptImages } = project.data
       , displayedTranscripts = view.displayedTranscriptsWithClusters
@@ -245,6 +246,10 @@ export default function SingleCellTable() {
 
           dispatch(viewActions.setFocusedTranscript({ transcript: nextFocusedTranscript }))
           dispatch(viewActions.setSelectedTranscripts({ transcripts: nextSelectedTranscripts }))
+
+          setOptions({
+            selectedTranscripts: nextSelectedTranscripts,
+          })
         },
         onRowEnter(data, index) {
           const { transcript } = data.displayedTranscripts[index]!
