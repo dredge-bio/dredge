@@ -15,6 +15,14 @@ export function count<T>(items: T[]) {
   return counts
 }
 
+type Point = [x: number, y: number]
+
+export function distance(p1: Point, p2: Point) {
+  return Math.sqrt(
+    Math.pow(p2[0] - p1[0], 2) +
+    Math.pow(p2[1] - p2[1], 2))
+}
+
 export function shallowEquals(a: unknown, b: unknown) {
   if (typeof a === 'object' && typeof b === 'object') {
     if (a === null) return a === b

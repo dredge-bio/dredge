@@ -7,7 +7,7 @@ import throttle from 'throttleit'
 
 import padding from '@dredge/bulk/components/MAPlot/padding'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
-import { useSized } from '@dredge/main'
+import { useSized, distance } from '@dredge/main'
 
 import * as viewActions from '../actions'
 import SingleCellExpression from '../expressions'
@@ -60,6 +60,8 @@ function drawClusterLabel(
 
   ctx.font = '36px sans-serif'
   ctx.fillStyle = 'black'
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
 
   ctx.fillText(
     cluster.label,
@@ -423,6 +425,32 @@ function SingleCell(props: SingleCellProps) {
           clusters.get(cell.clusterID)!,
           dimensions,
           canvasEl)
+
+        const { xScale, yScale } = dimensions
+            , ctx = canvasEl.getContext('2d')!
+            , cluster = clusters.get(cell.clusterID)!
+
+        cluster.cellClusters.forEach(cellCluster => {
+          const { midpoint } = cellCluster
+              , x = xScale(midpoint[0])
+              , y = yScale(midpoint[1])
+
+          let r = d3.max(
+            cellCluster.cells,
+            d => distance([ x, y ], [ xScale(d.umap1), yScale(d.umap2) ]))!
+
+          // Increase the radius by 10px of padding so that there is some space
+          // between the cells and the outline
+          r += 10
+
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, 2 * Math.PI, true);
+          ctx.strokeStyle = '2px black'
+          ctx.fillStyle = 'transparent';
+          ctx.closePath();
+          ctx.stroke()
+        })
+
       }
 
       hoveredCluster.current = cell && cell.clusterID

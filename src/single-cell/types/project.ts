@@ -25,6 +25,10 @@ export type SeuratCluster = {
   id: string;
   label: string;
   cells: Array<SeuratCell>;
+  cellClusters: {
+    cells: Array<SeuratCell>;
+    midpoint: [number, number];
+  }[];
   midpoint: [number, number];
   color: string,
 }

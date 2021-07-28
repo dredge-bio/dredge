@@ -1,6 +1,8 @@
+import * as R from 'ramda'
 import * as d3 from 'd3'
 
 import * as singleCellFields from './fields'
+import { DBSCAN } from 'density-clustering'
 
 import {
   fields as commonFields,
@@ -12,6 +14,7 @@ import { CreateFieldLogger } from '@dredge/log'
 import { SingleCellConfiguration } from './config'
 
 import {
+  delay,
   ProjectSource,
   SingleCellProject
 } from '@dredge/main'
@@ -100,17 +103,35 @@ function getClusters(clusterLevels: string[], cellMap: SeuratCellMap) {
     cellsByCluster.get(clusterID)!.push(cell)
   }
 
-  const clustersWithoutColor = new Map([...cellsByCluster].map(([ clusterID, cells ]) => [
-    clusterID, {
-      id: clusterID,
-      label: clusterID,
-      cells,
-      midpoint: [
-        mean(cells.map(x => x.umap1)),
-        mean(cells.map(x => x.umap2)),
-      ] as [number, number],
-    },
-  ]))
+  const clustersWithoutColor = new Map([...cellsByCluster].map(([ clusterID, cells ]) => {
+    const dbscan = new DBSCAN()
+
+    const cellPositions = cells.map(cell => [cell.umap1, cell.umap2])
+
+    const cellClusters = dbscan.run(cellPositions, 1, 1)
+      .map(cellCluster => {
+        const clusterCells = cellCluster.map(i => cells[i]!)
+            , umap1Midpoint = mean(clusterCells.map(x => x.umap1))
+            , umap2Midpoint = mean(clusterCells.map(x => x.umap2))
+
+        return {
+          cells: clusterCells,
+          midpoint: [umap1Midpoint, umap2Midpoint] as [number, number],
+        }
+      })
+
+    const biggestCluster = R.last(R.sortBy(x => x.cells.length, cellClusters))!
+
+    return [
+      clusterID, {
+        id: clusterID,
+        label: clusterID,
+        cellClusters,
+        cells,
+        midpoint: biggestCluster.midpoint,
+      },
+    ]
+  }))
 
   return colorClusters(clusterLevels, clustersWithoutColor)
 }
@@ -209,6 +230,8 @@ export async function loadProject(
   })
 
   projectStatusLog('Indexing clusters...')
+
+  await delay(0)
 
   const clusters = await getClusters(clusterLevels, cellMap)
 
