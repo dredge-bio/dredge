@@ -9,16 +9,16 @@ import padding from '@dredge/bulk/components/MAPlot/padding'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
 import { useSized, distance } from '@dredge/main'
 
-import * as viewActions from '../actions'
-import SingleCellExpression from '../expressions'
-import { useView, useSeuratDataset, useViewDispatch } from '../hooks'
+import * as viewActions from '../../actions'
+import SingleCellExpression from '../../expressions'
+import { useView, useSeuratDataset, useViewDispatch } from '../../hooks'
 
 import {
   SeuratCell,
   SeuratCellMap,
   SeuratClusterMap,
   SeuratCluster
-} from '../types'
+} from '../../types'
 
 const { useEffect, useCallback, useMemo, useRef, useState } = React
 
