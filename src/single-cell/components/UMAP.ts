@@ -449,7 +449,8 @@ function SingleCell(props: SingleCellProps) {
 
           ctx.beginPath();
           ctx.arc(x, y, r, 0, 2 * Math.PI, true);
-          ctx.strokeStyle = '2px black'
+          ctx.lineWidth = 2
+          ctx.strokeStyle = 'black'
           ctx.fillStyle = 'transparent';
           ctx.closePath();
           ctx.stroke()
