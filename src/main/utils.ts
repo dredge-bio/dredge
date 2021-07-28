@@ -18,9 +18,7 @@ export function count<T>(items: T[]) {
 type Point = [x: number, y: number]
 
 export function distance(p1: Point, p2: Point) {
-  return Math.sqrt(
-    Math.pow(p2[0] - p1[0], 2) +
-    Math.pow(p2[1] - p2[1], 2))
+  return Math.hypot(p2[0] - p1[0], p2[1] - p1[1])
 }
 
 export function shallowEquals(a: unknown, b: unknown) {
