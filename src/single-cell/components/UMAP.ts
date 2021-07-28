@@ -431,31 +431,62 @@ function SingleCell(props: SingleCellProps) {
             , cluster = clusters.get(cell.clusterID)!
 
         cluster.cellClusters.forEach(cellCluster => {
-          const { midpoint } = cellCluster
-              , x = xScale(midpoint[0])
-              , y = yScale(midpoint[1])
 
-          let r = d3.max(
-            cellCluster.cells,
-            d => distance([ x, y ], [ xScale(d.umap1), yScale(d.umap2) ]))!
+          if (cellCluster.cells.length < 5) {
+            const { midpoint } = cellCluster
+                , x = xScale(midpoint[0])
+                , y = yScale(midpoint[1])
 
-          // Increase the radius by 10px of padding so that there is some space
-          // between the cells and the outline
-          if (r < 5) {
-            r += 10
+            let r = d3.max(
+              cellCluster.cells,
+              d => distance([ x, y ], [ xScale(d.umap1), yScale(d.umap2) ]))!
+
+            // Increase the radius by 10px of padding so that there is some space
+            // between the cells and the outline
+            if (r < 5) {
+              r += 10
+            } else {
+              r += 5
+            }
+
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI, true);
+            ctx.lineWidth = 2
+            ctx.strokeStyle = 'black'
+            ctx.fillStyle = 'transparent';
+            ctx.closePath();
+            ctx.stroke()
           } else {
-            r += 5
+            const { midpoint } = cellCluster
+                , x0 = xScale(midpoint[0])
+                , y0 = yScale(midpoint[1])
+
+            const hull = d3.polygonHull(
+              cellCluster.cells.map(d => [ xScale(d.umap1), yScale(d.umap2) ]))!
+
+            const paddedHull = hull.map(([ x1, y1 ]) => {
+              const d = distance([x0, y0], [x1, y1])
+                  , paddedD = d + 20
+
+              return [
+                x0 - (paddedD * (x0 - x1)) / d,
+                y0 - (paddedD * (y0 - y1)) / d,
+              ] as [ number, number ]
+            })
+
+            const firstPoint = paddedHull[0]!
+
+            ctx.beginPath()
+            ctx.lineWidth = 2
+            ctx.strokeStyle = 'black'
+            ctx.moveTo(firstPoint[0], firstPoint[1])
+            paddedHull.forEach(([ x, y ]) => {
+              ctx.lineTo(x, y)
+            })
+            ctx.closePath()
+            ctx.stroke()
           }
-
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, 2 * Math.PI, true);
-          ctx.lineWidth = 2
-          ctx.strokeStyle = 'black'
-          ctx.fillStyle = 'transparent';
-          ctx.closePath();
-          ctx.stroke()
         })
-
       }
 
       hoveredCluster.current = cell && cell.clusterID
