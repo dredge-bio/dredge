@@ -441,7 +441,11 @@ function SingleCell(props: SingleCellProps) {
 
           // Increase the radius by 10px of padding so that there is some space
           // between the cells and the outline
-          r += 10
+          if (r < 5) {
+            r += 10
+          } else {
+            r += 5
+          }
 
           ctx.beginPath();
           ctx.arc(x, y, r, 0, 2 * Math.PI, true);
