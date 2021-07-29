@@ -100,8 +100,6 @@ function useInteractionLayer(
   onClusterClick: (cluster: string | null, e: MouseEvent) => void
 ) {
   const prevHoveredCluster = useRef<string | null>(null)
-      , dispatch = useViewDispatch()
-      , { project } = useView()
 
   useEffect(() => {
     const svgEl = svgRef.current
@@ -128,12 +126,6 @@ function useInteractionLayer(
 
       if (nearestCell) {
         nextCluster = nearestCell.clusterID
-      }
-
-      if (prevHoveredCluster.current !== nextCluster) {
-        dispatch(viewActions.setHoveredCluster({
-          cluster: nextCluster === null ? null : project.data.clusters.get(nextCluster)!,
-        }))
       }
 
       prevHoveredCluster.current = nextCluster
@@ -256,6 +248,16 @@ function SingleCell(props: SingleCellProps) {
     throttledSetTranscript(hoveredTranscript || focusedTranscript)
   }, [ hoveredTranscript, focusedTranscript ])
 
+  useEffect(() => {
+    if (view.hoveredCluster.source === 'UMAP') return
+
+    if (clusterTimeoutRef.current) {
+      clearTimeout(clusterTimeoutRef.current)
+      clusterTimeoutRef.current = null
+    }
+    setHoveredCluster(view.hoveredCluster.cluster)
+  }, [ view.hoveredCluster ])
+
   useInteractionLayer(
     svgRef,
     dimensions,
@@ -272,7 +274,10 @@ function SingleCell(props: SingleCellProps) {
           clusterTimeoutRef.current = setTimeout(() => {
             setHoveredCluster(cluster)
             hoveredClusterRef.current = cell && cell.clusterID
-            dispatch(viewActions.setHoveredCluster({ cluster }))
+            dispatch(viewActions.setHoveredCluster({
+              cluster,
+              source: 'UMAP',
+            }))
           }, 150)
         }
       } else {
@@ -282,7 +287,10 @@ function SingleCell(props: SingleCellProps) {
         }
         setHoveredCluster(cluster)
         hoveredClusterRef.current = cell && cell.clusterID
-        dispatch(viewActions.setHoveredCluster({ cluster }))
+        dispatch(viewActions.setHoveredCluster({
+          cluster,
+          source: 'UMAP',
+        }))
       }
 
     },

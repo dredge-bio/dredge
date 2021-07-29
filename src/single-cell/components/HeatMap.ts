@@ -3,8 +3,9 @@ import styled from 'styled-components'
 import * as d3 from 'd3'
 import { useEffect, useRef, useState } from 'react'
 import { useSized, formatNumber } from '@dredge/main'
-import { useView, useSeuratDataset } from '../hooks'
+import { useView, useViewDispatch, useSeuratDataset } from '../hooks'
 import { SeuratCluster } from '../types'
+import * as viewActions from '../actions'
 
 const PADDING_LEFT = 16
     , PADDING_RIGHT = 16
@@ -445,6 +446,7 @@ const GridOverlayWrapper = styled.div`
 
 export default function HeatMap() {
   const scDataset = useSeuratDataset()
+      , dispatch = useViewDispatch()
       , [ ref, rect ] = useSized()
       , canvasRef = useRef<HTMLCanvasElement | null>(null)
       , hoverCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -456,8 +458,8 @@ export default function HeatMap() {
 
   let hoveredGridCluster = hoveredSquare && heatmap && heatmap.clusterPositions.get(hoveredSquare.cluster)!
 
-  if (heatmap && !hoveredSquare && view.hoveredCluster) {
-    hoveredGridCluster = heatmap.clusterPositions.get(view.hoveredCluster)!
+  if (heatmap && !hoveredSquare && view.hoveredCluster.cluster) {
+    hoveredGridCluster = heatmap.clusterPositions.get(view.hoveredCluster.cluster)!
   }
 
   let hoveredGridTranscript = hoveredSquare && heatmap && heatmap.transcriptPositions.get(hoveredSquare.transcript)!
@@ -503,6 +505,13 @@ export default function HeatMap() {
       drawTranscriptRow(canvasEl, view.hoveredTranscript)
     }
   }, [ view.hoveredTranscript ])
+
+  useEffect(() => {
+    dispatch(viewActions.setHoveredCluster({
+      cluster: hoveredSquare && hoveredSquare.cluster,
+      source: 'HeatMap',
+    }))
+  }, [ hoveredSquare ])
 
   return (
     h('div', {

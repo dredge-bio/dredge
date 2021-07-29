@@ -25,7 +25,11 @@ export type SingleCellViewState = BaseView & TranscriptView & {
   project: SingleCellProject;
   selectedClusters: Set<string> | null;
   selectedTranscripts: Set<string>;
-  hoveredCluster: SeuratCluster | null;
+
+  hoveredCluster: {
+    cluster: SeuratCluster | null;
+    source: 'UMAP' | 'HeatMap';
+  };
 
   // FIXME: make nullable?
   displayedTranscriptsWithClusters: TranscriptWithClusterDGE[];

@@ -11,8 +11,7 @@ import {
   TranscriptWithClusterDGE,
   TranscriptImageMap,
   SingleCellSortPath,
-  TableSortOrder,
-  SeuratCluster
+  TableSortOrder
 } from './types'
 
 import { getTranscriptLookup } from './utils'
@@ -105,7 +104,7 @@ export const setSelectedClusters = createAction<
 >('set-selected-clusters')
 
 export const setHoveredCluster = createAction<
-  { cluster: SeuratCluster | null }
+  SingleCellViewState["hoveredCluster"]
 >('set-hovered-cluster')
 
 export const setSelectedTranscripts = createAction<
