@@ -235,11 +235,14 @@ const Container = styled.div`
 
 function SingleCell(props: SingleCellProps) {
   const { cells, clusters, scDataset, width, height, onClusterClick } = props
+      , dispatch = useViewDispatch()
       , view = useView()
       , { hoveredTranscript, focusedTranscript } = view
       , svgRef = useRef<SVGSVGElement>(null)
       , dimensions = useAxes(svgRef, width, height, cells)
+      , [ hoveringCluster, setHoveringCluster ] = useState(false)
       , [ hoveredCluster, setHoveredCluster ] = useState<SeuratCluster | null>(null)
+      , clusterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
       , hoveredClusterRef = useRef<string | null>(null)
       , [ showTranscript, setShowTranscript ] = useState<string | null>(null)
 
@@ -262,9 +265,26 @@ function SingleCell(props: SingleCellProps) {
 
       const cluster = cell && clusters.get(cell.clusterID)!
 
-      setHoveredCluster(cluster)
+      setHoveringCluster(cluster !== null)
 
-      hoveredClusterRef.current = cell && cell.clusterID
+      if (cluster === null) {
+        if (clusterTimeoutRef.current === null) {
+          clusterTimeoutRef.current = setTimeout(() => {
+            setHoveredCluster(cluster)
+            hoveredClusterRef.current = cell && cell.clusterID
+            dispatch(viewActions.setHoveredCluster({ cluster }))
+          }, 150)
+        }
+      } else {
+        if (clusterTimeoutRef.current) {
+          clearTimeout(clusterTimeoutRef.current)
+          clusterTimeoutRef.current = null
+        }
+        setHoveredCluster(cluster)
+        hoveredClusterRef.current = cell && cell.clusterID
+        dispatch(viewActions.setHoveredCluster({ cluster }))
+      }
+
     },
     (cluster, e) => {
       onClusterClick(cluster, e)
@@ -357,7 +377,7 @@ function SingleCell(props: SingleCellProps) {
           h('g.y-axis'),
 
           h('g.interaction-layer', {
-            ['data-hovering-cluster']: !!hoveredCluster,
+            ['data-hovering-cluster']: hoveringCluster,
           }, [
              h('rect', {
                fill: 'transparent',
