@@ -7,7 +7,7 @@ import throttle from 'throttleit'
 
 import padding from '@dredge/bulk/components/MAPlot/padding'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
-import { useSized, distance } from '@dredge/main'
+import { useSized } from '@dredge/main'
 
 import * as viewActions from '../../actions'
 import SingleCellExpression from '../../expressions'
@@ -16,59 +16,13 @@ import { useView, useSeuratDataset, useViewDispatch } from '../../hooks'
 import {
   SeuratCell,
   SeuratCellMap,
-  SeuratClusterMap,
-  SeuratCluster
+  SeuratCluster,
+  SeuratClusterMap
 } from '../../types'
 
+import UMAP from './UMAP'
+
 const { useEffect, useCallback, useMemo, useRef, useState } = React
-
-function drawUMAP(
-  cells: SeuratCell[],
-  color: (cell: SeuratCell) => string,
-  radius: (cell: SeuratCell) => number,
-  dimensions: ReturnType<typeof useDimensions>,
-  canvasEl: HTMLCanvasElement
-) {
-  const { xScale, yScale } = dimensions
-      , ctx = canvasEl.getContext('2d')!
-
-  ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
-
-  cells.forEach(cell => {
-    const { umap1, umap2 } = cell
-        , x = xScale(umap1)
-        , y = yScale(umap2)
-        , r = radius(cell)
-        , fill = color(cell)
-
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 2 * Math.PI, true);
-    ctx.fillStyle = fill;
-    ctx.closePath();
-    ctx.fill();
-  })
-}
-
-function drawClusterLabel(
-  cluster: SeuratCluster,
-  dimensions: ReturnType<typeof useDimensions>,
-  canvasEl: HTMLCanvasElement
-) {
-  const { xScale, yScale } = dimensions
-
-  const ctx = canvasEl.getContext('2d')!
-
-  ctx.font = '36px sans-serif'
-  ctx.fillStyle = 'black'
-  ctx.textBaseline = 'middle'
-  ctx.textAlign = 'center'
-
-  ctx.fillText(
-    cluster.label,
-    xScale(cluster.midpoint[0]),
-    yScale(cluster.midpoint[1]))
-}
-
 
 function useAxes(
   svgRef: React.RefObject<SVGSVGElement>,
@@ -196,78 +150,6 @@ function useInteractionLayer(
 }
 
 
-function useEmbeddingsByTranscript(
-  canvasRef: React.RefObject<HTMLCanvasElement>,
-  dimensions: ReturnType<typeof useDimensions>,
-  cells: SeuratCellMap,
-  clusters: SeuratClusterMap,
-  scDataset: SingleCellExpression,
-  transcript: string | null
-) {
-  useEffect(() => {
-    const canvasEl = canvasRef.current!
-
-    window.requestAnimationFrame(() => {
-      if (transcript !== null) {
-        const expressionsByCell = scDataset.getExpressionsForTranscript(transcript)
-
-
-        let sortedCells = [] as SeuratCell[]
-          , maxExpression = 0
-
-        cells.forEach(cell => {
-          const level = expressionsByCell.get(cell)
-
-          if (level === undefined) return
-
-          if (level > maxExpression) maxExpression = level
-
-          sortedCells.push(cell)
-        })
-
-        const colorScale = d3.scaleLinear<string>()
-          .domain([0, maxExpression])
-          .range(['#ddd', 'red'])
-
-        // Sort embeddings so that they are drawn in order of transcript expression
-        // level from lowest to highest
-        sortedCells = sortedCells.sort((a, b) => {
-          const levelA = expressionsByCell.get(a) || 0
-              , levelB = expressionsByCell.get(b) || 0
-
-          if (levelA === levelB) return 0
-
-          return levelA > levelB
-            ? 1
-            : -1
-        })
-
-        drawUMAP(
-          sortedCells,
-          cell => colorScale(expressionsByCell.get(cell) || 0),
-          cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
-          dimensions,
-          canvasEl)
-      } else {
-        drawUMAP(
-          [...cells.values()],
-          cell => clusters.get(cell.clusterID)!.color,
-          () => 1.75,
-          dimensions,
-          canvasEl)
-      }
-
-      for (const cluster of clusters.values()) {
-        drawClusterLabel(
-          cluster,
-          dimensions,
-          canvasEl)
-      }
-    })
-
-  }, [ dimensions, cells, transcript ])
-}
-
 type SingleCellProps = {
   height: number,
   width: number,
@@ -317,7 +199,6 @@ function findNearestCell(
 
   // Don't change the cluster if any of the candidates are from the one
   // that's already hovered
-
   let consensusNearestCluster: string | null = null
 
   if (prevCluster && nearestClusterCount.has(prevCluster)) {
@@ -357,139 +238,33 @@ function SingleCell(props: SingleCellProps) {
       , view = useView()
       , { hoveredTranscript, focusedTranscript } = view
       , svgRef = useRef<SVGSVGElement>(null)
-      , canvasRef = useRef<HTMLCanvasElement>(null)
-      , bgCanvasRef = useRef<HTMLCanvasElement>(null)
-      , overlayCanvasRef = useRef<HTMLCanvasElement>(null)
       , dimensions = useAxes(svgRef, width, height, cells)
-      , [ hoveredCell, setHoveredCell ] = useState<SeuratCell | null>(null)
-      , hoveredCluster = useRef<string | null>(null)
+      , [ hoveredCluster, setHoveredCluster ] = useState<SeuratCluster | null>(null)
+      , hoveredClusterRef = useRef<string | null>(null)
       , [ showTranscript, setShowTranscript ] = useState<string | null>(null)
 
   const throttledSetTranscript = useCallback(throttle((transcript: string | null) => {
       setShowTranscript(transcript)
   }, 150), [])
 
-  useEffect(() => {
-    if (bgCanvasRef.current === null) return
-
-    drawUMAP(
-      [...cells.values()],
-      () => '#ddd',
-      () => 1,
-      dimensions,
-      bgCanvasRef.current)
-  }, [ bgCanvasRef.current ])
+  const allCells = useMemo(() => Array.from(cells.values()), [ cells ])
 
   useEffect(() => {
     throttledSetTranscript(hoveredTranscript || focusedTranscript)
   }, [ hoveredTranscript, focusedTranscript ])
-
-  useEmbeddingsByTranscript(
-    canvasRef,
-    dimensions,
-    cells,
-    clusters,
-    scDataset,
-    showTranscript
-  )
 
   useInteractionLayer(
     svgRef,
     dimensions,
     cells,
     cell => {
-      const canvasEl = overlayCanvasRef.current
+      if (hoveredClusterRef.current === (cell?.clusterID)) return
 
-      if (!canvasEl) return
-      if (hoveredCluster.current === (cell && cell.clusterID)) return
+      const cluster = cell && clusters.get(cell.clusterID)!
 
-      setHoveredCell(cell)
+      setHoveredCluster(cluster)
 
-      let drawCells: SeuratCell[]
-
-      if (cell === null) {
-        drawCells = []
-      } else {
-        drawCells = clusters.get(cell.clusterID)!.cells
-      }
-
-      drawUMAP(
-        drawCells,
-        () => 'limegreen',
-        () => 2,
-        dimensions,
-        canvasEl)
-
-      if (cell) {
-        drawClusterLabel(
-          clusters.get(cell.clusterID)!,
-          dimensions,
-          canvasEl)
-
-        const { xScale, yScale } = dimensions
-            , ctx = canvasEl.getContext('2d')!
-            , cluster = clusters.get(cell.clusterID)!
-
-        cluster.cellClusters.forEach(cellCluster => {
-
-          if (cellCluster.cells.length < 5) {
-            const { midpoint } = cellCluster
-                , x = xScale(midpoint[0])
-                , y = yScale(midpoint[1])
-
-            let r = d3.max(
-              cellCluster.cells,
-              d => distance([ x, y ], [ xScale(d.umap1), yScale(d.umap2) ]))!
-
-            // Increase the radius by 10px of padding so that there is some space
-            // between the cells and the outline
-            if (r < 5) {
-              r += 10
-            } else {
-              r += 5
-            }
-
-            ctx.beginPath();
-            ctx.arc(x, y, r, 0, 2 * Math.PI, true);
-            ctx.lineWidth = 2
-            ctx.strokeStyle = 'black'
-            ctx.fillStyle = 'transparent';
-            ctx.closePath();
-            ctx.stroke()
-          } else {
-            const { midpoint } = cellCluster
-                , x0 = xScale(midpoint[0])
-                , y0 = yScale(midpoint[1])
-
-            const hull = d3.polygonHull(
-              cellCluster.cells.map(d => [ xScale(d.umap1), yScale(d.umap2) ]))!
-
-            const paddedHull = hull.map(([ x1, y1 ]) => {
-              const d = distance([x0, y0], [x1, y1])
-                  , paddedD = d + 20
-
-              return [
-                x0 - (paddedD * (x0 - x1)) / d,
-                y0 - (paddedD * (y0 - y1)) / d,
-              ] as [ number, number ]
-            })
-
-            const firstPoint = paddedHull[0]!
-
-            ctx.beginPath()
-            ctx.lineWidth = 2
-            ctx.strokeStyle = 'black'
-            ctx.moveTo(firstPoint[0], firstPoint[1])
-            paddedHull.forEach(([ x, y ]) => {
-              ctx.lineTo(x, y)
-            })
-            ctx.closePath()
-            ctx.stroke()
-          }
-        })
-      }
-
-      hoveredCluster.current = cell && cell.clusterID
+      hoveredClusterRef.current = cell && cell.clusterID
     },
     (cluster, e) => {
       onClusterClick(cluster, e)
@@ -498,46 +273,39 @@ function SingleCell(props: SingleCellProps) {
 
   return (
     h(Container, [
-      h('canvas', {
-        ref: bgCanvasRef,
+      React.createElement(UMAP, {
+        type: 'background',
+        dimensions,
+        cells: allCells,
         style: {
-          position: 'absolute',
-          left: padding.l,
-          top: padding.t,
           backgroundColor: '#f9f9f9',
         },
-        x: 0,
-        y: 0,
-        width: dimensions.plotWidth,
-        height: dimensions.plotHeight,
       }),
 
-      h('canvas', {
-        ref: canvasRef,
+      React.createElement(UMAP, showTranscript === null ? {
+        type: 'cluster-colors',
+        dimensions,
+        cells: allCells,
+        clusters,
         style: {
-          position: 'absolute',
-          left: padding.l,
-          top: padding.t,
           backgroundColor: 'transparent',
         },
-        x: 0,
-        y: 0,
-        width: dimensions.plotWidth,
-        height: dimensions.plotHeight,
+      } : {
+        type: 'transcript-expression',
+        dimensions,
+        cells: allCells,
+        scDataset,
+        transcript: showTranscript,
+        clusters,
+        style: {
+          backgroundColor: 'transparent',
+        },
       }),
 
-      h('canvas', {
-        ref: overlayCanvasRef,
-        style: {
-          position: 'absolute',
-          left: padding.l,
-          top: padding.t,
-          backgroundColor: 'transparent',
-        },
-        x: 0,
-        y: 0,
-        width: dimensions.plotWidth,
-        height: dimensions.plotHeight,
+      React.createElement(UMAP, {
+        type: 'focused-cluster',
+        cluster: hoveredCluster,
+        dimensions,
       }),
 
       h('svg', {
@@ -589,7 +357,7 @@ function SingleCell(props: SingleCellProps) {
           h('g.y-axis'),
 
           h('g.interaction-layer', {
-            ['data-hovering-cluster']: !!hoveredCell,
+            ['data-hovering-cluster']: !!hoveredCluster,
           }, [
              h('rect', {
                fill: 'transparent',
