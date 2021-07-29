@@ -18,12 +18,15 @@ function drawUMAP(
   color: (cell: SeuratCell) => string,
   radius: (cell: SeuratCell) => number,
   dimensions: ReturnType<typeof useDimensions>,
+  clear: boolean=false,
   canvasEl: HTMLCanvasElement
 ) {
   const { xScale, yScale } = dimensions
       , ctx = canvasEl.getContext('2d')!
 
-  ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
+  if (clear) {
+    ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
+  }
 
   cells.forEach(cell => {
     const { umap1, umap2 } = cell
@@ -60,6 +63,7 @@ function drawClusterLabel(
     yScale(cluster.midpoint[1]))
 }
 
+
 function drawClusterOutlines(
   cluster: SeuratCluster,
   dimensions: ReturnType<typeof useDimensions>,
@@ -92,9 +96,13 @@ function drawClusterOutlines(
       ctx.arc(x, y, r, 0, 2 * Math.PI, true);
       ctx.lineWidth = 2
       ctx.strokeStyle = 'black'
-      ctx.fillStyle = 'transparent';
       ctx.closePath();
-      ctx.stroke()
+      ctx.save()
+      ctx.globalCompositeOperation = 'xor'
+      ctx.fillStyle = 'white';
+      ctx.fill()
+      ctx.restore()
+      // ctx.stroke()
     } else {
       const { midpoint } = cellCluster
           , x0 = xScale(midpoint[0])
@@ -123,7 +131,12 @@ function drawClusterOutlines(
         ctx.lineTo(x, y)
       })
       ctx.closePath()
-      ctx.stroke()
+      ctx.save()
+      ctx.globalCompositeOperation = 'xor'
+      ctx.fillStyle = 'white';
+      ctx.fill()
+      ctx.restore()
+      // ctx.stroke()
     }
   })
 }
@@ -204,6 +217,7 @@ export default function UMAP(props: UMAPProps) {
           () => '#ddd',
           () => 1,
           props.dimensions,
+          true,
           canvasEl)
       } else if (props.type === 'cluster-colors') {
         drawUMAP(
@@ -211,6 +225,7 @@ export default function UMAP(props: UMAPProps) {
           (d) => props.clusters.get(d.clusterID)!.color,
           () => 1.75,
           props.dimensions,
+          true,
           canvasEl)
 
         Array.from(props.clusters.values()).forEach(cluster => {
@@ -229,6 +244,7 @@ export default function UMAP(props: UMAPProps) {
           cell => colorScale(expressionsByCell.get(cell) || 0),
           cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
           props.dimensions,
+          true,
           canvasEl)
 
         Array.from(props.clusters.values()).forEach(cluster => {
@@ -244,15 +260,27 @@ export default function UMAP(props: UMAPProps) {
 
         const cells = cluster.cells
 
+        ctx.save()
+        ctx.beginPath()
+        ctx.globalAlpha = .7
+        ctx.fillStyle = 'white'
+        ctx.fillRect(0, 0, canvasEl.width, canvasEl.height)
+        ctx.restore()
+
+        /*
+        drawClusterOutlines(cluster, dimensions, canvasEl)
+        */
+
         drawUMAP(
           cells,
-          () => 'limegreen',
+          () => cluster.color,
           () => 2,
           dimensions,
+          false,
           canvasEl)
 
         drawClusterLabel(cluster, dimensions, canvasEl)
-        drawClusterOutlines(cluster, dimensions, canvasEl)
+
       }
     })
 
