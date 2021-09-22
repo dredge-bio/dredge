@@ -55,7 +55,7 @@ function getColumns(width: number, view: SingleCellViewState) {
   const getItem = (data: TableData, index: number) =>
     data.displayedTranscripts[index]!
 
-  const displayClusters = [...(selectedClusters || [])]
+  const displayClusters = [...selectedClusters]
 
   if (!displayClusters.length) {
     return []

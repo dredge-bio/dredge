@@ -23,7 +23,7 @@ function blankView(project: SingleCellProject): SingleCellViewState {
       source: 'UMAP',
     },
 
-    selectedClusters: null,
+    selectedClusters: new Set(),
     displayedTranscriptsWithClusters: [],
 
     order: 'asc',

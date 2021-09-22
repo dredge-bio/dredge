@@ -98,18 +98,14 @@ function View() {
         },
       }, [
         h(UMAP, {
-          onClusterClick(cluster, e) {
+          onClusterClick(cluster) {
             const currentlySelected = currentlySelectedCluster.current
 
-            let nextSelected: Set<string> | null = null
+            let nextSelected: Set<string> = new Set()
 
-            if (e.shiftKey || e.ctrlKey) {
-              if (cluster === null) return
-
+            if (cluster !== null) {
               if (currentlySelected !== null) {
                 nextSelected = new Set([...currentlySelected])
-              } else {
-                nextSelected = new Set()
               }
 
               if (nextSelected.has(cluster)) {
@@ -117,8 +113,6 @@ function View() {
               } else {
                 nextSelected.add(cluster)
               }
-            } else {
-              nextSelected = cluster === null ? null : new Set([cluster])
             }
 
             updateOptions({

@@ -1,14 +1,12 @@
 import * as t from 'io-ts'
 import { withFallback } from 'io-ts-types'
 
-type SelectedClusters = Set<string> | null
-
 const selectedClusterCodec = new t.Type<
-  SelectedClusters,
+  Set<string>,
   string | null
 >(
   'selectedCluster',
-  (u): u is SelectedClusters =>
+  (u): u is Set<string> =>
     typeof u === 'object' &&
     u !== null &&
     u.constructor === Set &&
@@ -28,7 +26,7 @@ const selectedClusterCodec = new t.Type<
 
     return t.failure(u, c)
   },
-  a => a === null ? null : [...a].join(',')
+  a => a.size === 0 ? null : [...a].join(',')
 )
 
 type SelectedTranscripts = Set<string>
@@ -64,6 +62,6 @@ const selectedTranscriptsCodec = new t.Type<
 
 
 export const optionsCodec = t.type({
-  selectedClusters: withFallback(t.union([ selectedClusterCodec, t.null ]), null),
+  selectedClusters: withFallback(selectedClusterCodec, new Set()),
   selectedTranscripts: withFallback(selectedTranscriptsCodec, new Set()),
 })

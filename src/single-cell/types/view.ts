@@ -23,7 +23,7 @@ export type SingleCellSortPath =
 
 export type SingleCellViewState = BaseView & TranscriptView & {
   project: SingleCellProject;
-  selectedClusters: Set<string> | null;
+  selectedClusters: Set<string>;
   selectedTranscripts: Set<string>;
 
   hoveredCluster: {

@@ -100,7 +100,7 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
 })
 
 export const setSelectedClusters = createAction<
-  { clusters: Set<string> | null }
+  { clusters: Set<string> }
 >('set-selected-clusters')
 
 export const setHoveredCluster = createAction<
