@@ -507,6 +507,10 @@ export default function HeatMap() {
   }, [ view.hoveredTranscript ])
 
   useEffect(() => {
+    dispatch(viewActions.setHoveredTranscript({
+      transcript: hoveredSquare && hoveredSquare.transcript,
+    }))
+
     dispatch(viewActions.setHoveredCluster({
       cluster: hoveredSquare && hoveredSquare.cluster,
       source: 'HeatMap',
