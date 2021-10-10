@@ -2,7 +2,7 @@ import h from 'react-hyperscript'
 import * as d3 from 'd3'
 import { useRef, useEffect } from 'react'
 
-import { distance } from '@dredge/main'
+// import { distance } from '@dredge/main'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
 
 import {
@@ -13,14 +13,25 @@ import {
 
 import SingleCellExpression from '../../expressions'
 
-function drawUMAP(
+type UMAPPlotData = {
   cells: SeuratCell[],
   color: (cell: SeuratCell) => string,
   radius: (cell: SeuratCell) => number,
   dimensions: ReturnType<typeof useDimensions>,
-  clear: boolean=false,
+  clear?: boolean,
   canvasEl: HTMLCanvasElement
-) {
+}
+
+function drawUMAP(data: UMAPPlotData) {
+  const {
+    cells,
+    color,
+    radius,
+    dimensions,
+    clear=false,
+    canvasEl,
+  } = data
+
   const { xScale, yScale } = dimensions
       , ctx = canvasEl.getContext('2d')!
 
@@ -64,6 +75,7 @@ function drawClusterLabel(
 }
 
 
+/*
 function drawClusterOutlines(
   cluster: SeuratCluster,
   dimensions: ReturnType<typeof useDimensions>,
@@ -140,6 +152,7 @@ function drawClusterOutlines(
     }
   })
 }
+*/
 
 type UMAPProps = {
   dimensions: ReturnType<typeof useDimensions>;
@@ -224,21 +237,24 @@ export default function UMAP(props: UMAPProps) {
 
     window.requestAnimationFrame(() => {
       if (props.type === 'background') {
-        drawUMAP(
-          props.cells,
-          () => '#ddd',
-          () => 1,
-          props.dimensions,
-          true,
-          canvasEl)
+        drawUMAP({
+          cells: props.cells,
+          color: () => '#ddd',
+          radius: () => 1,
+          dimensions: props.dimensions,
+          clear: true,
+          canvasEl,
+        })
+
       } else if (props.type === 'cluster-colors') {
-        drawUMAP(
-          props.cells,
-          (d) => props.clusters.get(d.clusterID)!.color,
-          () => 1.75,
-          props.dimensions,
-          true,
-          canvasEl)
+        drawUMAP({
+          cells: props.cells,
+          color: (d) => props.clusters.get(d.clusterID)!.color,
+          radius: () => 1.75,
+          dimensions: props.dimensions,
+          clear: true,
+          canvasEl,
+        })
 
         Array.from(props.clusters.values()).forEach(cluster => {
           drawClusterLabel(cluster, props.dimensions, canvasEl)
@@ -252,13 +268,14 @@ export default function UMAP(props: UMAPProps) {
           props.cells, props.transcript, props.scDataset)
 
 
-        drawUMAP(
-          sortedCells,
-          cell => colorScale(expressionsByCell.get(cell) || 0),
-          cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
-          props.dimensions,
-          true,
-          canvasEl)
+        drawUMAP({
+          cells: sortedCells,
+          color: cell => colorScale(expressionsByCell.get(cell) || 0),
+          radius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
+          dimensions: props.dimensions,
+          clear: true,
+          canvasEl,
+        })
 
         Array.from(props.clusters.values()).forEach(cluster => {
           drawClusterLabel(cluster, props.dimensions, canvasEl)
@@ -286,13 +303,13 @@ export default function UMAP(props: UMAPProps) {
         */
 
         if (props.transcript === null) {
-          drawUMAP(
+          drawUMAP({
             cells,
-            () => cluster.color,
-            () => 2,
+            color: () => cluster.color,
+            radius: () => 2,
             dimensions,
-            false,
-            canvasEl)
+            canvasEl,
+          })
         } else {
           const {
             expressionsByCell,
@@ -302,13 +319,13 @@ export default function UMAP(props: UMAPProps) {
             props.cells, props.transcript, props.scDataset)
 
 
-          drawUMAP(
-            sortedCells.filter(cell => cell.clusterID === cluster.id),
-            cell => colorScale(expressionsByCell.get(cell) || 0),
-            cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
-            props.dimensions,
-            false,
-            canvasEl)
+          drawUMAP({
+            cells: sortedCells.filter(cell => cell.clusterID === cluster.id),
+            color: cell => colorScale(expressionsByCell.get(cell) || 0),
+            radius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
+            dimensions: props.dimensions,
+            canvasEl,
+          })
         }
 
         drawClusterLabel(cluster, dimensions, canvasEl)
