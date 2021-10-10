@@ -163,9 +163,13 @@ type UMAPProps = {
   } | {
     type: 'focused-cluster';
     cluster: SeuratCluster | null;
+    cells: SeuratCell[];
+    scDataset: SingleCellExpression;
+    transcript: string | null;
   }
 )
 
+// FIXME: Memoize this function
 function sortCells(
   cells: SeuratCell[],
   transcript: string,
@@ -199,7 +203,15 @@ function sortCells(
       : -1
   })
 
-  return { expressionsByCell, sortedCells, maxExpression }
+  const colorScale = d3.scaleLinear<string>()
+    .domain([0, maxExpression])
+    .range(['#ddd', 'red'])
+
+  return {
+    expressionsByCell,
+    sortedCells,
+    colorScale,
+  }
 }
 
 export default function UMAP(props: UMAPProps) {
@@ -232,12 +244,13 @@ export default function UMAP(props: UMAPProps) {
           drawClusterLabel(cluster, props.dimensions, canvasEl)
         })
       } else if (props.type === 'transcript-expression') {
-        const { expressionsByCell, sortedCells, maxExpression } = sortCells(
+        const {
+          expressionsByCell,
+          sortedCells,
+          colorScale,
+        } = sortCells(
           props.cells, props.transcript, props.scDataset)
 
-        const colorScale = d3.scaleLinear<string>()
-          .domain([0, maxExpression])
-          .range(['#ddd', 'red'])
 
         drawUMAP(
           sortedCells,
@@ -251,6 +264,7 @@ export default function UMAP(props: UMAPProps) {
           drawClusterLabel(cluster, props.dimensions, canvasEl)
         })
       } else {
+        // type is 'focused-cluster'
         const { cluster, dimensions } = props
             , ctx = canvasEl.getContext('2d')!
 
@@ -271,13 +285,31 @@ export default function UMAP(props: UMAPProps) {
         drawClusterOutlines(cluster, dimensions, canvasEl)
         */
 
-        drawUMAP(
-          cells,
-          () => cluster.color,
-          () => 2,
-          dimensions,
-          false,
-          canvasEl)
+        if (props.transcript === null) {
+          drawUMAP(
+            cells,
+            () => cluster.color,
+            () => 2,
+            dimensions,
+            false,
+            canvasEl)
+        } else {
+          const {
+            expressionsByCell,
+            sortedCells,
+            colorScale,
+          } = sortCells(
+            props.cells, props.transcript, props.scDataset)
+
+
+          drawUMAP(
+            sortedCells.filter(cell => cell.clusterID === cluster.id),
+            cell => colorScale(expressionsByCell.get(cell) || 0),
+            cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
+            props.dimensions,
+            false,
+            canvasEl)
+        }
 
         drawClusterLabel(cluster, dimensions, canvasEl)
 

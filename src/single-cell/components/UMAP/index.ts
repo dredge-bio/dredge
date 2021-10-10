@@ -334,6 +334,9 @@ function SingleCell(props: SingleCellProps) {
         type: 'focused-cluster',
         cluster: hoveredCluster,
         dimensions,
+        cells: allCells,
+        scDataset,
+        transcript: showTranscript,
       }),
 
       h('svg', {
