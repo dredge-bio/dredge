@@ -1,5 +1,6 @@
 import h from 'react-hyperscript'
 import { useEffect, useRef, useState } from 'react'
+import styled from 'styled-components'
 
 import { count } from '@dredge/main'
 
@@ -62,12 +63,33 @@ function getTranscriptBG(elements: HTMLImageElement[]) {
     : null
 }
 
+const ImageContainer = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px;
+  gap: 4px;
+
+  img {
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    max-height: 100%;
+  }
+`
+
 export default function TranscriptInfo() {
   const { hoveredTranscript, focusedTranscript, project } = useView()
       , { transcriptImages } = project.data
       , showTranscript = hoveredTranscript || focusedTranscript
       , [ loading, setLoading ] = useState(false)
-      , imgContainerRef = useRef<HTMLDivElement>()
+      , imgContainerRef = useRef<HTMLDivElement | null>(null)
       , [ bgColor, setBGColor ] = useState<string | null>(null)
 
   const currentImages = useRef({
@@ -154,20 +176,9 @@ export default function TranscriptInfo() {
         height: '100%',
       },
     }, [
-      h('div', {
+      h(ImageContainer, {
         key: showTranscript,
         ref: imgContainerRef,
-        style: {
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
       }, [
       ]),
 
