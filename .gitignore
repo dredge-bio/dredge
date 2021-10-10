@@ -1,7 +1,11 @@
 *.swp
 npm-debug.log
-data
 dist/*
 node_modules/*
+
 project.json
+
+# Project data that I'm using. not universal
+data
+insitus
 projects/*
