@@ -15,8 +15,8 @@ import SingleCellExpression from '../../expressions'
 
 type UMAPPlotData = {
   cells: SeuratCell[],
-  color: (cell: SeuratCell) => string,
-  radius: (cell: SeuratCell) => number,
+  cellColor: (cell: SeuratCell) => string,
+  cellRadius: (cell: SeuratCell) => number,
   dimensions: ReturnType<typeof useDimensions>,
   clear?: boolean,
   canvasEl: HTMLCanvasElement
@@ -25,8 +25,8 @@ type UMAPPlotData = {
 function drawUMAP(data: UMAPPlotData) {
   const {
     cells,
-    color,
-    radius,
+    cellColor,
+    cellRadius,
     dimensions,
     clear=false,
     canvasEl,
@@ -43,8 +43,8 @@ function drawUMAP(data: UMAPPlotData) {
     const { umap1, umap2 } = cell
         , x = xScale(umap1)
         , y = yScale(umap2)
-        , r = radius(cell)
-        , fill = color(cell)
+        , r = cellRadius(cell)
+        , fill = cellColor(cell)
 
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI, true);
@@ -239,8 +239,8 @@ export default function UMAP(props: UMAPProps) {
       if (props.type === 'background') {
         drawUMAP({
           cells: props.cells,
-          color: () => '#ddd',
-          radius: () => 1,
+          cellColor: () => '#ddd',
+          cellRadius: () => 1,
           dimensions: props.dimensions,
           clear: true,
           canvasEl,
@@ -249,8 +249,8 @@ export default function UMAP(props: UMAPProps) {
       } else if (props.type === 'cluster-colors') {
         drawUMAP({
           cells: props.cells,
-          color: (d) => props.clusters.get(d.clusterID)!.color,
-          radius: () => 1.75,
+          cellColor: (d) => props.clusters.get(d.clusterID)!.color,
+          cellRadius: () => 1.75,
           dimensions: props.dimensions,
           clear: true,
           canvasEl,
@@ -270,8 +270,8 @@ export default function UMAP(props: UMAPProps) {
 
         drawUMAP({
           cells: sortedCells,
-          color: cell => colorScale(expressionsByCell.get(cell) || 0),
-          radius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
+          cellColor: cell => colorScale(expressionsByCell.get(cell) || 0),
+          cellRadius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
           dimensions: props.dimensions,
           clear: true,
           canvasEl,
@@ -305,8 +305,8 @@ export default function UMAP(props: UMAPProps) {
         if (props.transcript === null) {
           drawUMAP({
             cells,
-            color: () => cluster.color,
-            radius: () => 2,
+            cellColor: () => cluster.color,
+            cellRadius: () => 2,
             dimensions,
             canvasEl,
           })
@@ -321,8 +321,8 @@ export default function UMAP(props: UMAPProps) {
 
           drawUMAP({
             cells: sortedCells.filter(cell => cell.clusterID === cluster.id),
-            color: cell => colorScale(expressionsByCell.get(cell) || 0),
-            radius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
+            cellColor: cell => colorScale(expressionsByCell.get(cell) || 0),
+            cellRadius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
             dimensions: props.dimensions,
             canvasEl,
           })
