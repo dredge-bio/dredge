@@ -6,10 +6,6 @@
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.0",
-    "@types/density-clustering": "^1.3.0",
-    "@types/file-saver": "^2.0.1",
-    "@types/is-url": "^1.2.28",
-    "@types/markdown-it": "^12.0.1",
     "blue-tape": "^1.0.0",
     "buffer": "^6.0.3",
     "d3": "^6.6.2",
@@ -39,16 +35,17 @@
     "rebass": "^3.0.1",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
-    "stringify-tree": "^1.0.2",
     "styled-components": "^4.1.3",
     "tape": "^4.2.0",
-    "throttleit": "^1.0.0",
-    "through2": "^3.0.1",
-    "union-type": "github:ptgolden/union-type"
+    "throttleit": "^1.0.0"
   },
   "devDependencies": {
     "@types/d3": "^6.3.0",
     "@types/debounce": "^1.2.0",
+    "@types/density-clustering": "^1.3.0",
+    "@types/file-saver": "^2.0.1",
+    "@types/is-url": "^1.2.28",
+    "@types/markdown-it": "^12.0.1",
     "@types/node": "^14.14.28",
     "@types/pako": "^1.0.1",
     "@types/ramda": "^0.27.38",
@@ -61,10 +58,10 @@
     "@types/rebass": "^4.0.8",
     "@types/styled-components": "^5.1.7",
     "@types/throttleit": "^1.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.20.0",
-    "@typescript-eslint/parser": "^4.20.0",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
     "argparse": "^2.0.1",
-    "esbuild": "^0.8.46",
-    "eslint": "^7.23.0"
+    "esbuild": "^0.13.4",
+    "eslint": "^7.32.0"
   }
 }
