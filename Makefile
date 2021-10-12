@@ -64,7 +64,7 @@ serve-prod: node_modules $(LINKED_INTERNAL_MODULES) | dist
 	./build --production --serve ./ -o $(JS_BUNDLE) $(JS_ENTRY)
 
 .PHONY: check_types
-check_types:
+check_types: $(LINKED_INTERNAL_MODULES)
 	tsc --noEmit -p .
 
 .PHONY: lint
