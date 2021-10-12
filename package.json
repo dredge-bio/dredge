@@ -22,7 +22,7 @@
     "markdown-it-attrs": "^3.0.1",
     "monocle-ts": "^2.3.9",
     "newtype-ts": "^0.3.4",
-    "org-shell": "^7.0.0-5",
+    "org-shell": "^7.0.0-8",
     "pako": "^2.0.3",
     "punycode": "^2.1.1",
     "ramda": "^0.26.1",
