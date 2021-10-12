@@ -86,7 +86,9 @@ export async function loadProject(
   try {
     validateExpressionMatrix(treatments, abundanceMeasures)
   } catch (e) {
-    projectStatusLog(e.message)
+    if (e instanceof Error) {
+      projectStatusLog(e.message)
+    }
     throw new Error()
   }
 

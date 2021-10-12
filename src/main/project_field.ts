@@ -82,7 +82,10 @@ export class ProjectField<Validated, Processed=Validated, ProcessingContext=void
           }
         ))
     } catch (e) {
-      log('Failed', e.message)
+      if (e instanceof Error) {
+        log('Failed', e.message)
+      }
+
       return null
     }
 
