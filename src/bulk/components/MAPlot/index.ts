@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import LoadingIndicator from './Loading'
 import PlotWrapper from './Outer'
 
@@ -23,7 +23,7 @@ export default function PlotContainer(props: PlotContainerProps) {
         height: '100%',
         position: 'relative',
       },
-    }, [
+    }, ...[
       rect === null ? null : h(PlotWrapper, {
         key,
         onBrush: props.onBrush,

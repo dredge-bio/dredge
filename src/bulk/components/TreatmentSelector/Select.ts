@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import * as React from 'react'
 
 import { useView } from '../../hooks'

@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 import * as d3 from 'd3'
@@ -174,12 +174,10 @@ export default function PValueSelector(props: PValueSelectorProps) {
   }, 10)
 
   return (
-    h(PValueSelectorContainer, [
-      h('p', [
-        'P value cutoff',
-      ]),
+    h(PValueSelectorContainer, null, ...[
+      h('p', null, 'P value cutoff'),
 
-      h(Flex, { className: 'p-controller' }, [
+      h(Flex, { className: 'p-controller' }, ...[
         h(Button, {
           onClick: () => {
             let value: number = 1
@@ -204,9 +202,8 @@ export default function PValueSelector(props: PValueSelectorProps) {
 
             handleChange(value)
           },
-        }, [
-          formatNumber(pValueThreshold),
-        ]),
+        }, formatNumber(pValueThreshold)),
+
         h(Button, {
           onClick: () => {
             handleChange(1)
@@ -214,13 +211,11 @@ export default function PValueSelector(props: PValueSelectorProps) {
           style: {
             display: 'flex',
           },
-        }, [
-          h(Reset, { height: 12 }),
-        ]),
+        }, h(Reset, { height: 12 })),
       ]),
 
-      h('div.pvalue-histogram', [
-        h('div.histogram', {}, histogram && histogram.bins.reverse().map((ct, i) =>
+      h('div.pvalue-histogram', null, ...[
+        h('div.histogram', null, histogram && histogram.bins.reverse().map((ct, i) =>
           h('span.histogram-bar', {
             key: `${comparedTreatments}-${i}`,
             style: {

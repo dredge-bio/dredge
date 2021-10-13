@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import throttle from 'throttleit'
 import * as d3 from 'd3'
 import * as React from 'react'
@@ -508,9 +508,8 @@ export default function Plot(props: PlotProps) {
   const [ treatmentALabel, treatmentBLabel ] = useComparedTreatmentLabels()
 
   return (
-    h('div', [
-      h(TreatmentLabels, {
-      }, [
+    h('div', null, ...[
+      h(TreatmentLabels, null, ...[
         h('div', {
           /*
           onMouseLeave() {
@@ -551,8 +550,7 @@ export default function Plot(props: PlotProps) {
         viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
         ref: svgRef,
       }, [
-        h('defs', [
-        ]),
+        h('defs'),
 
         // X Axis label
         h('text', {
@@ -584,7 +582,7 @@ export default function Plot(props: PlotProps) {
 
         h('g', {
           transform: `translate(${padding.l}, ${padding.t})`,
-        }, [
+        }, ...[
           h('rect', {
             fill: '#f9f9f9',
             stroke: '#ccc',
@@ -597,9 +595,10 @@ export default function Plot(props: PlotProps) {
           h('g.x-axis', {
             transform: `translate(0, ${dimensions.plotHeight})`,
           }),
+
           h('g.y-axis'),
 
-          h('g', { clipPath: 'url(#visible-plot)' }, [
+          h('g', { clipPath: 'url(#visible-plot)' }, ...[
             h('g.squares'),
 
             h('g.saved-transcripts'),

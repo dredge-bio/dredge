@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import * as R from 'ramda'
 
 import styled from 'styled-components'
@@ -70,7 +70,7 @@ export default function Wrapper(props: OuterProps) {
         width: '100%',
         position: 'relative',
       },
-    }, [
+    }, ...[
       h(Plot, {
         dispatch,
         opts,

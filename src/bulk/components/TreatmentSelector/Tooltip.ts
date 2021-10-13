@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 
 import { useView } from '../../hooks'
@@ -48,8 +48,8 @@ export default function Tooltip(props: TooltipProps) {
   if (!projectTreatment) return null
 
   return (
-    h(TooltipContainer, { position }, [
-      h('span', projectTreatment.label),
+    h(TooltipContainer, { position }, ...[
+      h('span', null, projectTreatment.label),
     ])
   )
 }

@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import { Button, Flex } from 'rebass'
 import { MagnifyingGlass, Target, Reset } from '@dredge/main'
@@ -96,12 +96,13 @@ export default function Toolbar(props: ToolbarProps) {
   const [ showHelp, setShowHelp ] = useState<HelpOptions | null>(null)
 
   return (
-    h('div', [
+    h('div', null, ...[
       showHelp && (
         h(HelpText, {
           padding,
         }, help[showHelp])
       ),
+
       h('div', {
         style: {
           position: 'absolute',
@@ -114,12 +115,12 @@ export default function Toolbar(props: ToolbarProps) {
           borderRadius: '4px 4px 0 0',
           borderBottom: 'none',
         },
-      }, [
+      }, null, ...[
         h(Flex, {
           className: 'toolbar',
           p: 2,
-        }, [
-          h(ButtonGroup, [
+        }, ...[
+          h(ButtonGroup, null, ...[
             h(ToolbarButton, {
               onClick: () => {
                 setInteractionType('brush')
@@ -132,6 +133,7 @@ export default function Toolbar(props: ToolbarProps) {
               },
               ['data-active']: interactionType === 'brush',
             }, h(Target)),
+
             h(ToolbarButton, {
               onClick: () => {
                 setInteractionType('zoom')
@@ -145,6 +147,7 @@ export default function Toolbar(props: ToolbarProps) {
               ['data-active']: interactionType === 'zoom',
             }, h(MagnifyingGlass)),
           ]),
+
           h(Button, {
             ml: 1,
             onMouseEnter: () => {

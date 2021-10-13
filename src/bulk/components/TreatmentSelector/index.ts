@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 import * as d3 from 'd3'
@@ -12,6 +12,7 @@ import Tooltip from './Tooltip'
 const { useEffect, useRef, useCallback, useState } = React
 
 type SelectorProps = {
+  transcript: string | null;
   selectedTreatment?: string | null;
   onSelectTreatment: (treatment: string, bottom?: boolean) => void;
   tooltipPos: 'bottom' | 'top';
@@ -196,8 +197,8 @@ export default function TreatmentSelector(props: SelectorProps) {
   }, [view.hoveredTreatment])
 
   return (
-    h(SelectorWrapper, [
-      svg && h('div.svg-wrapper', [
+    h(SelectorWrapper, null, ...[
+      svg && h('div.svg-wrapper', null, ...[
         h('div', { ref }),
 
         h(Tooltip, {
@@ -207,7 +208,7 @@ export default function TreatmentSelector(props: SelectorProps) {
       ]),
 
       !useSelectElement ? null : (
-        React.createElement(TreatmentSelect, {
+        h(TreatmentSelect, {
           selectedTreatment: selectedTreatment || null,
           onSelectTreatment(treatmentName: string) {
             onSelectTreatment(treatmentName)

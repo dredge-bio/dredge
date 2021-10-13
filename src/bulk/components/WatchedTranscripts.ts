@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 import { Flex, Box, Button } from 'rebass'
@@ -141,7 +141,7 @@ function Search(props: SearchProps) {
   }
 
   return (
-    h(SearchContainer, [
+    h(SearchContainer, null, ...[
       h('input', {
         ref,
         value: searchText,
@@ -149,9 +149,9 @@ function Search(props: SearchProps) {
         onChange: handleChange,
       }),
 
-      h('ul', {}, searchResults && (
+      h('ul', null, searchResults && (
         searchResults.length === 0
-          ? h('i', 'No results')
+          ? h('i', null, 'No results')
           : searchResults.map(({ alias, canonical }) =>
               h('li', {
                 key: alias,
@@ -164,7 +164,7 @@ function Search(props: SearchProps) {
                   },
                 }, alias),
 
-                h('span', ` (${canonical})`),
+                h('span', null, ` (${canonical})`),
               ])
             )
       )),
@@ -211,17 +211,17 @@ export default function WatchedTranscripts() {
       const { imported, skipped } = resp
 
       const importStatus = (
-        h('div', [
-          h('div', [
+        h('div', null, ...[
+          h('div', null, ...[
             `Imported ${imported.length} out of ${imported.length + skipped.length} in file.`,
           ]),
 
-          h(Box, { mt: 3 }, [
-            h('h2', 'Imported'),
+          h(Box, { mt: 3 }, ...[
+            h('h2', null, 'Imported'),
 
             imported.length === 0
-              ? h('p', 'None')
-              : h('ul', imported.map(([ name, canonicalName ]) =>
+              ? h('p', null, 'None')
+              : h('ul', null, imported.map(([ name, canonicalName ]) =>
                   h('li', { key: name }, [
                     name,
                     name === canonicalName
@@ -230,16 +230,16 @@ export default function WatchedTranscripts() {
                   ]))),
           ]),
 
-          h(Box, { mt: 3 }, [
-            h('h2', 'Skipped'),
+          h(Box, { mt: 3 }, ...[
+            h('h2', null, 'Skipped'),
 
             skipped.length === 0
-              ? h('p', 'None')
-              : h('ul', skipped.map(name =>
+              ? h('p', null, 'None')
+              : h('ul', null, skipped.map(name =>
                   h('li', { key: name }, name))),
           ]),
 
-          h(Box, { mt: 3 }, [
+          h(Box, { mt: 3 }, ...[
             h(Button, {
               onClick: () => {
                 setState(prev => ({
@@ -276,17 +276,18 @@ export default function WatchedTranscripts() {
         margin: '.75em 0 1em',
         position: 'relative',
       },
-    }, [
+    }, ...[
       h('h2', {
         style: {
           fontSize: 16,
           marginBottom: '.25em',
         },
       }, 'Watched transcripts'),
+
       h(Flex, {
         justifyContent: 'space-between',
       }, [
-        h(ButtonContainer, [
+        h(ButtonContainer, null, ...[
           !showSearch ? null : h(Search, {
             onSelect: (transcriptName) => {
               const newSavedTranscripts = new Set(savedTranscripts)
@@ -347,7 +348,7 @@ export default function WatchedTranscripts() {
           }, 'Clear'),
         ]),
 
-        h(ButtonContainer, [
+        h(ButtonContainer, null, [
           h(FileInput, {
             onChange: handleImport,
           }, 'Import'),

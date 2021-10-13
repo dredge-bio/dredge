@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 
@@ -43,8 +43,6 @@ export default function LoadingIndicator(props: LoadingProps) {
   if (!showTimer) return null
 
   return (
-    h(LoadingWrapper, [
-      'Loading.....',
-    ])
+    h(LoadingWrapper, null, 'Loading.....')
   )
 }

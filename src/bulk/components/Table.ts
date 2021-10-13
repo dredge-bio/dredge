@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import * as React from 'react'
 
 import { makeGenericTable, TableColumn } from '@dredge/shared'
@@ -91,7 +91,7 @@ function getColumns(width: number): TableColumn<BulkViewState, TableData, BulkTa
         const datum = getItem(data, index)
 
         return (
-          h('div.transcript-label', datum.label)
+          h('div.transcript-label', null, datum.label)
         )
       },
     },

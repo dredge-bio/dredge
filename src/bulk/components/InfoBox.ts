@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import * as React from 'react'
@@ -71,7 +71,7 @@ function ColorLegend(props: {
         flexDirection: 'column',
         textAlign: 'center',
       },
-    }, [
+    }, ...[
       h('h4', {
         key: 'title',
         style: {
@@ -79,13 +79,14 @@ function ColorLegend(props: {
           fontFamily: 'SourceSansPro',
         },
       }, 'Abundance'),
+
       h('div', {
         style: {
           display: 'flex',
           flexGrow: 1,
           position: 'relative',
         },
-      }, [
+      }, ...[
         h('div', {
           style: {
             width: 20,
@@ -130,11 +131,11 @@ export default function InfoBox() {
     transcript === null ? null : colorScaleForTranscript(transcript)
 
   return (
-    h(InfoBoxContainer, { showSVG }, [
-      h('div', [
-        transcript && h('h3', transcriptLabel),
+    h(InfoBoxContainer, { showSVG }, ...[
+      h('div', null, ...[
+        transcript && h('h3', null, transcriptLabel),
 
-        transcript && transcriptHyperlink && h(Flex, transcriptHyperlink.map(
+        transcript && transcriptHyperlink && h(Flex, null, transcriptHyperlink.map(
           ({ url, label }, i) =>
             h(Box, {
               ml: 2,
@@ -164,7 +165,7 @@ export default function InfoBox() {
       h('div', {
         onMouseEnter: () => setHovered(true),
         onMouseLeave: () => setHovered(false),
-      }, view.comparedTreatments && [
+      }, ...(!view.comparedTreatments ? [] : [
         colorScale && h(ColorLegend, {
           colorScale,
         }),
@@ -179,7 +180,7 @@ export default function InfoBox() {
             marginLeft: '2rem',
             flexGrow: 1,
           },
-        }, [
+        }, ...[
           transcript && h(TreatmentSelector, {
             transcript,
             paintHovered: true,
@@ -198,7 +199,7 @@ export default function InfoBox() {
             },
           }),
         ]),
-      ]),
+      ])),
     ])
   )
 }

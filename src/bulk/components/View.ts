@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 import { unwrapResult } from '@reduxjs/toolkit'
@@ -57,9 +57,7 @@ export default function BulkViewOuter(props: BulkViewProps) {
   const store = useMemo(() => createStore(project), [ project ])
 
   return (
-    h(Provider, { store }, [
-      h(View),
-    ])
+    h(Provider, { store }, h(View))
   )
 }
 
@@ -120,11 +118,11 @@ function View() {
   }, [pValue])
 
   return (
-    h(ViewerContainer, [
+    h(ViewerContainer, null, ...[
       h(GridArea, {
         column: '1 / span 10',
         row: '1 / span 2',
-      }, [
+      }, ...[
         h(TreatmentSelector, {
           useSelectBackup: true,
           selectedTreatment: treatmentA,
@@ -140,7 +138,7 @@ function View() {
       h(GridArea, {
         column: '1 / span 10',
         row: '11 / span 2',
-      }, [
+      }, ...[
         h(TreatmentSelector, {
           useSelectBackup: true,
           selectedTreatment: treatmentB,

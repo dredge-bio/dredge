@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import * as R from 'ramda'
@@ -78,17 +78,20 @@ export default function HeatMap(props: HeatMapProps) {
       style: {
         height: (yScale.domain()[1]! + 1) * SQUARE_WIDTH,
       },
-    }, [
+    }, ...[
       h('g', {
         transform: 'translate(4,4)',
-      }, [
-
-        h('g', squares.map(square =>
-          h('rect.heatmap-square', square!.attrs)
+      }, ...[
+        h('g', null, squares.map(square =>
+          h('rect', {
+            className: '.heatmap-square',
+            ...square!.attrs,
+          })
         )),
 
         h('g', squares.map(square =>
-          h('rect', Object.assign({}, square!.attrs, {
+          h('rect', {
+            ...square!.attrs,
             ['data-treatment']: square!.treatment,
             fill: 'transparent',
             transform: 'translate(0, 0)',
@@ -97,9 +100,7 @@ export default function HeatMap(props: HeatMapProps) {
             // onClick: this.selectTreatment,
             // onMouseEnter: this.setHoveredTreatment,
             // onMouseLeave: this.clearHoveredTreatment,
-          }), [
-            h('title', treatments.get(square!.treatment)?.label),
-          ])
+          }, h('title', null, treatments.get(square!.treatment)?.label))
         )),
 
       ]),
