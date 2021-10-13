@@ -1,0 +1,9 @@
+{
+  "name": "eslint-plugin-react-createelement",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "Patrick Golden",
+  "license": "MIT"
+}
