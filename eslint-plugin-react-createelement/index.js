@@ -13,6 +13,10 @@ module.exports = {
             const check = node => (
               node.type === 'ObjectExpression' ||
               node.type === 'CallExpression' ||
+              (
+                node.type === 'SpreadElement' &&
+                node.argument.type !== 'ArrayExpression'
+              ) ||
               ('value' in node && node.value == null)
             )
 
