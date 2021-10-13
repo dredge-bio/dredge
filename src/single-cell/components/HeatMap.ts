@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import { useEffect, useRef, useState } from 'react'
@@ -525,7 +525,7 @@ export default function HeatMap() {
         height: '100%',
         position: 'relative',
       },
-    }, [
+    }, ...[
       rect && h('canvas', {
         ref: canvasRef,
         style: {
@@ -538,6 +538,7 @@ export default function HeatMap() {
         height: rect.height,
         width: rect.width,
       }),
+
       rect && h('canvas', {
         ref: hoverCanvasRef,
         style: {
@@ -551,7 +552,7 @@ export default function HeatMap() {
         width: rect.width,
       }),
 
-      h(GridOverlayWrapper, [
+      h(GridOverlayWrapper, null, ...[
         hoveredGridTranscript && (
           h('div', {
             className: 'grid-overlay-transcript',
@@ -580,7 +581,7 @@ export default function HeatMap() {
           })
         ),
 
-        heatmap && h('div', heatmap.grid.clusters.flatMap(x => x.squares).map(
+        heatmap && h('div', null, heatmap.grid.clusters.flatMap(x => x.squares).map(
           square => (
             h('div', {
               onMouseEnter() {
@@ -600,7 +601,6 @@ export default function HeatMap() {
             })
           )
         )),
-
       ]),
     ])
   )

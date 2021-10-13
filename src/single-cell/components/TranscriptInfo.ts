@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
@@ -175,12 +175,11 @@ export default function TranscriptInfo() {
         background: bgColor || '#bbb',
         height: '100%',
       },
-    }, [
+    }, ...[
       h(ImageContainer, {
         key: showTranscript,
         ref: imgContainerRef,
-      }, [
-      ]),
+      }),
 
       !loading ? null : h('div', {
         style: {
@@ -193,7 +192,7 @@ export default function TranscriptInfo() {
           alignItems: 'center',
           justifyContent: 'center',
         },
-      }, [
+      }, ...[
         h('span', {
           style: {
             padding: '16px 32px',
@@ -201,7 +200,7 @@ export default function TranscriptInfo() {
             border: '2px solid #ccc',
             fontWeight: 'bold',
           },
-        }, [
+        }, ...[
           'loading',
         ]),
       ]),

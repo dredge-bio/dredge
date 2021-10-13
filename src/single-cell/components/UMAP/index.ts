@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import * as d3 from 'd3'
 import * as React from 'react'
 import * as R from 'ramda'
@@ -300,8 +300,8 @@ function SingleCell(props: SingleCellProps) {
   )
 
   return (
-    h(Container, [
-      React.createElement(UMAP, {
+    h(Container, null, [
+      h(UMAP, {
         type: 'background',
         dimensions,
         cells: allCells,
@@ -310,7 +310,7 @@ function SingleCell(props: SingleCellProps) {
         },
       }),
 
-      React.createElement(UMAP, showTranscript === null ? {
+      h(UMAP, showTranscript === null ? {
         type: 'cluster-colors',
         dimensions,
         cells: allCells,
@@ -330,7 +330,7 @@ function SingleCell(props: SingleCellProps) {
         },
       }),
 
-      React.createElement(UMAP, {
+      h(UMAP, {
         type: 'focused-cluster',
         cluster: hoveredCluster,
         dimensions,
@@ -349,7 +349,7 @@ function SingleCell(props: SingleCellProps) {
         width: dimensions.width,
         viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
         ref: svgRef,
-      }, [
+      }, ...[
         // X Axis label
         h('text', {
           dx: padding.l,
@@ -380,16 +380,17 @@ function SingleCell(props: SingleCellProps) {
 
         h('g', {
           transform: `translate(${padding.l}, ${padding.t})`,
-        }, [
+        }, ...[
 
           h('g.x-axis', {
             transform: `translate(0, ${dimensions.plotHeight})`,
           }),
+
           h('g.y-axis'),
 
           h('g.interaction-layer', {
             ['data-hovering-cluster']: hoveringCluster,
-          }, [
+          }, ...[
              h('rect', {
                fill: 'transparent',
                 x: 0,
@@ -434,7 +435,7 @@ export default function SingleCellLoader(props: OuterProps) {
       style: {
         height: '100%',
       },
-    }, [
+    }, ...[
       rect && h(SingleCell, {
         onClusterClick,
         scDataset,

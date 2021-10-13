@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 import { Provider } from 'react-redux'
@@ -48,9 +48,7 @@ export default function ViewOuter(props: ViewProps) {
   const store = useMemo(() => createStore(project), [ project ])
 
   return (
-    h(Provider, { store }, [
-      h(View),
-    ])
+    h(Provider, { store }, h(View))
   )
 }
 
@@ -88,15 +86,14 @@ function View() {
   currentlySelectedCluster.current = view.selectedClusters
 
   return (
-    h(ViewerContainer, [
-
+    h(ViewerContainer, null, ...[
       h(GridArea, {
         column: '1 / span 12',
         row: '1 / span 8',
         style: {
           border: '1px solid darkgreen',
         },
-      }, [
+      }, ...[
         h(UMAP, {
           onClusterClick(cluster) {
             const currentlySelected = currentlySelectedCluster.current
@@ -128,7 +125,7 @@ function View() {
         style: {
           border: '1px solid darkgreen',
         },
-      }, [
+      }, ...[
         h(HeatMap),
       ]),
 
@@ -138,7 +135,7 @@ function View() {
         style: {
           border: '1px solid darkgreen',
         },
-      }, [
+      }, ...[
         h(SingleCellTranscriptTable),
       ]),
 
@@ -148,7 +145,7 @@ function View() {
         style: {
           border: '1px solid darkgreen',
         },
-      }, [
+      }, ...[
         h(TranscriptInfo),
       ]),
 

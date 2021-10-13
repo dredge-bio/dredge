@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 
 import {
@@ -164,7 +164,7 @@ export default function SingleCellTable() {
         height: '100%',
         position: 'relative',
       },
-    }, [
+    }, ...[
       h(Table, {
         rowHeight: 30,
         renderHeaderRows(columns, context) {
@@ -187,7 +187,7 @@ export default function SingleCellTable() {
             }))
 
           return [
-            h('div', clusterColumns.map(column =>
+            h('div', null, clusterColumns.map(column =>
               column.cluster && h('div', {
                 key: column.cluster.id,
                 style: {
@@ -287,7 +287,7 @@ export default function SingleCellTable() {
             lineHeight: '150%',
             textAlign: 'center',
           },
-        }, [
+        }, ...[
           'Select a cluster to populate transcript table',
           h('br'),
           'Select multiple clusters by holding control or shift while clicking',
