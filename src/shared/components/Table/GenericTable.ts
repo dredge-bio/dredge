@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import * as R from 'ramda'
 import * as React from 'react'
 import { FixedSizeList as List } from 'react-window'
@@ -241,8 +241,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       h(TableWrapper, {
         className,
         ref,
-      }, [
-
+      }, ...[
         h(TableHeaderWrapper, {
           rowHeight,
           numRows: additionalRows.length + 1,
@@ -250,7 +249,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           totalWidth: headerWidth,
         }, [
           ...additionalRows.map((node, i) =>
-            React.createElement(TableHeaderRow, {
+            h(TableHeaderRow, {
               rowHeight,
               key: `table-row-${i}`,
             }, node)
@@ -273,7 +272,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
                   props.updateSort(col.sort.key, nextOrder)
 
                 },
-              }, [
+              }, ...[
 
                 typeof col.label === 'string'
                   ? col.label
@@ -305,7 +304,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           numRows: additionalRows.length + 1,
           className: 'table-scroll',
           tableWidthSet: dimensions !== null,
-        }, [
+        }, ...[
           dimensions && React.createElement(List, {
             innerRef: listRef,
             overscanCount: 50,
@@ -327,10 +326,10 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           }),
         ]),
 
-        h('div.borders', {
-        }, columns && columns.map(col =>
+        h('div.borders', null, columns && columns.map(col =>
           !col.borderLeft ? null : (
             h('span', {
+              key: col.key,
               style: {
                 position: 'absolute',
                 left: col.left - 8 - headerOffsetLeft,
@@ -341,8 +340,6 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             })
           )
         )),
-
-
       ])
     )
   }
