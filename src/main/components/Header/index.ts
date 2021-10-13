@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import { Route, useNavigation } from 'org-shell'
 import { Flex, Box, Button } from 'rebass'
@@ -156,8 +156,8 @@ export default function Header(props: HeaderProps) {
     h(HeaderContainer, {
       as: 'header',
       px: 4,
-    }, [
-      h('div', { style: { display: 'flex' }}, [
+    }, ...[
+      h('div', { style: { display: 'flex' }}, ...[
         h('h1', {
           style: {
             display: 'flex',
@@ -178,7 +178,7 @@ export default function Header(props: HeaderProps) {
         ]),
       ]),
 
-      isLocalFile ? null : h(Flex, { alignItems: 'center' }, [
+      isLocalFile ? null : h(Flex, { alignItems: 'center' }, ...[
         h(AriaMenuButton.Wrapper, {
           style: {
             position: 'relative',
@@ -202,7 +202,7 @@ export default function Header(props: HeaderProps) {
             style: {
               padding: 0,
             },
-          }, [
+          }, ...[
             h(AriaMenuButton.Button, {
               style: {
                 fontSize: '16px',
@@ -212,8 +212,8 @@ export default function Header(props: HeaderProps) {
             }, 'Menu'),
           ]),
 
-          h(Menu, [
-            h('ul', [
+          h(Menu, null, ...[
+            h('ul', null, ...[
               !projectLabel ? null : h(Box, {
                 is: 'li',
                 style: {
@@ -223,11 +223,11 @@ export default function Header(props: HeaderProps) {
                 },
               }, projectLabel),
 
-              h('li', {}, h(AriaMenuButton.MenuItem, {
+              h('li', null, h(AriaMenuButton.MenuItem, {
                 value: 'home',
               }, projectLabel ? 'View' : 'Home')),
 
-              !hasReadme ? null : h('li', {}, h(AriaMenuButton.MenuItem, {
+              !hasReadme ? null : h('li', null, h(AriaMenuButton.MenuItem, {
                 value: 'about',
               }, 'About dataset')),
 
@@ -240,15 +240,15 @@ export default function Header(props: HeaderProps) {
                 },
               }),
 
-              h('li', {}, h(AriaMenuButton.MenuItem, {
+              h('li', null, h(AriaMenuButton.MenuItem, {
                 value: 'resize',
               }, 'Resize application to window')),
 
-              h('li', {}, h(AriaMenuButton.MenuItem, {
+              h('li', null, h(AriaMenuButton.MenuItem, {
                 value: 'help',
               }, 'About DrEdGE')),
 
-              h('li', {}, h(AriaMenuButton.MenuItem, {
+              h('li', null, h(AriaMenuButton.MenuItem, {
                 value: 'dredge-home',
               }, 'DrEdGE project homepage')),
 

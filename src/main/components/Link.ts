@@ -1,7 +1,7 @@
 "use strict";
 
 import { Link } from 'org-shell'
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 
 function InternalLink(props: any) {
   return h('a', ...props)

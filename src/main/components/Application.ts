@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h, useRef } from 'react'
 import * as React from 'react'
 import * as R from 'ramda'
 import { createGlobalStyle } from 'styled-components'
@@ -10,8 +10,6 @@ import { Resource } from '../types'
 import { LogViewer } from '@dredge/log'
 import Header from './Header'
 import LocalFileMessage from './LocalFileMessage'
-
-const { useRef } = React
 
 
 const GlobalStyle = createGlobalStyle`
@@ -121,7 +119,7 @@ function Main(props: React.PropsWithChildren<{}>) {
   if (resource) {
     return children as unknown as React.ReactElement
   } else {
-    return h(Box, { p: 3 }, [
+    return h(Box, { p: 3 }, ...[
       h(LogViewer, {
         source: { key: 'global' },
       }),
@@ -178,18 +176,18 @@ export class Application extends React.Component<any, ApplicationState> {
       )
     } else if (error) {
       children = (
-        h(Box, [
+        h(Box, null, ...[
           h(Heading, { as: 'h1'}, 'Runtime error'),
           h(Box, { as: 'pre', mt: 2 }, error.stack),
           !componentStack ? null : h(Box, { as: 'pre' }, '----\n' + componentStack.trim()),
         ])
       )
     } else {
-      children = React.createElement(Main, null, this.props.children)
+      children = h(Main, null, this.props.children)
     }
 
     return (
-      h(ApplicationContainer, [
+      h(ApplicationContainer, null, ...[
         h(GlobalStyle),
 
         h(Header, {
@@ -197,7 +195,7 @@ export class Application extends React.Component<any, ApplicationState> {
           onRequestResize: this.handleRequestResize,
         }),
 
-        React.createElement('main', {}, children),
+        h('main', {}, children),
       ])
     )
   }

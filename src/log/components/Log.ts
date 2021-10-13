@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
 
@@ -124,7 +124,7 @@ function LogEntry({ project, timestamp, log }: LogItem) {
     ]
   } else {
     children = [
-      h('td'),
+      h('td', { key: 'placeholder' }),
       h('td', {
         key: 1,
         colSpan: 3,
@@ -134,7 +134,7 @@ function LogEntry({ project, timestamp, log }: LogItem) {
   }
 
   return (
-    h('tr', [
+    h('tr', null, [
       h('td', { key: 5 }, new Date(timestamp).toLocaleTimeString()),
       h('td', { key: 6 }, project),
       ...children,
@@ -183,13 +183,13 @@ export function LogViewer() {
   }
 
   return (
-    h('div', [
-      h('h2', label),
+    h('div', null, ...[
+      h('h2', null, label),
 
-      h(LogTable, [
-        h('thead', []),
+      h(LogTable, null, ...[
+        h('thead'),
 
-        h('tbody', filterMultiple(logArr).map(entry =>
+        h('tbody', null, filterMultiple(logArr).map(entry =>
           h(LogEntry, {
             key: entry.id,
             ...entry,

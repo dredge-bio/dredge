@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import * as R from 'ramda'
 import { ORGShell, Route } from 'org-shell'
 import { Provider } from 'react-redux'

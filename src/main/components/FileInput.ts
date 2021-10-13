@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import { Button, ButtonProps } from 'rebass'
 
 type FileInputProps = Omit<ButtonProps, 'onChange'> & {

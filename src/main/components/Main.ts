@@ -1,4 +1,4 @@
-import h from 'react-hyperscript'
+import { createElement as h } from 'react'
 import { Box } from 'rebass'
 
 import { useAppSelector } from '../hooks'
@@ -12,15 +12,13 @@ export function Main() {
 
   if ('loaded' in project || 'failed' in project) {
     return (
-      h(Box, { p: 3 }, [
+      h(Box, { p: 3 }, ...[
         h(LogViewer, {
           source: { key: 'global' },
         }),
       ])
     )
   }
-
-  project
 
   if (project.type === 'Bulk') {
     return (
