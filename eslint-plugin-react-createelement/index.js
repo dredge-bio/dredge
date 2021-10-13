@@ -8,7 +8,11 @@ module.exports = {
 
             if (node.arguments.length === 1) return
 
-            const propsArg = node.arguments[1]
+            let propsArg = node.arguments[1]
+
+            if (propsArg.type === 'ConditionalExpression') {
+              propsArg = propsArg.consequent
+            }
 
             const check = node => (
               node.type === 'ObjectExpression' ||
