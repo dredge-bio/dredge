@@ -124,6 +124,7 @@ function View() {
         row: '1 / span 2',
       }, ...[
         h(TreatmentSelector, {
+          transcript: null,
           useSelectBackup: true,
           selectedTreatment: treatmentA,
           onSelectTreatment: treatment => {
@@ -140,6 +141,7 @@ function View() {
         row: '11 / span 2',
       }, ...[
         h(TreatmentSelector, {
+          transcript: null,
           useSelectBackup: true,
           selectedTreatment: treatmentB,
           onSelectTreatment: treatment => {
