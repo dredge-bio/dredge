@@ -1,5 +1,43 @@
 module.exports = {
   rules: {
+    'arrays-require-keys': {
+      create(context) {
+        return {
+          CallExpression(node) {
+            if (node.callee.name !== 'h') return
+            if (node.arguments.length !== 3) return
+
+            const childArg = node.arguments[2]
+
+            if (childArg.type !== 'ArrayExpression') return
+
+            const missingKey = childArg.elements.some(node => {
+              if (node.type !== 'CallExpression' || node.callee.name !== 'h') return false
+
+              // call to createElement not passed a props object
+              if (node.arguments.length < 2) return true
+
+              // Check for object literal props. Ignore if it's not that
+              if (node.arguments[1].type !== 'ObjectExpression') return false
+
+              const propsNode = node.arguments[1]
+
+              return !propsNode.properties.some(propertyNode =>
+                propertyNode.key.name === 'key' ||
+                propertyNode.key.value === 'key'
+              )
+            })
+
+            if (missingKey) {
+              context.report({
+                node,
+                message: 'Unexpected child array without key values',
+              })
+            }
+          },
+        }
+      },
+    },
     'createelement-arguments': {
       create(context) {
         return {

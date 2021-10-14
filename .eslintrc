@@ -16,6 +16,7 @@
       "objects": "always-multiline",
     }],
     "react-createelement/createelement-arguments": 2,
+    "react-createelement/arrays-require-keys": 2,
     "curly": [2, "multi-line"],
     "new-cap": 0,
     "no-mixed-requires": 0,
