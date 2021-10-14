@@ -1,6 +1,6 @@
 "use strict";
 
-const h = require('react-hyperscript')
+const { createElement: h, Fragment } = require('react')
     , Documentation = require('./Documentation')
     , fields = require('./fields')
 
@@ -11,24 +11,26 @@ module.exports = function ConfigField({
 }) {
   const { required, label } = fields[fieldName]
 
-  return [
-    h('label', {
-      key: `${fieldName}-label`,
-      ['data-required']: !!required,
-    }, [
-      h('span.label-text', label),
-    ]),
+  return (
+    h(Fragment, null, [
+      h('label', {
+        key: `${fieldName}-label`,
+        ['data-required']: !!required,
+      }, h('span', {
+        className: 'label-text',
+      }, label)),
 
-    h('div', {
-      key: `${fieldName}-field`,
-    }, children),
+      h('div', {
+        key: `${fieldName}-field`,
+      }, children),
 
-    h(Help, {
-      key: `${fieldName}-help`,
-      helpField: fieldName,
-      setHelpField,
-    }),
-  ]
+      h(Help, {
+        key: `${fieldName}-help`,
+        helpField: fieldName,
+        setHelpField,
+      }),
+    ])
+  )
 }
 
 function Help({
@@ -37,19 +39,20 @@ function Help({
   setHelpField,
 }) {
   return (
-    h('div.help', [
-      h('.icon', {
+    h('div', {
+      className: 'help',
+    }, ...[
+      h('div', {
+        className: 'icon',
         tabIndex: 0,
         onClick: () => {
           setHelpField(helpField)
         },
         ['data-field']: helpField,
-      }, [
-        h('span.help', '?'),
-      ]),
+      }, h('span', { className: 'help' }, '?')),
 
       (showHelp !== helpField) ? null : (
-        h('.help-box', [
+        h('div', { className: 'help-box' }, ...[
           h(Documentation, { fieldName: helpField }),
         ])
       ),

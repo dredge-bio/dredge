@@ -549,7 +549,7 @@ export default function Plot(props: PlotProps) {
         height: '100%',
         viewBox: `0 0 ${dimensions.width} ${dimensions.height}`,
         ref: svgRef,
-      }, [
+      }, ...[
         h('defs'),
 
         // X Axis label

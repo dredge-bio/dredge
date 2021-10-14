@@ -155,7 +155,7 @@ function Search(props: SearchProps) {
           : searchResults.map(({ alias, canonical }) =>
               h('li', {
                 key: alias,
-              }, [
+              }, ...[
                 h('a', {
                   href: '#',
                   onClick: (e: Event) => {
@@ -348,7 +348,7 @@ export default function WatchedTranscripts() {
           }, 'Clear'),
         ]),
 
-        h(ButtonContainer, null, [
+        h(ButtonContainer, null, ...[
           h(FileInput, {
             onChange: handleImport,
           }, 'Import'),

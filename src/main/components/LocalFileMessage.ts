@@ -27,7 +27,7 @@ export default function LocalFileMessage() {
       style: {
         maxWidth: 720,
       },
-    }, [
+    }, ...[
       h(Heading, { as: 'h1' }, 'Setup'),
 
       h('p', null, `

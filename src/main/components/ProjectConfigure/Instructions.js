@@ -1,6 +1,6 @@
 "use strict";
 
-const h = require('react-hyperscript')
+const { createElement: h } = require('react')
     , React = require('react')
     , { Box, Heading } = require('rebass')
     , Documentation = require('./Documentation')
@@ -36,13 +36,13 @@ module.exports = class Instructions extends React.Component {
     return (
       h('div', {
         ref: this.containerRef,
-      }, [
-        h(Box, Object.values(fields).map(({ name, label, required }) =>
+      }, ...[
+        h(Box, null, Object.values(fields).map(({ name, label, required }) =>
           h(Box, {
             key: name,
             id: `field-${name}`,
             mb: 4,
-          }, [
+          }, ...[
             h(Heading, {
               as: 'h2',
               p: 2,
@@ -56,6 +56,7 @@ module.exports = class Instructions extends React.Component {
                   : 'transparent',
               },
             }, label),
+
             h(Documentation, { fieldName: name }),
           ])
         )),

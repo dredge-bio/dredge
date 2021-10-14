@@ -1,6 +1,6 @@
 "use strict";
 
-const h = require('react-hyperscript')
+const { createElement: h } = require('react')
     , R = require('ramda')
     , { version } = require('../../../package.json')
     , fakeBase = 'http://example.com'
@@ -189,27 +189,27 @@ module.exports = function ConfigTree({
   return (
     h('svg', {
       height: spacing.y * (tree.length + 1),
-    }, [
+    }, ...[
 
       h('g', {
         transform: `translate(0,${spacing.y})`,
-      }, [
-        h('g', tree.map(item =>
+      }, ...[
+        h('g', null, tree.map(item =>
           h('g', {
             transform: `translate(${item.x * spacing.x},${item.y * spacing.y})`,
-          }, [
+          }, ...[
             h('text', {
               style: {
                 fontWeight: item.isCustom ? 'bold' : 'unset',
               },
-            }, [
+            }, ...[
               item.isFolder ? '🗀 ' : '',
               decodeURIComponent(item.name),
             ]),
           ])
         )),
 
-        h('g', lines.map(line =>
+        h('g', null, lines.map(line =>
           h('line', Object.assign({}, line, {
             stroke: '#333',
             strokeWidth: '1px',

@@ -343,7 +343,7 @@ function PValueBrush(props: PValueBrushProps) {
         width: '100%',
       },
       ref: outerRef,
-    }, [
+    }, ...[
       h('svg', {
         className: 'brush-container',
         style: {

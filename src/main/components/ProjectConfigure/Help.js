@@ -1,6 +1,6 @@
 "use strict";
 
-const h = require('react-hyperscript')
+const { createElement: h } = require('react')
     , React = require('react')
     , { Flex, Box, Heading } = require('rebass')
     , styled = require('styled-components').default
@@ -40,11 +40,11 @@ module.exports = class HelpPage extends React.Component {
     return (
       h('div', {
         ref: this.containerRef,
-      }, [
+      }, ...[
         h(Box, {
           py: 3,
           px: 4,
-        }, [
+        }, ...[
           h(Box, {
             style: {
               minWidth: 420,
@@ -52,7 +52,7 @@ module.exports = class HelpPage extends React.Component {
               margin: '0 auto',
               height: '100%',
             },
-          }, [
+          }, ...[
               h(Documentation, { fieldName: 'instructions' }),
 
               // h(Instructions, { showHelp }),

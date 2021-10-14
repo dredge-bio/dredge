@@ -1,7 +1,7 @@
 /*
+import { createElement as h } from 'react'
 import { Route } from 'org-shell'
 import { Box, Button } from 'rebass'
-import h from 'react-hyperscript'
 import * as React from 'react'
 import { LogViewer } from '@dredge/log'
 import Link from './Link'

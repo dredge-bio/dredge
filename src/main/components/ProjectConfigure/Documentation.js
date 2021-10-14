@@ -1,6 +1,6 @@
 "use strict"
 
-const h = require('react-hyperscript')
+const { createElement: h } = require('react')
     , styled = require('styled-components').default
     , instructions = require('instructions.md')
     , fieldDocs = require('./fields')

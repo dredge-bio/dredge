@@ -178,14 +178,14 @@ function View() {
       ),
 
 
-      h(GridArea, { column: '12 / span 13', row: '1 / span 9' }, [
+      h(GridArea, { column: '12 / span 13', row: '1 / span 9' }, ...[
         h('div', {
           style: {
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
           },
-        }, [
+        }, ...[
           h(WatchedTranscripts),
           h('div', {
             ['data-area']: 'table',
@@ -195,9 +195,7 @@ function View() {
               flex: 1,
               maxHeight: 'calc(100% - 84px)',
             },
-          }, [
-            h(BulkTranscriptTable),
-          ]),
+          }, h(BulkTranscriptTable)),
         ]),
       ]),
 
