@@ -592,20 +592,18 @@ export default function Plot(props: PlotProps) {
             height: dimensions.plotHeight,
           }),
 
-          h('g.x-axis', {
+          h('g', {
+            className: 'x-axis',
             transform: `translate(0, ${dimensions.plotHeight})`,
           }),
 
-          h('g.y-axis'),
+          h('g', { className: 'y-axis' }),
 
           h('g', { clipPath: 'url(#visible-plot)' }, ...[
-            h('g.squares'),
-
-            h('g.saved-transcripts'),
-
-            h('g.interaction'),
-
-            h('g.hovered-marker'),
+            h('g', { className: 'squares' }),
+            h('g', { className: 'saved-transcripts' }),
+            h('g', { className: 'interaction' }),
+            h('g', { className: 'hovered-marker' }),
           ]),
         ]),
       ]),

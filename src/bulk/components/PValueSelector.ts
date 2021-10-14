@@ -214,10 +214,15 @@ export default function PValueSelector(props: PValueSelectorProps) {
         }, h(Reset, { height: 12 })),
       ]),
 
-      h('div.pvalue-histogram', null, ...[
-        h('div.histogram', null, histogram && histogram.bins.reverse().map((ct, i) =>
-          h('span.histogram-bar', {
+      h('div', {
+        className: 'pvalue-histogram',
+      }, ...[
+        h('div', {
+          className: 'histogram',
+        }, histogram && histogram.bins.reverse().map((ct, i) =>
+          h('span', {
             key: `${comparedTreatments}-${i}`,
+            className: 'histogram-bar',
             style: {
               height: `${100 / histogram.ticks.length}%`,
               top: `${i * (100 / histogram.ticks.length)}%`,
@@ -339,7 +344,8 @@ function PValueBrush(props: PValueBrushProps) {
       },
       ref: outerRef,
     }, [
-      h('svg.brush-container', {
+      h('svg', {
+        className: 'brush-container',
         style: {
           position: 'absolute',
         },

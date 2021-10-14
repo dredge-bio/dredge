@@ -326,7 +326,9 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           }),
         ]),
 
-        h('div.borders', null, columns && columns.map(col =>
+        h('div', {
+          className: 'borders',
+        }, columns && columns.map(col =>
           !col.borderLeft ? null : (
             h('span', {
               key: col.key,

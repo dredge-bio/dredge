@@ -198,7 +198,9 @@ export default function TreatmentSelector(props: SelectorProps) {
 
   return (
     h(SelectorWrapper, null, ...[
-      svg && h('div.svg-wrapper', null, ...[
+      svg && h('div', {
+        className: 'svg-wrapper',
+      }, ...[
         h('div', { ref }),
 
         h(Tooltip, {

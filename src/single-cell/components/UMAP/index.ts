@@ -382,13 +382,15 @@ function SingleCell(props: SingleCellProps) {
           transform: `translate(${padding.l}, ${padding.t})`,
         }, ...[
 
-          h('g.x-axis', {
+          h('g', {
+            className: 'x-axis',
             transform: `translate(0, ${dimensions.plotHeight})`,
           }),
 
-          h('g.y-axis'),
+          h('g', { className: 'y-axis' }),
 
-          h('g.interaction-layer', {
+          h('g', {
+            className: 'interaction-layer',
             ['data-hovering-cluster']: hoveringCluster,
           }, ...[
              h('rect', {

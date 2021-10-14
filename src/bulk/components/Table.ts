@@ -91,7 +91,9 @@ function getColumns(width: number): TableColumn<BulkViewState, TableData, BulkTa
         const datum = getItem(data, index)
 
         return (
-          h('div.transcript-label', null, datum.label)
+          h('div', {
+            className: 'transcript-label',
+          }, datum.label)
         )
       },
     },
