@@ -300,7 +300,7 @@ function SingleCell(props: SingleCellProps) {
   )
 
   return (
-    h(Container, null, [
+    h(Container, null, ...[
       h(UMAP, {
         type: 'background',
         dimensions,

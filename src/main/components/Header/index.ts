@@ -163,7 +163,7 @@ export default function Header(props: HeaderProps) {
             display: 'flex',
             fontFamily: 'SourceSansPro',
           },
-        }, [
+        }, ...[
           headerText,
           /*
           (!view || view.project.source !== 'local') ? null : (
@@ -196,7 +196,7 @@ export default function Header(props: HeaderProps) {
               window.location.href = 'http://dredge.bio.unc.edu'
             }
           },
-        }, [
+        }, ...[
           h(Button, {
             ml: 2,
             style: {
