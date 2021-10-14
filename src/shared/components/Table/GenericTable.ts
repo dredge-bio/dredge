@@ -1,7 +1,7 @@
 import { createElement as h } from 'react'
 import * as R from 'ramda'
 import * as React from 'react'
-import { FixedSizeList as List } from 'react-window'
+import { FixedSizeList, ListChildComponentProps } from 'react-window'
 
 import { useResizeCallback, shallowEquals } from '@dredge/main'
 
@@ -63,16 +63,12 @@ type TableData<Context, ItemData, SortPath> = {
 }
 
 type RowProps<Context, ItemData, SortPath> = {
-  data: {
-    data: ItemData;
-    columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
-    rowClassName?: string | ((data: ItemData, index: number) => string);
-    onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
-    onRowEnter?: (data: ItemData, index: number, event: MouseEvent) => void;
-    onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
-  },
-  index: number;
-  style: React.CSSProperties;
+  data: ItemData;
+  columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
+  rowClassName?: string | ((data: ItemData, index: number) => string);
+  onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
+  onRowEnter?: (data: ItemData, index: number, event: MouseEvent) => void;
+  onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
 }
 
 type CellProps = React.PropsWithChildren<{
@@ -94,9 +90,9 @@ function TableCell(props: CellProps) {
   )
 }
 
-
-/* eslint-disable-next-line */
-const TableRow = memo(function TableRow<Context, ItemData, SortPath>(props: RowProps<Context, ItemData, SortPath>) {
+function TableRow<Context, ItemData, SortPath>(
+  props: ListChildComponentProps<RowProps<Context, ItemData, SortPath>>
+) {
   const {
     style,
     data: {
@@ -133,7 +129,9 @@ const TableRow = memo(function TableRow<Context, ItemData, SortPath>(props: RowP
       }, column.renderRow(data, index))
     )))
   )
-}, (prevProps, nextProps) => {
+}
+
+const MemoizedTableRow = memo(TableRow, (prevProps, nextProps) => {
   let oldClassName: string = ''
     , newClassName: string = ''
 
@@ -155,7 +153,7 @@ const TableRow = memo(function TableRow<Context, ItemData, SortPath>(props: RowP
     shallowEquals(prevProps.data.data, nextProps.data.data) &&
     oldClassName === newClassName
   )
-})
+}) as typeof TableRow
 
 export function makeGenericTable<Context, ItemData, SortPath>() {
   return function Table(props: TableData<Context, ItemData, SortPath>) {
@@ -237,6 +235,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const additionalRows = renderHeaderRows && columns &&
       renderHeaderRows(columns, context) || []
 
+    const TranscriptList = <new () => FixedSizeList<RowProps<Context, ItemData, SortPath>>> FixedSizeList
+
     return (
       h(TableWrapper, {
         className,
@@ -305,7 +305,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           className: 'table-scroll',
           tableWidthSet: dimensions !== null,
         }, ...[
-          dimensions && React.createElement(List, {
+          dimensions && columns && h(TranscriptList, {
             innerRef: listRef,
             overscanCount: 50,
             itemCount,
@@ -322,7 +322,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             height: dimensions.height - additionalRows.length * rowHeight - 1,
             width: dimensions.widthWithScrollbar,
 
-            children: TableRow,
+            children: MemoizedTableRow,
           }),
         ]),
 
