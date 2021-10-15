@@ -80,7 +80,7 @@ function TableCell(props: CellProps) {
   const { children, left, width } = props
 
   return (
-    React.createElement('div', {
+    h('div', {
       style: {
         position: 'absolute',
         left,
@@ -115,14 +115,14 @@ function TableRow<Context, ItemData, SortPath>(
   }
 
   return (
-    React.createElement('div', {
+    h('div', {
       className,
       onClick: onRowClick && ((e: MouseEvent) => onRowClick(data, index, e)),
       onMouseEnter: onRowEnter && ((e: MouseEvent) => onRowEnter(data, index, e)),
       onMouseLeave: onRowLeave && ((e: MouseEvent) => onRowLeave(data, index, e)),
       style,
     }, (columns || []).map(column => (
-      React.createElement(TableCell, {
+      h(TableCell, {
         key: column.key,
         left: column.left,
         width: column.width,
@@ -235,7 +235,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const additionalRows = renderHeaderRows && columns &&
       renderHeaderRows(columns, context) || []
 
-    const TranscriptList = <new () => FixedSizeList<RowProps<Context, ItemData, SortPath>>> FixedSizeList
+    const TranscriptList = FixedSizeList as
+      new () => FixedSizeList<RowProps<Context, ItemData, SortPath>>
 
     return (
       h(TableWrapper, {
