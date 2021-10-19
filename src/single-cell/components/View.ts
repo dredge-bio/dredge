@@ -80,6 +80,10 @@ function View() {
       dispatch(viewActions.setSelectedTranscripts({
         transcripts: selectedTranscripts,
       }))
+
+      dispatch(viewActions.setFocusedTranscript({
+        transcript: [...selectedTranscripts].pop()!,
+      }))
     }
   }, [])
 
