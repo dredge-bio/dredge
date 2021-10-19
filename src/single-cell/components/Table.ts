@@ -1,4 +1,4 @@
-import { createElement as h } from 'react'
+import { createElement as h, useEffect } from 'react'
 import styled from 'styled-components'
 
 import {
@@ -153,10 +153,17 @@ function getColumns(width: number, view: SingleCellViewState) {
 export default function SingleCellTable() {
   const view = useView()
       , dispatch = useViewDispatch()
-      , [ , setOptions ] = useViewOptions()
+      , [ options, setOptions ] = useViewOptions()
       , { selectedTranscripts, focusedTranscript, project } = view
       , { transcriptImages } = project.data
       , displayedTranscripts = view.displayedTranscriptsWithClusters
+
+  useEffect(() => {
+    dispatch(viewActions.setViewSort({
+      path: options.sortBy,
+      order: options.sortOrder,
+    }))
+  }, [])
 
   return (
     h('div', {
@@ -200,6 +207,10 @@ export default function SingleCellTable() {
           ]
         },
         updateSort(path, order) {
+          setOptions({
+            sortBy: path,
+            sortOrder: order,
+          })
           dispatch(viewActions.setViewSort({ path, order }))
         },
         rowClassName(data, index) {
