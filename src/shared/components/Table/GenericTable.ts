@@ -1,7 +1,7 @@
 import { createElement as h } from 'react'
 import * as R from 'ramda'
 import * as React from 'react'
-import { FixedSizeList, ListChildComponentProps } from 'react-window'
+import { FixedSizeList, FixedSizeListProps, ListChildComponentProps } from 'react-window'
 
 import { useResizeCallback, shallowEquals } from '@dredge/main'
 
@@ -235,8 +235,17 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const additionalRows = renderHeaderRows && columns &&
       renderHeaderRows(columns, context) || []
 
-    const TranscriptList = FixedSizeList as
-      new () => FixedSizeList<RowProps<Context, ItemData, SortPath>>
+    type ListData = RowProps<Context, ItemData, SortPath>
+    type ListComponent = FixedSizeList<ListData>
+    type ListProps = FixedSizeListProps<ListData>
+
+    const TranscriptList = FixedSizeList as React.ClassType<
+      ListProps,
+      ListComponent,
+      new () => ListComponent
+    >
+
+    const windowListRef = useRef<ListComponent>(null)
 
     return (
       h(TableWrapper, {
@@ -307,6 +316,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           tableWidthSet: dimensions !== null,
         }, ...[
           dimensions && columns && h(TranscriptList, {
+            ref: windowListRef,
             innerRef: listRef,
             overscanCount: 50,
             itemCount,
