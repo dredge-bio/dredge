@@ -1,7 +1,7 @@
 import * as t from 'io-ts'
 import { fromNullable } from 'io-ts-types'
 import * as d3 from 'd3'
-import { inflate } from 'pako'
+import { decompress } from 'fflate'
 
 import { ProjectField } from '@dredge/main'
 
@@ -157,34 +157,40 @@ export const metadata = new ProjectField({
   processValidated: noopPromise,
 })
 
-const seuratExpressionCodec = new t.Type<DataView>(
+const seuratExpressionCodec = new t.Type<Uint8Array>(
   'seuratMetadata',
-  (u): u is DataView => {
-    // ???
-    return true
+  (u): u is Uint8Array => {
+    return u instanceof Uint8Array
   },
   (u, c) => {
     if (!(u instanceof ArrayBuffer)) {
       return t.failure(u, c)
     }
 
-    const uint8arr = new Uint8Array(u)
-        , res = inflate(uint8arr)
-        , view = new DataView(res.buffer)
-
-    return t.success(view)
+    return t.success(new Uint8Array(u))
   },
   () => {
     throw new Error()
   }
 )
 
-export const expressionData = new ProjectField({
+export const expressionData = new ProjectField<Uint8Array, DataView>({
   label: 'Transcript expression data',
   required: true,
   cached: false,
   decoder: seuratExpressionCodec,
-  processValidated: noopPromise,
+  processValidated: arr => {
+    return new Promise((resolve, reject) => {
+      decompress(arr, (err, decompressed) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(new DataView(decompressed.buffer))
+        }
+      })
+    })
+
+  },
   processResponse: resp => {
     return resp.arrayBuffer()
   },
