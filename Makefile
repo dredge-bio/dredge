@@ -80,6 +80,9 @@ watch: serve
 .PHONY: watch-prod
 watch-prod: serve-prod
 
+.PHONY: link
+link: $(LINKED_INTERNAL_MODULES)
+
 .PHONY: test
 test:
 	@$(NPM_BIN)/blue-tape $(TEST_FILES)
