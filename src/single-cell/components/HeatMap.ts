@@ -584,6 +584,7 @@ export default function HeatMap() {
         heatmap && h('div', null, heatmap.grid.clusters.flatMap(x => x.squares).map(
           square => (
             h('div', {
+              key: square.transcript + square.cluster.id,
               onMouseEnter() {
                 setHoveredSquare(square)
               },
