@@ -135,7 +135,7 @@ function View() {
 
       h(GridArea, {
         column: '13 / span 12',
-        row: '1 / span 8',
+        row: '1 / span 7',
         style: {
           border: '1px solid darkgreen',
         },
@@ -145,7 +145,7 @@ function View() {
 
       h(GridArea, {
         column: '13 / span 12',
-        row: '9 / span 4',
+        row: '8 / span 5',
         style: {
           border: '1px solid darkgreen',
         },

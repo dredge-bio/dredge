@@ -5,8 +5,8 @@ import LRU from 'lru-cache'
 
 import { count } from '@dredge/main'
 
-import { useView } from '../hooks'
-import { TranscriptImage } from '../types'
+import { useView } from '../../hooks'
+import { TranscriptImage } from '../../types'
 
 type TranscriptImageWithElement = TranscriptImage & {
   element: HTMLImageElement;
@@ -85,7 +85,7 @@ const ImageContainer = styled.div`
   }
 `
 
-export default function TranscriptInfo() {
+export default function TranscriptImages() {
   const { hoveredTranscript, focusedTranscript, project } = useView()
       , { transcriptImages } = project.data
       , showTranscript = hoveredTranscript || focusedTranscript
