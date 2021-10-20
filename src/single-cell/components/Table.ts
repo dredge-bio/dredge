@@ -50,16 +50,14 @@ function sortFor(
 }
 
 function getColumns(width: number, view: SingleCellViewState) {
-  const { selectedClusters } = view
+  const { selectedClusters, project } = view
 
   const getItem = (data: TableData, index: number) =>
     data.displayedTranscripts[index]!
 
-  const displayClusters = [...selectedClusters]
-
-  if (!displayClusters.length) {
-    return []
-  }
+  const displayClusters = selectedClusters.size
+    ? [...selectedClusters]
+    : [...project.data.clusters.keys()]
 
   const clusterColumns: Column[] = displayClusters.flatMap(clusterName => [
     {
@@ -178,13 +176,9 @@ export default function SingleCellTable() {
           const { selectedClusters } = context
               , clusterMap = context.project.data.clusters
 
-          if (selectedClusters === null) {
-            return [
-              null,
-            ]
-          }
-
-          const selectedClustersArr = [...selectedClusters]
+          const selectedClustersArr = selectedClusters.size
+            ? [...selectedClusters]
+            : [...clusterMap.keys()]
 
           const clusterColumns = columns.slice(2)
             .filter((col, i) => i % 2 === 0)
@@ -285,25 +279,6 @@ export default function SingleCellTable() {
         },
         itemCount: displayedTranscripts.length,
       }),
-
-      displayedTranscripts.length > 0 ? null : (
-        h('div', {
-          style: {
-            position: 'absolute',
-            top: '20%',
-            left: 0,
-            right: 0,
-
-            color: '#666',
-            lineHeight: '150%',
-            textAlign: 'center',
-          },
-        }, ...[
-          'Select a cluster to populate transcript table',
-          h('br'),
-          'Select multiple clusters by holding control or shift while clicking',
-        ])
-      ),
     ])
   )
 }

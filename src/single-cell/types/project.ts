@@ -58,6 +58,7 @@ export type SingleCellProjectData = TranscriptData & {
   readme: string | null;
   cells: SeuratCellMap;
   expressionData: DataView;
+  transcriptsWithClusters: Map<string, ClusterDGE[]>;
   differentialExpressions: ClusterDGE[];
   clusters: SeuratClusterMap;
   transcriptImages: TranscriptImageMap;

@@ -7,7 +7,6 @@ import {
 
 import {
   SingleCellViewState,
-  ClusterDGE,
   TranscriptWithClusterDGE,
   TranscriptImageMap,
   SingleCellSortPath,
@@ -58,6 +57,18 @@ function sortTranscripts(
     transcripts)
 }
 
+function intersection<T>(a: Set<T>, b: Set<T>) {
+  const common = new Set<T>()
+
+  a.forEach(x => {
+    if (b.has(x)) {
+      common.add(x)
+    }
+  })
+
+  return common
+}
+
 export const updateDisplayedSingleCellTranscripts = createAsyncAction<
   {},
   {
@@ -65,34 +76,22 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
   }
 >('update-displayed-sc-transcripts', async (args, { getState }) => {
   const { selectedClusters, project, sortPath, order } = getState()
-      , { transcriptImages } = project.data
+      , { transcriptImages, transcriptsWithClusters } = project.data
+      , getCanonicalTranscriptLabel = getTranscriptLookup(project)
 
-  if (!selectedClusters) {
-    return {
-      displayedTranscripts: [],
-    }
+  let displayedTranscripts: TranscriptWithClusterDGE[] = [...transcriptsWithClusters].map(
+    ([ transcriptID, clusters ]) => ({
+      transcript: {
+        id: transcriptID,
+        label: getCanonicalTranscriptLabel(transcriptID) || transcriptID,
+      },
+      dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ])),
+    }))
+
+  if (selectedClusters.size) {
+    displayedTranscripts = displayedTranscripts.filter(
+      ({ dgeByCluster }) => intersection(new Set(dgeByCluster.keys()), selectedClusters).size > 0)
   }
-
-  const getCanonicalTranscriptLabel = getTranscriptLookup(project)
-      , dgesByTranscript: Map<string, Set<ClusterDGE>> = new Map()
-
-  project.data.differentialExpressions.forEach(dge => {
-    if (!selectedClusters.has(dge.clusterID)) return
-
-    if (!dgesByTranscript.has(dge.transcriptID)) {
-      dgesByTranscript.set(dge.transcriptID, new Set())
-    }
-
-    dgesByTranscript.get(dge.transcriptID)!.add(dge)
-  })
-
-  const displayedTranscripts = [...dgesByTranscript].map(([ transcript, clusters ]) => ({
-    transcript: {
-      id: transcript,
-      label: getCanonicalTranscriptLabel(transcript) || transcript,
-    },
-    dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ])),
-  }))
 
   return {
     displayedTranscripts: sortTranscripts(displayedTranscripts, transcriptImages, sortPath, order),

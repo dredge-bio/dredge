@@ -24,7 +24,8 @@ import {
   SeuratCellMap,
   SeuratCluster,
   SeuratClusterMap,
-  TranscriptImageMap
+  TranscriptImageMap,
+  ClusterDGE
 } from './types'
 
 export const labels: Map<keyof SingleCellConfiguration, string> = new Map([
@@ -220,13 +221,24 @@ export async function loadProject(
 
   const { corpus, transcriptAliases } = await buildTranscriptCorpus(Object.keys(transcripts), transcripts)
 
+  projectStatusLog('Indexing differential expressions...')
+
+  const transcriptsWithClusters: Map<string, ClusterDGE[]> = new Map()
+
   differentialExpressions.forEach(dge => {
     const realTranscriptID = corpus[dge.transcriptID]
+
     if (!realTranscriptID) {
       projectStatusLog(`Transcript ${dge.transcriptID} was referenced in differential expression file, but is not a valid transcript`)
       throw new Error()
     }
+
+    if (!transcriptsWithClusters.has(realTranscriptID)) {
+      transcriptsWithClusters.set(realTranscriptID, [])
+    }
+
     dge.transcriptID = realTranscriptID
+    transcriptsWithClusters.get(realTranscriptID)!.push(dge)
   })
 
   projectStatusLog('Indexing clusters...')
@@ -264,6 +276,7 @@ export async function loadProject(
       clusters,
       expressionData,
       differentialExpressions,
+      transcriptsWithClusters,
       transcripts: Object.keys(transcripts),
       transcriptCorpus: corpus,
       transcriptAliases,
