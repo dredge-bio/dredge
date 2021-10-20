@@ -1,6 +1,7 @@
 import { createElement as h } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
+import LRU from 'lru-cache'
 
 import { count } from '@dredge/main'
 
@@ -92,6 +93,8 @@ export default function TranscriptInfo() {
       , imgContainerRef = useRef<HTMLDivElement | null>(null)
       , [ bgColor, setBGColor ] = useState<string | null>(null)
 
+  const imageCache = useRef(new LRU<string, HTMLImageElement>(20))
+
   const currentImages = useRef({
     images: null as TranscriptImage[] | null,
     loaded: false,
@@ -112,25 +115,38 @@ export default function TranscriptInfo() {
       return
     }
 
-    setTimeout(() => {
-      const showLoading = (
-        (images === currentImages.current.images) &&
-        !currentImages.current.loaded
-      )
+    const showLoading = (
+      (images === currentImages.current.images) &&
+      !currentImages.current.loaded
+    )
 
-      if (showLoading) {
-        setLoading(true)
-        setBGColor(null)
-      }
-    }, 10)
+    if (showLoading) {
+      setLoading(true)
+      setBGColor(null)
+    }
 
     const loadImages = async () => {
       imgContainerRef.current!.innerHTML = ''
 
       const loadedImages = await Promise.all(
-        images.map(image =>
-          loadImage(image.filename)
-            .then(element => ({ image, element }))))
+        images.map(async image => {
+          let element: HTMLImageElement | null
+
+          const cached = imageCache.current.get(image.filename)
+
+          if (!cached) {
+            element = await loadImage(image.filename)
+
+            if (element) {
+              imageCache.current.set(image.filename, element)
+            }
+          } else {
+            element = cached
+          }
+
+          return { image, element }
+        })
+      )
 
       currentImages.current.loaded = true
 
