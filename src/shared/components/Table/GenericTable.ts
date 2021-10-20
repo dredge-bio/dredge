@@ -171,9 +171,12 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       onRowLeave,
     } = props
 
+    const borderElRef = useRef<HTMLDivElement>()
+        , headerWrapperRef = useRef<HTMLDivElement | null>(null)
+
+
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
         , [ columns, setColumns ] = useState<(TableColumn<Context, ItemData, SortPath> & { left: number })[] | null>(null)
-        , [ headerOffsetLeft, setHeaderOffsetLeft ] = useState(0)
         , [ headerWidth, setHeaderWidth ] = useState<string | number>('100%')
 
     const ref = useResizeCallback(el => {
@@ -200,7 +203,12 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       const scrollEl = el.parentNode! as HTMLDivElement
 
       scrollEl.addEventListener('scroll', () => {
-        setHeaderOffsetLeft(scrollEl.scrollLeft)
+        requestAnimationFrame(() => {
+          headerWrapperRef.current!.style.transform = `translateX(-${scrollEl.scrollLeft}px)`
+          borderElRef.current!.style.transform = `translateX(-${scrollEl.scrollLeft}px)`
+        })
+
+        // setHeaderOffsetLeft(scrollEl.scrollLeft)
       })
     }, [listRef.current])
 
@@ -253,9 +261,12 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
         ref,
       }, ...[
         h(TableHeaderWrapper, {
+          ref: headerWrapperRef,
+          style: {
+            willChange: 'transform',
+          },
           rowHeight,
           numRows: additionalRows.length + 1,
-          offsetLeft: headerOffsetLeft,
           totalWidth: headerWidth,
         }, [
           ...additionalRows.map((node, i) =>
@@ -309,6 +320,33 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
         ]),
 
+        h('div', {
+          className: 'borders',
+          ref: borderElRef,
+          style: {
+            willChange: 'transform',
+            pointerEvents: 'none',
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+          },
+        }, columns && columns.map(col =>
+          !col.borderLeft ? null : (
+            h('span', {
+              key: col.key,
+              style: {
+                position: 'absolute',
+                left: col.left - 8,
+                top: 0,
+                bottom: 0,
+                borderLeft: '1px solid #ccc',
+              },
+            })
+          )
+        )),
+
         h(TableBodyWrapper, {
           rowHeight,
           numRows: additionalRows.length + 1,
@@ -337,22 +375,6 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           }),
         ]),
 
-        h('div', {
-          className: 'borders',
-        }, columns && columns.map(col =>
-          !col.borderLeft ? null : (
-            h('span', {
-              key: col.key,
-              style: {
-                position: 'absolute',
-                left: col.left - 8 - headerOffsetLeft,
-                top: 0,
-                bottom: 0,
-                borderLeft: '1px solid #ccc',
-              },
-            })
-          )
-        )),
       ])
     )
   }

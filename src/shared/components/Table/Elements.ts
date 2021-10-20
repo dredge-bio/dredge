@@ -9,7 +9,7 @@ export const TableWrapper = styled.div`
   & table {
     table-layout: fixed;
     border-collapse: collapse;
-    background-color: white;
+    /* background-color: white; */
   }
 
   & * {
@@ -51,11 +51,9 @@ export const TableWrapper = styled.div`
 export const TableHeaderWrapper = styled.div<{
   rowHeight: number;
   numRows: number;
-  offsetLeft: number;
   totalWidth: number | string;
 }>`
   width: ${props => typeof props.totalWidth === 'string' ? props.totalWidth : `${props.totalWidth}px`};
-  transform: translateX(-${props => props.offsetLeft}px);
   height: ${props => props.numRows * props.rowHeight}px;
   background-color: #f0f0f0;
   border-bottom: 1px solid #ccc;
