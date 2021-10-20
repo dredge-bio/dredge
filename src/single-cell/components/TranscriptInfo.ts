@@ -56,7 +56,7 @@ function getTranscriptBG(elements: HTMLImageElement[]) {
 
   const cornerColors = elements.map(getImageCornerColors).flat()
       , colorCounts = count(cornerColors)
-      , [ topColor, topColorCount ] = [...colorCounts].sort((a, b) => a[1] - b[1])[0]!
+      , [ topColor, topColorCount ] = [...colorCounts].sort((a, b) => b[1] - a[1])[0]!
 
   // Return a color if at least half of the matched colors are the same
   return topColorCount >= (elements.length * 2)
