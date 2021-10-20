@@ -9,7 +9,6 @@ const InfoContainer = styled.div`
 
   display: grid;
   grid-template-rows: auto 1fr;
-  grid-template-columns: 256px 1fr;
 `
 
 function CurrentTranscript() {
@@ -30,20 +29,10 @@ function CurrentTranscript() {
   )
 }
 
-function TranscriptClusterLevels() {
-  return null
-}
-
 export default function TranscriptInfo() {
   return (
     h(InfoContainer, null, ...[
-      h('div', {
-        style: {
-          gridColumn: '1 / 3',
-        },
-      }, h(CurrentTranscript)),
-
-      h('div', null, h(TranscriptClusterLevels)),
+      h(CurrentTranscript),
 
       h(TranscriptImages),
     ])
