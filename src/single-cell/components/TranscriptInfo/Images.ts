@@ -64,20 +64,29 @@ function getTranscriptBG(elements: HTMLImageElement[]) {
     : null
 }
 
-const ImageContainer = styled.div`
+function gridColumns(imageCount: number) {
+  if (imageCount < 2) return '1fr'
+  if (imageCount == 2) return 'repeat(2, 1fr)'
+  return `repeat(${Math.ceil(imageCount / 2)}, 1fr)`
+}
+
+const ImageContainer = styled.div<{
+  imageCount: number;
+}>`
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
 
   padding: 8px;
-  gap: 4px;
+  grid-gap: 4px;
+
+  grid-template-columns: ${ props => gridColumns(props.imageCount) };
 
   img {
+    margin: auto;
     min-width: 0;
     min-height: 0;
     max-width: 100%;
@@ -195,6 +204,7 @@ export default function TranscriptImages() {
       h(ImageContainer, {
         key: showTranscript,
         ref: imgContainerRef,
+        imageCount: images ? images.length : 0,
       }),
 
       !loading ? null : h('div', {
