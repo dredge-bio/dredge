@@ -21,6 +21,7 @@ const ViewerContainer = styled.div`
   height: 100%;
 
   padding: .66rem;
+  grid-gap: 6px;
 
   grid-template-columns: repeat(24, 1fr);
   grid-template-rows: repeat(12, 1fr);
@@ -95,7 +96,7 @@ function View() {
         column: '1 / span 12',
         row: '1 / span 8',
         style: {
-          border: '1px solid darkgreen',
+          border: '1px solid #999',
         },
       }, ...[
         h(UMAP, {
@@ -127,7 +128,7 @@ function View() {
         column: '1 / span 12',
         row: '9 / span 4',
         style: {
-          border: '1px solid darkgreen',
+          border: '1px solid #999',
         },
       }, ...[
         h(HeatMap),
@@ -137,7 +138,7 @@ function View() {
         column: '13 / span 12',
         row: '1 / span 7',
         style: {
-          border: '1px solid darkgreen',
+          border: '1px solid #999',
         },
       }, ...[
         h(SingleCellTranscriptTable),
@@ -147,7 +148,7 @@ function View() {
         column: '13 / span 12',
         row: '8 / span 5',
         style: {
-          border: '1px solid darkgreen',
+          border: '1px solid #999',
         },
       }, ...[
         h(TranscriptInfo),
