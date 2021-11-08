@@ -28,6 +28,10 @@ const opts = {
   plugins: [docsPlugin],
 }
 
+if (args.production) {
+  opts.minify = true
+}
+
 if (args.serve) {
   opts.sourcemap = 'inline'
   serve({
