@@ -135,6 +135,11 @@ function TableCell<Context, ItemData, SortPath>(
         ...style,
         ...extraStyle,
       },
+      onClick(e: MouseEvent) {
+        if (onRowClick) {
+          onRowClick(data, rowIndex, e)
+        }
+      },
       onMouseEnter(e: MouseEvent) {
         if (onRowEnter) {
           onRowEnter(data, rowIndex, e)
