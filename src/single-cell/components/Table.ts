@@ -71,13 +71,7 @@ function getColumns(width: number, view: SingleCellViewState) {
 
         const dge = item.dgeByCluster.get(clusterName)
 
-        return (
-          h('span', {
-            style: {
-              display: 'inline-block',
-            },
-          }, dge ? formatNumber(dge.logFC) : null)
-        )
+        return dge ? formatNumber(dge.logFC) : null
       },
     },
     {
@@ -134,13 +128,7 @@ function getColumns(width: number, view: SingleCellViewState) {
       renderRow(data: TableData, index: number) {
         const item = getItem(data, index)
 
-        return (
-          h('span', {
-            style: {
-              paddingLeft: '4px',
-            },
-          }, item.transcript.label)
-        )
+        return item.transcript.label
       },
     } as Column,
 
