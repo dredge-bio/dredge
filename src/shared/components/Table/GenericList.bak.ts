@@ -1,13 +1,9 @@
 import { createElement as h } from 'react'
 import * as R from 'ramda'
 import * as React from 'react'
-import {
-  VariableSizeGrid,
-  VariableSizeGridProps,
-  GridChildComponentProps
-} from 'react-window'
+import { FixedSizeList, FixedSizeListProps, ListChildComponentProps } from 'react-window'
 
-import { useResizeCallback } from '@dredge/main'
+import { useResizeCallback, shallowEquals } from '@dredge/main'
 
 import {
   TableSortOrder
@@ -21,7 +17,7 @@ import {
   TableBodyWrapper
 } from './Elements'
 
-const { useRef, useState, useEffect } = React
+const { useRef, useState, useEffect, memo } = React
 
 const DEFAULT_ROW_HEIGHT = 28
 
@@ -66,7 +62,7 @@ type TableData<Context, ItemData, SortPath> = {
 
 }
 
-type CellProps<Context, ItemData, SortPath> = {
+type RowProps<Context, ItemData, SortPath> = {
   data: ItemData;
   columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
   rowClassName?: string | ((data: ItemData, index: number) => string);
@@ -75,8 +71,27 @@ type CellProps<Context, ItemData, SortPath> = {
   onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
 }
 
-function TableCell<Context, ItemData, SortPath>(
-  props: GridChildComponentProps<CellProps<Context, ItemData, SortPath>>
+type CellProps = React.PropsWithChildren<{
+  left: number;
+  width: number;
+}>
+
+function TableCell(props: CellProps) {
+  const { children, left, width } = props
+
+  return (
+    h('div', {
+      style: {
+        position: 'absolute',
+        left,
+        width,
+      },
+    }, children)
+  )
+}
+
+function TableRow<Context, ItemData, SortPath>(
+  props: ListChildComponentProps<RowProps<Context, ItemData, SortPath>>
 ) {
   const {
     style,
@@ -88,37 +103,34 @@ function TableCell<Context, ItemData, SortPath>(
       onRowEnter,
       onRowLeave,
     },
-    rowIndex,
-    columnIndex,
+    index,
   } = props
 
-  /*
   let className: undefined | string
 
   if (typeof rowClassName === 'string') {
     className = rowClassName
   } else if (rowClassName) {
-    className = rowClassName(data, rowIndex)
-  }
-  */
-
-  const column = columns[columnIndex]!
-      , cell = column.renderRow(data, rowIndex)
-
-  if (column.borderLeft) {
-    style.marginLeft = '-8px';
-    style.paddingLeft = '8px';
-    style.borderLeft = '1px solid #ccc';
+    className = rowClassName(data, index)
   }
 
   return (
-    h('span', {
+    h('div', {
+      className,
+      onClick: onRowClick && ((e: MouseEvent) => onRowClick(data, index, e)),
+      onMouseEnter: onRowEnter && ((e: MouseEvent) => onRowEnter(data, index, e)),
+      onMouseLeave: onRowLeave && ((e: MouseEvent) => onRowLeave(data, index, e)),
       style,
-    }, cell)
+    }, (columns || []).map(column => (
+      h(TableCell, {
+        key: column.key,
+        left: column.left,
+        width: column.width,
+      }, column.renderRow(data, index))
+    )))
   )
 }
 
-/*
 const MemoizedTableRow = memo(TableRow, (prevProps, nextProps) => {
   let oldClassName: string = ''
     , newClassName: string = ''
@@ -126,24 +138,22 @@ const MemoizedTableRow = memo(TableRow, (prevProps, nextProps) => {
   if (typeof prevProps.data.rowClassName === 'string') {
     oldClassName = prevProps.data.rowClassName
   } else if (typeof prevProps.data.rowClassName === 'function') {
-    oldClassName = prevProps.data.rowClassName(prevProps.data.data, prevProps.rowIndex)
+    oldClassName = prevProps.data.rowClassName(prevProps.data.data, prevProps.index)
   }
 
   if (typeof nextProps.data.rowClassName === 'string') {
     newClassName = nextProps.data.rowClassName
   } else if (typeof nextProps.data.rowClassName === 'function') {
-    newClassName = nextProps.data.rowClassName(nextProps.data.data, nextProps.rowIndex)
+    newClassName = nextProps.data.rowClassName(nextProps.data.data, nextProps.index)
   }
 
   return (
-    prevProps.rowIndex === nextProps.rowIndex &&
-    prevProps.columnIndex === nextProps.columnIndex &&
+    prevProps.index === nextProps.index &&
     R.equals(prevProps.data.columns.map(x => x.key), nextProps.data.columns.map(x => x.key)) &&
     shallowEquals(prevProps.data.data, nextProps.data.data) &&
     oldClassName === newClassName
   )
 }) as typeof TableRow
-*/
 
 export function makeGenericTable<Context, ItemData, SortPath>() {
   return function Table(props: TableData<Context, ItemData, SortPath>) {
@@ -161,7 +171,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       onRowLeave,
     } = props
 
-    const headerWrapperRef = useRef<HTMLDivElement | null>(null)
+    const borderElRef = useRef<HTMLDivElement>()
+        , headerWrapperRef = useRef<HTMLDivElement | null>(null)
 
 
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
@@ -183,6 +194,23 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     })
 
     const listRef = useRef<HTMLDivElement>()
+
+    useEffect(() => {
+      const el = listRef.current
+
+      if (!el) return
+
+      const scrollEl = el.parentNode! as HTMLDivElement
+
+      scrollEl.addEventListener('scroll', () => {
+        requestAnimationFrame(() => {
+          headerWrapperRef.current!.style.transform = `translateX(-${scrollEl.scrollLeft}px)`
+          borderElRef.current!.style.transform = `translateX(-${scrollEl.scrollLeft}px)`
+        })
+
+        // setHeaderOffsetLeft(scrollEl.scrollLeft)
+      })
+    }, [listRef.current])
 
     useEffect(() => {
       if (!dimensions) return
@@ -215,11 +243,11 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const additionalRows = renderHeaderRows && columns &&
       renderHeaderRows(columns, context) || []
 
-    type ListData = CellProps<Context, ItemData, SortPath>
-    type ListComponent = VariableSizeGrid<ListData>
-    type ListProps = VariableSizeGridProps<ListData>
+    type ListData = RowProps<Context, ItemData, SortPath>
+    type ListComponent = FixedSizeList<ListData>
+    type ListProps = FixedSizeListProps<ListData>
 
-    const TranscriptList = VariableSizeGrid as React.ClassType<
+    const TranscriptList = FixedSizeList as React.ClassType<
       ListProps,
       ListComponent,
       new () => ListComponent
@@ -292,6 +320,33 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
         ]),
 
+        h('div', {
+          className: 'borders',
+          ref: borderElRef,
+          style: {
+            willChange: 'transform',
+            pointerEvents: 'none',
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+          },
+        }, columns && columns.map(col =>
+          !col.borderLeft ? null : (
+            h('span', {
+              key: col.key,
+              style: {
+                position: 'absolute',
+                left: col.left - 8,
+                top: 0,
+                bottom: 0,
+                borderLeft: '1px solid #ccc',
+              },
+            })
+          )
+        )),
+
         h(TableBodyWrapper, {
           rowHeight,
           numRows: additionalRows.length + 1,
@@ -301,20 +356,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           dimensions && columns && h(TranscriptList, {
             ref: windowListRef,
             innerRef: listRef,
-            // overscanCount: 50,
-
-            rowCount: itemCount,
-            rowHeight: () => 24,
-            columnCount: columns.length,
-            columnWidth: (index: number) => columns[index]!.width,
-            onScroll(e) {
-              headerWrapperRef.current!.style.transform = `translateX(-${e.scrollLeft}px)`
-            },
-
-            height: dimensions.height - additionalRows.length * rowHeight - 1,
-            width: dimensions.widthWithScrollbar,
-
-
+            overscanCount: 50,
+            itemCount,
             itemData: {
               onRowClick,
               onRowEnter,
@@ -323,8 +366,12 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
               data: itemData,
               columns,
             },
+            itemSize: 24,
 
-            children: TableCell,
+            height: dimensions.height - additionalRows.length * rowHeight - 1,
+            width: dimensions.widthWithScrollbar,
+
+            children: MemoizedTableRow,
           }),
         ]),
 
