@@ -56,7 +56,7 @@ type TableData<Context, ItemData, SortPath> = {
   rowClassName?: string | ((data: ItemData, index: number) => string);
   onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
   onRowEnter?: (data: ItemData, index: number, event: MouseEvent) => void;
-  onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
+  onRowLeave?: () => void;
 
   rowHeight?: number;
   renderHeaderRows?: (
@@ -69,7 +69,10 @@ type TableData<Context, ItemData, SortPath> = {
 type CellProps<Context, ItemData, SortPath> = {
   data: ItemData;
   columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
+  inRow: number | null,
+  inColumn: number | null,
   rowClassName?: string | ((data: ItemData, index: number) => string);
+  onCellEnter: (rowIndex: number, columnIndex: number) => void;
   onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
   onRowEnter?: (data: ItemData, index: number, event: MouseEvent) => void;
   onRowLeave?: (data: ItemData, index: number, event: MouseEvent) => void;
@@ -83,6 +86,9 @@ function TableCell<Context, ItemData, SortPath>(
     data: {
       data,
       columns,
+      onCellEnter,
+      inRow,
+      inColumn,
       rowClassName,
       onRowClick,
       onRowEnter,
@@ -105,15 +111,36 @@ function TableCell<Context, ItemData, SortPath>(
   const column = columns[columnIndex]!
       , cell = column.renderRow(data, rowIndex)
 
+  const extraStyle: React.CSSProperties = {
+    padding: '0 6px',
+    cursor: 'pointer',
+    lineHeight: style.height + 'px',
+  }
+
   if (column.borderLeft) {
-    style.marginLeft = '-8px';
-    style.paddingLeft = '8px';
-    style.borderLeft = '1px solid #ccc';
+    extraStyle.borderLeft = '1px solid #ccc';
+  }
+
+  if (columnIndex === inColumn) {
+    extraStyle.backgroundColor = '#f0f0f0';
+  }
+
+  if (rowIndex === inRow) {
+    extraStyle.backgroundColor = '#f0f0f0';
   }
 
   return (
     h('span', {
-      style,
+      style: {
+        ...style,
+        ...extraStyle,
+      },
+      onMouseEnter(e: MouseEvent) {
+        if (onRowEnter) {
+          onRowEnter(data, rowIndex, e)
+        }
+        onCellEnter(rowIndex, columnIndex)
+      },
     }, cell)
   )
 }
@@ -167,6 +194,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
         , [ columns, setColumns ] = useState<(TableColumn<Context, ItemData, SortPath> & { left: number })[] | null>(null)
         , [ headerWidth, setHeaderWidth ] = useState<string | number>('100%')
+        , [ inRow, setInRow ] = useState<number | null>(null)
+        , [ inColumn, setInColumn ] = useState<number | null>(null)
 
     const ref = useResizeCallback(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
@@ -256,6 +285,8 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
                 key: col.key,
                 left: col.left,
                 clickable: col.sort !== null,
+                width: col.width,
+                borderLeft: col.borderLeft,
                 onClick: () => {
                   if (!col.sort) return
 
@@ -297,6 +328,13 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           numRows: additionalRows.length + 1,
           className: 'table-scroll',
           tableWidthSet: dimensions !== null,
+          onMouseLeave() {
+            if (onRowLeave) {
+              onRowLeave()
+            }
+            setInRow(null)
+            setInColumn(null)
+          },
         }, ...[
           dimensions && columns && h(TranscriptList, {
             ref: windowListRef,
@@ -304,7 +342,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             // overscanCount: 50,
 
             rowCount: itemCount,
-            rowHeight: () => 24,
+            rowHeight: () => rowHeight,
             columnCount: columns.length,
             columnWidth: (index: number) => columns[index]!.width,
             onScroll(e) {
@@ -316,6 +354,12 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
 
             itemData: {
+              inRow,
+              inColumn,
+              onCellEnter(rowIndex, columnIndex) {
+                setInRow(rowIndex)
+                setInColumn(columnIndex)
+              },
               onRowClick,
               onRowEnter,
               onRowLeave,

@@ -192,8 +192,10 @@ export default function SingleCellTable() {
               column.cluster && h('div', {
                 key: column.cluster.id,
                 style: {
+                  padding: '0 6px',
                   fontWeight: 'bold',
                   position: 'absolute',
+                  borderLeft: column.borderLeft ? '1px solid #ccc' : undefined,
                   left: column.left,
                 },
               }, column.cluster.label)

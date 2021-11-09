@@ -90,6 +90,8 @@ export const TableBodyWrapper = styled.div<{
 
 export const TableHeaderCell = styled.span<{
   left: number;
+  width: number;
+  borderLeft?: boolean;
   clickable?: boolean;
   css?: CSSObject;
 }>`
@@ -98,7 +100,10 @@ export const TableHeaderCell = styled.span<{
   user-select: none;
   top: 0;
   bottom: 0;
+  padding: 0 6px;
   left: ${props => props.left}px;
+  width: ${props => props.width}px;
   ${props => props.clickable ? 'cursor: pointer;' : ''}
+  ${props => props.borderLeft ? 'border-left: 1px solid #ccc;' : ''}
   ${props => props.css}
 `
