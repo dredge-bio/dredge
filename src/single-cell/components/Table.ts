@@ -160,6 +160,7 @@ export default function SingleCellTable() {
     }, ...[
       h(Table, {
         rowHeight: 26,
+        freezeColumns: 2,
         renderHeaderRows(columns, context) {
           const { selectedClusters } = context
               , clusterMap = context.project.data.clusters

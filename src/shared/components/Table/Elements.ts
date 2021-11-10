@@ -21,6 +21,10 @@ export const TableWrapper = styled.div`
     text-align: left;
   }
 
+  & .frozen-columns::-webkit-scrollbar {
+    width: 0;
+  }
+
   .transcript-row: {
     position: relative;
   }

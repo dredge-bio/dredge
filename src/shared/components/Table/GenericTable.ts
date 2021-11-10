@@ -48,6 +48,7 @@ type TableData<Context, ItemData, SortPath> = {
 
   context: Context;
   getColumns: (totalWidth: number, context: Context) => TableColumn<Context, ItemData, SortPath>[];
+  freezeColumns?: number,
   itemCount: number,
   itemData: ItemData;
   sortOrder: TableSortOrder;
@@ -182,6 +183,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const {
       className,
       getColumns,
+      freezeColumns,
       context,
       renderHeaderRows,
       rowHeight=DEFAULT_ROW_HEIGHT,
@@ -215,8 +217,6 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
       setDimensions({ ...dims })
     })
-
-    const listRef = useRef<HTMLDivElement>()
 
     useEffect(() => {
       if (!dimensions) return
@@ -259,7 +259,11 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
       new () => ListComponent
     >
 
-    const windowListRef = useRef<ListComponent>(null)
+    const scrollGridRef = useRef<ListComponent>(null)
+        , frozenGridRef = useRef<ListComponent>(null)
+
+    const frozenColumns = (columns || []).slice(0, freezeColumns)
+        , scrollColumns = (columns || []).slice(freezeColumns)
 
     return (
       h(TableWrapper, {
@@ -341,21 +345,71 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             setInColumn(null)
           },
         }, ...[
-          dimensions && columns && h(TranscriptList, {
-            ref: windowListRef,
-            innerRef: listRef,
-            // overscanCount: 50,
-
+          !freezeColumns ? null : (dimensions && columns && h(TranscriptList, {
+            ref: frozenGridRef,
+            className: 'frozen-columns',
+            style: {
+              position: 'absolute',
+              overflow: 'hidden',
+              borderRight: '1px solid #ccc',
+              marginRight: '-1px',
+            },
             rowCount: itemCount,
             rowHeight: () => rowHeight,
-            columnCount: columns.length,
-            columnWidth: (index: number) => columns[index]!.width,
+            columnCount: frozenColumns.length,
+            columnWidth: (index: number) => frozenColumns[index]!.width,
             onScroll(e) {
-              headerWrapperRef.current!.style.transform = `translateX(-${e.scrollLeft}px)`
+              if (!e.scrollUpdateWasRequested) {
+                headerWrapperRef.current!.style.transform = `translateX(-${e.scrollLeft}px)`
+              }
+              if (scrollGridRef.current) {
+                scrollGridRef.current.scrollTo({ scrollTop: e.scrollTop })
+              }
             },
 
             height: dimensions.height - additionalRows.length * rowHeight - 1,
-            width: dimensions.widthWithScrollbar,
+            width: R.sum(frozenColumns.map(x => x.width)),
+
+            itemData: {
+              inRow,
+              inColumn,
+              onCellEnter(rowIndex, columnIndex) {
+                setInRow(rowIndex)
+                setInColumn(columnIndex)
+              },
+              onRowClick,
+              onRowEnter,
+              onRowLeave,
+              rowClassName,
+              data: itemData,
+              columns: frozenColumns,
+            },
+
+            children: TableCell,
+          })),
+          dimensions && columns && h(TranscriptList, {
+            ref: scrollGridRef,
+            // overscanCount: 50,
+            style: {
+              position: 'absolute',
+              left: R.sum(frozenColumns.map(x => x.width)),
+            },
+
+            rowCount: itemCount,
+            rowHeight: () => rowHeight,
+            columnCount: scrollColumns.length,
+            columnWidth: (index: number) => scrollColumns[index]!.width,
+            onScroll(e) {
+              if (!e.scrollUpdateWasRequested) {
+                headerWrapperRef.current!.style.transform = `translateX(-${e.scrollLeft}px)`
+              }
+              if (frozenGridRef.current) {
+                frozenGridRef.current.scrollTo({ scrollTop: e.scrollTop })
+              }
+            },
+
+            height: dimensions.height - additionalRows.length * rowHeight - 1,
+            width: dimensions.widthWithScrollbar - R.sum(frozenColumns.map(x => x.width)),
 
 
             itemData: {
@@ -370,7 +424,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
               onRowLeave,
               rowClassName,
               data: itemData,
-              columns,
+              columns: scrollColumns,
             },
 
             children: TableCell,
