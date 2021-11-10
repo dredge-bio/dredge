@@ -67,11 +67,17 @@ type TableData<Context, ItemData, SortPath> = {
 
 }
 
+type MouseCellPosition = {
+  type: 'scroll' | 'frozen';
+  rowIndex: number;
+  columnIndex: number;
+}
+
 type CellProps<Context, ItemData, SortPath> = {
   data: ItemData;
   columns: (TableColumn<Context, ItemData, SortPath> & { left: number })[];
-  inRow: number | null,
-  inColumn: number | null,
+  columnType: 'scroll' | 'frozen';
+  mousePosition: MouseCellPosition | null;
   rowClassName?: string | ((data: ItemData, index: number) => string);
   onCellEnter: (rowIndex: number, columnIndex: number) => void;
   onRowClick?: (data: ItemData, index: number, event: MouseEvent) => void;
@@ -88,8 +94,8 @@ function TableCell<Context, ItemData, SortPath>(
       data,
       columns,
       onCellEnter,
-      inRow,
-      inColumn,
+      mousePosition,
+      columnType,
       rowClassName,
       onRowClick,
       onRowEnter,
@@ -122,12 +128,18 @@ function TableCell<Context, ItemData, SortPath>(
     extraStyle.borderLeft = '1px solid #ccc';
   }
 
-  if (columnIndex === inColumn) {
-    extraStyle.backgroundColor = '#f0f0f0';
-  }
+  if (mousePosition) {
+    const shade = (
+      mousePosition.rowIndex === rowIndex || (
+        mousePosition.type === columnType &&
+        columnType === 'scroll' &&
+        mousePosition.columnIndex === columnIndex
+      )
+    )
 
-  if (rowIndex === inRow) {
-    extraStyle.backgroundColor = '#f0f0f0';
+    if (shade) {
+      extraStyle.backgroundColor = '#f0f0f0';
+    }
   }
 
   return (
@@ -201,8 +213,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
     const [ dimensions, setDimensions ] = useState<DimensionState>(null)
         , [ columns, setColumns ] = useState<(TableColumn<Context, ItemData, SortPath> & { left: number })[] | null>(null)
         , [ headerWidth, setHeaderWidth ] = useState<string | number>('100%')
-        , [ inRow, setInRow ] = useState<number | null>(null)
-        , [ inColumn, setInColumn ] = useState<number | null>(null)
+        , [ mousePosition, setMousePosition ] = useState<MouseCellPosition | null>(null)
 
     const ref = useResizeCallback(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
@@ -342,8 +353,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             if (onRowLeave) {
               onRowLeave()
             }
-            setInRow(null)
-            setInColumn(null)
+            setMousePosition(null)
           },
         }, ...[
           !freezeColumns ? null : (dimensions && columns && h(TranscriptList, {
@@ -351,7 +361,6 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             className: 'frozen-columns',
             style: {
               position: 'absolute',
-              overflow: 'hidden',
               borderRight: '1px solid #ccc',
               marginRight: '-1px',
             },
@@ -359,6 +368,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             rowHeight: () => rowHeight,
             columnCount: frozenColumns.length,
             columnWidth: (index: number) => frozenColumns[index]!.width,
+            overscanColumnCount: 20,
             onScroll(e) {
               if (!e.scrollUpdateWasRequested) {
                 headerWrapperRef.current!.style.transform = `translateX(-${e.scrollLeft}px)`
@@ -372,11 +382,14 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             width: R.sum(frozenColumns.map(x => x.width)),
 
             itemData: {
-              inRow,
-              inColumn,
+              columnType: 'frozen',
+              mousePosition,
               onCellEnter(rowIndex, columnIndex) {
-                setInRow(rowIndex)
-                setInColumn(columnIndex)
+                setMousePosition({
+                  type: 'frozen',
+                  rowIndex,
+                  columnIndex,
+                })
               },
               onRowClick,
               onRowEnter,
@@ -414,11 +427,14 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
 
             itemData: {
-              inRow,
-              inColumn,
+              columnType: 'scroll',
+              mousePosition,
               onCellEnter(rowIndex, columnIndex) {
-                setInRow(rowIndex)
-                setInColumn(columnIndex)
+                setMousePosition({
+                  type: 'scroll',
+                  rowIndex,
+                  columnIndex,
+                })
               },
               onRowClick,
               onRowEnter,
