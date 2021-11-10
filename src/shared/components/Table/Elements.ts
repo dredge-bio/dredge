@@ -80,6 +80,7 @@ export const TableBodyWrapper = styled.div<{
   height: calc(100% - ${props => props.numRows * props.rowHeight}px);
   background-color: white;
   overflow-y: ${props => props.tableWidthSet ? 'unset' : 'scroll'};
+  contain: layout;
 
   & .transcript-row:hover {
     background-color: #e6e6e6;

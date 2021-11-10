@@ -273,6 +273,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
         h(TableHeaderWrapper, {
           ref: headerWrapperRef,
           style: {
+            contain: 'layout',
             willChange: 'transform',
           },
           rowHeight,

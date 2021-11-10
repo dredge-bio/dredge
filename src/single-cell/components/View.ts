@@ -35,6 +35,7 @@ interface GridAreaProps {
 
 const GridArea = styled.div<GridAreaProps>`
   position: relative;
+  contain: strict;
   grid-column: ${ props => props.column };
   grid-row: ${ props => props.row };
 `
