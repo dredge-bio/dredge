@@ -15,7 +15,7 @@ import {
 
 import {
   TableWrapper,
-  TableHeaderCell,
+  TableHeaderCellWrapper,
   TableHeaderWrapper,
   TableHeaderRow,
   TableBodyWrapper
@@ -96,10 +96,8 @@ function TableCell<Context, ItemData, SortPath>(
       onCellEnter,
       mousePosition,
       columnType,
-      rowClassName,
       onRowClick,
       onRowEnter,
-      onRowLeave,
     },
     rowIndex,
     columnIndex,
@@ -160,6 +158,59 @@ function TableCell<Context, ItemData, SortPath>(
         onCellEnter(rowIndex, columnIndex)
       },
     }, cell)
+  )
+}
+
+type TableHeaderCellProps<Context, ItemData, SortPath> = {
+  column: TableColumn<Context, ItemData, SortPath> & { left: number };
+  context: Context;
+  updateSort: (sortPath: SortPath, order: TableSortOrder) => void;
+  sortOrder: TableSortOrder;
+}
+
+function TableHeaderCell<Context, ItemData, SortPath>(
+  props: TableHeaderCellProps<Context, ItemData, SortPath>
+) {
+  const { column, context, updateSort, sortOrder } = props
+
+  return (
+    h(TableHeaderCellWrapper, {
+      left: column.left,
+      clickable: column.sort !== null,
+      width: column.width,
+      borderLeft: column.borderLeft,
+      onClick: () => {
+        if (!column.sort) return
+
+        const active = column.sort.active(context)
+            , nextOrder = (active && sortOrder === 'asc') ? 'desc' : 'asc'
+
+        updateSort(column.sort.key, nextOrder)
+
+      },
+    }, ...[
+
+      typeof column.label === 'string'
+        ? column.label
+        : column.label(context),
+
+      column.sort === null ? null : (() => {
+        const active = column.sort.active(context)
+
+        if (!active) return null
+
+        return (
+          h('span', {
+            style: {
+              position: 'relative',
+              fontSize: 10,
+              top: -1,
+              left: 1,
+            },
+          }, sortOrder === 'asc' ? ' ▾' : ' ▴')
+        )
+      })(),
+    ])
   )
 }
 
@@ -275,6 +326,11 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
     const frozenColumns = (columns || []).slice(0, freezeColumns)
         , scrollColumns = (columns || []).slice(freezeColumns)
+        , frozenWidth = R.sum(frozenColumns.map(x => x.width))
+
+    const HeaderCell = TableHeaderCell as React.FunctionComponent<
+      TableHeaderCellProps<Context, ItemData, SortPath>
+    >
 
     return (
       h(TableWrapper, {
@@ -301,47 +357,47 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
           h(TableHeaderRow, {
             rowHeight,
             key: 'column-headers',
-          }, columns && columns.map(col =>
-              h(TableHeaderCell, {
-                key: col.key,
-                left: col.left,
-                clickable: col.sort !== null,
-                width: col.width,
-                borderLeft: col.borderLeft,
-                onClick: () => {
-                  if (!col.sort) return
-
-                  const active = col.sort.active(props.context)
-                      , nextOrder = (active && props.sortOrder === 'asc') ? 'desc' : 'asc'
-
-                  props.updateSort(col.sort.key, nextOrder)
-
-                },
-              }, ...[
-
-                typeof col.label === 'string'
-                  ? col.label
-                  : col.label(props.context),
-
-                col.sort === null ? null : (() => {
-                  const active = col.sort.active(props.context)
-
-                  if (!active) return null
-
-                  return (
-                    h('span', {
-                      style: {
-                        position: 'relative',
-                        fontSize: 10,
-                        top: -1,
-                        left: 1,
-                      },
-                    }, props.sortOrder === 'asc' ? ' ▾' : ' ▴')
-                  )
-                })(),
-              ])
+          }, columns && scrollColumns.map(column =>
+              h(HeaderCell, {
+                key: `scroll-${column.key}`,
+                column,
+                context,
+                sortOrder: props.sortOrder,
+                updateSort: props.updateSort,
+              })
            )),
+        ]),
 
+        h(TableHeaderWrapper, {
+          rowHeight,
+          numRows: additionalRows.length + 1,
+          totalWidth: frozenWidth + 1,
+          style: {
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            borderRight: '1px solid #666',
+          },
+        }, [
+          ...additionalRows.map((node, i) =>
+            h(TableHeaderRow, {
+              rowHeight,
+              key: `table-row-${i}`,
+            })
+          ),
+
+          h(TableHeaderRow, {
+            rowHeight,
+            key: 'column-headers',
+          }, columns && frozenColumns.map(column =>
+              h(HeaderCell, {
+                key: `frozen-${column.key}`,
+                column,
+                context,
+                sortOrder: props.sortOrder,
+                updateSort: props.updateSort,
+              })
+           )),
         ]),
 
         h(TableBodyWrapper, {
@@ -361,8 +417,10 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             className: 'frozen-columns',
             style: {
               position: 'absolute',
-              borderRight: '1px solid #ccc',
-              marginRight: '-1px',
+              borderRight: '1px solid #333',
+              overflowX: 'hidden',
+              scrollbarWidth: 'none',
+              zIndex: 1,
             },
             rowCount: itemCount,
             rowHeight: () => rowHeight,
@@ -370,16 +428,13 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             columnWidth: (index: number) => frozenColumns[index]!.width,
             overscanColumnCount: 20,
             onScroll(e) {
-              if (!e.scrollUpdateWasRequested) {
-                headerWrapperRef.current!.style.transform = `translateX(-${e.scrollLeft}px)`
-              }
               if (scrollGridRef.current) {
                 scrollGridRef.current.scrollTo({ scrollTop: e.scrollTop })
               }
             },
 
             height: dimensions.height - additionalRows.length * rowHeight - 1,
-            width: R.sum(frozenColumns.map(x => x.width)),
+            width: frozenWidth + 1,
 
             itemData: {
               columnType: 'frozen',
@@ -401,12 +456,13 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
 
             children: TableCell,
           })),
+
           dimensions && columns && h(TranscriptList, {
             ref: scrollGridRef,
             // overscanCount: 50,
             style: {
               position: 'absolute',
-              left: R.sum(frozenColumns.map(x => x.width)),
+              left: frozenWidth,
             },
 
             rowCount: itemCount,
@@ -423,7 +479,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
             },
 
             height: dimensions.height - additionalRows.length * rowHeight - 1,
-            width: dimensions.widthWithScrollbar - R.sum(frozenColumns.map(x => x.width)),
+            width: dimensions.widthWithScrollbar - frozenWidth,
 
 
             itemData: {

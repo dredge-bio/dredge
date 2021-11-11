@@ -60,7 +60,7 @@ export const TableHeaderWrapper = styled.div<{
   width: ${props => typeof props.totalWidth === 'string' ? props.totalWidth : `${props.totalWidth}px`};
   height: ${props => props.numRows * props.rowHeight}px;
   background-color: #f0f0f0;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #666;
 `
 
 export const TableHeaderRow = styled.div<{
@@ -93,7 +93,7 @@ export const TableBodyWrapper = styled.div<{
   */
 `
 
-export const TableHeaderCell = styled.span<{
+export const TableHeaderCellWrapper = styled.span<{
   left: number;
   width: number;
   borderLeft?: boolean;
