@@ -38,29 +38,18 @@ const Table = styled(TableComponent)`
   }
 
   .transcript-row-selected {
-    background: #f3f3ff;
+    background: #ececff;
   }
 
   .transcript-row-selected.transcript-row-hovered,
   .transcript-row-selected.transcript-column-hovered {
-    background: #ececff;
-  }
-
-  .transcript-row-hovered.transcript-column-hovered.transcript-row-selected {
     background: #e3e3ff;
   }
 
-  .transcript-row-selected::after {
-    position: absolute;
-    top: 0;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    border-top: 1px solid #aaa;
-    border-bottom: 1px solid #aaa;
-    content: " ";
-    z-index: 1;
+  .transcript-row-hovered.transcript-column-hovered.transcript-row-selected {
+    background: #dcdcff;
   }
+
 `
 
 type Column = TableColumn<SingleCellViewState, TableData, SingleCellSortPath>
@@ -278,35 +267,26 @@ export default function SingleCellTable() {
 
           return className
         },
-        onRowClick(data, index, e) {
-          const { ctrlKey } = e
-              , { selectedTranscripts } = data
+        onRowClick(data, index) {
+          const { selectedTranscripts } = data
               , { transcript } = data.displayedTranscripts[index]!
 
-          let nextFocusedTranscript: string | null = transcript.id
-            , nextSelectedTranscripts = new Set(selectedTranscripts)
+          let nextFocusedTranscript = transcript.id as string | null
 
-          if (ctrlKey) {
-            if (selectedTranscripts.has(transcript.id)) {
-              nextSelectedTranscripts.delete(transcript.id)
+          const nextSelectedTranscripts = new Set(selectedTranscripts)
 
-              const focusNext = Array.from(nextFocusedTranscript).slice(-1)[0]
+          if (selectedTranscripts.has(transcript.id)) {
+            nextSelectedTranscripts.delete(transcript.id)
 
-              if (focusNext) {
-                nextFocusedTranscript = focusNext
-              } else {
-                nextFocusedTranscript = null
-              }
+            const focusNext = Array.from(nextSelectedTranscripts).slice(-1)[0]
+
+            if (focusNext) {
+              nextFocusedTranscript = focusNext
             } else {
-              nextSelectedTranscripts.add(transcript.id)
+              nextFocusedTranscript = null
             }
           } else {
-            if (selectedTranscripts.has(transcript.id)) {
-              nextSelectedTranscripts = new Set()
-              nextFocusedTranscript = null
-            } else {
-              nextSelectedTranscripts = new Set([transcript.id])
-            }
+            nextSelectedTranscripts.add(transcript.id)
           }
 
           dispatch(viewActions.setFocusedTranscript({ transcript: nextFocusedTranscript }))
