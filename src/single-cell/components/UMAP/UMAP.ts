@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'react'
 
 // import { distance } from '@dredge/main'
 import { useDimensions } from '@dredge/bulk/components/MAPlot/hooks'
+import { delay } from '@dredge/main'
 
 import {
   SeuratCell,
@@ -18,11 +19,15 @@ type UMAPPlotData = {
   cellColor: (cell: SeuratCell) => string,
   cellRadius: (cell: SeuratCell) => number,
   dimensions: ReturnType<typeof useDimensions>,
+  animationID: number,
+  currentAnimationID: { current: number }
   clear?: boolean,
   canvasEl: HTMLCanvasElement
 }
 
-function drawUMAP(data: UMAPPlotData) {
+const CELL_DRAW_BATCH_SIZE = 1500
+
+async function drawUMAP(data: UMAPPlotData) {
   const {
     cells,
     cellColor,
@@ -30,6 +35,8 @@ function drawUMAP(data: UMAPPlotData) {
     dimensions,
     clear=false,
     canvasEl,
+    animationID,
+    currentAnimationID,
   } = data
 
   const { xScale, yScale } = dimensions
@@ -39,19 +46,31 @@ function drawUMAP(data: UMAPPlotData) {
     ctx.clearRect(0, 0, dimensions.plotWidth, dimensions.plotHeight)
   }
 
-  cells.forEach(cell => {
+  let i = 0
+
+  for (const cell of cells) {
     const { umap1, umap2 } = cell
         , x = xScale(umap1)
         , y = yScale(umap2)
         , r = cellRadius(cell)
         , fill = cellColor(cell)
 
+    if (animationID !== currentAnimationID.current) {
+      return
+    }
+
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI, true);
     ctx.fillStyle = fill;
     ctx.closePath();
     ctx.fill();
-  })
+
+    i++;
+
+    if (i % CELL_DRAW_BATCH_SIZE === 0) {
+      await delay(0)
+    }
+  }
 }
 
 function drawClusterLabel(
@@ -163,6 +182,10 @@ type UMAPProps = {
     cells: SeuratCell[];
   }
   | {
+    type: 'cluster-labels';
+    clusters: SeuratClusterMap;
+  }
+  | {
     type: 'cluster-colors';
     cells: SeuratCell[];
     clusters: SeuratClusterMap;
@@ -229,6 +252,8 @@ function sortCells(
 
 export default function UMAP(props: UMAPProps) {
   const canvasRef = useRef<HTMLCanvasElement>()
+      , animationID = useRef(0)
+      , currentAnimationID = useRef(0)
 
   useEffect(() => {
     const canvasEl = canvasRef.current
@@ -236,6 +261,9 @@ export default function UMAP(props: UMAPProps) {
     if (!canvasEl) return
 
     window.requestAnimationFrame(() => {
+      animationID.current += 1
+      currentAnimationID.current = animationID.current
+
       if (props.type === 'background') {
         drawUMAP({
           cells: props.cells,
@@ -244,6 +272,8 @@ export default function UMAP(props: UMAPProps) {
           dimensions: props.dimensions,
           clear: true,
           canvasEl,
+          animationID: animationID.current,
+          currentAnimationID,
         })
 
       } else if (props.type === 'cluster-colors') {
@@ -254,11 +284,15 @@ export default function UMAP(props: UMAPProps) {
           dimensions: props.dimensions,
           clear: true,
           canvasEl,
+          animationID: animationID.current,
+          currentAnimationID,
         })
 
+        /*
         Array.from(props.clusters.values()).forEach(cluster => {
           drawClusterLabel(cluster, props.dimensions, canvasEl)
         })
+        */
       } else if (props.type === 'transcript-expression') {
         const {
           expressionsByCell,
@@ -275,8 +309,16 @@ export default function UMAP(props: UMAPProps) {
           dimensions: props.dimensions,
           clear: true,
           canvasEl,
+          animationID: animationID.current,
+          currentAnimationID,
         })
 
+        /*
+        Array.from(props.clusters.values()).forEach(cluster => {
+          drawClusterLabel(cluster, props.dimensions, canvasEl)
+        })
+        */
+      } else if (props.type === 'cluster-labels') {
         Array.from(props.clusters.values()).forEach(cluster => {
           drawClusterLabel(cluster, props.dimensions, canvasEl)
         })
@@ -309,6 +351,8 @@ export default function UMAP(props: UMAPProps) {
             cellRadius: () => 2,
             dimensions,
             canvasEl,
+            animationID: animationID.current,
+            currentAnimationID,
           })
         } else {
           const {
@@ -325,6 +369,8 @@ export default function UMAP(props: UMAPProps) {
             cellRadius: cell => expressionsByCell.has(cell) ? 2.25 : 1.75,
             dimensions: props.dimensions,
             canvasEl,
+            animationID: animationID.current,
+            currentAnimationID,
           })
         }
 

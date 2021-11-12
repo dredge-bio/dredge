@@ -310,15 +310,18 @@ function SingleCell(props: SingleCellProps) {
         },
       }),
 
-      h(UMAP, showTranscript === null ? {
+      h(UMAP, {
         type: 'cluster-colors',
         dimensions,
         cells: allCells,
         clusters,
         style: {
+          display: showTranscript === null ? undefined : 'none',
           backgroundColor: 'transparent',
         },
-      } : {
+      }),
+
+      showTranscript === null ? null : h(UMAP, {
         type: 'transcript-expression',
         dimensions,
         cells: allCells,
@@ -337,6 +340,12 @@ function SingleCell(props: SingleCellProps) {
         cells: allCells,
         scDataset,
         transcript: showTranscript,
+      }),
+
+      h(UMAP, {
+        type: 'cluster-labels',
+        clusters,
+        dimensions,
       }),
 
       h('svg', {
