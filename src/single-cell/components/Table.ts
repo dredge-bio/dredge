@@ -28,9 +28,38 @@ const TableComponent = makeGenericTable<SingleCellViewState, TableData, SingleCe
 
 const Table = styled(TableComponent)`
 
-  .sc-table-row:hover,
-  .sc-table-row__focused {
-    background: #f0f0f0;
+  .transcript-row-hovered,
+  .transcript-column-hovered {
+    background: #f3f3f3;
+  }
+
+  .transcript-row-hovered.transcript-column-hovered {
+    background: #ececec;
+  }
+
+  .transcript-row-selected {
+    background: #f3f3ff;
+  }
+
+  .transcript-row-selected.transcript-row-hovered,
+  .transcript-row-selected.transcript-column-hovered {
+    background: #ececff;
+  }
+
+  .transcript-row-hovered.transcript-column-hovered.transcript-row-selected {
+    background: #e3e3ff;
+  }
+
+  .transcript-row-selected::after {
+    position: absolute;
+    top: 0;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+    content: " ";
+    z-index: 1;
   }
 `
 
@@ -61,7 +90,7 @@ function getColumns(width: number, view: SingleCellViewState) {
 
   const clusterColumns: Column[] = displayClusters.flatMap(clusterName => [
     {
-      key: `cluster-${clusterName}`,
+      key: `cluster-${clusterName}-logFC`,
       label: 'logFC',
       width: 72,
       sort: sortFor(clusterName, 'logFC'),
@@ -161,6 +190,46 @@ export default function SingleCellTable() {
       h(Table, {
         rowHeight: 26,
         freezeColumns: 2,
+        getCellClassname(props) {
+          const {
+            column,
+            mousePosition,
+            rowIndex,
+            data,
+          } = props
+
+          let className = ''
+
+          if (mousePosition) {
+            const rowHovered = mousePosition.rowIndex === rowIndex
+
+            const columnHovered = (
+              column.key.startsWith('cluster-') &&
+              mousePosition.column.key.startsWith('cluster-') &&
+              column.key.replace(/logFC|pvalue/, '') === mousePosition.column.key.replace(/logFC|pvalue/, '')
+            )
+
+            if (rowHovered) {
+              className += ' transcript-row-hovered';
+            }
+
+            if (columnHovered) {
+              className += ' transcript-column-hovered';
+            }
+
+          }
+
+          const rowTranscript = data.displayedTranscripts[rowIndex]!
+
+          const rowSelected = data.selectedTranscripts.has(rowTranscript.transcript.id)
+
+          if (rowSelected) {
+            className += ' transcript-row-selected'
+          }
+
+
+          return className
+        },
         renderHeaderRows(columns, context) {
           const { selectedClusters } = context
               , clusterMap = context.project.data.clusters
