@@ -1,12 +1,14 @@
-import { createElement as h } from 'react'
+import { createElement as h, useState } from 'react'
 import { Flex, Button, Text } from 'rebass'
 import { useView, useViewDispatch, useViewOptions } from '../hooks'
 import * as viewActions from '../actions'
+import { SearchTranscripts } from '@dredge/shared'
 
 export default function Toolbar() {
-  const { selectedTranscripts } = useView()
+  const { selectedTranscripts, project } = useView()
       , dispatch = useViewDispatch()
       , [ , updateOptions ] = useViewOptions()
+      , [ showSearch, setShowSearch ] = useState(false)
 
   return (
     h(Flex, {
@@ -17,6 +19,22 @@ export default function Toolbar() {
       justifyContent: 'space-between',
     }, ...[
       h('div', null, ...[
+        !showSearch ? null : h(SearchTranscripts, {
+          project,
+          onSelect(transcriptID) {
+            const newSelectedTranscripts = new Set(selectedTranscripts)
+
+            newSelectedTranscripts.add(transcriptID)
+
+            dispatch(viewActions.setSelectedTranscripts({ transcripts: newSelectedTranscripts }))
+            dispatch(viewActions.setFocusedTranscript({ transcript: transcriptID }))
+
+            updateOptions({
+              selectedTranscripts: newSelectedTranscripts,
+            })
+          },
+        }),
+
         h(Text, {
           mx: 2,
           fontWeight: 'bold',
@@ -34,6 +52,9 @@ export default function Toolbar() {
 
         h(Button, {
           mx: 2,
+          onClick() {
+            setShowSearch(prev => !prev)
+          },
         }, 'Search'),
 
         h(Button, {
@@ -41,10 +62,10 @@ export default function Toolbar() {
           disabled: selectedTranscripts.size === 0,
           onClick() {
             updateOptions({
-              selectedTranscripts: new Set()
+              selectedTranscripts: new Set(),
             })
             dispatch(viewActions.clearSelectedTranscripts())
-          }
+          },
         }, 'Clear'),
 
       ]),
