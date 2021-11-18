@@ -68,6 +68,10 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
 
       state.hoveredTranscript = transcript
     })
+    .addCase(viewActions.clearSelectedTranscripts, (state, action) => {
+      state.selectedTranscripts = new Set()
+      state.focusedTranscript = null
+    })
     .addCase(viewActions.setFocusedTranscript, (state, action) => {
       const { transcript } = action.payload
 

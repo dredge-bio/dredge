@@ -110,6 +110,8 @@ export const setSelectedTranscripts = createAction<
   { transcripts: Set<string> }
 >('set-selected-transcripts')
 
+export const clearSelectedTranscripts = createAction('clear-selected-transcripts')
+
 export const setViewSort = createAction<
   {
     path: SingleCellSortPath,

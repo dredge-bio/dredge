@@ -13,6 +13,7 @@ import UMAP from './UMAP'
 import HeatMap from './HeatMap'
 import SingleCellTranscriptTable from './Table'
 import TranscriptInfo from './TranscriptInfo'
+import Toolbar from './Toolbar'
 
 const { useEffect, useRef, useMemo } = React
 
@@ -24,18 +25,19 @@ const ViewerContainer = styled.div`
   grid-gap: 6px;
 
   grid-template-columns: repeat(24, 1fr);
-  grid-template-rows: repeat(12, 1fr);
+  grid-template-rows: repeat(15, 1fr);
 `
 
 interface GridAreaProps {
-  column: string,
-  row: string,
-  ['data-area']?: string,
+  column: string;
+  row: string;
+  contain?: boolean;
+  ['data-area']?: string;
 }
 
 const GridArea = styled.div<GridAreaProps>`
   position: relative;
-  contain: strict;
+  ${props => props.contain ? 'contain: strict' : ''};
   grid-column: ${ props => props.column };
   grid-row: ${ props => props.row };
 `
@@ -95,7 +97,8 @@ function View() {
     h(ViewerContainer, null, ...[
       h(GridArea, {
         column: '1 / span 12',
-        row: '1 / span 8',
+        row: '1 / span 10',
+        contain: true,
         style: {
           border: '1px solid #999',
         },
@@ -127,7 +130,8 @@ function View() {
 
       h(GridArea, {
         column: '1 / span 12',
-        row: '9 / span 4',
+        row: '11 / span 5',
+        contain: true,
         style: {
           border: '1px solid #999',
         },
@@ -137,7 +141,18 @@ function View() {
 
       h(GridArea, {
         column: '13 / span 12',
-        row: '1 / span 7',
+        row: '1 / span 1',
+        style: {
+          border: '1px solid #999',
+        },
+      }, ...[
+        h(Toolbar),
+      ]),
+
+      h(GridArea, {
+        column: '13 / span 12',
+        row: '2 / span 8',
+        contain: true,
         style: {
           border: '1px solid #999',
         },
@@ -147,7 +162,8 @@ function View() {
 
       h(GridArea, {
         column: '13 / span 12',
-        row: '8 / span 5',
+        row: '10 / span 6',
+        contain: true,
         style: {
           border: '1px solid #999',
         },
