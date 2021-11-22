@@ -21,12 +21,16 @@ export function memoizeForProject<P extends LoadedProject>() {
   }
 }
 
-export async function buildTranscriptCorpus(transcripts: string[], transcriptAliases: Record<string, string[]>) {
+export async function buildTranscriptCorpus(
+  transcripts: string[],
+  transcriptAliases: Map<string, string[]>
+) {
   const corpus: Record<string, string> = {}
-      , corpusVals: ([alias: string, transcript: string])[] = []
+      , corpusVals: ([ alias: string, transcript: string ])[] = []
 
   let i = 0
-  for (const [ transcript, aliases ] of Object.entries(transcriptAliases)) {
+
+  for (const [ transcript, aliases ] of transcriptAliases) {
     for (const alias of [...aliases, transcript]) {
       // FIXME: This should probably throw if an alias is not unique (i.e. can
       // can identify two different transcripts)
@@ -38,7 +42,6 @@ export async function buildTranscriptCorpus(transcripts: string[], transcriptAli
     }
   }
 
-  i = 0
   transcripts.forEach(transcript => {
     if (!(transcript in corpus)) {
       corpus[transcript] = transcript

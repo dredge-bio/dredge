@@ -149,7 +149,7 @@ export async function loadProject(
     metadata,
     expressionData,
     differentialExpressions,
-    transcripts,
+    transcriptsWithAliases,
     transcriptImages,
     readme,
   ] = await Promise.all([
@@ -184,7 +184,7 @@ export async function loadProject(
     metadata === null ||
     expressionData === null ||
     differentialExpressions === null ||
-    transcripts === null
+    transcriptsWithAliases === null
   ) {
     projectStatusLog('Could not load project.')
     throw new Error()
@@ -219,25 +219,28 @@ export async function loadProject(
     })
   }
 
-  const { corpus, transcriptAliases } = await buildTranscriptCorpus(Object.keys(transcripts), transcripts)
+  const transcripts = Array.from(transcriptsWithAliases.keys())
+
+  const { corpus, transcriptAliases } = await buildTranscriptCorpus(
+    transcripts,
+    transcriptsWithAliases
+  )
 
   projectStatusLog('Indexing differential expressions...')
 
-  const transcriptsWithClusters: Map<string, ClusterDGE[]> = new Map()
+  const transcriptsWithClusters: Map<string, ClusterDGE[]> = new Map(
+    transcripts.map(transcript => [ transcript, []] ))
 
   differentialExpressions.forEach(dge => {
     const realTranscriptID = corpus[dge.transcriptID]
 
-    if (!realTranscriptID) {
+    if (!realTranscriptID || !transcriptsWithClusters.has(realTranscriptID)) {
       projectStatusLog(`Transcript ${dge.transcriptID} was referenced in differential expression file, but is not a valid transcript`)
       throw new Error()
     }
 
-    if (!transcriptsWithClusters.has(realTranscriptID)) {
-      transcriptsWithClusters.set(realTranscriptID, [])
-    }
-
     dge.transcriptID = realTranscriptID
+
     transcriptsWithClusters.get(realTranscriptID)!.push(dge)
   })
 
@@ -277,7 +280,7 @@ export async function loadProject(
       expressionData,
       differentialExpressions,
       transcriptsWithClusters,
-      transcripts: Object.keys(transcripts),
+      transcripts,
       transcriptCorpus: corpus,
       transcriptAliases,
       transcriptImages: transcriptImageMap,

@@ -23,7 +23,7 @@ export const aliases = new ProjectField({
   },
   decoder: t.string,
   async processValidated(str) {
-    const aliases: Record<string, Array<string>> = {}
+    const aliases: Map<string, Array<string>> = new Map()
 
     let i = 0
 
@@ -33,7 +33,7 @@ export const aliases = new ProjectField({
       // Make sure the line is not blank
       if (!canonical) continue
 
-      aliases[canonical] = others
+      aliases.set(canonical, others)
       i++
       if (i % 1500 === 0) await delay(0)
     }
