@@ -3,6 +3,7 @@ import { Flex, Button, Text } from 'rebass'
 import styled from 'styled-components'
 import { useView, useViewDispatch, useViewOptions } from '../hooks'
 import * as viewActions from '../actions'
+import { ExportType } from '../types'
 import { SearchTranscripts } from '@dredge/shared'
 import { Box } from 'rebass'
 
@@ -50,6 +51,7 @@ type ExportDialogProps = {
 function ExportDialog(props: ExportDialogProps) {
   const { hideDialog } = props
       , id = Math.random().toString()
+      , dispatch = useViewDispatch()
       , view = useView()
       , { selectedTranscripts, selectedClusters } = view
 
@@ -61,10 +63,10 @@ function ExportDialog(props: ExportDialogProps) {
     */
 
   const [ transcriptOption, setTranscriptOption ] = useState(
-    (selectedTranscripts.size ? 'selected' : 'all') as 'selected' | 'all')
+    (selectedTranscripts.size ? 'selected' : 'all') as ExportType)
 
   const [ clusterOption, setClusterOption ] = useState(
-    (selectedClusters.size ? 'selected' : 'all') as 'selected' | 'all')
+    (selectedClusters.size ? 'selected' : 'all') as ExportType)
 
   return (
     h(ExportDialogContainer, {
@@ -154,6 +156,13 @@ function ExportDialog(props: ExportDialogProps) {
             backgroundColor: 'blue',
             color: 'white',
           },
+          async onClick() {
+            await dispatch(viewActions.exportTranscripts({
+              withClusters: clusterOption,
+              withTranscripts: transcriptOption,
+            }))
+            // hideDialog()
+          }
         }, 'Export'),
 
         h(Button, {

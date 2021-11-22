@@ -63,3 +63,5 @@ export type SingleCellProjectData = TranscriptData & {
   clusters: SeuratClusterMap;
   transcriptImages: TranscriptImageMap;
 }
+
+export type ExportType = 'all' | 'selected'
