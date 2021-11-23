@@ -122,7 +122,7 @@ export async function fetchResource(url: string, cache=true) {
 
         const req = new Request(url, {
           method: 'HEAD',
-          headers,
+          headers: headHeaders,
         })
 
         const headResp = await fetch(req)
