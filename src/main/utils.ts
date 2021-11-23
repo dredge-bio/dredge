@@ -103,18 +103,18 @@ export async function fetchResource(url: string, cache=true) {
     if (cachedResponse) {
       let tryHead = false
 
-      console.info(`Foudn ${url} from cache`)
+      console.info(`Found ${url} from cache`)
 
       const headHeaders = new Headers()
 
       if (cachedResponse.headers.has('etag')) {
         headHeaders.append('If-None-Match', cachedResponse.headers.get('etag')!)
         tryHead = true
-      }
-
-      if (cachedResponse.headers.has('last-modified')) {
+      } else if (cachedResponse.headers.has('last-modified')) {
         headers.append('If-Modified-Since', cachedResponse.headers.get('last-modified')!)
         tryHead = true
+      } else {
+        console.info(`No cache headers were found for cached response of ${url}`)
       }
 
       if (tryHead) {
@@ -142,16 +142,14 @@ export async function fetchResource(url: string, cache=true) {
     }
 
     if (refreshCache) {
-      try {
-        console.info(`Refreshing ${url} in cache`)
-        await cacheStorage.add(url)
-        const cached = await cacheStorage.match(url)
-        if (!cached) {
-          throw new Error(`Error adding ${url} to cache`)
-        }
-        // resp = cached
-      } catch (e) {
-        console.error(e)
+      console.info(`Refreshing ${url} in cache`)
+
+      const newResp = await fetch(url, { headers })
+
+      resp = newResp.clone()
+
+      if (newResp.status === 200) {
+        cacheStorage.put(url, newResp)
       }
     }
 
