@@ -117,7 +117,7 @@ $(INTERNAL_MODULE_DIR)/%: src/% | $(INTERNAL_MODULE_DIR)
 	ln -s ../../src/$* $@
 
 $(VERSIONED_JS_BUNDLE): $(LINKED_INTERNAL_MODULES) node_modules $(JS_FILES) | dist
-	./build --production -o $@ $(JS_ENTRY)
+	./build -o $@ $(JS_ENTRY)
 
 $(MINIFIED_VERSIONED_JS_BUNDLE): node_modules $(JS_FILES) | dist
 	./build --production --compress -o $@ $(JS_ENTRY)
