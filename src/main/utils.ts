@@ -94,6 +94,7 @@ export async function fetchResource(url: string, cache=true) {
     headers.append('Cache-Control', 'no-cache')
     resp = await fetch(url, { headers })
   } else {
+    console.info(`Attempting to load ${url} from cache`)
     const cacheStorage = await caches.open(cacheName)
         , cachedResponse = await cacheStorage.match(url)
 
@@ -101,6 +102,8 @@ export async function fetchResource(url: string, cache=true) {
 
     if (cachedResponse) {
       let tryHead = false
+
+      console.info(`Foudn ${url} from cache`)
 
       const headHeaders = new Headers()
 
@@ -115,6 +118,8 @@ export async function fetchResource(url: string, cache=true) {
       }
 
       if (tryHead) {
+        console.info(`Checking if ${url} has been updated`)
+
         const req = new Request(url, {
           method: 'HEAD',
           headers,
@@ -123,8 +128,10 @@ export async function fetchResource(url: string, cache=true) {
         const headResp = await fetch(req)
 
         if (headResp.status === 304) {
+          console.info(`${url} has not been updated`)
           resp = cachedResponse
         } else if (headResp.status === 200) {
+          console.info(`${url} has been updated`)
           refreshCache = true
         }
       } else {
@@ -136,6 +143,7 @@ export async function fetchResource(url: string, cache=true) {
 
     if (refreshCache) {
       try {
+        console.info(`Refreshing ${url} in cache`)
         await cacheStorage.add(url)
         const cached = await cacheStorage.match(url)
         if (!cached) {
