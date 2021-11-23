@@ -65,7 +65,7 @@ async function noopPromise<T>(x: T) {
 export const embeddings = new ProjectField({
   label: 'Seurat UMAP embeddings',
   required: true,
-  cached: false,
+  cached: true,
   decoder: t.array(seuratEmbeddingsCodec),
   processResponse: async resp => {
     const text = await resp.text()
@@ -77,7 +77,7 @@ export const embeddings = new ProjectField({
 export const differentialExpressions = new ProjectField({
   label: 'Cluster diffential expressions',
   required: true,
-  cached: false,
+  cached: true,
   decoder: t.array(t.type({
     clusterID: t.string,
     transcriptID: t.string,
@@ -131,7 +131,7 @@ const seuratMetadataCodec = new t.Type<SeuratMetadata>(
 export const metadata = new ProjectField({
   label: 'Seurat metadata',
   required: true,
-  cached: false,
+  cached: true,
   decoder: t.array(seuratMetadataCodec),
   processResponse: async resp => {
     const text = await resp.text()
@@ -177,7 +177,7 @@ const seuratExpressionCodec = new t.Type<Uint8Array>(
 export const expressionData = new ProjectField<Uint8Array, DataView>({
   label: 'Transcript expression data',
   required: true,
-  cached: false,
+  cached: true,
   decoder: seuratExpressionCodec,
   processValidated: arr => {
     return new Promise((resolve, reject) => {
@@ -199,7 +199,7 @@ export const expressionData = new ProjectField<Uint8Array, DataView>({
 export const clusterLevels = new ProjectField({
   label: 'Cluster levels',
   required: true,
-  cached: false,
+  cached: true,
   decoder: t.array(t.string),
   processValidated: noopPromise,
   processResponse: resp => {
@@ -210,7 +210,7 @@ export const clusterLevels = new ProjectField({
 export const transcripts = new ProjectField({
   label: 'Transcripts',
   required: true,
-  cached: false,
+  cached: true,
   decoder: seuratExpressionCodec,
   processValidated: noopPromise,
   processResponse: resp => {
@@ -221,7 +221,7 @@ export const transcripts = new ProjectField({
 export const transcriptImages = new ProjectField({
   label: 'Transcript images',
   required: false,
-  cached: false,
+  cached: true,
   decoder: t.array(t.type({
     transcript: t.string,
     filename: t.string,

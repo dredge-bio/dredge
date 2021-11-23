@@ -82,14 +82,75 @@ export function readFile(file: File): Promise<string> {
   })
 }
 
+const CACHE_VERSION = 10
+    , cacheName = `dredge-${CACHE_VERSION}`
+
 export async function fetchResource(url: string, cache=true) {
   const headers = new Headers()
 
+  let resp: Response | undefined
+
   if (!cache) {
     headers.append('Cache-Control', 'no-cache')
-  }
+    resp = await fetch(url, { headers })
+  } else {
+    const cacheStorage = await caches.open(cacheName)
+        , cachedResponse = await cacheStorage.match(url)
 
-  const resp = await fetch(url, { headers })
+    let refreshCache = false
+
+    if (cachedResponse) {
+      let tryHead = false
+
+      const headHeaders = new Headers()
+
+      if (cachedResponse.headers.has('etag')) {
+        headHeaders.append('If-None-Match', cachedResponse.headers.get('etag')!)
+        tryHead = true
+      }
+
+      if (cachedResponse.headers.has('last-modified')) {
+        headers.append('If-Modified-Since', cachedResponse.headers.get('last-modified')!)
+        tryHead = true
+      }
+
+      if (tryHead) {
+        const req = new Request(url, {
+          method: 'HEAD',
+          headers,
+        })
+
+        const headResp = await fetch(req)
+
+        if (headResp.status === 304) {
+          resp = cachedResponse
+        } else if (headResp.status === 200) {
+          refreshCache = true
+        }
+      } else {
+        refreshCache = true
+      }
+    } else {
+      refreshCache = true
+    }
+
+    if (refreshCache) {
+      try {
+        await cacheStorage.add(url)
+        const cached = await cacheStorage.match(url)
+        if (!cached) {
+          throw new Error(`Error adding ${url} to cache`)
+        }
+        // resp = cached
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    if (!resp) {
+      resp = await fetch(url, { headers })
+    }
+  }
 
   if (!resp.ok) {
     if (resp.status === 404) {

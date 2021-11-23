@@ -86,7 +86,7 @@ export const loadProjectConfig = createAsyncAction<
 
       log('Pending')
 
-      resp = await fetchResource(configURL)
+      resp = await fetchResource(configURL, false)
 
       log('OK')
     } catch (e) {
