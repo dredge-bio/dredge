@@ -52,22 +52,31 @@ export class ProjectField<Validated, Processed=Validated, ProcessingContext=void
     const fullURL = new URL(url, window.location.toString()).href
         , log = makeLog(this.label, url ? fullURL : '')
 
-    await log('Pending')
+    await log({ type: 'Pending' })
 
     if (!url) {
-      log('Missing')
+      log({ type: 'Missing' })
       return null
     }
 
     try {
-      const resp = await fetchResource(url, this.cached)
-          , value = await this.processResponse(resp)
+      const resp = await fetchResource(url, this.cached, message => {
+        log({
+          type: 'Pending',
+          message,
+        })
+      })
+
+      const value = await this.processResponse(resp)
 
       return pipe(
         this.decoder.decode(value),
         fold(
           errors => {
-            log('Failed', errors.join('\n'))
+            log({
+              type: 'Failed',
+              message: errors.join('\n'),
+            })
 
             const errString = PathReporter.report({ _tag: 'Left', left: errors })
 
@@ -76,14 +85,17 @@ export class ProjectField<Validated, Processed=Validated, ProcessingContext=void
           async val => {
             const processed = await this.processValidated(val, context)
 
-            await log('OK')
+            await log({ type: 'OK' })
 
             return processed
           }
         ))
     } catch (e) {
       if (e instanceof Error) {
-        log('Failed', e.message)
+        log({
+          type: 'Failed',
+          message: e.message,
+        })
       }
 
       return null

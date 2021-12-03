@@ -38,28 +38,35 @@ export const loadProjectConfig = createAsyncAction<
     return { config: project.config }
   }
 
-  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
-    (status: LogStatus, message?: string) => {
+  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) => {
+    const { payload: { logID }} = dispatch(logAction.getNextLogID())
+
+    return (status: LogStatus) => {
       dispatch(logAction.log({
         project,
         log: {
+          logID,
           url,
           label,
           status,
-          message: message || null,
         },
       }))
     }
+  }
 
-  const makeStatusLog = (project: ProjectSource | null) =>
-    (message: string) => {
+  const makeStatusLog = (project: ProjectSource | null) => {
+    return (message: string) => {
+      const { payload: { logID }} = dispatch(logAction.getNextLogID())
+
       dispatch(logAction.log({
         project,
         log: {
+          logID,
           message,
         },
       }))
     }
+  }
 
 
   // We should only be dealing with the global config at this point, because
@@ -84,22 +91,28 @@ export const loadProjectConfig = createAsyncAction<
 
     try {
 
-      log('Pending')
+      log({ type: 'Pending' })
 
       resp = await fetchResource(configURL, false)
 
-      log('OK')
+      log({ type: 'OK' })
     } catch (e) {
       // const { message } = e
 
-      log('Failed', 'Configuration file not found')
+      log({
+        type: 'Failed',
+        message: 'Configuration file not found',
+      })
       throw new Error()
     }
 
     try {
       configJson = await resp.json()
     } catch (e) {
-      log('Failed', 'Configuration file not valid json')
+      log({
+        type: 'Failed',
+        message: 'Configuration file not valid json',
+      })
     }
 
     if (configJson.type === 'Bulk' || configJson.type === undefined) {
@@ -114,7 +127,9 @@ export const loadProjectConfig = createAsyncAction<
 
         const log = makeResourceLog(source, value, url)
 
-        await log('Pending')
+        await log({
+          type: 'Pending',
+        })
 
         const decoded: Either<t.Errors, any> = decoder.decode(configJson[configKey])
 
@@ -122,11 +137,16 @@ export const loadProjectConfig = createAsyncAction<
           decoded,
           fold(
             errors => {
-              log('Failed')
+              log({
+                type: 'Failed',
+                message: `Error decoding field ${configKey}`,
+              })
               console.log(errors)
             },
             () => {
-              log('OK')
+              log({
+                type: 'OK',
+              })
             }
           ))
         await delay(0)
@@ -143,7 +163,9 @@ export const loadProjectConfig = createAsyncAction<
 
         const log = makeResourceLog(source, value, url)
 
-        await log('Pending')
+        await log({
+          type: 'Pending',
+        })
 
         const decoded: Either<t.Errors, any> = decoder.decode(configJson[configKey])
 
@@ -151,14 +173,17 @@ export const loadProjectConfig = createAsyncAction<
           decoded,
           fold(
             errors => {
-              log('Failed')
+              log({
+                type: 'Failed',
+                message: `Error decoding field ${configKey}`,
+              })
               console.log(errors)
             },
             (val: any) => {
               if (val === null || (val.length === 0)) {
-                log('Missing')
+                log({ type: 'Missing' })
               } else {
-                log('OK')
+                log({ type: 'OK' })
               }
             }
           ))
@@ -166,7 +191,10 @@ export const loadProjectConfig = createAsyncAction<
       }
     } else {
         const message = 'Project type must be either `Bulk` or `SingleCell`'
-        log('Failed', message)
+        log({
+          type: 'Failed',
+          message,
+        })
         throw new Error(message)
     }
   }
@@ -206,26 +234,35 @@ export const loadProject = createAsyncAction<
     return project
   }
 
-  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) =>
-    (status: LogStatus, message?: string) =>
+  const makeResourceLog = (project: ProjectSource | null, label: string, url: string) => {
+    const { payload: { logID }} = dispatch(logAction.getNextLogID())
+
+    return (status: LogStatus) => {
       dispatch(logAction.log({
         project,
         log: {
+          logID,
           url,
           label,
           status,
-          message: message || null,
         },
       }))
+    }
+  }
 
-  const makeStatusLog = (project: ProjectSource | null) =>
-    (message: string) =>
+  const makeStatusLog = (project: ProjectSource | null) => {
+    return (message: string) => {
+      const { payload: { logID }} = dispatch(logAction.getNextLogID())
+
       dispatch(logAction.log({
         project,
         log: {
+          logID,
           message,
         },
       }))
+    }
+  }
 
   const projectStatusLog = makeStatusLog(args.source)
 

@@ -21,25 +21,20 @@ interface StatusProps {
   indent: boolean;
 }
 
-function filterMultiple(log: Array<LogItem>) {
-  const ret: Array<LogItem> = []
-      , urlsVisited: Record<string, number> = {}
+function groupByID(log: Array<LogItem>) {
+  const entries: Map<number, LogItem[]> = new Map()
 
-  log.forEach(entry => {
-    if ('url' in entry.log) {
-      const pos = urlsVisited[entry.log.url]
+  for (const item of log) {
+    const { logID } = item.log
 
-      if (typeof pos === 'number') {
-        ret[pos] = entry
-      } else {
-        urlsVisited[entry.log.url] = ret.push(entry) - 1
-      }
-    } else {
-      ret.push(entry)
+    if (!entries.has(logID)) {
+      entries.set(logID, [])
     }
-  })
 
-  return ret
+    entries.get(logID)!.push(item)
+  }
+
+  return entries
 }
 
 function Status(props: StatusProps) {
@@ -100,6 +95,7 @@ const LogTable = styled.table`
 td {
   font-size: 12px;
   padding: 2px 6px;
+  vertical-align: top;
 }
 
 /*
@@ -110,17 +106,34 @@ td:nth-of-type(2) {
 */
 `
 
-function LogEntry({ project, timestamp, log }: LogItem) {
+function LogEntry(props: { entries: LogItem[] }) {
+  const { entries } = props
+
+  const { project, log } = [...entries].pop()!
+
   let children
+
+  const messages = []
+
+  for (const entry of entries) {
+    if (!('status' in entry.log)) continue;
+    if (!('message' in entry.log.status)) continue;
+    if (entry.log.status.message) {
+      messages.push(entry.log.status.message)
+    }
+  }
 
   if ('status' in log) {
     children = [
-      h('td', { key: 1 }, h(Status, { status: log.status, indent: false })),
+      h('td', { key: 1 }, h(Status, { status: log.status.type, indent: false })),
       h('td', { key: 2 }, log.label),
       h('td', { key: 3 }, h('a', {
         href: log.url,
       }, log.url)),
-      h('td', { key: 4 }, log.message),
+
+      h('td', { key: 4 }, h('ul', null, messages.map((message, i) =>
+        h('li', { key: i }, message)
+      ))),
     ]
   } else {
     children = [
@@ -135,7 +148,7 @@ function LogEntry({ project, timestamp, log }: LogItem) {
 
   return (
     h('tr', null, [
-      h('td', { key: 5 }, new Date(timestamp).toLocaleTimeString()),
+      h('td', { key: 5 }, new Date(entries[0]!.timestamp).toLocaleTimeString()),
       h('td', { key: 6 }, project),
       ...children,
     ])
@@ -182,6 +195,8 @@ export function LogViewer() {
     label = 'Loading project...'
   }
 
+  const entries = groupByID(logArr)
+
   return (
     h('div', null, ...[
       h('h2', null, label),
@@ -189,10 +204,10 @@ export function LogViewer() {
       h(LogTable, null, ...[
         h('thead'),
 
-        h('tbody', null, filterMultiple(logArr).map(entry =>
+        h('tbody', null, [...entries].map(([ logID, entries ]) =>
           h(LogEntry, {
-            key: entry.id,
-            ...entry,
+            key: logID,
+            entries,
           })
         )),
       ]),

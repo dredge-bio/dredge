@@ -6,20 +6,37 @@ export * from './components'
 
 let id = 0
 
-export type LogStatus = 'Pending' | 'Failed' | 'Missing' | 'OK'
-
-export interface StatusLogEntry {
-  message: string,
+export type LogBase = {
+  logID: number;
 }
 
-export interface ResourceLogEntry {
-  url: string,
-  label: string,
-  status: LogStatus,
-  message: string | null,
+export type LogStatus = {
+  type: 'Pending';
+  percent: number;
+} | {
+  type: 'Pending';
+  message?: string;
+} | {
+  type: 'Failed';
+  message: string;
+} | {
+  type: 'Missing';
+} | {
+  type: 'OK';
+  message?: string;
 }
 
-type LogEntry = StatusLogEntry | ResourceLogEntry
+export type ResourceLogEntry = LogBase & {
+  url: string;
+  label: string;
+  status: LogStatus;
+}
+
+export type StatusLogEntry = LogBase & {
+  message: string;
+}
+
+export type LogEntry = StatusLogEntry | ResourceLogEntry
 
 export type CreateFieldLogger =
   (label: string, url: string) =>
@@ -27,12 +44,19 @@ export type CreateFieldLogger =
 
 export type Log = {
   project: ProjectSource | null,
-  id: number,
   timestamp: number,
   log: LogEntry,
 }
 
 export const actions = {
+  getNextLogID: createAction('get-next-log-id', () => {
+    return {
+      payload: {
+        logID: id++,
+      },
+    }
+  }),
+
   log: createAction<{
     project: ProjectSource | null,
     log: LogEntry,
@@ -59,7 +83,6 @@ export const reducer = createReducer(initialState(), builder => {
         project,
         log,
         timestamp: new Date().getTime(),
-        id: id++,
       }
       return [...state, entry]
 

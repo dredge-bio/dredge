@@ -85,8 +85,16 @@ export function readFile(file: File): Promise<string> {
 const CACHE_VERSION = 10
     , cacheName = `dredge-${CACHE_VERSION}`
 
-export async function fetchResource(url: string, cache=true) {
+export async function fetchResource(
+  url: string,
+  cache: boolean,
+  updateMessage?: (message: string) => void
+) {
   const headers = new Headers()
+
+  if (!updateMessage) {
+    updateMessage = (message: string) => message
+  }
 
   let resp: Response | undefined
 
@@ -94,7 +102,7 @@ export async function fetchResource(url: string, cache=true) {
     headers.append('Cache-Control', 'no-cache')
     resp = await fetch(url, { headers })
   } else {
-    console.info(`Attempting to load ${url} from cache`)
+    updateMessage(`Attempting to load ${url} from cache`)
     const cacheStorage = await caches.open(cacheName)
         , cachedResponse = await cacheStorage.match(url)
 
@@ -103,7 +111,7 @@ export async function fetchResource(url: string, cache=true) {
     if (cachedResponse) {
       let tryHead = false
 
-      console.info(`Found ${url} from cache`)
+      updateMessage(`Found ${url} from cache`)
 
       const headHeaders = new Headers()
 
@@ -114,11 +122,11 @@ export async function fetchResource(url: string, cache=true) {
         headers.append('If-Modified-Since', cachedResponse.headers.get('last-modified')!)
         tryHead = true
       } else {
-        console.info(`No cache headers were found for cached response of ${url}`)
+        updateMessage(`No cache headers were found for cached response of ${url}`)
       }
 
       if (tryHead) {
-        console.info(`Checking if ${url} has been updated`)
+        updateMessage(`Checking if ${url} has been updated`)
 
         const req = new Request(url, {
           method: 'HEAD',
@@ -128,10 +136,10 @@ export async function fetchResource(url: string, cache=true) {
         const headResp = await fetch(req)
 
         if (headResp.status === 304) {
-          console.info(`${url} has not been updated`)
+          updateMessage(`${url} has not been updated`)
           resp = cachedResponse
         } else if (headResp.status === 200) {
-          console.info(`${url} has been updated`)
+          updateMessage(`${url} has been updated`)
           refreshCache = true
         }
       } else {
@@ -142,7 +150,7 @@ export async function fetchResource(url: string, cache=true) {
     }
 
     if (refreshCache) {
-      console.info(`Refreshing ${url} in cache`)
+      updateMessage(`Refreshing ${url} in cache`)
 
       const newResp = await fetch(url, { headers })
 
