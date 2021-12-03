@@ -49,6 +49,10 @@ const MessageWrapper = styled.div`
     padding: 0;
   }
 
+  li + li {
+    margin-top: 4px;
+  }
+
   a {
     text-decoration: none;
     color: black;
@@ -140,10 +144,16 @@ const LogProject = styled.div`
 */
 
 const LogTable = styled.table`
+border-collapse: collapse;
+
 td {
   font-size: 12px;
   padding: 2px 6px;
   vertical-align: top;
+}
+
+tr:hover {
+  background: #dfdfdf;
 }
 
 /*
@@ -186,16 +196,16 @@ function LogEntry(props: { entries: LogItem[] }) {
       h('td', { key: 'placeholder' }),
       h('td', {
         key: 1,
-        colSpan: 3,
         className: 'status-message',
       }, log.message),
+      h('td', { key: 'placeholder2', colspan: 2 }),
     ]
   }
 
   return (
     h('tr', null, [
       h('td', { key: 5 }, new Date(entries[0]!.timestamp).toLocaleTimeString()),
-      h('td', { key: 6 }, project),
+      // h('td', { key: 6 }, project),
       ...children,
     ])
   )
