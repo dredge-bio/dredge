@@ -158,6 +158,7 @@ export async function fetchResource(
 
       if (newResp.status === 200) {
         cacheStorage.put(url, newResp)
+        updateMessage(`Updated ${url} in cache`)
       }
     }
 

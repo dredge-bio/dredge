@@ -9,6 +9,8 @@ import {
 
 import { Log as LogItem } from '../'
 
+const { useState } = React
+
 const IconWrapper = styled.span`
   svg {
   }
@@ -35,6 +37,52 @@ function groupByID(log: Array<LogItem>) {
   }
 
   return entries
+}
+
+const MessageWrapper = styled.div`
+  display: grid;
+  grid-template-columns: 8px 1fr;
+
+  ul, li {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+  }
+`
+
+function Messages(props: {
+  messages: string[]
+}) {
+  const { messages } = props
+      , [ isOpen, setIsOpen ] = useState(false)
+
+  return (
+    h(MessageWrapper, {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: '20px 1fr',
+      },
+    }, messages.length === 0 ? null : [
+      messages.length < 2 ? h('span') : h('a', {
+        key: 'button',
+        href: '#',
+        onClick(e: React.MouseEvent) {
+          e.preventDefault()
+          setIsOpen(prev => !prev)
+        },
+      }, isOpen ? '－' : '＋'),
+      h('ul', { key: 'list' }, isOpen
+          ? messages.map((message, i) => h('li', { key: i }, message))
+          : h('li', { key: messages.length - 1 }, messages.slice(-1).pop()!)
+       ),
+    ])
+  )
 }
 
 function Status(props: StatusProps) {
@@ -131,9 +179,7 @@ function LogEntry(props: { entries: LogItem[] }) {
         href: log.url,
       }, log.url)),
 
-      h('td', { key: 4 }, h('ul', null, messages.map((message, i) =>
-        h('li', { key: i }, message)
-      ))),
+      h('td', { key: 4 }, h(Messages, { messages })),
     ]
   } else {
     children = [
