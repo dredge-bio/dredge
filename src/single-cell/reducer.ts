@@ -3,7 +3,6 @@ import { createReducer } from '@reduxjs/toolkit'
 import { SingleCellViewState } from './types'
 import { SingleCellProject } from '@dredge/main'
 
-
 import * as viewActions from './actions'
 
 function blankView(project: SingleCellProject): SingleCellViewState {
@@ -33,6 +32,12 @@ function blankView(project: SingleCellProject): SingleCellViewState {
 
 const createViewReducer = (project: SingleCellProject) => createReducer(blankView(project), builder => {
   builder
+    .addCase(viewActions.importSavedTranscripts, (state, action) => {
+      action.payload.imported.forEach(([ , canonicalName ]) => {
+        state.selectedTranscripts.add(canonicalName)
+      })
+      return state
+    })
     .addCase(viewActions.setHoveredCluster, (state, action) => {
       state.hoveredCluster = action.payload
     })
@@ -68,7 +73,7 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
 
       state.hoveredTranscript = transcript
     })
-    .addCase(viewActions.clearSelectedTranscripts, (state, action) => {
+    .addCase(viewActions.clearSelectedTranscripts, state => {
       state.selectedTranscripts = new Set()
       state.focusedTranscript = null
     })

@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { useView, useViewDispatch, useViewOptions } from '../hooks'
 import * as viewActions from '../actions'
 import { ExportType } from '../types'
-import { SearchTranscripts } from '@dredge/shared'
+import { SearchTranscripts, useImportTranscripts } from '@dredge/shared'
 import { Box } from 'rebass'
 
 const ExportDialogContainer = styled(Box)`
@@ -162,7 +162,7 @@ function ExportDialog(props: ExportDialogProps) {
               withTranscripts: transcriptOption,
             }))
             // hideDialog()
-          }
+          },
         }, 'Export'),
 
         h(Button, {
@@ -185,6 +185,15 @@ export default function Toolbar() {
       , [ , updateOptions ] = useViewOptions()
       , [ showSearch, setShowSearch ] = useState(false)
       , [ showExport, setShowExport ] = useState(false)
+
+  const [ importStatusEl, importButtonEl ] = useImportTranscripts(
+    project,
+    transcripts => {
+      updateOptions({
+        selectedTranscripts: new Set(transcripts.map(transcript => transcript[0])),
+      })
+    }
+  )
 
   return (
     h(Flex, {
@@ -253,6 +262,9 @@ export default function Toolbar() {
       ]),
 
       h('div', null, ...[
+        importButtonEl,
+        importStatusEl,
+
         h(Button, {
           mx: 2,
           onClick() {

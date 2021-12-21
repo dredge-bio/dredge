@@ -1,4 +1,3 @@
-
 export type TranscriptView = {
   focusedTranscript: string | null;
   hoveredTranscript: string | null;
@@ -12,4 +11,9 @@ export type BaseView = {
 }
 
 export type TableSortOrder = 'asc' | 'desc'
+
+export type ImportedTranscript = [
+  name: string,
+  canonicalName: string,
+]
 

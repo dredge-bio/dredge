@@ -400,64 +400,6 @@ export const setHoveredTreatment = createAction<
 >('set-hovered-treatment')
 
 
-type ImportedTranscript = [
-  name: string,
-  canonicalName: string,
-]
-
-// FIXME: Make this generic across projects
-export const importSavedTranscripts = createAsyncAction<
-  {
-    text: string
-  },
-  {
-    imported: Array<ImportedTranscript>,
-    skipped: Array<string>,
-  }
->('import-saved-transcripts', async (args, { getState }) => {
-  const view = getState()
-      , { text } = args
-      , { project } = view
-
-  const rows = d3.tsvParseRows(text.trim())
-
-  if (R.path([0, 0], rows) === 'Gene name') {
-    rows.shift()
-  }
-
-  const transcriptsInFile = rows.map(row => row[0])
-      , getCanonicalTranscriptLabel = getTranscriptLookup(project)
-      , newWatchedTranscripts = []
-      , imported: Array<ImportedTranscript> = []
-      , skipped: Array<string> = []
-
-  for (const t of transcriptsInFile) {
-    if (t === undefined) continue
-
-    const canonicalName = getCanonicalTranscriptLabel(t)
-
-    if (canonicalName) {
-      imported.push([t, canonicalName])
-      newWatchedTranscripts.push(canonicalName)
-    } else {
-      skipped.push(t)
-    }
-  }
-
-  // FIXME
-  /*
-  const existingWatchedTranscripts = view.savedTranscripts
-  await dispatch(Action.SetSavedTranscripts(
-    [...newWatchedTranscripts, ...existingWatchedTranscripts]
-  ))
-  */
-
-  return {
-    imported,
-    skipped,
-  }
-})
-
 function getGlobalWatchedGenesKey() {
   return window.location.pathname + '-watched'
 }
