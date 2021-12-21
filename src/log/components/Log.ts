@@ -73,7 +73,7 @@ function Messages(props: {
         gridTemplateColumns: '20px 1fr',
       },
     }, messages.length === 0 ? null : [
-      messages.length < 2 ? h('span') : h('a', {
+      messages.length < 2 ? h('span', { key: 'spacer' }) : h('a', {
         key: 'button',
         href: '#',
         onClick(e: React.MouseEvent) {
@@ -198,7 +198,7 @@ function LogEntry(props: { entries: LogItem[] }) {
         key: 1,
         className: 'status-message',
       }, log.message),
-      h('td', { key: 'placeholder2', colspan: 2 }),
+      h('td', { key: 'placeholder2', colSpan: 2 }),
     ]
   }
 
