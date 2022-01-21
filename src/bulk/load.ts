@@ -106,7 +106,7 @@ export async function loadProject(
   // than URL
   projectStatusLog('Building transcript corpus...')
 
-  const { corpus, transcriptAliases } = await buildTranscriptCorpus(transcripts, aliases || {})
+  const { corpus, transcriptAliases } = await buildTranscriptCorpus(transcripts, aliases || new Map())
 
   const transcriptIndices = await buildIndexMap(transcripts)
       , replicateIndices = await buildIndexMap(replicates)

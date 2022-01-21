@@ -1,13 +1,11 @@
 import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as React from 'react'
-import { Flex, Box, Button } from 'rebass'
-import { unwrapResult } from '@reduxjs/toolkit'
+import { Flex, Button } from 'rebass'
 
 import * as viewActions from '../actions'
 import { useView, useViewDispatch } from '../hooks'
-import { readFile, FileInput } from '@dredge/main'
-import { SearchTranscripts } from '@dredge/shared'
+import { SearchTranscripts, useImportTranscripts } from '@dredge/shared'
 
 const { useState } = React
 
@@ -31,25 +29,6 @@ const ButtonContainer = styled.div`
   }
 `
 
-const StatusContainer = styled.div`
-  position: absolute;
-  z-index: 1;
-
-  top: 0; bottom: 0; left: 0; right: 0;
-
-  padding: 2em;
-
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`
-
-type WatchedTranscriptsState = {
-  showSearch: boolean;
-  importStatus: React.ReactElement | null;
-}
-
-
 // FIXME: Make this generic across any view
 export default function WatchedTranscripts() {
   const view = useView()
@@ -63,85 +42,21 @@ export default function WatchedTranscripts() {
 
   const transcripts = displayedTranscripts?.transcripts || []
 
-  const [{
-    showSearch,
-    importStatus,
-  }, setState] = useState<WatchedTranscriptsState>({
-    showSearch: false,
-    importStatus: null,
-  })
+  const [ showSearch,  setShowSearch] = useState(false)
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || !files.length) return
-
-    const text = await readFile(files[0]!)
-
-    try {
-      const resp = await dispatch(viewActions.importSavedTranscripts({
-        text,
-      })).then(unwrapResult)
-
-      const { imported, skipped } = resp
-
-      const importStatus = (
-        h('div', null, ...[
-          h('div', null, ...[
-            `Imported ${imported.length} out of ${imported.length + skipped.length} in file.`,
-          ]),
-
-          h(Box, { mt: 3 }, ...[
-            h('h2', null, 'Imported'),
-
-            imported.length === 0
-              ? h('p', null, 'None')
-              : h('ul', null, imported.map(([ name, canonicalName ]) =>
-                  h('li', { key: name }, [
-                    name,
-                    name === canonicalName
-                      ? ''
-                      : ` (as ${canonicalName})`,
-                  ]))),
-          ]),
-
-          h(Box, { mt: 3 }, ...[
-            h('h2', null, 'Skipped'),
-
-            skipped.length === 0
-              ? h('p', null, 'None')
-              : h('ul', null, skipped.map(name =>
-                  h('li', { key: name }, name))),
-          ]),
-
-          h(Box, { mt: 3 }, ...[
-            h(Button, {
-              onClick: () => {
-                setState(prev => ({
-                  ...prev,
-                  importStatus: null,
-                }))
-              },
-            }, 'Dismiss'),
-          ]),
-        ])
-      )
-
-      setState(prev => ({
-        ...prev,
-        importStatus,
-      }))
-    } catch (e) {
-      alert('Error while importing transcripts. See console for details.')
-      console.error(e)
+  const [ importStatusEl, importButtonEl ] = useImportTranscripts(
+    project,
+    () => {}
+    /*
+    transcripts => {
+      updateOptions({
+        selectedTranscripts: new Set(transcripts.map(transcript => transcript[0])),
+      })
     }
-  }
+    */
+  )
 
-  const handleImport = (files: FileList | null) => {
-    handleFiles(files)
-  }
 
-  if (importStatus) {
-    return h(StatusContainer, {}, importStatus)
-  }
 
   return (
     h('div', {
@@ -172,19 +87,13 @@ export default function WatchedTranscripts() {
                 transcriptNames: [...newSavedTranscripts],
               }))
 
-              setState(prev => ({
-                ...prev,
-                showSearch: false,
-              }))
+              setShowSearch(true)
             },
           }),
 
           h(Button, {
             onClick: () => {
-              setState(prev =>({
-                ...prev,
-                showSearch: !showSearch,
-              }))
+              setShowSearch(prev => !prev)
             },
           }, 'Search'),
 
@@ -223,9 +132,7 @@ export default function WatchedTranscripts() {
         ]),
 
         h(ButtonContainer, null, ...[
-          h(FileInput, {
-            onChange: handleImport,
-          }, 'Import'),
+          importButtonEl,
 
           h(Button, {
             disabled: savedTranscripts.size === 0,
@@ -234,6 +141,8 @@ export default function WatchedTranscripts() {
             },
           }, 'Export'),
         ]),
+
+        importStatusEl,
       ]),
     ])
   )

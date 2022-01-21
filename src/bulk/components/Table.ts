@@ -222,11 +222,75 @@ export default function BulkTable() {
 
   return (
     h(Table, {
+      rowHeight: 26,
+      freezeColumns: 0, // FIXME: false?
+
+      // FIXME: add CSS styles
+      getCellClassname(props) {
+        const {
+          mousePosition,
+          rowIndex,
+          columnIndex,
+          data,
+        } = props
+
+        let className = ''
+
+        if (mousePosition) {
+          const rowHovered = mousePosition.rowIndex === rowIndex
+              , columnHovered = mousePosition.columnIndex === columnIndex
+
+          if (rowHovered) {
+            className += ' transcript-row-hovered';
+          }
+
+          if (columnHovered) {
+            className += ' transcript-column-hovered';
+          }
+
+        }
+
+        const rowTranscript = data.displayedTranscripts?.transcripts[rowIndex]
+            , rowSelected = rowTranscript && data.savedTranscripts.has(rowTranscript.name)
+
+        if (rowSelected) {
+          className += ' transcript-row-selected'
+        }
+
+        return className
+      },
+
+      /* FIXME
+      renderHeaderRows(columns, context) {
+      },
+      */
+
+      /* FIXME:
+      rowClassName(data, index) {
+      }
+      */
+
+      /* FIXME
+      onRowClick(data, index) {
+      },
+      */
+
+      /* FIXME
+      onRowEnter(data, index) {
+      },
+      */
+
+      /* FIXME
+      onRowLeave() {
+      },
+      */
+
       updateSort(key, order) {
         // FIXME
         key;
         order;
       },
+
       sortOrder: view.order,
       context: view,
       getColumns,

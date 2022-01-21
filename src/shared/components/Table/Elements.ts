@@ -93,6 +93,8 @@ export const TableBodyWrapper = styled.div<{
   */
 `
 
+export const TableHeaderCell = styled.div``
+
 export const TableHeaderCellWrapper = styled.span<{
   left: number;
   width: number;

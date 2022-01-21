@@ -1,4 +1,4 @@
-import { createElement as h, useState, useEffect } from 'react'
+import { createElement as h, useState  } from 'react'
 import { Flex, Button, Text } from 'rebass'
 import styled from 'styled-components'
 import { useView, useViewDispatch, useViewOptions } from '../hooks'
