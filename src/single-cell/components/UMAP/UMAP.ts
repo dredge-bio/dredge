@@ -88,7 +88,7 @@ function drawClusterLabel(
   ctx.textAlign = 'center'
 
   ctx.fillText(
-    cluster.label,
+    cluster.id,
     xScale(cluster.midpoint[0]),
     yScale(cluster.midpoint[1]))
 }

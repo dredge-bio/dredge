@@ -200,7 +200,10 @@ export const clusterLevels = new ProjectField({
   label: 'Cluster levels',
   required: true,
   cached: true,
-  decoder: t.array(t.string),
+  decoder: t.array(t.type({
+    id: t.string,
+    label: t.string,
+  })),
   processValidated: noopPromise,
   processResponse: resp => {
     return resp.json()

@@ -45,7 +45,7 @@ function mean(vals: number[]) {
 }
 
 function colorClusters(
-  clusterLevels: string[],
+  clusterLevels: { id: string, label: string }[],
   clusters: Map<string, Omit<SeuratCluster, 'color'>>
 ) {
   const orderedClusterMap: SeuratClusterMap = new Map()
@@ -55,8 +55,8 @@ function colorClusters(
 
   let idx = 0
 
-  clusterLevels.forEach(clusterID => {
-    const cluster = clusters.get(clusterID)
+  clusterLevels.forEach(({ id }) => {
+    const cluster = clusters.get(id)
 
     // This is a cluster defined in clusterLevels without any cells assigned
     // to it. This probably should never happen? But we can just skip it if
@@ -66,7 +66,7 @@ function colorClusters(
     }
     const hue = hueScale(idx)
 
-    orderedClusterMap.set(clusterID, {
+    orderedClusterMap.set(id, {
       ...cluster,
       color: d3.hcl(hue, hue > 180 ? C + 14 : C, L).toString(),
     })
@@ -77,7 +77,10 @@ function colorClusters(
   return orderedClusterMap
 }
 
-function getClusters(clusterLevels: string[], cellMap: SeuratCellMap) {
+function getClusters(
+  clusterLevels: { id: string, label: string }[],
+  cellMap: SeuratCellMap
+) {
   const cellsByCluster = new Map() as Map<string, SeuratCell[]>
 
   let umap1Min = Infinity
@@ -85,10 +88,12 @@ function getClusters(clusterLevels: string[], cellMap: SeuratCellMap) {
     , umap1Max = -Infinity
     , umap2Max = -Infinity
 
+  const clustersByID = new Map(clusterLevels.map(x => [ x.id, x ]))
+
   for (const cell of cellMap.values()) {
     const { clusterID } = cell
 
-    if (!clusterLevels.includes(clusterID)) {
+    if (!clustersByID.has(clusterID)) {
       throw new Error(`Cell ${cell.cellID} has the cluster ${clusterID}, but this cluster is not in the defined cluster levels`)
     }
 
@@ -125,8 +130,7 @@ function getClusters(clusterLevels: string[], cellMap: SeuratCellMap) {
 
     return [
       clusterID, {
-        id: clusterID,
-        label: clusterID,
+        ...clustersByID.get(clusterID)!,
         cellClusters,
         cells,
         midpoint: biggestCluster.midpoint,

@@ -201,7 +201,7 @@ function heatmapDimensions(
     }
 
     const label = {
-      text: cluster.cluster.label,
+      text: cluster.cluster.id,
       color: 'black',
       font: '24px sans-serif',
       align: 'center' as CanvasTextAlign,

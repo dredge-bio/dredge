@@ -245,7 +245,7 @@ export default function SingleCellTable() {
                   borderLeft: column.borderLeft ? '1px solid #ccc' : undefined,
                   left: column.left,
                 },
-              }, column.cluster.label)
+              }, column.cluster.id)
             )),
           ]
         },
