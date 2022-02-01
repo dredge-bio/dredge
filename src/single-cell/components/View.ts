@@ -12,8 +12,8 @@ import createStore from '../store'
 import UMAP from './UMAP'
 import HeatMap from './HeatMap'
 import SingleCellTranscriptTable from './Table'
-import TranscriptInfo from './TranscriptInfo'
 import Toolbar from './Toolbar'
+import InfoPane from './InfoPane'
 
 const { useEffect, useRef, useMemo } = React
 
@@ -165,12 +165,12 @@ function View() {
         row: '10 / span 6',
         contain: true,
         style: {
+          marginRight: -6,
           border: '1px solid #999',
         },
       }, ...[
-        h(TranscriptInfo),
+        h(InfoPane),
       ]),
-
     ])
   )
 }

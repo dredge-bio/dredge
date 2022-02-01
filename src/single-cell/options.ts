@@ -123,6 +123,7 @@ const sortOrderCodec = new t.Type<
 
 
 export const optionsCodec = t.type({
+  showWindow: withFallback(t.union([ t.literal('images'), t.literal('clusters') ]), 'images'),
   sortOrder: withFallback(sortOrderCodec, 'asc'),
   sortBy: withFallback(sortPathCodec, 'transcript'),
   selectedClusters: withFallback(selectedClusterCodec, new Set()),
