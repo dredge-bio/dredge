@@ -6,7 +6,7 @@ import { useView } from '../hooks'
 const Container = styled(Box)`
   height: 100%;
   max-height: 100%;
-  overflow-y: auto;
+  overflow: auto;
 `
 
 export default function ClusterLegend() {
@@ -16,15 +16,41 @@ export default function ClusterLegend() {
   return (
     h(Container, {
       bg: 'white',
-      py: 3,
-      px: 4,
+      py: 2,
+      px: 3,
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'wrap',
+      },
     }, [...clusters.values()].map(cluster => (
       h('div', {
         key: cluster.id,
+        style: {
+          display: 'inline-flex',
+          alignItems: 'center',
+          margin: '4px 8px',
+        },
       }, ...[
-        cluster.id,
-        ' = ',
-        cluster.label,
+        h('span', {
+          style: {
+            display: 'inline-block',
+            width: '30px',
+            height: '30px',
+            marginRight: '4px',
+            background: cluster.color,
+          },
+        }),
+
+        h('span', {
+          style: {
+            display: 'inline-block',
+          },
+        }, ...[
+          cluster.id,
+          ' = ',
+          cluster.label,
+        ]),
       ])
     )))
   )
