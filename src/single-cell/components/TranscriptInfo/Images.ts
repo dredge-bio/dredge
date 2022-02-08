@@ -1,8 +1,9 @@
 import { createElement as h } from 'react'
-import { useEffect, useLayoutEffect, useRef, useState, SyntheticEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { useView } from '../../hooks'
 import LRU from 'lru-cache'
+import { TranscriptImage } from '../../types'
 
 function gridColumns(imageCount: number) {
   if (imageCount < 2) return '1fr'
@@ -35,19 +36,83 @@ const ImageContainer = styled.div<{
   }
 `
 
+function useImageCache() {
+  const cacheRef = useRef(new LRU<string, string>({
+    max: 50,
+    dispose(k, v) {
+      URL.revokeObjectURL(v)
+    },
+  }))
+
+  useEffect(() => {
+    return () => {
+      cacheRef.current.reset()
+    }
+  }, [])
+
+  async function getImage(url: string): Promise<HTMLImageElement> {
+
+    if (!cacheRef.current.has(url)) {
+      const resp = await fetch(url)
+
+      if (!resp.ok) throw new Error(`${resp.status}: ${resp.statusText}`)
+
+      const blob = await resp.blob()
+          , objectURL = URL.createObjectURL(blob)
+
+      cacheRef.current.set(url, objectURL)
+    }
+
+    const objectURL = cacheRef.current.get(url)!
+
+    return new Promise(resolve => {
+      const img = document.createElement('img')
+      img.src = objectURL
+      img.onload = () => {
+        resolve(img)
+      }
+    })
+  }
+
+  return getImage
+}
+
+function imageTitle(image: TranscriptImage) {
+  let title = image.resolution
+
+  if (image.title) {
+    title += ` – ${image.title}`
+  }
+
+  return title
+}
+
 export default function TranscriptImages() {
   const { hoveredTranscript, focusedTranscript, project } = useView()
       , { transcriptImages } = project.data
       , showTranscript = hoveredTranscript || focusedTranscript
       , imgContainerRef = useRef<HTMLDivElement | null>(null)
-      , [ loadedImages, setLoadedImages ] = useState<Set<string>>(new Set())
-      , imgCache = useRef(new LRU<string, HTMLImageElement>(50))
+      , getImage = useImageCache()
+
+  const [ loadedImages, setLoadedImages ] = useState<Map<string, HTMLImageElement>>(new Map())
 
   const images = showTranscript && transcriptImages.get(showTranscript) || null
 
   useEffect(() => {
-    setLoadedImages(new Set())
-  }, [showTranscript])
+    async function refresh() {
+      setLoadedImages(new Map())
+
+      if (images) {
+        images.forEach(image => {
+          getImage(image.filename).then(imageEl => {
+            setLoadedImages(prev => new Map([ ...prev, [image.filename, imageEl]]))
+          })
+        })
+      }
+    }
+
+    refresh()
+  }, [ showTranscript ])
 
   return (
     h('div', {
@@ -64,39 +129,36 @@ export default function TranscriptImages() {
       }, showTranscript && images && images.map(val =>
         h('div', {
           key: val.filename,
-          ['data-name']: val.filename,
+          ['data-name']: btoa(val.filename),
           style: {
             overflow: 'hidden',
             display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           },
         }, ...[
-          imgCache.current.has(val.filename)
-            ? h(() => {
-                useLayoutEffect(() => {
-                  const containerEl = imgContainerRef.current
-
-                  if (containerEl === null) return
-
-                  const div = containerEl.querySelector(`[data-name="${val.filename}"`)
-                      , img = imgCache.current.get(val.filename)!
-
-                  img.style.opacity = '1';
-
-                  div!.appendChild(imgCache.current.get(val.filename)!)
-                }, [])
+          h('div', {
+            className: 'image',
+            style: {
+              overflow: 'hidden',
+              display: 'flex',
+            },
+          }, ...[
+            !loadedImages.has(val.filename) ? null : (
+              h(() => {
+                const container = document.querySelector(`[data-name="${btoa(val.filename)}"] .image`)
+                if (container) {
+                  container.appendChild(loadedImages.get(val.filename)!)
+                }
 
                 return null
               })
-            : h('img', {
-                style: {
-                  opacity: loadedImages.has(val.filename) ? 1 : 0,
-                },
-                onLoad(e: SyntheticEvent) {
-                  setLoadedImages(prev => new Set([...prev, val.filename]))
-                  imgCache.current.set(val.filename, e.target as HTMLImageElement)
-                },
-                src: val.filename,
-              }),
+            ),
+          ]),
+
+          !loadedImages.has(val.filename) ? null : (
+            h('div', null, imageTitle(val))
+          ),
         ])
       )),
     ])
