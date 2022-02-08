@@ -228,6 +228,7 @@ export const transcriptImages = new ProjectField({
   decoder: t.array(t.type({
     transcript: t.string,
     filename: t.string,
+    resolution: t.string,
     title: fromNullable(
       t.union([t.string, t.null]),
       null),

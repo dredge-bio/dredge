@@ -45,6 +45,7 @@ export type ClusterDGE = {
 export type TranscriptImage = {
   transcriptID: string;
   filename: string;
+  resolution: string;
   title: string | null;
 }
 

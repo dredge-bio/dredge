@@ -269,6 +269,7 @@ export async function loadProject(
       transcriptImageMap.get(transcriptID)!.push({
         transcriptID,
         filename: obj.filename,
+        resolution: obj.resolution,
         title: obj.title,
       })
     })
