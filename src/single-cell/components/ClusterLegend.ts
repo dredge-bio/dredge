@@ -20,7 +20,6 @@ const Container = styled(Box)`
       column-gap: 6px;
 
       border: 1px solid transparent;
-      cursor: pointer;
   }
 
   .legend-cluster[data-cluster-hovered="true"] {
