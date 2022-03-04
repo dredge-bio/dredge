@@ -1,5 +1,6 @@
 import { createElement as h } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 import { useView } from '../../hooks'
 import LRU from 'lru-cache'
@@ -87,6 +88,58 @@ function imageTitle(image: TranscriptImage) {
   return title
 }
 
+type ImageWithElement = {
+  image: TranscriptImage,
+  el: HTMLImageElement,
+}
+
+const ExpandedImageContainer = styled.div`
+.background {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 6px;
+}
+
+.background {
+  background-color: rgba(0, 0, 0, .66);
+}
+
+.image {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+`
+
+function ExpandedImage(props: ImageWithElement & {
+  onClose: () => void;
+}) {
+  const { image, el, onClose } = props
+      , imageContainerRef = useRef<HTMLDivElement>()
+
+  useLayoutEffect(() => {
+    imageContainerRef.current!.appendChild(el)
+  }, [])
+
+  const children = h(ExpandedImageContainer, null, ...[
+    h('div', {
+      className: 'background',
+      onClick: () => onClose(),
+    }),
+
+    h('div', {
+      className: 'image',
+      ref: imageContainerRef,
+      onClick: () => onClose(),
+    })
+  ])
+
+  return createPortal(children, document.body)
+}
+
 export default function TranscriptImages() {
   const { hoveredTranscript, focusedTranscript, project } = useView()
       , { transcriptImages } = project.data
@@ -95,6 +148,8 @@ export default function TranscriptImages() {
       , getImage = useImageCache()
 
   const [ loadedImages, setLoadedImages ] = useState<Map<string, HTMLImageElement>>(new Map())
+
+  const [ expandedImage, setExpandedImage ] = useState<ImageWithElement | null>(null)
 
   const images = showTranscript && transcriptImages.get(showTranscript) || null
 
@@ -135,10 +190,19 @@ export default function TranscriptImages() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
           },
         }, ...[
           h('div', {
             className: 'image',
+            onClick() {
+              getImage(val.filename).then(el => {
+                setExpandedImage({
+                  el,
+                  image: val,
+                })
+              })
+            },
             style: {
               overflow: 'hidden',
               display: 'flex',
@@ -161,6 +225,13 @@ export default function TranscriptImages() {
           ),
         ])
       )),
+
+      expandedImage && h(ExpandedImage, {
+        ...expandedImage,
+        onClose() {
+          setExpandedImage(null)
+        },
+      }),
     ])
   )
 }
