@@ -15,7 +15,7 @@ import SingleCellTranscriptTable from './Table'
 import Toolbar from './Toolbar'
 import InfoPane from './InfoPane'
 
-const { useEffect, useRef, useMemo } = React
+const { useEffect, useRef, useState, useMemo } = React
 
 const ViewerContainer = styled.div`
   display: grid;
@@ -61,6 +61,7 @@ function View() {
       , view = useView()
       , currentlySelectedCluster = useRef<Set<string> | null>(null)
       , [ options, updateOptions ] = useViewOptions()
+      , [ renderCounter, setRenderCounter ] = useState(0)
 
   useEffect(() => {
     dispatch(viewActions.setSelectedClusters({
@@ -91,10 +92,24 @@ function View() {
     }
   }, [])
 
+  useEffect(() => {
+    const cb = () => {
+      setRenderCounter(prev => prev + 1)
+    }
+
+    window.addEventListener('application-resize', cb)
+
+    return () => {
+      window.removeEventListener('application-resize', cb)
+    }
+  }, [])
+
   currentlySelectedCluster.current = view.selectedClusters
 
   return (
-    h(ViewerContainer, null, ...[
+    h(ViewerContainer, {
+      key: renderCounter,
+    }, ...[
       h(GridArea, {
         column: '1 / span 12',
         row: '1 / span 10',

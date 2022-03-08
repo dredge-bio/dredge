@@ -7,7 +7,7 @@ import {
   GridChildComponentProps
 } from 'react-window'
 
-import { useResizeCallback } from '@dredge/main'
+import { useNode } from '@dredge/main'
 
 import {
   TableSortOrder
@@ -281,7 +281,7 @@ export function makeGenericTable<Context, ItemData, SortPath>() {
         , [ headerWidth, setHeaderWidth ] = useState<string | number>('100%')
         , [ mousePosition, setMousePosition ] = useState<MouseCellPosition<Context, ItemData, SortPath> | null>(null)
 
-    const ref = useResizeCallback(el => {
+    const ref = useNode(el => {
       const tableEl = el.querySelector('.table-scroll')! as HTMLDivElement
 
       const dims = {

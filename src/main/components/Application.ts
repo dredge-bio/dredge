@@ -45,15 +45,25 @@ type ApplicationSize = {
   resource: Resource | null,
   width: number | null,
   height: number | null,
+  windowWidth: number,
+  windowHeight: number,
 }
 
-function ApplicationContainer(props: any) {
+type ApplicationContainerProps = React.PropsWithChildren<{
+  windowWidth: number,
+  windowHeight: number,
+}>
+
+function ApplicationContainer(props: ApplicationContainerProps) {
   const { resource } = useResource()
+      , { windowWidth, windowHeight } = props
 
   const sizeRef = useRef<ApplicationSize>({
     resource: null,
     width: null,
     height: null,
+    windowWidth: props.windowWidth,
+    windowHeight: props.windowHeight,
   })
 
   const absoluteDimensions = !!(
@@ -61,10 +71,16 @@ function ApplicationContainer(props: any) {
     !!(resource as Resource).absoluteDimensions
   )
 
-  if (sizeRef.current.resource !== resource) {
+  const needsResize = (
+    sizeRef.current.resource !== resource ||
+    sizeRef.current.windowWidth !== props.windowWidth ||
+    sizeRef.current.windowHeight !== props.windowHeight
+  )
+
+  if (needsResize) {
     if (absoluteDimensions) {
-      const newWidth = R.max(window.innerWidth, MIN_WIDTH)
-          , newHeight = R.max(window.innerHeight, MIN_HEIGHT)
+      const newWidth = R.max(windowWidth, MIN_WIDTH)
+          , newHeight = R.max(windowHeight, MIN_HEIGHT)
 
       sizeRef.current.width = newWidth;
       sizeRef.current.height = newHeight;
@@ -92,8 +108,8 @@ function ApplicationContainer(props: any) {
 
   return (
     h('div', {
-      ...props,
       style,
+      children: props.children,
     })
   )
 }
@@ -165,7 +181,7 @@ export class Application extends React.Component<any, ApplicationState> {
   }
 
   render() {
-    const { error, componentStack } = this.state
+    const { error, componentStack, width, height } = this.state
         , isLocalFile = window.location.protocol === 'file:'
 
     let children: React.ReactNode
@@ -187,7 +203,10 @@ export class Application extends React.Component<any, ApplicationState> {
     }
 
     return (
-      h(ApplicationContainer, null, ...[
+      h(ApplicationContainer, {
+        windowWidth: width,
+        windowHeight: height,
+      }, ...[
         h(GlobalStyle),
 
         h(Header, {

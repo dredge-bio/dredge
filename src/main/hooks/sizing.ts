@@ -2,19 +2,16 @@ import * as React from 'react'
 
 const { useCallback, useState } = React
 
-type ResizeCallback = (node: HTMLElement) => void
+type NodeCallback = (node: HTMLElement) => void
 
-export function useResizeCallback(onResize: ResizeCallback) {
+export function useNode(nodeCB: NodeCallback) {
   let cb: () => void | undefined
 
   const ref = useCallback((node: HTMLElement | null) => {
     if (node) {
-      cb = () => { onResize(node) }
+      cb = () => { nodeCB(node) }
 
       cb()
-      window.addEventListener('application-resize', cb)
-    } else {
-      window.removeEventListener('application-resize', cb)
     }
   }, [])
 
@@ -26,10 +23,10 @@ type RectState = null | {
   width: number;
 }
 
-export function useSized(): [ ReturnType<typeof useResizeCallback>, RectState ] {
+export function useSized(): [ ReturnType<typeof useNode>, RectState ] {
   const [ rect, setRectState ] = useState<RectState>(null)
 
-  const ref = useResizeCallback(node => {
+  const ref = useNode(node => {
     setRectState({
       height: node.clientHeight,
       width: node.clientWidth,
