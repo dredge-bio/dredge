@@ -25,6 +25,7 @@ import { BulkTreatmentMap } from './types'
 export const labels: Map<keyof BulkConfiguration, string> = new Map([
   ['label', 'Project label'],
   ['readme', 'Project documentation'],
+  ['permalinkPrefix', 'Permalink prefix'],
   ['abundanceMeasures', 'Transcript abundance measures'],
   ['heatmapMinimumMaximum', 'Abundance heatmap color scale floor'],
   ['abundanceLimits', 'Limits for abundance measures'],

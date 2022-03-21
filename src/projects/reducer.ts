@@ -32,6 +32,7 @@ function defaultLocalConfig(): bulk.BulkProjectConfig {
   return {
     type: 'Bulk',
     label: '',
+    permalinkPrefix: '',
     readme: './about.md',
     transcriptHyperlink: [
       {

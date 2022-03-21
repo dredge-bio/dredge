@@ -31,6 +31,7 @@ import {
 export const labels: Map<keyof SingleCellConfiguration, string> = new Map([
   ['label', 'Project label'],
   ['readme', 'Project documentation'],
+  ['permalinkPrefix', 'Permalink prefix'],
   ['transcriptHyperlink', 'Transcript hyperlink'],
   ['transcriptImages', 'Transcript images'],
   ['seuratEmbeddings', 'Seurat UMAP embedding coordinates'],

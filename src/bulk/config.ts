@@ -67,6 +67,7 @@ export const configuration = t.type({
   transcriptAliases: fromNullable(URLString, ''),
   diagram: fromNullable(URLString, ''),
   grid: fromNullable(URLString, ''),
+  permalinkPrefix: fromNullable(URLString, ''),
 })
 
 export type BulkConfiguration = t.TypeOf<typeof configuration>

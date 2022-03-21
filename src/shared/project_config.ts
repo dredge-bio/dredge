@@ -6,6 +6,7 @@ import { pipe } from 'fp-ts/function'
 export type Config = {
   label: string;
   readme: string,
+  permalinkPrefix: string,
   transcriptHyperlink: Array<{
     label: string,
     url: string,

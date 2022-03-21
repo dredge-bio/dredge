@@ -14,6 +14,7 @@ export const configuration = t.type({
   differentialExpressions: URLString,
 
   // Optional
+  permalinkPrefix: fromNullable(URLString, ''),
   readme: fromNullable(URLString, ''),
   transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
   transcriptImages: fromNullable(URLString, ''),
