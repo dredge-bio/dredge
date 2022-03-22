@@ -8,6 +8,7 @@ import { version } from '../../../../package.json'
 import { useAppSelector } from '../../hooks'
 
 interface HeaderProps {
+  height: number;
   onRequestResize: () => void;
   isLocalFile: boolean;
 }
@@ -51,6 +52,11 @@ const svg = `
 `
 
 const HeaderContainer = styled(Box)`
+  /* Take the header out of the grid, and fix it across the top of the viewport */
+  position: fixed;
+  left: 0;
+  right: 0;
+
   background-color: hsl(205, 35%, 25%);
   background-image: url("data:image/svg+xml,${encodeURIComponent(svg.trim())}");
   height: 100%;
@@ -124,7 +130,7 @@ const Menu = styled(AriaMenuButton.Menu)`
 `
 
 export default function Header(props: HeaderProps) {
-  const { onRequestResize, isLocalFile } = props
+  const { onRequestResize, isLocalFile, height } = props
       , navigateTo = useNavigation()
 
   const { project } = useAppSelector(state => {
@@ -156,6 +162,9 @@ export default function Header(props: HeaderProps) {
     h(HeaderContainer, {
       as: 'header',
       px: 4,
+      style: {
+        height,
+      },
     }, ...[
       h('div', { style: { display: 'flex' }}, ...[
         h('h1', {

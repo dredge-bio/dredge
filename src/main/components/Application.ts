@@ -40,6 +40,7 @@ pre {
 
 const MIN_HEIGHT = 700
     , MIN_WIDTH = 1280
+    , HEADER_HEIGHT = 64
 
 type ApplicationSize = {
   resource: Resource | null,
@@ -100,10 +101,10 @@ function ApplicationContainer(props: ApplicationContainerProps) {
   if (absoluteDimensions) {
     style.width = sizeRef.current.width! + 'px'
     style.height = sizeRef.current.height! + 'px'
-    style.gridTemplateRows = `64px minmax(${MIN_HEIGHT - 64}px, 1fr)`;
+    style.gridTemplateRows = `${HEADER_HEIGHT}px minmax(${MIN_HEIGHT - 64}px, 1fr)`;
     style.gridTemplateColumns = `minmax(${MIN_WIDTH}px, 1fr)`;
   } else {
-    style.gridTemplateRows = `64px 1fr`;
+    style.gridTemplateRows = `${HEADER_HEIGHT}px 1fr`;
   }
 
   return (
@@ -209,12 +210,18 @@ export class Application extends React.Component<any, ApplicationState> {
       }, ...[
         h(GlobalStyle),
 
+        h('main', {
+          style: {
+            gridRow: '2/3',
+          },
+        }, children),
+
         h(Header, {
+          height: HEADER_HEIGHT,
           isLocalFile,
           onRequestResize: this.handleRequestResize,
         }),
 
-        h('main', {}, children),
       ])
     )
   }
