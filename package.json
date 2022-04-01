@@ -8,6 +8,7 @@
     "@reduxjs/toolkit": "^1.6.2",
     "blue-tape": "^1.0.0",
     "buffer": "^6.0.3",
+    "clipboard": "^2.0.10",
     "d3": "^6.6.2",
     "debounce": "^1.2.0",
     "density-clustering": "^1.3.0",

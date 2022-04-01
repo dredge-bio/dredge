@@ -1,11 +1,13 @@
-import { createElement as h } from 'react'
+import { createElement as h, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { Route, useNavigation } from 'org-shell'
 import { Flex, Box, Button } from 'rebass'
 import * as AriaMenuButton from 'react-aria-menubutton'
+import Clipboard from 'clipboard'
 
 import { version } from '../../../../package.json'
 import { useAppSelector } from '../../hooks'
+import { Permalink } from '@dredge/main'
 
 interface HeaderProps {
   height: number;
@@ -129,16 +131,80 @@ const Menu = styled(AriaMenuButton.Menu)`
   }
 `
 
-export default function Header(props: HeaderProps) {
-  const { onRequestResize, isLocalFile, height } = props
-      , navigateTo = useNavigation()
-
-  const { project } = useAppSelector(state => {
+function useActiveProject() {
+  const { project, source } = useAppSelector(state => {
     const source = state.projects.active
         , project = state.projects.directory[source]
 
     return { project, source }
   })
+
+  return { project, source }
+}
+
+function PermalinkButton() {
+  const { project } = useActiveProject()
+      , permalinkPrefixRef = useRef('')
+
+  const notLoaded = (
+    ('loaded' in project) ||
+    ('failed' in project)
+  )
+
+  useEffect(() => {
+    const clipboard = new Clipboard('#permalink-copy', {
+      text: () => {
+        return permalinkPrefixRef.current + window.location.search + window.location.hash
+      },
+    })
+
+    return () => {
+      clipboard.destroy()
+    }
+  }, [])
+
+  if (notLoaded) return null
+
+  const { config: { permalinkPrefix } } = project
+
+  if (!permalinkPrefix) return null
+
+  permalinkPrefixRef.current = permalinkPrefix
+
+  return (
+    h(Button, {
+      id: 'permalink-copy',
+      ml: 2,
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 14px',
+      },
+    }, ...[
+      h('span', {
+        style: {
+          fontSize: '16px',
+          fontWeight: 'bold',
+          display: 'inline-block',
+          padding: '9px 0',
+          marginRight: '7px',
+        },
+      }, 'Permalink'),
+
+      h(Permalink, {
+        height: 20,
+        width: 20,
+        strokeWidth: 2,
+      }),
+    ])
+  )
+}
+
+export default function Header(props: HeaderProps) {
+  const { onRequestResize, isLocalFile, height } = props
+      , navigateTo = useNavigation()
+
+  const { project } = useActiveProject()
 
   let projectLabel = ''
     , hasReadme = false
@@ -188,6 +254,8 @@ export default function Header(props: HeaderProps) {
       ]),
 
       isLocalFile ? null : h(Flex, { alignItems: 'center' }, ...[
+        h(PermalinkButton),
+
         h(AriaMenuButton.Wrapper, {
           style: {
             position: 'relative',
