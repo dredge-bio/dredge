@@ -145,6 +145,7 @@ function useActiveProject() {
 function PermalinkButton() {
   const { project } = useActiveProject()
       , permalinkPrefixRef = useRef('')
+      , [ showCopyMessage, setShowCopyMessage ] = useState(false)
 
   const notLoaded = (
     ('loaded' in project) ||
@@ -156,6 +157,13 @@ function PermalinkButton() {
       text: () => {
         return permalinkPrefixRef.current + window.location.search + window.location.hash
       },
+    })
+
+    clipboard.on('success', () => {
+      setShowCopyMessage(true)
+      setTimeout(() => {
+        setShowCopyMessage(false)
+      }, 1000)
     })
 
     return () => {
@@ -172,30 +180,51 @@ function PermalinkButton() {
   permalinkPrefixRef.current = permalinkPrefix
 
   return (
-    h(Button, {
-      id: 'permalink-copy',
-      ml: 2,
+    h('div', {
       style: {
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 14px',
+        position: 'relative',
       },
     }, ...[
-      h('span', {
+      h(Button, {
+        id: 'permalink-copy',
+        ml: 2,
         style: {
-          fontSize: '16px',
-          fontWeight: 'bold',
-          display: 'inline-block',
-          padding: '9px 0',
-          marginRight: '7px',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 14px',
         },
-      }, 'Permalink'),
+      }, ...[
+        h('span', {
+          style: {
+            fontSize: '16px',
+            fontWeight: 'bold',
+            display: 'inline-block',
+            padding: '9px 0',
+            marginRight: '7px',
+          },
+        }, 'Permalink'),
 
-      h(Permalink, {
-        height: 20,
-        width: 20,
-        strokeWidth: 2,
-      }),
+        h(Permalink, {
+          height: 20,
+          width: 20,
+          strokeWidth: 2,
+        }),
+      ]),
+
+      !showCopyMessage ? null : (
+        h(Box, {
+          bg: 'lightgreen',
+          p: 3,
+          style: {
+            whiteSpace: 'nowrap',
+            position: 'absolute',
+            right: 0,
+            top: 'calc(100% + 4px)',
+          },
+        }, ...[
+          'Permalink copied to clipboard',
+        ])
+      ),
     ])
   )
 }
