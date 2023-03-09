@@ -98,13 +98,22 @@ export async function fetchResource(
 
   let resp: Response | undefined
 
-  if (!cache) {
+  let cacheStorage: Cache | null = null
+
+  if (cache) {
+    try {
+      cacheStorage = await caches.open(cacheName)
+    } catch (e) {
+      updateMessage('Cache not available, loadin from network')
+    }
+  }
+
+  if (!cache || !cacheStorage) {
     headers.append('Cache-Control', 'no-cache')
     resp = await fetch(url, { headers })
   } else {
     updateMessage(`Attempting to load ${url} from cache`)
-    const cacheStorage = await caches.open(cacheName)
-        , cachedResponse = await cacheStorage.match(url)
+    const cachedResponse = await cacheStorage.match(url)
 
     let refreshCache = false
 
