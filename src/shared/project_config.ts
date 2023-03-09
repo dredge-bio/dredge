@@ -7,6 +7,7 @@ export type Config = {
   label: string;
   readme: string,
   permalinkPrefix: string,
+  transcriptLabelTemplate: string,
   transcriptHyperlink: Array<{
     label: string,
     url: string,
@@ -16,7 +17,7 @@ export type Config = {
 export type TranscriptData = {
   transcripts: string[];
   transcriptCorpus: Record<string, string>;
-  transcriptAliases: ([alias: string, transcript: string])[];
+  transcriptAliases: Map<string, string[]>;
 }
 
 export const URLString = withValidate(t.string, (input, context) => {

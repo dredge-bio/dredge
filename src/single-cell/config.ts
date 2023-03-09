@@ -17,6 +17,7 @@ export const configuration = t.type({
   permalinkPrefix: fromNullable(URLString, ''),
   readme: fromNullable(URLString, ''),
   transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
+  transcriptLabelTemplate: fromNullable(t.string, ''),
   transcriptImages: fromNullable(URLString, ''),
 })
 

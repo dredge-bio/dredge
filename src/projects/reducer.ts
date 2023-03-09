@@ -48,6 +48,7 @@ function defaultLocalConfig(): bulk.BulkProjectConfig {
     treatments: './treatments.json',
     pairwiseName: './pairwise_files/%A_vs_%B.tsv',
     transcriptAliases: './transcript_aliases.tsv',
+    transcriptLabelTemplate: '',
     abundanceMeasures: './expression_matrix.tsv',
     diagram: './diagram.svg',
     grid: './grid.csv',

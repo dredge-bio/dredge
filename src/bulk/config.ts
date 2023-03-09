@@ -62,6 +62,7 @@ export const configuration = t.type({
 
   // Optional
   transcriptHyperlink: fromNullable(TranscriptHyperlink, []),
+  transcriptLabelTemplate: fromNullable(t.string, ''),
   heatmapMinimumMaximum: fromNullable(t.number, 0),
   readme: fromNullable(URLString, ''),
   transcriptAliases: fromNullable(URLString, ''),

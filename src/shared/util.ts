@@ -26,7 +26,6 @@ export async function buildTranscriptCorpus(
   transcriptAliases: Map<string, string[]>
 ) {
   const corpus: Record<string, string> = {}
-      , corpusVals: ([ alias: string, transcript: string ])[] = []
 
   let i = 0
 
@@ -35,7 +34,6 @@ export async function buildTranscriptCorpus(
       // FIXME: This should probably throw if an alias is not unique (i.e. can
       // can identify two different transcripts)
       corpus[alias] = transcript
-      corpusVals.push([alias, transcript])
 
       i++
       if (i % 5000 === 0) await delay(0)
@@ -45,15 +43,16 @@ export async function buildTranscriptCorpus(
   transcripts.forEach(transcript => {
     if (!(transcript in corpus)) {
       corpus[transcript] = transcript
-      corpusVals.push([transcript, transcript])
     }
   })
 
   return {
     corpus,
-    transcriptAliases: corpusVals,
+    transcriptAliases,
   }
 }
+
+let transcriptLabelErrorRaised = false
 
 const transcriptLookupCache: WeakMap<
   object,
@@ -64,10 +63,37 @@ export const getTranscriptLookup = memoizeForProject<LoadedProject>()(
   transcriptLookupCache,
   project => project.data.transcriptCorpus,
   project => {
-    const { transcriptCorpus } = project.data
+    const { transcriptLabelTemplate } = project.config
+        , { transcriptCorpus, transcriptAliases } = project.data
 
     const fn = function getCanonicalTranscriptLabel(transcriptName: string) {
-      return transcriptCorpus[transcriptName] || null
+      const canonicalID = transcriptCorpus[transcriptName] || null
+
+      if (canonicalID === null) return null
+
+      if (!transcriptLabelTemplate) return canonicalID
+
+      const aliases = transcriptAliases.get(canonicalID)
+
+      if (aliases === undefined) return null
+
+      const allNames = [canonicalID, ...aliases]
+
+      const regex = /\$\$\d+\$\$/g
+
+      try {
+        return transcriptLabelTemplate.replace(regex, match => {
+          const idx = parseInt(match.slice(2, -2))
+          return allNames[idx]!
+        })
+      } catch (e) {
+        if (!transcriptLabelErrorRaised) {
+          console.error('Transcript label template invalid')
+          console.error(e)
+          transcriptLabelErrorRaised = true
+        }
+        return canonicalID
+      }
     }
 
     return fn
@@ -88,12 +114,12 @@ export const getSearchTranscripts = memoizeForProject<LoadedProject>()(
   searchTranscriptsCache,
   project => project.data.transcriptAliases,
   project => {
-    const { transcriptAliases } = project.data
+    const { transcriptCorpus } = project.data
 
     function searchTranscripts (name: string, limit=20) {
       const results: TranscriptSearchResult[] = []
 
-      for (const x of transcriptAliases) {
+      for (const x of Object.entries(transcriptCorpus)) {
         if (x[0].startsWith(name)) {
           results.push({
             alias: x[0], canonical: x[1],
