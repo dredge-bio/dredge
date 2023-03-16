@@ -180,11 +180,12 @@ function ExportDialog(props: ExportDialogProps) {
 }
 
 export default function Toolbar() {
-  const { selectedTranscripts, project } = useView()
+  const { selectedTranscripts, showOnlySelectedTranscripts, project } = useView()
       , dispatch = useViewDispatch()
       , [ , updateOptions ] = useViewOptions()
       , [ showSearch, setShowSearch ] = useState(false)
       , [ showExport, setShowExport ] = useState(false)
+      , showHideOthers = selectedTranscripts.size > 0 || showOnlySelectedTranscripts
 
   const [ importStatusEl, importButtonEl ] = useImportTranscripts(
     project,
@@ -249,7 +250,8 @@ export default function Toolbar() {
         }, 'Search'),
 
         h(Button, {
-          mx: 2,
+          ml: 2,
+          mr: 3,
           disabled: selectedTranscripts.size === 0,
           onClick() {
             updateOptions({
@@ -258,6 +260,25 @@ export default function Toolbar() {
             dispatch(viewActions.clearSelectedTranscripts())
           },
         }, 'Clear'),
+
+        !showHideOthers ? null : h('input', {
+          type: 'checkbox',
+          id: 'hide-others',
+          name: 'hide-others',
+          checked: showOnlySelectedTranscripts,
+          onChange() {
+            dispatch(viewActions.setShowOnlySelectedTranscripts(!showOnlySelectedTranscripts))
+          },
+        }),
+
+        !showHideOthers ? null : h(Text, {
+          as: 'label',
+          htmlFor: 'hide-others',
+          ml: '2px',
+          mr: 2,
+          fontWeight: 'bold',
+          display: 'inline-block',
+        }, 'Hide others'),
 
       ]),
 

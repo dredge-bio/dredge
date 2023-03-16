@@ -25,6 +25,7 @@ export type SingleCellViewState = BaseView & TranscriptView & {
   project: SingleCellProject;
   selectedClusters: Set<string>;
   selectedTranscripts: Set<string>;
+  showOnlySelectedTranscripts: Boolean;
 
   hoveredCluster: {
     cluster: SeuratCluster | null;

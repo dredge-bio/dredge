@@ -16,6 +16,7 @@ function blankView(project: SingleCellProject): SingleCellViewState {
 
     selectedTranscripts: new Set(),
     savedTranscripts: new Set(),
+    showOnlySelectedTranscripts: false,
 
     hoveredCluster: {
       cluster: null,
@@ -50,6 +51,13 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
       const { transcripts } = action.payload
 
       state.selectedTranscripts = transcripts
+
+      if (transcripts.size === 0) {
+        state.showOnlySelectedTranscripts = false;
+      }
+    })
+    .addCase(viewActions.setShowOnlySelectedTranscripts, (state, action) => {
+      state.showOnlySelectedTranscripts = action.payload
     })
     .addCase(viewActions.updateDisplayedSingleCellTranscripts.fulfilled, (state, action) => {
       const { displayedTranscripts } = action.payload
@@ -76,6 +84,7 @@ const createViewReducer = (project: SingleCellProject) => createReducer(blankVie
     .addCase(viewActions.clearSelectedTranscripts, state => {
       state.selectedTranscripts = new Set()
       state.focusedTranscript = null
+      state.showOnlySelectedTranscripts = false;
     })
     .addCase(viewActions.setFocusedTranscript, (state, action) => {
       const { transcript } = action.payload

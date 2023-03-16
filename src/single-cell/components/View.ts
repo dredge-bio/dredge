@@ -60,6 +60,7 @@ function View() {
   const dispatch = useViewDispatch()
       , view = useView()
       , currentlySelectedCluster = useRef<Set<string> | null>(null)
+      , prevSelectedTranscripts = useRef<Set<string> | null>(null)
       , [ options, updateOptions ] = useViewOptions()
       , [ renderCounter, setRenderCounter ] = useState(0)
 
@@ -72,10 +73,17 @@ function View() {
   useEffect(() => {
     dispatch(viewActions.updateDisplayedSingleCellTranscripts({ view }))
   }, [
+    view.showOnlySelectedTranscripts,
+    (
+      view.showOnlySelectedTranscripts &&
+      view.selectedTranscripts !== prevSelectedTranscripts.current
+    ),
     view.selectedClusters,
     view.sortPath,
     view.order,
   ])
+
+  prevSelectedTranscripts.current = view.selectedTranscripts;
 
   // Set selected transcripts once from options
   useEffect(() => {

@@ -78,16 +78,32 @@ export const updateDisplayedSingleCellTranscripts = createAsyncAction<
     displayedTranscripts: TranscriptWithClusterDGE[]
   }
 >('update-displayed-sc-transcripts', async (args, { getState }) => {
-  const { selectedClusters, project, sortPath, order } = getState()
-      , { transcriptImages, transcriptsWithClusters } = project.data
+  const {
+    selectedClusters,
+    selectedTranscripts,
+    showOnlySelectedTranscripts,
+    project,
+    sortPath,
+    order,
+  } = getState()
+  const { transcriptImages, transcriptsWithClusters } = project.data
       , getCanonicalTranscriptLabel = getTranscriptLookup(project)
 
-  let displayedTranscripts: TranscriptWithClusterDGE[] = [...transcriptsWithClusters].map(
-    ([ transcriptID, clusters ]) => ({
+  let shownTranscripts = [...transcriptsWithClusters]
+
+  if (showOnlySelectedTranscripts) {
+    shownTranscripts = shownTranscripts.filter(([ transcriptID ]) =>
+      selectedTranscripts.has(transcriptID)
+    )
+  }
+
+  let displayedTranscripts: TranscriptWithClusterDGE[] = shownTranscripts
+    .map(([ transcriptID, clusters ]) => ({
       transcript: {
         id: transcriptID,
         label: getCanonicalTranscriptLabel(transcriptID) || transcriptID,
       },
+
       dgeByCluster: new Map([...clusters].map(cluster => [ cluster.clusterID, cluster ])),
     }))
 
@@ -112,6 +128,10 @@ export const setHoveredCluster = createAction<
 export const setSelectedTranscripts = createAction<
   { transcripts: Set<string> }
 >('set-selected-transcripts')
+
+export const setShowOnlySelectedTranscripts = createAction<
+  Boolean
+>('set-show-only-selected-transcripts')
 
 export const clearSelectedTranscripts = createAction('clear-selected-transcripts')
 
