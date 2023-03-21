@@ -90,8 +90,6 @@ export async function fetchResource(
   cache: boolean,
   updateMessage?: (message: string) => void
 ) {
-  const headers = new Headers()
-
   if (!updateMessage) {
     updateMessage = (message: string) => message
   }
@@ -109,6 +107,7 @@ export async function fetchResource(
   }
 
   if (!cache || !cacheStorage) {
+    const headers = new Headers()
     headers.append('Cache-Control', 'no-cache')
     resp = await fetch(url, { headers })
   } else {
@@ -128,7 +127,7 @@ export async function fetchResource(
         headHeaders.append('If-None-Match', cachedResponse.headers.get('etag')!)
         tryHead = true
       } else if (cachedResponse.headers.has('last-modified')) {
-        headers.append('If-Modified-Since', cachedResponse.headers.get('last-modified')!)
+        headHeaders.append('If-Modified-Since', cachedResponse.headers.get('last-modified')!)
         tryHead = true
       } else {
         updateMessage(`No cache headers were found for cached response of ${url}`)
@@ -161,7 +160,7 @@ export async function fetchResource(
     if (refreshCache) {
       updateMessage(`Refreshing ${url} in cache`)
 
-      const newResp = await fetch(url, { headers })
+      const newResp = await fetch(url)
 
       resp = newResp.clone()
 
@@ -172,7 +171,7 @@ export async function fetchResource(
     }
 
     if (!resp) {
-      resp = await fetch(url, { headers })
+      resp = await fetch(url)
     }
   }
 
