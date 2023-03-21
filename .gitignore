@@ -1,6 +1,7 @@
 *.swp
 npm-debug.log
 dist/*
+history/*
 node_modules/*
 
 project.json

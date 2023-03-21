@@ -32,7 +32,7 @@ ZIPPED_FILES = $(VERSIONED_JS_BUNDLE) \
 
 FIRST_ZIP_VERSION := v1.2.1
 VERSION_TAGS := $(shell git tag | sed -ne '/$(FIRST_ZIP_VERSION)/,$$ p')
-VERSION_ZIPFILES := $(patsubst v%,dist/dredge-%.zip,$(VERSION_TAGS))
+VERSION_ZIPFILES := $(patsubst v%,history/dredge-%.zip,$(VERSION_TAGS))
 
 INTERNAL_MODULES = main \
 		   shared \
@@ -122,7 +122,7 @@ $(VERSIONED_JS_BUNDLE): $(LINKED_INTERNAL_MODULES) node_modules $(JS_FILES) | di
 $(MINIFIED_VERSIONED_JS_BUNDLE): node_modules $(JS_FILES) | dist
 	./build --production --compress -o $@ $(JS_ENTRY)
 
-$(VERSIONED_ZIPFILE): node_modules $(ZIPPED_FILES) | dist
+$(VERSIONED_ZIPFILE): node_modules $(ZIPPED_FILES)
 	@rm -f $@
 	mkdir -p $(VERSIONED_DIRECTORY)
 	cp $(ZIPPED_FILES) $(VERSIONED_DIRECTORY)
@@ -132,14 +132,14 @@ $(VERSIONED_ZIPFILE): node_modules $(ZIPPED_FILES) | dist
 		-e 's|$(JS_BUNDLE)|$(notdir $(MINIFIED_VERSIONED_JS_BUNDLE))|' \
 		$(VERSIONED_DIRECTORY)/index.html
 	cd dist && zip -r $(notdir $@) $(notdir $(VERSIONED_DIRECTORY))
-	rm -rf $(VERSIONED_DIRECTORY) $(VERSIONED_JS_BUNDLE) $(MINIFIED_VERSIONED_JS_BUNDLE)
+	rm -rf $(VERSIONED_DIRECTORY)
 
-dist/dredge-%.zip: | dist
-	git archive v$* --prefix=dist/$*/ | tar xf -
-	cd dist/$* && sed -i \
+history/dredge-%.zip:
+	git archive v$* --prefix=history/$*/ | tar xf -
+	cd history/$* && sed -i \
 		-e 's|VERSION := .*|VERSION := $*|' \
 		-e 's|mabrowser|dredge|' \
 		Makefile *.html
-	cd dist/$* && (npm ci || (rm -rf node_modules package-lock.json && npm install && npm install basscss@7.1.0)) && make $@
-	cp dist/$*/$@ $@
-	rm -rf dist/$*
+	cd history/$* && (npm ci || (rm -rf node_modules package-lock.json && npm install && npm install basscss@7.1.0)) && make $(subst history/,dist/,$@)
+	cp history/$*/$(subst history/,dist/,$@) $@
+	rm -rf history/$*
