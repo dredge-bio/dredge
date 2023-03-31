@@ -203,6 +203,8 @@ export default function Toolbar() {
       width: '100%',
       alignItems: 'center',
       justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      p: 2,
     }, ...[
       h('div', null, ...[
         !showSearch ? null : h(SearchTranscripts, {
@@ -292,10 +294,6 @@ export default function Toolbar() {
             setShowExport(prev => !prev)
           },
         }, 'Export'),
-
-        h(Button, {
-          mx: 2,
-        }, 'Import'),
       ]),
     ])
   )
