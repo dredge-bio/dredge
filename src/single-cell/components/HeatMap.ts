@@ -131,7 +131,6 @@ function drawText(
   ctx.fillText(text.text, text.x, text.y, text.maxWidth)
 }
 
-
 function heatmapDimensions(
   rect: { width: number, height: number },
   transcripts: string[],
@@ -208,6 +207,7 @@ function heatmapDimensions(
       baseline: 'alphabetic' as CanvasTextBaseline,
       x: clusterStartX + grid.squareW / 2,
       y: bar.y - TEXT_GAP,
+      maxWidth: bar.w,
     }
 
     let maxY = bar.y + bar.h
