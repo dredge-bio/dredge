@@ -591,6 +591,9 @@ export default function HeatMap() {
               onMouseLeave() {
                 setHoveredSquare(null)
               },
+              onClick() {
+                dispatch(viewActions.setFocusedTranscript({ transcript: square.transcript }))
+              },
               title: `${square.transcript}: ${formatNumber(square.meanZScore)}`,
               style: {
                 position: 'absolute',
