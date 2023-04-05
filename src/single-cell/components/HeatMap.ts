@@ -2,6 +2,7 @@ import { createElement as h } from 'react'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import { useEffect, useRef, useState } from 'react'
+import { saveAs } from 'file-saver'
 import { useSized, formatNumber } from '@dredge/main'
 import { useView, useViewDispatch, useSeuratDataset } from '../hooks'
 import { SeuratCluster } from '../types'
@@ -551,6 +552,27 @@ export default function HeatMap() {
         height: rect.height,
         width: rect.width,
       }),
+
+      heatmap && h('a', {
+        href: '#',
+        style: {
+          fontFamily: 'SourceSansPro',
+          fontSize: 18,
+          position: 'absolute',
+          top: heatmap.scale.y,
+          right: PADDING_RIGHT,
+        },
+        onClick(e) {
+          e.preventDefault()
+          if (canvasRef.current !== null) {
+            canvasRef.current.toBlob(blob => {
+              if (blob !== null) {
+                saveAs(blob, `dredge-heatmap-${new Date().getTime()}.png`)
+              }
+            }, 'image/png')
+          }
+        },
+      }, 'Save image'),
 
       h(GridOverlayWrapper, null, ...[
         hoveredGridTranscript && (
