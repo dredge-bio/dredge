@@ -239,7 +239,14 @@ function SingleCell(props: SingleCellProps) {
       , [ showTranscript, setShowTranscript ] = useState<string | null>(null)
 
   const throttledSetTranscript = useCallback(throttle((transcript: string | null) => {
+    // FIXME: There's no way that this should ever be undefined, but it is
+    // happening when you hover around the grid squares quickly and then move
+    // the mouse outside. (Sometimes). I'm sure it has something to do with
+    // throttling, and some state being out of date when it's read, but I'm
+    // having trouble tracking it down at the moment.
+    if (transcript !== undefined) {
       setShowTranscript(transcript)
+    }
   }, 150), [])
 
   const allCells = useMemo(() => Array.from(cells.values()), [ cells ])
