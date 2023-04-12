@@ -565,7 +565,33 @@ export default function HeatMap() {
         onClick(e) {
           e.preventDefault()
           if (canvasRef.current !== null) {
-            canvasRef.current.toBlob(blob => {
+            const srcCanvas = canvasRef.current
+                , destCanvas = document.createElement('canvas')
+
+            destCanvas.height = srcCanvas.height
+            destCanvas.width = srcCanvas.width
+
+            const destCtx = destCanvas.getContext('2d')
+
+            if (destCtx === null) return
+
+            destCtx.drawImage(srcCanvas, 0, 0)
+
+            const permalink = view.project.config.permalinkPrefix
+
+            if (permalink) {
+              drawText(destCtx, {
+                color: 'black',
+                text: permalink,
+                align: 'right' as CanvasTextAlign,
+                baseline: 'top' as CanvasTextBaseline,
+                font: '20px sans-serif',
+                x: heatmap.grid.x + heatmap.grid.w,
+                y: heatmap.scale.y,
+              })
+            }
+
+            destCanvas.toBlob(blob => {
               if (blob !== null) {
                 saveAs(blob, `dredge-heatmap-${new Date().getTime()}.png`)
               }
